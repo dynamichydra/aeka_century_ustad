@@ -7,7 +7,6 @@ import 'package:century_ai/features/shop/screens/favorites/favorites.dart';
 import 'package:century_ai/features/support/screens/about_us/about_us.dart';
 import 'package:century_ai/features/support/screens/contact_us/contact_us.dart';
 import 'package:century_ai/features/support/screens/terms_conditions/terms_conditions.dart';
-import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';

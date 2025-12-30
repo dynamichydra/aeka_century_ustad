@@ -2,7 +2,6 @@ import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
-import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 

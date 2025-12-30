@@ -69,7 +69,7 @@ class Onboarding extends StatelessWidget {
 
             // NEXT Button (Circular) - Optional, but keeping standard structure. 
             // Since the last page is input, we might want to hide this on the last page.
-            OnBoardingNextButton(pageController: pageController),
+            // OnBoardingNextButton(pageController: pageController),
           ],
         ),
       ),
@@ -115,15 +115,20 @@ class OnBoardingDotNavigation extends StatelessWidget {
     final dark = THelperFunctions.isDarkMode(context);
 
     return Positioned(
-      bottom: TDeviceUtils.getBottomNavigationBarHeight() + 25,
-      left: TSizes.defaultSpace,
-      child: SmoothPageIndicator(
-        controller: pageController,
-        onDotClicked: (index) => context.read<OnboardingCubit>().dotNavigationClick(index),
-        count: 3,
-        effect: ExpandingDotsEffect(
-            activeDotColor: dark ? TColors.light : TColors.dark,
-            dotHeight: 6),
+      bottom: TDeviceUtils.getBottomNavigationBarHeight(),
+      left: 0,
+      right: 0,
+      child: Center(
+        child: SmoothPageIndicator(
+          controller: pageController,
+          onDotClicked: (index) => context.read<OnboardingCubit>().dotNavigationClick(index),
+          count: 3,
+          effect: WormEffect(
+              activeDotColor: dark ? TColors.light : TColors.dark,
+              dotHeight: 12, // Increased size for circle
+              dotWidth: 12,
+          ),
+        ),
       ),
     );
   }
@@ -142,7 +147,8 @@ class OnBoardingNextButton extends StatelessWidget {
     final dark = THelperFunctions.isDarkMode(context);
     
     return Positioned(
-      right: TSizes.defaultSpace,
+      right: 0,
+      left: 0,
       bottom: TDeviceUtils.getBottomNavigationBarHeight(),
       child: BlocBuilder<OnboardingCubit, int>(
         builder: (context, state) {
