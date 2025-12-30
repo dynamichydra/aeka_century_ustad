@@ -76,12 +76,20 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                   decoration: InputDecoration(
                     prefixIcon: Container(
                       padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(right: 10),
+                      margin: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: TColors.primary.withOpacity(0.1),
+                        color: TColors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: TColors.borderPrimary,
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Iconsax.call, color: TColors.primary),
+                      child: const Icon(Iconsax.call, color: TColors.black),
                     ),
                     labelText: 'Mobile Number',
                     filled: true,
@@ -107,19 +115,27 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                   decoration: InputDecoration(
                     prefixIcon: Container(
                       padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(right: 10),
+                      margin: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: TColors.primary.withOpacity(0.1),
+                        color: TColors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: TColors.borderPrimary,
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
                       ),
                       child: const Icon(
                         Iconsax.password_check,
-                        color: TColors.primary,
+                        color: TColors.black,
                       ),
                     ),
                     labelText: 'Enter OTP',
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: TColors.softGrey,
                   ),
                   keyboardType: TextInputType.number,
                 ),
