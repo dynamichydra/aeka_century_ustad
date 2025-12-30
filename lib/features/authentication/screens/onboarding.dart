@@ -24,6 +24,7 @@ class Onboarding extends StatelessWidget {
     return BlocProvider(
       create: (_) => controller,
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             // Horizontal Scrollable Page
@@ -38,26 +39,29 @@ class Onboarding extends StatelessWidget {
                   );
                 }
               },
-              child: PageView(
-                controller: pageController,
-                onPageChanged: controller.updatePageIndicator,
-                children: const [
-                  OnboardingPage(
-                    image: TImages.onBoardingImage1,
-                    title: TTexts.onBoardingTitle1,
-                    subTitle: TTexts.onBoardingSubTitle1,
-                  ),
-                  OnboardingPage(
-                    image: TImages.onBoardingImage2,
-                    title: TTexts.onBoardingTitle2,
-                    subTitle: TTexts.onBoardingSubTitle2,
-                  ),
-                  OnboardingInputPage(
-                    image: TImages.onBoardingImage3,
-                    title: TTexts.onBoardingTitle3,
-                    subTitle: TTexts.onBoardingSubTitle3,
-                  ),
-                ],
+              child: Padding(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: PageView(
+                  controller: pageController,
+                  onPageChanged: controller.updatePageIndicator,
+                  children: const [
+                    OnboardingPage(
+                      image: TImages.onBoardingImage1,
+                      title: TTexts.onBoardingTitle1,
+                      subTitle: TTexts.onBoardingSubTitle1,
+                    ),
+                    OnboardingPage(
+                      image: TImages.onBoardingImage2,
+                      title: TTexts.onBoardingTitle2,
+                      subTitle: TTexts.onBoardingSubTitle2,
+                    ),
+                    OnboardingInputPage(
+                      image: TImages.onBoardingImage3,
+                      title: TTexts.onBoardingTitle3,
+                      subTitle: TTexts.onBoardingSubTitle3,
+                    ),
+                  ],
+                ),
               ),
             ),
 
