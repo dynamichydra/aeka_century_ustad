@@ -1,17 +1,25 @@
 import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
+import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: const Drawer(), // Basic Drawer with hamburger icon implied by Scaffold
+      drawer: const Drawer(),
       appBar: AppBar(
         leading: Builder(
           builder: (context) => IconButton(
@@ -22,7 +30,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
            Padding(
              padding: const EdgeInsets.only(right: TSizes.defaultSpace),
-             child: const Image(image: AssetImage(TImages.toyIcon), width: 30, height: 30), // Example Image Icon
+             child: const Image(image: AssetImage(TImages.toyIcon), width: 30, height: 30),
            ),
         ],
         backgroundColor: Colors.transparent,
@@ -44,7 +52,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: TSizes.spaceBtwItems),
                     Text(
-                      "John Doe", // Placeholder name
+                      "John Doe",
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ],
@@ -80,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                     labelText: 'Search for images...',
                     border: OutlineInputBorder(),
                     filled: true,
-                    fillColor: Colors.white, // Or TColors.softGrey
+                    fillColor: Colors.white,
                   ),
                 ),
               ),
@@ -180,15 +188,56 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        onDestinationSelected: (index) {},
-        destinations: const [
-          NavigationDestination(icon: Icon(Iconsax.image), label: 'Image'),
-          NavigationDestination(icon: Icon(Iconsax.camera), label: 'Camera'),
-          NavigationDestination(icon: Icon(Iconsax.heart), label: 'Favorite'),
-          NavigationDestination(icon: Icon(Iconsax.magic_star), label: 'AI'), // Using Magic Star for AI
-        ],
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace, vertical: TSizes.sm),
+        child: Container(
+          padding: const EdgeInsets.all(TSizes.sm),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.3),
+                offset: const Offset(0, 4),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavItem(Iconsax.image, 0),
+              _buildNavItem(Iconsax.camera, 1),
+              _buildNavItem(Iconsax.heart, 2),
+              _buildNavItem(Iconsax.magic_star, 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, int index) {
+    bool isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isSelected ? TColors.primary : Colors.white,
+          boxShadow: [
+             BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                offset: const Offset(0, 4),
+                blurRadius: 10,
+              ),
+          ]
+        ),
+        child: Icon(
+          icon, 
+          color: isSelected ? Colors.white : TColors.darkGrey,
+        ),
       ),
     );
   }
