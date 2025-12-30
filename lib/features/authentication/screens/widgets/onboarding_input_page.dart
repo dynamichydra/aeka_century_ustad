@@ -50,22 +50,66 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
             
             // Toggle between Mobile Number and OTP Input
             if (!_showOtpInput) ...[
-              TextFormField(
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Iconsax.call),
-                  labelText: 'Mobile Number',
-                  border: OutlineInputBorder(),
+              Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
                 ),
-                keyboardType: TextInputType.phone,
+                child: TextFormField(
+                  decoration: InputDecoration(
+                    prefixIcon: Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(right: 10),
+                      decoration: BoxDecoration(
+                         shape: BoxShape.circle,
+                         color: TColors.primary.withOpacity(0.1), 
+                      ),
+                      child: const Icon(Iconsax.call, color: TColors.primary),
+                    ),
+                    labelText: 'Mobile Number',
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
               ),
             ] else ...[
-              TextFormField(
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Iconsax.password_check),
-                  labelText: 'Enter OTP',
-                  border: OutlineInputBorder(),
+              Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
                 ),
-                keyboardType: TextInputType.number,
+                child: TextFormField(
+                  decoration: InputDecoration(
+                    prefixIcon: Container(
+                       padding: const EdgeInsets.all(12),
+                       margin: const EdgeInsets.only(right: 10),
+                       decoration: BoxDecoration(
+                         shape: BoxShape.circle,
+                         color: TColors.primary.withOpacity(0.1),
+                       ),
+                      child: const Icon(Iconsax.password_check, color: TColors.primary),
+                    ),
+                    labelText: 'Enter OTP',
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
               ),
             ],
             

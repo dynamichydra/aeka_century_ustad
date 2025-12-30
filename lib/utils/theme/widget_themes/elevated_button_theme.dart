@@ -10,7 +10,8 @@ class TElevatedButtonTheme {
   /* -- Light Theme -- */
   static final lightElevatedButtonTheme  = ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      elevation: 0,
+      elevation: 8,
+      shadowColor: TColors.primary.withOpacity(0.5),
       foregroundColor: TColors.light,
       backgroundColor: TColors.primary,
       disabledForegroundColor: TColors.darkGrey,
@@ -25,7 +26,8 @@ class TElevatedButtonTheme {
   /* -- Dark Theme -- */
   static final darkElevatedButtonTheme = ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      elevation: 0,
+      elevation: 8,
+      shadowColor: TColors.primary.withOpacity(0.5),
       foregroundColor: TColors.light,
       backgroundColor: TColors.primary,
       disabledForegroundColor: TColors.darkGrey,

@@ -61,6 +61,31 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: TSizes.spaceBtwItems),
               
+              // Search Input
+              Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
+                ),
+                child: TextFormField(
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Iconsax.search_normal),
+                    labelText: 'Search for images...',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white, // Or TColors.softGrey
+                  ),
+                ),
+              ),
+              const SizedBox(height: TSizes.spaceBtwSections),
+
               SizedBox(
                 height: 100,
                 child: ListView.separated(
@@ -68,7 +93,7 @@ class HomeScreen extends StatelessWidget {
                   itemCount: 6, // 5 images + 1 "See more"
                   separatorBuilder: (_, __) => const SizedBox(width: TSizes.spaceBtwItems),
                   itemBuilder: (context, index) {
-                    if (index == 5) {
+                   if (index == 5) {
                       // See More Button at end of row
                       return Column(
                         children: [
@@ -113,15 +138,12 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: TSizes.spaceBtwSections),
-
+              
               // "Popular image list" Section
-              // "bottom of the row show popular image list and left side see more button"
-              // Interpreting as a header row with "See more" on the left? Or list with button on left?
-              // Standard UX: Title Left, See More Right.
-              // Request: "left side see more button".
               Row(
                  mainAxisAlignment: MainAxisAlignment.start,
                  children: [
+                   // "left side see more button"
                    TextButton(
                      onPressed: (){}, 
                      child: const Row(
@@ -132,9 +154,6 @@ class HomeScreen extends StatelessWidget {
                        ],
                      )
                    ),
-                   const Spacer(), // To push text to left if needed, or keep it compact
-                   // If text is Popular Images?
-                   // Text("Popular Images", style: Theme.of(context).textTheme.headlineSmall),
                  ],
               ),
               const SizedBox(height: TSizes.spaceBtwItems),
