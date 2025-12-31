@@ -1,4 +1,4 @@
-import 'package:century_ai/features/authentication/screens/onboarding.dart';
+import 'package:century_ai/router/router.dart';
 import 'package:century_ai/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,22 +16,26 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
+
       providers: [
         BlocProvider(create: (_) => NetworkCubit()),
       ],
-      child: MaterialApp(
-        title: 'Century AI',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.light,
-        theme: TAppTheme.lightTheme,
-        darkTheme: TAppTheme.darkTheme,
-        home: BlocListener<NetworkCubit, List<ConnectivityResult>>(
-          listener: (context, state) {
-            if (state.contains(ConnectivityResult.none)) {
-              TLoaders.customToast(context: context, message: 'No Internet Connection');
-            }
-          },
-          child: const Onboarding(),
+      child: BlocListener<NetworkCubit, List<ConnectivityResult>>(
+        listener: (context, state) {
+          if (state.contains(ConnectivityResult.none)) {
+            TLoaders.customToast(
+              context: context,
+              message: 'No Internet Connection',
+            );
+          }
+        },
+        child: MaterialApp.router(
+          title: 'Century AI',
+          debugShowCheckedModeBanner: false,
+          themeMode: ThemeMode.light,
+          theme: TAppTheme.lightTheme,
+          darkTheme: TAppTheme.darkTheme,
+          routerConfig: router,
         ),
       ),
     );

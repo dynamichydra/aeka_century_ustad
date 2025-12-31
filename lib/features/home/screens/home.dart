@@ -20,22 +20,22 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
-      appBar: AppBar(
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Iconsax.menu_1, color: Colors.black),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        actions: [
-           Padding(
-             padding: const EdgeInsets.only(right: TSizes.defaultSpace),
-             child: const Image(image: AssetImage(TImages.toyIcon), width: 30, height: 30),
-           ),
-        ],
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      // appBar: AppBar(
+      //   leading: Builder(
+      //     builder: (context) => IconButton(
+      //       icon: const Icon(Iconsax.menu_1, color: Colors.black),
+      //       onPressed: () => Scaffold.of(context).openDrawer(),
+      //     ),
+      //   ),
+      //   actions: [
+      //      Padding(
+      //        padding: const EdgeInsets.only(right: TSizes.defaultSpace),
+      //        child: const Image(image: AssetImage(TImages.toyIcon), width: 30, height: 30),
+      //      ),
+      //   ],
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      // ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(TSizes.defaultSpace),
@@ -188,57 +188,57 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace, vertical: TSizes.sm),
-        child: Container(
-          padding: const EdgeInsets.all(TSizes.sm),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                offset: const Offset(0, 4),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildNavItem(Iconsax.image, 0),
-              _buildNavItem(Iconsax.camera, 1),
-              _buildNavItem(Iconsax.heart, 2),
-              _buildNavItem(Iconsax.magic_star, 3),
-            ],
-          ),
-        ),
-      ),
+      // bottomNavigationBar: Padding(
+      //   padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace, vertical: TSizes.sm),
+      //   child: Container(
+      //     padding: const EdgeInsets.all(TSizes.sm),
+      //     decoration: BoxDecoration(
+      //       color: Colors.white,
+      //       borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
+      //       boxShadow: [
+      //         BoxShadow(
+      //           color: Colors.grey.withOpacity(0.3),
+      //           offset: const Offset(0, 4),
+      //           blurRadius: 10,
+      //         ),
+      //       ],
+      //     ),
+      //     child: Row(
+      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //       children: [
+      //         _buildNavItem(Iconsax.image, 0),
+      //         _buildNavItem(Iconsax.camera, 1),
+      //         _buildNavItem(Iconsax.heart, 2),
+      //         _buildNavItem(Iconsax.magic_star, 3),
+      //       ],
+      //     ),
+      //   ),
+      // ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, int index) {
-    bool isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: isSelected ? TColors.primary : Colors.white,
-          boxShadow: [
-             BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                offset: const Offset(0, 4),
-                blurRadius: 10,
-              ),
-          ]
-        ),
-        child: Icon(
-          icon, 
-          color: isSelected ? Colors.white : TColors.darkGrey,
-        ),
-      ),
-    );
-  }
+  // Widget _buildNavItem(IconData icon, int index) {
+  //   bool isSelected = _selectedIndex == index;
+  //   return GestureDetector(
+  //     onTap: () => setState(() => _selectedIndex = index),
+  //     child: Container(
+  //       padding: const EdgeInsets.all(12),
+  //       decoration: BoxDecoration(
+  //         shape: BoxShape.circle,
+  //         color: isSelected ? TColors.primary : Colors.white,
+  //         boxShadow: [
+  //            BoxShadow(
+  //               color: Colors.black.withOpacity(0.1),
+  //               offset: const Offset(0, 4),
+  //               blurRadius: 10,
+  //             ),
+  //         ]
+  //       ),
+  //       child: Icon(
+  //         icon,
+  //         color: isSelected ? Colors.white : TColors.darkGrey,
+  //       ),
+  //     ),
+  //   );
+  // }
 }

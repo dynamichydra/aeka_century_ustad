@@ -1,9 +1,9 @@
-import 'package:century_ai/features/home/screens/home.dart';
 import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 
 class OnboardingInputPage extends StatefulWidget {
@@ -152,13 +152,8 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                       _showOtpInput = true;
                     });
                   } else {
-                    // Navigate to Home Page
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                    );
+
+                    context.go('/');
                   }
                 },
                 style: ElevatedButton.styleFrom(
