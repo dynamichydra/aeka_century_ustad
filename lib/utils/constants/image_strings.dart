@@ -82,84 +82,17 @@ class TImages {
   static const String onBoardingImage3 = "assets/images/animations/sammy-line-success.png";
 
   // -- Products
-  static const String productImage1 = "assets/images/content/default_image.png";
-  static const String productImage2 = "assets/images/content/default_image.png";
-  static const String productImage3 = "assets/images/content/default_image.png";
-  static const String productImage4 = "assets/images/content/default_image.png";
-  static const String productImage5 = "assets/images/content/default_image.png";
-  static const String productImage6 = "assets/images/content/default_image.png";
-  static const String productImage7 = "assets/images/content/default_image.png";
-  static const String productImage8 = "assets/images/content/default_image.png";
-  static const String productImage9 = "assets/images/content/default_image.png";
-  static const String productImage10 = "assets/images/content/default_image.png";
-  static const String productImage11 = "assets/images/content/default_image.png";
-  static const String productImage12 = "assets/images/content/default_image.png";
-  static const String productImage13 = "assets/images/content/default_image.png";
-  static const String productImage14 = "assets/images/content/default_image.png";
-  static const String productImage15 = "assets/images/content/default_image.png";
-  static const String productImage16 = "assets/images/content/default_image.png";
-  static const String productImage17 = "assets/images/content/default_image.png";
-  static const String productImage18 = "assets/images/content/default_image.png";
-  static const String productImage19 = "assets/images/content/default_image.png";
-  static const String productImage20 = "assets/images/content/default_image.png";
-  static const String productImage21 = "assets/images/content/default_image.png";
-  static const String productImage22 = "assets/images/content/default_image.png";
-  static const String productImage23 = "assets/images/content/default_image.png";
-  static const String productImage24 = "assets/images/content/default_image.png";
-  static const String productImage25 = "assets/images/content/default_image.png";
-  static const String productImage26 = "assets/images/content/default_image.png";
-  static const String productImage27 = "assets/images/content/default_image.png";
-  static const String productImage28 = "assets/images/content/default_image.png";
-  static const String productImage29 = "assets/images/content/default_image.png";
-  static const String productImage30 = "assets/images/content/default_image.png";
-  static const String productImage31 = "assets/images/content/default_image.png";
-  static const String productImage32 = "assets/images/content/default_image.png";
-  static const String productImage33 = "assets/images/content/default_image.png";
-  static const String productImage34 = "assets/images/content/default_image.png";
-  static const String productImage35 = "assets/images/content/default_image.png";
-  static const String productImage36 = "assets/images/content/default_image.png";
-  static const String productImage37 = "assets/images/content/default_image.png";
-  static const String productImage38 = "assets/images/content/default_image.png";
-  static const String productImage39 = "assets/images/content/default_image.png";
-  static const String productImage40 = "assets/images/content/default_image.png";
-  static const String productImage41 = "assets/images/content/default_image.png";
-  static const String productImage42 = "assets/images/content/default_image.png";
-  static const String productImage43 = "assets/images/content/default_image.png";
-  static const String productImage44 = "assets/images/content/default_image.png";
-  static const String productImage45 = "assets/images/content/default_image.png";
-  static const String productImage46 = "assets/images/content/default_image.png";
-  static const String productImage47 = "assets/images/content/default_image.png";
-  static const String productImage48 = "assets/images/content/default_image.png";
-  static const String productImage49 = "assets/images/content/default_image.png";
-  static const String productImage50 = "assets/images/content/default_image.png";
-  static const String productImage51 = "assets/images/content/default_image.png";
-  static const String productImage52 = "assets/images/content/default_image.png";
-  static const String productImage53 = "assets/images/content/default_image.png";
-  static const String productImage54 = "assets/images/content/default_image.png";
-  static const String productImage55 = "assets/images/content/default_image.png";
-  static const String productImage56 = "assets/images/content/default_image.png";
-  static const String productImage57 = "assets/images/content/default_image.png";
-  static const String productImage58 = "assets/images/content/default_image.png";
-  static const String productImage59 = "assets/images/content/default_image.png";
-  static const String productImage60 = "assets/images/content/default_image.png";
-  static const String productImage61 = "assets/images/content/default_image.png";
-  static const String productImage62 = "assets/images/content/default_image.png";
-  static const String productImage63 = "assets/images/content/default_image.png";
-  static const String productImage64 = "assets/images/content/default_image.png";
-  static const String productImage65 = "assets/images/content/default_image.png";
-  static const String productImage66 = "assets/images/content/default_image.png";
-  static const String productImage67 = "assets/images/content/default_image.png";
-  static const String productImage68 = "assets/images/content/default_image.png";
-  static const String productImage69 = "assets/images/content/default_image.png";
-  static const String productImage70 = "assets/images/content/default_image.png";
-  static const String productImage71 = "assets/images/content/default_image.png";
-  static const String productImage72 = "assets/images/content/default_image.png";
-  static const String productImage73 = "assets/images/content/default_image.png";
-  static const String productImage74 = "assets/images/content/default_image.png";
-  static const String productImage75 = "assets/images/content/default_image.png";
-  static const String productImage76 = "assets/images/content/default_image.png";
-  static const String productImage77= "assets/images/content/default_image.png";
-
+  static const String productImage1 = "assets/images/furniture/1.jpg";
+  static const String productImage2 = "assets/images/furniture/2.jpg";
+  static const String productImage3 = "assets/images/furniture/3.jpg";
+  static const String productImage4 = "assets/images/furniture/4.jpg";
+  static const String productImage5 = "assets/images/furniture/5.jpg";
+  static const String productImage6 = "assets/images/furniture/6.jpg";
+  static const String productImage7 = "assets/images/furniture/7.jpg";
+  static const String productImage8 = "assets/images/furniture/8.jpg";
+  static const String productImage9 = "assets/images/furniture/9.jpg";
+  static const String productImage10 = "assets/images/furniture/10.jpg";
+ 
 
 
 
@@ -195,4 +128,19 @@ class TImages {
   static const String paystack = "assets/icons/payment_methods/paystack.png";
   static const String paytm = "assets/icons/payment_methods/paytm.png";
   static const String successfulPaymentIcon = "assets/icons/payment_methods/successful_payment_icon.png";
+}
+
+class TProductImages {
+  static const List<String> productImages = [
+    'assets/images/furniture/1.jpg',
+    'assets/images/furniture/2.jpg',
+    'assets/images/furniture/3.jpg',
+    'assets/images/furniture/4.jpg',
+    'assets/images/furniture/5.jpg',
+    'assets/images/furniture/6.jpg',
+    'assets/images/furniture/7.jpg',
+    'assets/images/furniture/8.jpg',
+    'assets/images/furniture/9.jpg',
+    'assets/images/furniture/10.jpg',
+  ];
 }

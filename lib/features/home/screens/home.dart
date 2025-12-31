@@ -98,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 100,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 6, // 5 images + 1 "See more"
+                  itemCount: TProductImages.productImages.length,
                   separatorBuilder: (_, __) => const SizedBox(width: TSizes.spaceBtwItems),
                   itemBuilder: (context, index) {
                    if (index == 5) {
@@ -134,8 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(100),
-                            child: const Image(
-                              image: AssetImage(TImages.clothIcon), // Placeholder
+                            child: Image(
+                              image: AssetImage(
+                                TProductImages.productImages[index],
+                              ), // Placeholder
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -170,13 +172,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ListView.separated(
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
-                itemCount: 4,
+                itemCount: TProductImages.productImages.length,
                 separatorBuilder: (_, __) => const SizedBox(height: TSizes.spaceBtwItems),
                 itemBuilder: (context, index) {
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
-                    child: const Image(
-                      image: AssetImage(TImages.promoBanner1), 
+                    child: Image(
+                      image: AssetImage(TProductImages.productImages[index]), 
                       height: 150, 
                       width: double.infinity, 
                       fit: BoxFit.cover
@@ -188,57 +190,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      // bottomNavigationBar: Padding(
-      //   padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace, vertical: TSizes.sm),
-      //   child: Container(
-      //     padding: const EdgeInsets.all(TSizes.sm),
-      //     decoration: BoxDecoration(
-      //       color: Colors.white,
-      //       borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
-      //       boxShadow: [
-      //         BoxShadow(
-      //           color: Colors.grey.withOpacity(0.3),
-      //           offset: const Offset(0, 4),
-      //           blurRadius: 10,
-      //         ),
-      //       ],
-      //     ),
-      //     child: Row(
-      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //       children: [
-      //         _buildNavItem(Iconsax.image, 0),
-      //         _buildNavItem(Iconsax.camera, 1),
-      //         _buildNavItem(Iconsax.heart, 2),
-      //         _buildNavItem(Iconsax.magic_star, 3),
-      //       ],
-      //     ),
-      //   ),
-      // ),
     );
   }
-
-  // Widget _buildNavItem(IconData icon, int index) {
-  //   bool isSelected = _selectedIndex == index;
-  //   return GestureDetector(
-  //     onTap: () => setState(() => _selectedIndex = index),
-  //     child: Container(
-  //       padding: const EdgeInsets.all(12),
-  //       decoration: BoxDecoration(
-  //         shape: BoxShape.circle,
-  //         color: isSelected ? TColors.primary : Colors.white,
-  //         boxShadow: [
-  //            BoxShadow(
-  //               color: Colors.black.withOpacity(0.1),
-  //               offset: const Offset(0, 4),
-  //               blurRadius: 10,
-  //             ),
-  //         ]
-  //       ),
-  //       child: Icon(
-  //         icon,
-  //         color: isSelected ? Colors.white : TColors.darkGrey,
-  //       ),
-  //     ),
-  //   );
-  // }
 }
