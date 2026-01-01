@@ -1,5 +1,5 @@
+import 'package:century_ai/common/widgets/inputs/text_field.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
-import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
@@ -13,29 +13,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
-      // appBar: AppBar(
-      //   leading: Builder(
-      //     builder: (context) => IconButton(
-      //       icon: const Icon(Iconsax.menu_1, color: Colors.black),
-      //       onPressed: () => Scaffold.of(context).openDrawer(),
-      //     ),
-      //   ),
-      //   actions: [
-      //      Padding(
-      //        padding: const EdgeInsets.only(right: TSizes.defaultSpace),
-      //        child: const Image(image: AssetImage(TImages.toyIcon), width: 30, height: 30),
-      //      ),
-      //   ],
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      // ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(TSizes.defaultSpace),
@@ -70,27 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: TSizes.spaceBtwItems),
               
               // Search Input
-              Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 2,
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                  borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
-                ),
-                child: TextFormField(
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Iconsax.search_normal),
-                    labelText: 'Search for images...',
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
+              const TTextField(
+                labelText: 'Search for images...',
+                prefixIcon: Icon(Iconsax.search_normal),
+                fillColor: Colors.white,
               ),
               const SizedBox(height: TSizes.spaceBtwSections),
 
@@ -98,11 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 100,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: TProductImages.productImages.length,
+                  itemCount: 5,
                   separatorBuilder: (_, __) => const SizedBox(width: TSizes.spaceBtwItems),
                   itemBuilder: (context, index) {
-                   if (index == 5) {
-                      // See More Button at end of row
+                   if (index == 4) {
+                      // See More Button at end of row (5th element)
                       return Column(
                         children: [
                            Container(
@@ -130,7 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.all(TSizes.xs),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: TColors.primary),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(100),
@@ -179,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
                     child: Image(
                       image: AssetImage(TProductImages.productImages[index]), 
-                      height: 150, 
                       width: double.infinity, 
                       fit: BoxFit.cover
                     ),

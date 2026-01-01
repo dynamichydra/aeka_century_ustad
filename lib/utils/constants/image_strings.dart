@@ -5,8 +5,9 @@
 class TImages {
 
   // -- App Logos
-  static const String darkAppLogo = "assets/logos/t-store-splash-logo-black.png";
-  static const String lightAppLogo = "assets/logos/t-store-splash-logo-white.png";
+  static const String darkAppLogo = "assets/logos/Century_Laminates_with_tagline__Eng__page-0001-removebg-preview.png";
+  static const String lightAppLogo = "assets/logos/Century_Laminates_with_tagline__Eng__page-0001-removebg-preview.png";
+  static const String smallLogo = "assets/logos/small_logo.png";
 
   // -- Default Images
   static const String defaultImage = "assets/images/content/default_image.png";
@@ -77,9 +78,9 @@ class TImages {
   static String tickCongratulationsConfettiAnimation = "assets/images/animations/tick-confetti.json";
 
   // -- OnBoarding Texts
-  static const String onBoardingImage1 = "assets/images/animations/sammy-line-sale.png";
-  static const String onBoardingImage2 = "assets/images/animations/sammy-line-workout.gif";
-  static const String onBoardingImage3 = "assets/images/animations/sammy-line-success.png";
+  static const String onBoardingImage1 = "assets/logos/onboarding1.png";
+  static const String onBoardingImage2 = "assets/logos/onboarding2.png";
+  static const String onBoardingImage3 = "assets/logos/Carpenter_Mascot_Post_copy-removebg-preview.png";
 
   // -- Products
   static const String productImage1 = "assets/images/furniture/1.jpg";

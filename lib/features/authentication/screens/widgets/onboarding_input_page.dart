@@ -1,3 +1,4 @@
+import 'package:century_ai/common/widgets/inputs/text_field.dart';
 import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
@@ -60,85 +61,18 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
 
             // Toggle between Mobile Number and OTP Input
             if (!_showOtpInput) ...[
-              Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 2,
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                  borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
-                ),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    prefixIcon: Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: TColors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: TColors.borderPrimary,
-                            blurRadius: 12,
-                            spreadRadius: 2,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Iconsax.call, color: TColors.black),
-                    ),
-                    labelText: 'Mobile Number',
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  keyboardType: TextInputType.phone,
-                ),
+              const TTextField(
+                labelText: 'Mobile Number',
+                prefixIcon: Icon(Iconsax.call, color: TColors.black),
+                isCircularIcon: true,
+                keyboardType: TextInputType.phone,
               ),
             ] else ...[
-              Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 2,
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                  borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
-                ),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    prefixIcon: Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: TColors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: TColors.borderPrimary,
-                            blurRadius: 12,
-                            spreadRadius: 2,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Iconsax.password_check,
-                        color: TColors.black,
-                      ),
-                    ),
-                    labelText: 'Enter OTP',
-                    filled: true,
-                    fillColor: TColors.softGrey,
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
+              const TTextField(
+                labelText: 'Enter OTP',
+                prefixIcon: Icon(Iconsax.password_check, color: TColors.black),
+                isCircularIcon: true,
+                keyboardType: TextInputType.number,
               ),
             ],
             const SizedBox(height: TSizes.spaceBtwItems),

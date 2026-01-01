@@ -40,7 +40,7 @@ class NavWrapper extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(right: TSizes.defaultSpace),
             child: Image(
-              image: AssetImage(TImages.toyIcon),
+              image: AssetImage(TImages.smallLogo),
               width: 30,
               height: 30,
             ),
