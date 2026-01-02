@@ -26,7 +26,7 @@ class NavWrapper extends StatelessWidget {
     if (currentIndex == -1) currentIndex = 0;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
 
       appBar: AppBar(
