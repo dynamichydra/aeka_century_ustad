@@ -81,7 +81,12 @@ class TImages {
   static const String onBoardingImageTopLeft = "assets/images/vectors/onboarding_top_left.png";
   static const String onBoardingImage1 = "assets/logos/onboarding1.png";
   static const String onBoardingImage2 = "assets/logos/onboarding2.png";
-  static const String onBoardingImage3 = "assets/logos/Carpenter_Mascot_Post_copy-removebg-preview.png";
+  static const String onBoardingImage3 = "assets/images/vectors/Screenshot_2025-12-10_at_1.37.02_PM_1-removebg-preview.png";
+  static const String onBoardingImage4 = "assets/logos/onboarding7.png";
+  static const String onBoardingImage5 = "assets/logos/onboarding3.png";
+  static const String onBoardingImage6 = "assets/logos/Carpenter_Mascot_Post_copy-removebg-preview.png";
+  static const String onBoardingImageUssad = "assets/images/vectors/Carpenter_Mascot_Post_copy_YUIO-removebg-preview.png";
+
 
   // -- Products
   static const String productImage1 = "assets/images/furniture/1.jpg";

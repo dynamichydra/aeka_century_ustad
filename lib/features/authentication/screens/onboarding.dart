@@ -9,18 +9,35 @@ import 'package:century_ai/utils/device/device_utility.dart';
 import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-class Onboarding extends StatelessWidget {
+class Onboarding extends StatefulWidget {
   const Onboarding({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final controller = OnboardingCubit();
-    // PageController to handle swiping
-    final pageController = PageController();
+  State<Onboarding> createState() => _OnboardingState();
+}
 
+class _OnboardingState extends State<Onboarding> {
+  late final OnboardingCubit controller;
+  late final PageController pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = OnboardingCubit();
+    pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    controller.close();
+    pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => controller,
       child: Scaffold(
@@ -29,12 +46,12 @@ class Onboarding extends StatelessWidget {
         body: Stack(
           children: [
             // Horizontal Scrollable Page
-            BlocListener<OnboardingCubit, int>(
+            BlocListener<OnboardingCubit, OnboardingState>(
               listener: (context, state) {
                 // Animate to the page when state changes (e.g. from dot click or skip)
-                 if (pageController.hasClients && pageController.page != state.toDouble()) {
+                if (pageController.hasClients && pageController.page != state.pageIndex.toDouble()) {
                   pageController.animateToPage(
-                    state,
+                    state.pageIndex,
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
                   );
@@ -48,16 +65,18 @@ class Onboarding extends StatelessWidget {
                   children: const [
                     OnboardingPage(
                       image: TImages.onBoardingImage1,
+                      image2: TImages.onBoardingImage2,
                       title: TTexts.onBoardingTitle1,
                       subTitle: TTexts.onBoardingSubTitle1,
                     ),
                     OnboardingPage(
-                      image: TImages.onBoardingImage2,
+                      image: TImages.onBoardingImage3,
+                      image2: TImages.onBoardingImage4,
                       title: TTexts.onBoardingTitle2,
                       subTitle: TTexts.onBoardingSubTitle2,
                     ),
                     OnboardingInputPage(
-                      image: TImages.onBoardingImage3,
+                      image: TImages.onBoardingImage6,
                       title: TTexts.onBoardingTitle3,
                       subTitle: TTexts.onBoardingSubTitle3,
                     ),
@@ -80,9 +99,6 @@ class Onboarding extends StatelessWidget {
 
             // Dot Navigation SmoothPageIndicator
             OnBoardingDotNavigation(pageController: pageController),
-
-            // NEXT Button (Circular) - Removed as per request
-            // OnBoardingNextButton(pageController: pageController),
           ],
         ),
       ),
@@ -100,14 +116,19 @@ class OnBoardingSkip extends StatelessWidget {
     return Positioned(
       top: 36,
       right: TSizes.defaultSpace,
-      child: BlocBuilder<OnboardingCubit, int>(
+      child: BlocBuilder<OnboardingCubit, OnboardingState>(
         builder: (context, state) {
           // Hide Skip button on the last page
-          if (state == 2) return const SizedBox.shrink();
-          
+          if (state.pageIndex == 2) return const SizedBox.shrink();
+
           return TextButton(
             onPressed: () => context.read<OnboardingCubit>().skipPage(),
-            child: const Text('Skip'),
+            child: Text('Skip',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: TColors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           );
         },
       ),
@@ -127,57 +148,56 @@ class OnBoardingDotNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
 
-    return Positioned(
-      bottom: TDeviceUtils.getBottomNavigationBarHeight(),
-      left: 0,
-      right: 0,
-      child: Center(
-        child: SmoothPageIndicator(
-          controller: pageController,
-          onDotClicked: (index) => context.read<OnboardingCubit>().dotNavigationClick(index),
-          count: 3,
-          effect: WormEffect(
-              activeDotColor: dark ? TColors.light : TColors.dark,
-              dotHeight: 12, // Increased size for circle
-              dotWidth: 12,
+    return BlocBuilder<OnboardingCubit, OnboardingState>(
+      builder: (context, state) {
+        if (state.isOtpStage) return const SizedBox.shrink();
+
+        return Positioned(
+          bottom: TDeviceUtils.getBottomNavigationBarHeight() * 0.3,
+          left: TSizes.defaultSpace,
+          right: TSizes.defaultSpace,
+          child: Column(
+            children: [
+              Center(
+                child: SmoothPageIndicator(
+                  controller: pageController,
+                  onDotClicked: (index) => context.read<OnboardingCubit>().dotNavigationClick(index),
+                  count: 3,
+                  effect: WormEffect(
+                    activeDotColor: dark ? TColors.light : TColors.dotActiveColor,
+                    dotHeight: 12,
+                    dotWidth: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(height: TSizes.spaceBtwItems),
+              Center(
+                child: BlocBuilder<OnboardingCubit, OnboardingState>(
+                  builder: (context, state) {
+                    // Strictly hide Next button on the final page
+                    if (state.pageIndex == 2) return const SizedBox.shrink();
+
+                    return TextButton(
+                      onPressed: () {
+                        // Page 1 and 2 (index 0 and 1) have sub-image toggles
+                        context.read<OnboardingCubit>().nextPage(true);
+                      },
+                      child: Text(
+                        'Next',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: TColors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-class OnBoardingNextButton extends StatelessWidget {
-  const OnBoardingNextButton({
-    super.key,
-    required this.pageController,
-  });
-
-  final PageController pageController;
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = THelperFunctions.isDarkMode(context);
-    
-    return Positioned(
-      right: 0,
-      left: 0,
-      bottom: TDeviceUtils.getBottomNavigationBarHeight(),
-      child: BlocBuilder<OnboardingCubit, int>(
-        builder: (context, state) {
-           // Hide Next button on the last page because we have "Get OTP"
-           if (state == 2) return const SizedBox.shrink();
-
-           return ElevatedButton(
-            onPressed: () => context.read<OnboardingCubit>().nextPage(),
-            style: ElevatedButton.styleFrom(
-              shape: const CircleBorder(),
-              backgroundColor: dark ? TColors.primary : Colors.black,
-            ),
-            child: const Icon(Iconsax.arrow_right_3),
-          );
-        },
-      ),
-    );
-  }
-}

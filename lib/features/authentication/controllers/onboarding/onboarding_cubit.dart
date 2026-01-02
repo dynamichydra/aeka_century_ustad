@@ -1,22 +1,48 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class OnboardingCubit extends Cubit<int> {
-  OnboardingCubit() : super(0);
+class OnboardingState {
+  final int pageIndex;
+  final bool isSecondImage;
+  final bool isOtpStage;
 
-  void updatePageIndicator(int index) => emit(index);
+  OnboardingState({
+    required this.pageIndex,
+    this.isSecondImage = false,
+    this.isOtpStage = false,
+  });
+}
+
+class OnboardingCubit extends Cubit<OnboardingState> {
+  OnboardingCubit() : super(OnboardingState(pageIndex: 0));
+
+  void updatePageIndicator(int index) =>
+      emit(OnboardingState(pageIndex: index, isSecondImage: false, isOtpStage: false));
 
   void dotNavigationClick(int index) {
-    emit(index);
-    // Note: The UI layer will need to listen to this state change to animate the PageController
+    emit(OnboardingState(pageIndex: index, isSecondImage: false, isOtpStage: false));
   }
 
-  void nextPage() {
-    if (state < 2) {
-      emit(state + 1);
+  void setOtpStage(bool value) {
+    emit(OnboardingState(
+      pageIndex: state.pageIndex,
+      isSecondImage: state.isSecondImage,
+      isOtpStage: value,
+    ));
+  }
+
+  void nextPage(bool hasSecondImage) {
+    if (hasSecondImage && !state.isSecondImage) {
+      emit(OnboardingState(pageIndex: state.pageIndex, isSecondImage: true, isOtpStage: false));
+    } else {
+      if (state.pageIndex < 2) {
+        emit(OnboardingState(pageIndex: state.pageIndex + 1, isSecondImage: false, isOtpStage: false));
+      }
     }
   }
 
   void skipPage() {
-    emit(2); // Jump to the last page (index 2)
+    emit(OnboardingState(pageIndex: 2, isSecondImage: false, isOtpStage: false));
   }
 }
+
+
