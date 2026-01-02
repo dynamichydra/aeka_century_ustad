@@ -5,6 +5,8 @@ import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:go_router/go_router.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -64,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: TSizes.spaceBtwSections),
 
               SizedBox(
-                height: 100,
+                height: 120,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: 5,
@@ -95,24 +97,33 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       );
                     }
-                    return Column(
-                      children: [
-                        Container(
-                          width: 60,
-                          height: 60,
-                          padding: const EdgeInsets.all(TSizes.xs),
-                          decoration: BoxDecoration(shape: BoxShape.circle),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(100),
-                            child: Image(
-                              image: AssetImage(
-                                TProductImages.productImages[index],
-                              ), // Placeholder
-                              fit: BoxFit.cover,
+                    final product = TProductImages.productImages[index];
+                    return GestureDetector(
+                      onTap: () => context.go('/product-explorer', extra: product),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            padding: const EdgeInsets.all(TSizes.xs),
+                            decoration: BoxDecoration(shape: BoxShape.circle),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(100),
+                              child: Image(
+                                image: AssetImage(product.image),
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: TSizes.spaceBtwItems / 2),
+                          Text(
+                            product.name,
+                            style: Theme.of(context).textTheme.labelMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -164,8 +175,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: TSizes.spaceBtwItems),
                 itemBuilder: (context, index) {
                   return BeforeAfterSlider(
-                    beforeImage: TProductImages.productImages[index],
-                    afterImage: TProductImages.productImages[index + 1],
+                    beforeImage: TProductImages.productImages[index].image,
+                    afterImage: TProductImages.productImages[index + 1].image,
                   );
                 },
               ),

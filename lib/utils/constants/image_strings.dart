@@ -131,17 +131,25 @@ class TImages {
   static const String successfulPaymentIcon = "assets/icons/payment_methods/successful_payment_icon.png";
 }
 
+class ProductImageModel {
+  final String id;
+  final String name;
+  final String image;
+
+  ProductImageModel({required this.id, required this.name, required this.image});
+}
+
 class TProductImages {
-  static const List<String> productImages = [
-    'assets/images/furniture/1.jpg',
-    'assets/images/furniture/2.jpg',
-    'assets/images/furniture/3.jpg',
-    'assets/images/furniture/4.jpg',
-    'assets/images/furniture/5.jpg',
-    'assets/images/furniture/6.jpg',
-    'assets/images/furniture/7.jpg',
-    'assets/images/furniture/8.jpg',
-    'assets/images/furniture/9.jpg',
-    'assets/images/furniture/10.jpg',
+  static List<ProductImageModel> productImages = [
+    ProductImageModel(id: '1', name: 'Furniture 1', image: 'assets/images/furniture/1.jpg'),
+    ProductImageModel(id: '2', name: 'Furniture 2', image: 'assets/images/furniture/2.jpg'),
+    ProductImageModel(id: '3', name: 'Furniture 3', image: 'assets/images/furniture/3.jpg'),
+    ProductImageModel(id: '4', name: 'Furniture 4', image: 'assets/images/furniture/4.jpg'),
+    ProductImageModel(id: '5', name: 'Furniture 5', image: 'assets/images/furniture/5.jpg'),
+    ProductImageModel(id: '6', name: 'Furniture 6', image: 'assets/images/furniture/6.jpg'),
+    ProductImageModel(id: '7', name: 'Furniture 7', image: 'assets/images/furniture/7.jpg'),
+    ProductImageModel(id: '8', name: 'Furniture 8', image: 'assets/images/furniture/8.jpg'),
+    ProductImageModel(id: '9', name: 'Furniture 9', image: 'assets/images/furniture/9.jpg'),
+    ProductImageModel(id: '10', name: 'Furniture 10', image: 'assets/images/furniture/10.jpg'),
   ];
 }
