@@ -1,4 +1,5 @@
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
+import 'package:century_ai/features/home/screens/widgets/before_after_slider.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
@@ -46,11 +47,14 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Let’s explore", style: Theme.of(context).textTheme.headlineSmall),
+                  Text(
+                    "Let’s explore",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ],
               ),
               const SizedBox(height: TSizes.spaceBtwItems),
-              
+
               // Search Input
               const TTextField(
                 labelText: 'Search for images...',
@@ -64,13 +68,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: 5,
-                  separatorBuilder: (_, __) => const SizedBox(width: TSizes.spaceBtwItems),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: TSizes.spaceBtwItems),
                   itemBuilder: (context, index) {
-                   if (index == 4) {
+                    if (index == 4) {
                       // See More Button at end of row (5th element)
                       return Column(
                         children: [
-                           Container(
+                          Container(
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
@@ -78,12 +83,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.grey.shade200,
                             ),
                             child: IconButton(
-                              onPressed: () {}, 
-                              icon: const Icon(Iconsax.arrow_right_3)
+                              onPressed: () {},
+                              icon: const Icon(Iconsax.arrow_right_3),
                             ),
                           ),
                           const SizedBox(height: TSizes.spaceBtwItems / 2),
-                          Text("See more", style: Theme.of(context).textTheme.labelMedium),
+                          Text(
+                            "See more",
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
                         ],
                       );
                     }
@@ -93,9 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 60,
                           height: 60,
                           padding: const EdgeInsets.all(TSizes.xs),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                          ),
+                          decoration: BoxDecoration(shape: BoxShape.circle),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(100),
                             child: Image(
@@ -111,41 +117,55 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: TSizes.spaceBtwSections),
-              
+
+              // const SizedBox(height: TSizes.spaceBtwSections),
+
               // "Popular image list" Section
+              // Row(
+              //    mainAxisAlignment: MainAxisAlignment.start,
+              //    children: [
+              //      // "left side see more button"
+              //      TextButton(
+              //        onPressed: (){},
+              //        child: const Row(
+              //          children: [
+              //            Text("See More"),
+              //            SizedBox(width: 4),
+              //            Icon(Iconsax.arrow_right_3, size: 16),
+              //          ],
+              //        )
+              //      ),
+              //    ],
+              // ),
+              // const SizedBox(height: TSizes.spaceBtwItems),
               Row(
-                 mainAxisAlignment: MainAxisAlignment.start,
-                 children: [
-                   // "left side see more button"
-                   TextButton(
-                     onPressed: (){}, 
-                     child: const Row(
-                       children: [
-                         Text("See More"),
-                         SizedBox(width: 4),
-                         Icon(Iconsax.arrow_right_3, size: 16),
-                       ],
-                     )
-                   ),
-                 ],
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    spacing: 3,
+                    children: [
+                      Icon(
+                        Icons.local_fire_department_sharp,
+                        color: Color(0xFFF29D38),
+                      ),
+                      Text("POPULAR"),
+                    ],
+                  ),
+                  Text("See all"),
+                ],
               ),
               const SizedBox(height: TSizes.spaceBtwItems),
-              
               // Popular Image List (Vertical for now)
               ListView.separated(
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
-                itemCount: TProductImages.productImages.length,
-                separatorBuilder: (_, __) => const SizedBox(height: TSizes.spaceBtwItems),
+                itemCount: TProductImages.productImages.length - 1,
+                separatorBuilder: (_, __) =>
+                const SizedBox(height: TSizes.spaceBtwItems),
                 itemBuilder: (context, index) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
-                    child: Image(
-                      image: AssetImage(TProductImages.productImages[index]), 
-                      width: double.infinity, 
-                      fit: BoxFit.cover
-                    ),
+                  return BeforeAfterSlider(
+                    beforeImage: TProductImages.productImages[index],
+                    afterImage: TProductImages.productImages[index + 1],
                   );
                 },
               ),

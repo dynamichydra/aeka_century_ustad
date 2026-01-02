@@ -1,7 +1,10 @@
+import 'dart:io';
 
-import 'package:century_ai/features/ai_image/camera_index.dart';
-import 'package:century_ai/features/ai_image/image_edit_page.dart';
+
+
 import 'package:century_ai/features/authentication/screens/onboarding.dart';
+import 'package:century_ai/features/camera_pages/camera_pages_index.dart';
+import 'package:century_ai/features/camera_pages/image_edit_page.dart';
 import 'package:century_ai/features/home/screens/home.dart';
 import 'package:century_ai/router/shell_route.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +17,11 @@ final GoRouter router = GoRouter(
       name: 'onboarding',
       builder: (context, state) => const Onboarding(),
     ),
+    GoRoute(
+      path: "/camera",
+      name: "camera",
+      builder: (context, state) => CameraPagesIndex(),
+    ),
     ShellRoute(
       builder: (context, state, child) {
         return NavWrapper(child: child); // persistent layout
@@ -23,11 +31,13 @@ final GoRouter router = GoRouter(
           path: "/",
           name: "home",
           builder: (context, state) => HomeScreen(),
-        ), GoRoute(
-          path: "/camera",
-          name: "camera",
-          builder: (context, state) => CameraIndex(),
-        ), GoRoute(
+        ),
+        // GoRoute(
+        //   path: "/camera",
+        //   name: "camera",
+        //   builder: (context, state) => CameraIndex(),
+        // ),
+        GoRoute(
           path: "/heart",
           name: "heart",
           builder: (context, state) => HomeScreen(),
@@ -50,8 +60,8 @@ final GoRouter router = GoRouter(
       path: "/image_edit_page",
       name: "Image Edit Page",
       builder: (context, state) {
-        final int id = state.extra as int;
-        return ImageEditPage(id: id,);
+        final File imageFile = state.extra as File;
+        return ImageEditPage(imageFile: imageFile);
       },
     ),
 
