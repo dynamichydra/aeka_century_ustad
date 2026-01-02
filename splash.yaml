@@ -1,15 +1,14 @@
 flutter_native_splash:
   color: "#D0232A"
   color_dark: "#D0232A"
-  image: assets/logos/Century_Laminates_with_tagline__Eng__page-0001-removebg-preview.png
-  image_dark: assets/logos/Century_Laminates_with_tagline__Eng__page-0001-removebg-preview.png
+  background_image: assets/logos/splash_log.png
+  background_image_dark: assets/logos/splash_log.png
+  fullscreen: true
 
+  android_12:
+    color: "#D0232A"
+    color_dark: "#D0232A"
+    image: assets/logos/splash_log.png
+    image_dark: assets/logos/splash_log.png
 
-flutter_native_splash:
-  color: "#D0232A"
-  color_dark: "#D0232A"
-  image: assets/logos/Century_Laminates_with_tagline__Eng__page-0001-removebg-preview.png
-  image_dark: assets/logos/Century_Laminates_with_tagline__Eng__page-0001-removebg-preview.png
-
-
-  web: false    
+  web: false
