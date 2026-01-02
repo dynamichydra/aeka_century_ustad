@@ -10,13 +10,13 @@ class TColors {
   static const Color iconPrimary = Color(0xFF8D8D8D);
 
   // Text colors
-  static const Color textPrimary = Color(0xFF272727);
+  static const Color textPrimary = Color(0xFF000000);
   static const Color textSecondary = Color(0xFF656565);
   static const Color textWhite = Colors.white;
 
   // Background colors
   static const Color light = Color(0xFFF6F6F6);
-  static const Color dark = Color(0xFF272727);
+  static const Color dark = Color(0xFF000000);
   static const Color primaryBackground = Color(0xFFF5F5F5);
 
   // Background Container colors
@@ -47,6 +47,7 @@ class TColors {
   static const Color lightGrey = Color(0xFFF9F9F9);
   static const Color white = Color(0xFFFFFFFF);
   static const Color inputBackground = Color(0xFFD9D9D9);
+  static const Color onboardingBackground = Color(0xFFEDEAEA);
 
 }
 

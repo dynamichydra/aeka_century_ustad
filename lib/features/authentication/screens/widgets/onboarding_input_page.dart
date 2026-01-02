@@ -33,13 +33,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            Image(
-              width: THelperFunctions.screenWidth(context) * 0.4,
-              height: THelperFunctions.screenHeight(context) * 0.15,
-              image: AssetImage(
-                dark ? TImages.lightAppLogo : TImages.darkAppLogo,
-              ),
-            ),
+            SizedBox(height: 100),
             Text(
               widget.title,
               style: Theme.of(context).textTheme.headlineMedium,

@@ -87,6 +87,7 @@ flutter:
     - assets/icons/payment_methods/
     - assets/images/furniture/
     - assets/images/lamination/
+    - assets/images/vectors/
 
   #--------------- LOCAL FONTS ------------------#
   fonts:

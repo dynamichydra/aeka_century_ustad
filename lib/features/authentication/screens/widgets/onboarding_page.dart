@@ -19,31 +19,34 @@ class OnboardingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
     return Padding(
-      padding: const EdgeInsets.all(TSizes.defaultSpace),
+      padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace),
       child: Column(
         children: [
-          SizedBox(height: TDeviceUtils.getAppBarHeight()),
+          SizedBox(height: 62.01),
           Image(
             width: THelperFunctions.screenWidth(context) * 0.4,
-            height: THelperFunctions.screenHeight(context) * 0.15,
-            image: AssetImage(dark ? TImages.lightAppLogo : TImages.darkAppLogo),
+            image: AssetImage(
+              dark ? TImages.lightAppLogo : TImages.darkAppLogo,
+            ),
           ),
+          const SizedBox(height: TSizes.spaceBtwItems),
           Text(
             title,
             style: Theme.of(context).textTheme.headlineLarge,
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.start,
           ),
           const SizedBox(height: TSizes.spaceBtwItems),
           Text(
             subTitle,
-            style: Theme.of(context).textTheme.bodyMedium,
-            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.start,
           ),
-          const SizedBox(height: TSizes.spaceBtwSections),
+          const SizedBox(height: TSizes.spaceBtwItems),
           Image(
-              width: THelperFunctions.screenWidth(context) * 0.8,
-              height: THelperFunctions.screenHeight(context) * 0.4,
-              image: AssetImage(image)),
+            width: THelperFunctions.screenWidth(context),
+            height: THelperFunctions.screenWidth(context),
+            image: AssetImage(image),
+          ),
         ],
       ),
     );

@@ -25,6 +25,7 @@ class Onboarding extends StatelessWidget {
       create: (_) => controller,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
+        backgroundColor: TColors.onboardingBackground,
         body: Stack(
           children: [
             // Horizontal Scrollable Page
@@ -68,11 +69,19 @@ class Onboarding extends StatelessWidget {
             // Skip Button
             const OnBoardingSkip(),
 
+            // Top Left Image
+            Positioned(
+              top: TDeviceUtils.getAppBarHeight() - 20,
+              left: 0,
+              child: const Image(
+                image: AssetImage(TImages.onBoardingImageTopLeft),
+              ),
+            ),
+
             // Dot Navigation SmoothPageIndicator
             OnBoardingDotNavigation(pageController: pageController),
 
-            // NEXT Button (Circular) - Optional, but keeping standard structure. 
-            // Since the last page is input, we might want to hide this on the last page.
+            // NEXT Button (Circular) - Removed as per request
             // OnBoardingNextButton(pageController: pageController),
           ],
         ),
@@ -89,7 +98,7 @@ class OnBoardingSkip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: TDeviceUtils.getAppBarHeight(),
+      top: 36,
       right: TSizes.defaultSpace,
       child: BlocBuilder<OnboardingCubit, int>(
         builder: (context, state) {

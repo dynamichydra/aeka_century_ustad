@@ -78,6 +78,7 @@ class TImages {
   static String tickCongratulationsConfettiAnimation = "assets/images/animations/tick-confetti.json";
 
   // -- OnBoarding Texts
+  static const String onBoardingImageTopLeft = "assets/images/vectors/onboarding_top_left.png";
   static const String onBoardingImage1 = "assets/logos/onboarding1.png";
   static const String onBoardingImage2 = "assets/logos/onboarding2.png";
   static const String onBoardingImage3 = "assets/logos/Carpenter_Mascot_Post_copy-removebg-preview.png";
