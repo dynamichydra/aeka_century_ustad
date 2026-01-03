@@ -54,13 +54,16 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                 const Divider(color: TColors.primary, thickness: 2, height: 2),
                 Align(
                   alignment: Alignment.centerRight,
+
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
                     ),
+                    margin: EdgeInsets.only(right: 10),
                     color: TColors.primary,
                     child: Text(
+
                       "APKA APNA DESIGN GUIDE",
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             color: TColors.white,

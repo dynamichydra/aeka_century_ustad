@@ -13,9 +13,11 @@ class NavWrapper extends StatelessWidget {
 
   static const List<String> _routes = [
     "/",
+    "/Calculator",
     "/camera",
+    "/upload",
     "/heart",
-    "/star",
+    "/people",
   ];
 
   @override
@@ -76,24 +78,34 @@ class NavWrapper extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _NavItem(
-                icon: Iconsax.image,
+                icon: Icons.image,
                 isSelected: currentIndex == 0,
                 onTap: () => context.go(_routes[0]),
               ),
               _NavItem(
-                icon: Iconsax.camera,
+                icon: Icons.calculate,
                 isSelected: currentIndex == 1,
                 onTap: () => context.go(_routes[1]),
               ),
               _NavItem(
-                icon: Iconsax.heart,
+                icon: Icons.camera_alt,
                 isSelected: currentIndex == 2,
-                onTap: () => context.go(_routes[2]),
+                onTap: () => context.push(_routes[2]),
               ),
               _NavItem(
-                icon: Iconsax.magic_star,
+                icon: Icons.file_upload_outlined,
                 isSelected: currentIndex == 3,
                 onTap: () => context.go(_routes[3]),
+              ),
+              _NavItem(
+                icon: Icons.favorite,
+                isSelected: currentIndex == 4,
+                onTap: () => context.go(_routes[4]),
+              ),
+              _NavItem(
+                icon: Icons.nature_people_sharp,
+                isSelected: currentIndex == 5,
+                onTap: () => context.go(_routes[5]),
               ),
             ],
           ),
@@ -133,7 +145,7 @@ class _NavItem extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          color: isSelected ? Colors.white : TColors.darkGrey,
+          color: isSelected ? Colors.white : TColors.black,
         ),
       ),
     );

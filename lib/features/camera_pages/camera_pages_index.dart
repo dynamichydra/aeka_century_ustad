@@ -2,7 +2,11 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:century_ai/utils/constants/sizes.dart';
+import 'package:century_ai/utils/constants/image_strings.dart';
+import 'package:iconsax/iconsax.dart';
 
 class CameraPagesIndex extends StatefulWidget {
   const CameraPagesIndex({super.key});
@@ -16,6 +20,8 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   CameraController? _controller;
   bool _isReady = false;
   final double _bottomBarHeight = 140;
+
+  bool _isImageTaken = false;
 
   @override
   void initState() {
@@ -50,10 +56,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     final XFile file = await _controller!.takePicture();
 
     // Navigate to edit page (example)
-    context.push(
-      "/image_edit_page",
-      extra: File(file.path),
-    );
+    context.push("/image_edit_page", extra: File(file.path));
   }
 
   @override
@@ -72,9 +75,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       body: Stack(
         children: [
           // 📷 Camera Preview (full screen)
-          Positioned.fill(
-            child: CameraPreview(_controller!),
-          ),
+          Positioned.fill(child: CameraPreview(_controller!)),
 
           // 🟦 Capture Area Overlay (stays above camera)
           const _CaptureOverlay(),
@@ -85,9 +86,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
             left: 0,
             right: 0,
             height: _bottomBarHeight,
-            child: Container(
-              color: Colors.white,
-            ),
+            child: Container(color: Colors.white),
           ),
 
           // 🔘 Capture Button (inside white area)
@@ -97,11 +96,12 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
             right: 0,
             child: Center(
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  SizedBox(width: 10,),
+                  SizedBox(width: 5),
                   GestureDetector(
-                    onTap: (){_scaffoldKey.currentState?.openDrawer();
+                    onTap: () {
+                      context.go("/");
                     },
                     child: Container(
                       width: 50,
@@ -113,13 +113,15 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                           width: 0,
                         ),
                         boxShadow: [
-                          BoxShadow(blurRadius: 3, color: Color(0xFF646464), offset: const Offset(0, 2), )
+                          BoxShadow(
+                            blurRadius: 3,
+                            color: Color(0xFF646464),
+                            offset: const Offset(0, 2),
+                          ),
                         ],
                         color: Colors.white,
                       ),
-                      child: const Center(
-                        child: Icon(Icons.menu, size: 24,),
-                      ),
+                      child: const Center(child: Icon(Icons.home, size: 24)),
                     ),
                   ),
                   GestureDetector(
@@ -134,17 +136,22 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                           width: 0,
                         ),
                         boxShadow: [
-                          BoxShadow(blurRadius: 3, color: Color(0xFF646464), offset: const Offset(0, 4), )
+                          BoxShadow(
+                            blurRadius: 3,
+                            color: Color(0xFF646464),
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                         color: Colors.white,
                       ),
-                      child: const Center(
-                        child: Icon(Icons.camera_alt, size: 24,),
+                      child: Center(
+                        child: Icon(Icons.camera_alt, size: 36),
+                        // child: SvgPicture.asset("assets/icons/app_icons/image_flash.svg"),
                       ),
                     ),
                   ),
                   GestureDetector(
-                    onTap: (){},
+                    onTap: () {},
                     child: Container(
                       width: 50,
                       height: 50,
@@ -155,28 +162,60 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                           width: 0,
                         ),
                         boxShadow: [
-                          BoxShadow(blurRadius: 3, color: Color(0xFF646464), offset: const Offset(0, 2), )
+                          BoxShadow(
+                            blurRadius: 3,
+                            color: Color(0xFF646464),
+                            offset: const Offset(0, 2),
+                          ),
                         ],
                         color: Colors.white,
                       ),
-                      child: const Center(
-                        child: Icon(Icons.file_upload_outlined, size: 24,),
+                      child: Center(
+                        child: SvgPicture.asset("assets/icons/app_icons/images.svg"),
                       ),
                     ),
                   ),
-                  SizedBox(width: 10,),
+                  SizedBox(width: 5),
                 ],
               ),
             ),
           ),
 
-          // ❌ Close Button
+          // Custom App Button
           Positioned(
             top: 40,
-            left: 16,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 28),
-              onPressed: () => context.go("/"),
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: Icon(Iconsax.menu_1, color: Colors.black),
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(right: TSizes.defaultSpace),
+                  child: Image(
+                    image: AssetImage(TImages.smallLogo),
+                    width: 30,
+                    height: 30,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Positioned(
+            bottom: 45,
+            left: 7,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back_ios, color: Colors.black),
+                  onPressed: () => context.pop(),
+                ),
+              ],
             ),
           ),
         ],
@@ -185,7 +224,6 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     ;
   }
 }
-
 
 class _CaptureOverlay extends StatelessWidget {
   const _CaptureOverlay();
@@ -214,10 +252,7 @@ class _OverlayPainter extends CustomPainter {
     );
 
     // Dim background
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      dimPaint,
-    );
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), dimPaint);
 
     // Clear capture area
     canvas.saveLayer(Rect.largest, Paint());

@@ -8,6 +8,7 @@ import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
+import 'package:century_ai/utils/constants/colors.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'dummy_data.dart';
 import 'package:century_ai/utils/api/gemini_image_service.dart';
@@ -31,6 +32,7 @@ class ImageEditPage extends StatefulWidget {
 }
 
 class _ImageEditPageState extends State<ImageEditPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey _screenKey = GlobalKey();
   bool _pickingColor = false;
   ui.Image? _screenImage;
@@ -123,29 +125,31 @@ Rules:
     return RepaintBoundary(
       key: _screenKey,
       child: Scaffold(
-        appBar: AppBar(
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Iconsax.menu_1, color: Colors.black),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: TSizes.defaultSpace),
-              child: Image(
-                image: AssetImage(TImages.smallLogo),
-                width: 30,
-                height: 30,
-              ),
-            ),
-          ],
-          backgroundColor: Colors.white,
-          elevation: 0,
-        ),
+        key: _scaffoldKey,
+        // appBar: AppBar(
+        //   leading: Builder(
+        //     builder: (context) => IconButton(
+        //       icon: const Icon(Iconsax.menu_1, color: Colors.black),
+        //       onPressed: () => Scaffold.of(context).openDrawer(),
+        //     ),
+        //   ),
+        //   actions: const [
+        //     Padding(
+        //       padding: EdgeInsets.only(right: TSizes.defaultSpace),
+        //       child: Image(
+        //         image: AssetImage(TImages.smallLogo),
+        //         width: 30,
+        //         height: 30,
+        //       ),
+        //     ),
+        //   ],
+        //   backgroundColor: Colors.white,
+        //   elevation: 0,
+        // ),
         drawer: const HomeDrawer(),
         backgroundColor: Colors.white,
         body: GestureDetector(
+
           onPanDown: (d) async {
             if (!_pickingColor) return;
 
@@ -210,9 +214,6 @@ Rules:
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.12),
@@ -234,18 +235,12 @@ Rules:
                         ),
                       ),
 
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
                           Text("AI Based Color & Pattern Search"),
-                          interiorExteriorToggle(),
-                        ],
-                      ),
                       SizedBox(height: 5),
                       const TTextField(
-                        labelText: 'Search...',
-                        prefixIcon: Icon(Iconsax.search_normal),
-                        fillColor: Colors.white,
+                        labelText: 'Search',
+                        prefixIcon: Icon(Icons.search, color: TColors.darkerGrey),
+                        isCircularIcon: true,
                       ),
                       SizedBox(height: 5),
 
@@ -367,13 +362,37 @@ Rules:
                 ),
               ),
 
+              // Custom App Button
+              Positioned(
+                top: 40,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: Icon(Iconsax.menu_1, color: Colors.black),
+                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(right: TSizes.defaultSpace),
+                      child: Image(
+                        image: AssetImage(TImages.smallLogo),
+                        width: 30,
+                        height: 30,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               if (_pickingColor)
                 Positioned(
                   left: _touchPos.dx - 18,
                   top: _touchPos.dy - 48,
                   child: Container(
-                    width: 36,
-                    height: 36,
+                    width: 18,
+                    height: 18,
                     decoration: BoxDecoration(
                       color: _pickedColor,
                       shape: BoxShape.circle,
@@ -394,7 +413,7 @@ Rules:
   /// ---------------- COLOR PICKER ----------------
   Widget _colorPicker() {
     return SizedBox(
-      height: 44,
+      height: 24,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: colorList.length,
@@ -406,8 +425,8 @@ Rules:
           return GestureDetector(
             onTap: () => setState(() => _selectedColor = c),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 30,
+              height: 30,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: hexToColor(c["hex"]),
@@ -426,7 +445,7 @@ Rules:
   /// ---------------- LAMINATION PICKER ----------------
   Widget _laminationPicker() {
     return SizedBox(
-      height: 56,
+      height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: laminationList.length,
@@ -438,49 +457,22 @@ Rules:
           return GestureDetector(
             onTap: () => setState(() => _selectedLamination = l),
             child: Container(
-              width: 56,
+              width: 36,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(5),
                 border: Border.all(
                   color: selected ? Colors.blue : Colors.transparent,
                   width: 2,
                 ),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(2),
                 child: Image.asset(l["image"], fit: BoxFit.cover),
               ),
             ),
           );
         },
       ),
-    );
-  }
-
-  Widget interiorExteriorToggle() {
-    return ToggleSwitch(
-      borderWidth: 1,
-      borderColor: [Colors.black],
-      minWidth: 75,
-      minHeight: 20,
-      cornerRadius: 5,
-      totalSwitches: 2,
-      labels: const ["Interior", "Exterior"],
-      initialLabelIndex: _isInterior ? 0 : 1,
-
-      /// COLORS
-      activeBgColor: const [Colors.white],
-      inactiveBgColor: const Color(0xFF2E2E2E),
-      activeFgColor: Colors.black,
-      inactiveFgColor: Colors.transparent,
-
-      // 👈 hides unselected text
-      radiusStyle: true,
-      onToggle: (index) {
-        setState(() {
-          _isInterior = index == 0;
-        });
-      },
     );
   }
 }
