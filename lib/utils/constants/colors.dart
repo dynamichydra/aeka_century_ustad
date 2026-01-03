@@ -50,6 +50,7 @@ class TColors {
   static const Color inputBackground = Color(0xFFD9D9D9);
   static const Color onboardingBackground = Color(0xFFEDEAEA);
   static const Color dotActiveColor = Color(0xFF898888);
+  static const Color lightGray = Color(0xFFA39F9F);
 
 }
 

@@ -1,6 +1,7 @@
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
 import 'package:century_ai/features/home/screens/widgets/before_after_slider.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
+import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
@@ -31,14 +32,50 @@ class _HomeScreenState extends State<HomeScreen> {
               Center(
                 child: Column(
                   children: [
-                    const CircleAvatar(
-                      radius: 40,
-                      backgroundImage: AssetImage(TImages.user),
-                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFF898888),
+                            blurRadius: 15,
+                            spreadRadius: 3,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                        child: Container(
+                          padding: const EdgeInsets.all(8), // Layer 2 (Yellow)
+                          decoration: const BoxDecoration(
+                              color: Color(0xFF898888), shape: BoxShape.circle),
+                          child: Container(
+                            padding: const EdgeInsets.all(6), // Layer 3 (Blue)
+                            decoration: const BoxDecoration(
+                                color: Color(0xFF4F4F4F), shape: BoxShape.circle),
+                            child: Container(
+                              padding: const EdgeInsets.all(4), // Layer 4 (Grey)
+                              decoration: const BoxDecoration(
+                                  color: Color(0xFF1F1919),
+                                  shape: BoxShape.circle),
+                              child: Container(
+                                padding: const EdgeInsets.all(1), // Separation
+                                decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle),
+                                child: const CircleAvatar(
+                                  radius: 40,
+                                  backgroundImage: AssetImage(TImages.user),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                   
                     const SizedBox(height: TSizes.spaceBtwItems),
                     Text(
-                      "John Doe",
-                      style: Theme.of(context).textTheme.titleLarge,
+                      "Namaste Ramesh",
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ],
                 ),
@@ -50,8 +87,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Let’s explore",
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    "LET'S EXPLORE",
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineSmall?.copyWith(color: TColors.lightGray,letterSpacing: 2),
                   ),
                 ],
               ),
@@ -69,11 +108,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 120,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 5,
+                  itemCount: 4,
                   separatorBuilder: (_, __) =>
                       const SizedBox(width: TSizes.spaceBtwItems),
                   itemBuilder: (context, index) {
-                    if (index == 4) {
+                    if (index == 3) {
                       // See More Button at end of row (5th element)
                       return Column(
                         children: [
@@ -82,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 60,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.grey.shade200,
+                              color: TColors.inputBackground,
                             ),
                             child: IconButton(
                               onPressed: () {},
