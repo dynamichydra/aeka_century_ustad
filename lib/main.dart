@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
           }
         },
         child: MaterialApp.router(
-          title: 'Century AI',
+          title: 'Century Laminates',
           debugShowCheckedModeBanner: false,
           themeMode: ThemeMode.light,
           theme: TAppTheme.lightTheme,
