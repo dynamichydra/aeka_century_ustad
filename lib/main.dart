@@ -5,9 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:century_ai/utils/helpers/network_manager.dart';
 import 'package:century_ai/utils/popups/loaders.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_portal/flutter_portal.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    Portal(
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
