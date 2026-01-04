@@ -55,6 +55,7 @@ dependencies:
   camera: ^0.11.3
   toggle_switch: ^2.3.0
   flutter_svg: ^2.2.3
+  flutter_launcher_icons: ^0.14.4
 
 
 
@@ -71,7 +72,10 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/logos/small_logo.png"
 # The following section is specific to Flutter packages.
 flutter:
 
