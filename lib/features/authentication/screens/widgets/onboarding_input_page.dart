@@ -92,8 +92,8 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                     children: [
                       // White Circular Background
                       Container(
-                        width: THelperFunctions.screenWidth(context) * 0.7,
-                        height: THelperFunctions.screenWidth(context) * 0.7,
+                        width: THelperFunctions.screenWidth(context) * 0.5,
+                        height: THelperFunctions.screenWidth(context) * 0.5,
                         decoration: BoxDecoration(
                           color: TColors.white,
                           shape: BoxShape.circle,
@@ -110,8 +110,8 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                       ClipPath(
                         clipper: TImagePopOutClipper(),
                         child: Image(
-                          width: THelperFunctions.screenWidth(context) * 0.8,
-                          height: THelperFunctions.screenWidth(context) * 0.8,
+                          width: THelperFunctions.screenWidth(context) * 0.6,
+                          height: THelperFunctions.screenWidth(context) * 0.6,
                           fit: BoxFit.contain,
                           alignment: Alignment.bottomCenter,
                           image: AssetImage(widget.image),
@@ -196,7 +196,7 @@ class TImagePopOutClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     // Circle diameter is 0.7/0.8 of the image width
-    final circleRadius = size.width * (0.7 / 0.8) / 2;
+    final circleRadius = size.width * (0.5 / 0.6) / 2;
     // The center should be at height - radius to match bottomCenter alignment
     final centerY = size.height - circleRadius;
 
