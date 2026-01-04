@@ -12,13 +12,11 @@ class OnboardingPage extends StatelessWidget {
   const OnboardingPage({
     super.key,
     required this.image,
-    this.image2,
     required this.title,
     required this.subTitle,
   });
 
   final String image, title, subTitle;
-  final String? image2;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +28,7 @@ class OnboardingPage extends StatelessWidget {
           const Spacer(flex: 2), // Top flexible space
           Image(
             width: THelperFunctions.screenWidth(context) * 0.4,
-            height: 70,
+            height: 100,
             image: AssetImage(
               dark ? TImages.lightAppLogo : TImages.darkAppLogo,
             ),
@@ -50,16 +48,11 @@ class OnboardingPage extends StatelessWidget {
           const Spacer(flex: 1), // Space between text and image
           Flexible(
             flex: 8, // Main image takes most of the remaining space
-            child: BlocBuilder<OnboardingCubit, OnboardingState>(
-              builder: (context, state) {
-                final showSecondImage = state.isSecondImage && image2 != null;
-                return Image(
-                  width: THelperFunctions.screenWidth(context),
-                  height: THelperFunctions.screenWidth(context),
-                  fit: BoxFit.contain, // Ensure image fits responsibly
-                  image: AssetImage(showSecondImage ? image2! : image),
-                );
-              },
+            child: Image(
+              width: THelperFunctions.screenWidth(context),
+              height: THelperFunctions.screenWidth(context),
+              fit: BoxFit.contain, // Ensure image fits responsibly
+              image: AssetImage(image),
             ),
           ),
           const Spacer(flex: 4), // Space for bottom navigation area
