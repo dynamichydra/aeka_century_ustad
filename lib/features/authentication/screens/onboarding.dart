@@ -48,30 +48,32 @@ class _OnboardingState extends State<Onboarding> {
             // Horizontal Scrollable Page
             BlocListener<OnboardingCubit, OnboardingState>(
               listener: (context, state) {
-                // Animate to the page when state changes (e.g. from dot click or skip)
-                if (pageController.hasClients && pageController.page != state.pageIndex.toDouble()) {
-                  pageController.animateToPage(
-                    state.pageIndex,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
+                if (pageController.hasClients) {
+                  final currentPage = pageController.page?.round() ?? 0;
+                  if (currentPage != state.pageIndex) {
+                    pageController.animateToPage(
+                      state.pageIndex,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
                 }
               },
               child: Padding(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
                 child: PageView(
                   controller: pageController,
                   onPageChanged: controller.updatePageIndicator,
                   children: const [
                     OnboardingPage(
                       image: TImages.onBoardingImage1,
-                      image2: TImages.onBoardingImage2,
                       title: TTexts.onBoardingTitle1,
                       subTitle: TTexts.onBoardingSubTitle1,
                     ),
                     OnboardingPage(
-                      image: TImages.onBoardingImage3,
-                      image2: TImages.onBoardingImage4,
+                      image: TImages.onBoardingImage4,
                       title: TTexts.onBoardingTitle2,
                       subTitle: TTexts.onBoardingSubTitle2,
                     ),
@@ -107,9 +109,7 @@ class _OnboardingState extends State<Onboarding> {
 }
 
 class OnBoardingSkip extends StatelessWidget {
-  const OnBoardingSkip({
-    super.key,
-  });
+  const OnBoardingSkip({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +123,8 @@ class OnBoardingSkip extends StatelessWidget {
 
           return TextButton(
             onPressed: () => context.read<OnboardingCubit>().skipPage(),
-            child: Text('Skip',
+            child: Text(
+              'Skip',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: TColors.black,
                 fontWeight: FontWeight.bold,
@@ -137,10 +138,7 @@ class OnBoardingSkip extends StatelessWidget {
 }
 
 class OnBoardingDotNavigation extends StatelessWidget {
-  const OnBoardingDotNavigation({
-    super.key,
-    required this.pageController,
-  });
+  const OnBoardingDotNavigation({super.key, required this.pageController});
 
   final PageController pageController;
 
@@ -161,10 +159,13 @@ class OnBoardingDotNavigation extends StatelessWidget {
               Center(
                 child: SmoothPageIndicator(
                   controller: pageController,
-                  onDotClicked: (index) => context.read<OnboardingCubit>().dotNavigationClick(index),
+                  onDotClicked: (index) =>
+                      context.read<OnboardingCubit>().dotNavigationClick(index),
                   count: 3,
                   effect: WormEffect(
-                    activeDotColor: dark ? TColors.light : TColors.dotActiveColor,
+                    activeDotColor: dark
+                        ? TColors.light
+                        : TColors.dotActiveColor,
                     dotHeight: 12,
                     dotWidth: 12,
                   ),
@@ -179,15 +180,14 @@ class OnBoardingDotNavigation extends StatelessWidget {
 
                     return TextButton(
                       onPressed: () {
-                        // Page 1 and 2 (index 0 and 1) have sub-image toggles
-                        context.read<OnboardingCubit>().nextPage(true);
+                        context.read<OnboardingCubit>().nextPage();
                       },
                       child: Text(
                         'Next',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: TColors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          color: TColors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     );
                   },
@@ -200,4 +200,3 @@ class OnBoardingDotNavigation extends StatelessWidget {
     );
   }
 }
-

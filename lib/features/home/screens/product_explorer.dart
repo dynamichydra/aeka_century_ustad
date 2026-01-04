@@ -1,4 +1,5 @@
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
+import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ class ProductExplorerScreen extends StatefulWidget {
 
 class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
   late ProductImageModel _currentProduct;
-  bool _isGridView = true;
+  int _crossAxisCount = 2;
 
   @override
   void initState() {
@@ -27,9 +28,12 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentProduct.name),
+        automaticallyImplyLeading: false,
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Iconsax.more)),
+          Padding(
+            padding: const EdgeInsets.only(right: TSizes.md),
+            child: Image.asset(TImages.smallLogo, width: 35, height: 35),
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -51,8 +55,36 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                 height: 100,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: TProductImages.productImages.length,
+                  itemCount: 4, // 3 images + 1 See More
                   itemBuilder: (context, index) {
+                    if (index == 3) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: TSizes.spaceBtwItems),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: TColors.inputBackground,
+                              ),
+                              child: IconButton(
+                                onPressed: () {},
+                                icon: const Icon(Iconsax.arrow_right_3, color: Colors.black),
+                              ),
+                            ),
+                            const SizedBox(height: TSizes.spaceBtwItems / 2),
+                            Text(
+                              "See more",
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     final product = TProductImages.productImages[index];
                     final isSelected = _currentProduct.id == product.id;
 
@@ -62,19 +94,40 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                           _currentProduct = product;
                         });
                       },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: TSizes.spaceBtwItems),
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? Colors.orange : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 30,
-                          backgroundImage: AssetImage(product.image),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: TSizes.spaceBtwItems),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected ? TColors.productSelectedColor : Colors.transparent,
+                                  width: 4,
+                                ),
+                              ),
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(4), // Hollow ring gap
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 30,
+                                    backgroundImage: AssetImage(product.image),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: TSizes.spaceBtwItems / 2),
+                            Text(
+                              product.name,
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -84,103 +137,68 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
               const SizedBox(height: TSizes.spaceBtwSections),
 
               // Grid View or List View of related images
-              _isGridView
-                  ? GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: TSizes.spaceBtwItems,
-                        mainAxisSpacing: TSizes.spaceBtwItems,
-                        childAspectRatio: 1,
-                      ),
-                      itemCount: 8, // Representative number
-                      itemBuilder: (context, index) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(TSizes.md),
-                          child: Image.asset(
-                            _currentProduct.image, // In a real app, these might be different sub-images
-                            fit: BoxFit.cover,
-                          ),
-                        );
-                      },
-                    )
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 8,
-                      separatorBuilder: (_, __) => const SizedBox(height: TSizes.spaceBtwItems),
-                      itemBuilder: (context, index) {
-                         return ClipRRect(
-                          borderRadius: BorderRadius.circular(TSizes.md),
-                          child: Image.asset(
-                            _currentProduct.image,
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        );
-                      },
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _crossAxisCount,
+                  crossAxisSpacing: TSizes.spaceBtwItems,
+                  mainAxisSpacing: TSizes.spaceBtwItems,
+                  childAspectRatio: 1,
+                ),
+                itemCount: 8, // Representative number
+                itemBuilder: (context, index) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(TSizes.md),
+                    child: Image.asset(
+                      _currentProduct.image, // In a real app, these might be different sub-images
+                      fit: BoxFit.cover,
                     ),
+                  );
+                },
+              ),
             ],
           ),
         ),
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(TSizes.defaultSpace),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: TSizes.sm, horizontal: TSizes.md),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Menu Button (Left)
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Iconsax.menu_1, color: Colors.black),
-              ),
-              // Change View Button (Right)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isGridView = !_isGridView;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: TSizes.md, vertical: TSizes.sm),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(TSizes.buttonRadius),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _isGridView ? Iconsax.row_vertical : Iconsax.grid_1,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: TSizes.sm),
-                      Text(
-                        _isGridView ? "List View" : "Grid View",
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Menu Button (Left)
+            Builder(
+              builder: (context) => Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  icon: const Icon(Iconsax.menu_1, color: Colors.black),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: TSizes.spaceBtwSections),
+            // Change View Button (Right)
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _crossAxisCount = (_crossAxisCount == 2) ? 4 : 2;
+                  });
+                },
+                icon: Icon(
+                  _crossAxisCount == 2 ? Iconsax.grid_2 : Iconsax.grid_1,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
