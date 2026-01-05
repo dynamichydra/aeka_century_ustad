@@ -6,6 +6,7 @@ import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -39,7 +40,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
               children: [
                 SizedBox(height: 62.01),
                 Image(
-                  width: THelperFunctions.screenWidth(context) * 0.4,
+                  width: THelperFunctions.screenWidth(context) * 0.6,
                   height: 100,
                   image: AssetImage(
                     dark ? TImages.lightAppLogo : TImages.darkAppLogo,
@@ -50,12 +51,24 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image(
-                        image: AssetImage(TImages.onBoardingImageUssad),
-                        width: THelperFunctions.screenWidth(context) * 0.5,
-                        fit: BoxFit.contain,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 0,
+                        ),
+                        color: TColors.primary,
+                        child: Text(
+                          "USTAAD",
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 36,
+                                color: Colors.white,
+                                fontFamily: "Helvatica",
+                              ),
+                        ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 6),
                       const Divider(
                         color: TColors.primary,
                         thickness: 2,
@@ -63,11 +76,13 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                       ),
                       Align(
                         alignment: Alignment.centerRight,
+
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
+                            horizontal: 12,
                             vertical: 4,
                           ),
+                          margin: EdgeInsets.only(right: 8),
                           color: TColors.primary,
                           child: Text(
                             "APKA APNA DESIGN GUIDE",
@@ -134,6 +149,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                   const TTextField(
                     labelText: 'Mobile Number',
                     prefixIcon: Icon(Iconsax.call, color: TColors.black),
+                    // prefixIcon: SvgPicture.asset("/"),
                     isCircularIcon: true,
                     keyboardType: TextInputType.phone,
                   ),
@@ -141,7 +157,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                   const TTextField(
                     labelText: 'Enter OTP',
                     prefixIcon: Icon(
-                      Iconsax.password_check,
+                      Icons.more_horiz_rounded,
                       color: TColors.black,
                     ),
                     isCircularIcon: true,

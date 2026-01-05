@@ -7,7 +7,7 @@ import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:cupertino_icons/cupertino_icons.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +17,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _isGridView = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,27 +37,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF898888),
-                            blurRadius: 15,
-                            spreadRadius: 3,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+
                       ),
                         child: Container(
-                          padding: const EdgeInsets.all(8), // Layer 2 (Yellow)
+                          padding: const EdgeInsets.all(4), // Layer 2 (Yellow)
                           decoration: const BoxDecoration(
-                              color: Color(0xFF898888), shape: BoxShape.circle),
+                              color: Color(0xFFC5C3C3), shape: BoxShape.circle),
                           child: Container(
-                            padding: const EdgeInsets.all(6), // Layer 3 (Blue)
-                            decoration: const BoxDecoration(
-                                color: Color(0xFF4F4F4F), shape: BoxShape.circle),
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                                color: Color(0xFF9A9797),
+                              shape: BoxShape.circle
+                            ),
                             child: Container(
-                              padding: const EdgeInsets.all(4), // Layer 4 (Grey)
+                              padding: const EdgeInsets.all(8), // Layer 4 (Grey)
                               decoration: const BoxDecoration(
-                                  color: Color(0xFF1F1919),
+                                  color: Color(0xFF504B4B),
                                   shape: BoxShape.circle),
                               child: Container(
                                 padding: const EdgeInsets.all(1), // Separation
@@ -101,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 labelText: 'Search for images...',
                 prefixIcon: Icon(Iconsax.search_normal),
                 fillColor: Colors.white,
+                suffixIcon: Icon(Icons.local_fire_department),
               ),
               const SizedBox(height: TSizes.spaceBtwSections),
 
@@ -108,11 +106,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 120,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 4,
+                  itemCount: 5,
                   separatorBuilder: (_, __) =>
                       const SizedBox(width: TSizes.spaceBtwItems),
                   itemBuilder: (context, index) {
-                    if (index == 3) {
+                    if (index == 4) {
                       // See More Button at end of row (5th element)
                       return Column(
                         children: [
@@ -136,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       );
                     }
-                    final product = TProductImages.productImages[index];
+                    final product = ProductImages.productImages[index];
                     return GestureDetector(
                       onTap: () => context.go('/product-explorer', extra: product),
                       child: Column(
@@ -192,33 +190,95 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
-                    spacing: 3,
-                    children: [
+                    children: const [
                       Icon(
                         Icons.local_fire_department_sharp,
                         color: Color(0xFFF29D38),
                       ),
+                      SizedBox(width: 4),
                       Text("POPULAR"),
                     ],
                   ),
-                  Text("See all"),
+
+                  Row(
+                    children: [
+                      const Text("See all"),
+                      const SizedBox(width: 8),
+
+                      /// 🔲 Layout toggle button
+                      IconButton(
+                        icon: Icon(
+                          _isGridView ? Icons.view_list : Icons.grid_view,
+                          size: 22,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isGridView = !_isGridView;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ],
               ),
+
               const SizedBox(height: TSizes.spaceBtwItems),
               // Popular Image List (Vertical for now)
-              ListView.separated(
-                physics: const NeverScrollableScrollPhysics(),
+              _isGridView
+                  ? GridView.builder(
                 shrinkWrap: true,
-                itemCount: TProductImages.productImages.length - 1,
-                separatorBuilder: (_, __) =>
-                const SizedBox(height: TSizes.spaceBtwItems),
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4, // 👈 4 images per row
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1, // square images
+                ),
+                itemCount: ProductImages.productImages.length,
                 itemBuilder: (context, index) {
-                  return BeforeAfterSlider(
-                    beforeImage: TProductImages.productImages[index].image,
-                    afterImage: TProductImages.productImages[index + 1].image,
+                  final product = ProductImages.productImages[index];
+
+                  return GestureDetector(
+                    onTap: () {
+                      // open product
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        product.image,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  );
+                },
+              )
+                  : ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: ProductImages.productImages.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final product = ProductImages.productImages[index];
+
+                  return GestureDetector(
+                    onTap: () {
+                      // open product
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        product.image,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   );
                 },
               ),
+
+
+
             ],
           ),
         ),

@@ -3,6 +3,7 @@ import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -13,9 +14,7 @@ class NavWrapper extends StatelessWidget {
 
   static const List<String> _routes = [
     "/",
-    "/Calculator",
     "/camera",
-    "/upload",
     "/heart",
     "/people",
   ];
@@ -78,34 +77,43 @@ class NavWrapper extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _NavItem(
-                icon: Icons.image,
+                icon: Icon(
+                  Icons.image,
+                  color: TColors.black,
+                ),
                 isSelected: currentIndex == 0,
                 onTap: () => context.go(_routes[0]),
               ),
               _NavItem(
-                icon: Icons.calculate,
+                icon: Icon(
+                  Icons.camera_alt,
+                  color: TColors.black,
+                ),
                 isSelected: currentIndex == 1,
-                onTap: () => context.go(_routes[1]),
+                onTap: () => context.push(_routes[1]),
               ),
+
               _NavItem(
-                icon: Icons.camera_alt,
+                icon: Icon(
+                  Icons.favorite,
+                  color: TColors.black,
+                ),
                 isSelected: currentIndex == 2,
-                onTap: () => context.push(_routes[2]),
+                onTap: () => context.go(_routes[2]),
               ),
+
               _NavItem(
-                icon: Icons.file_upload_outlined,
+                icon: SvgPicture.asset(
+                  "assets/icons/app_icons/person.svg",
+                  height: 24,
+                  width: 24,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.black,
+                    BlendMode.srcIn,
+                  ),
+                ),
                 isSelected: currentIndex == 3,
                 onTap: () => context.go(_routes[3]),
-              ),
-              _NavItem(
-                icon: Icons.favorite,
-                isSelected: currentIndex == 4,
-                onTap: () => context.go(_routes[4]),
-              ),
-              _NavItem(
-                icon: Icons.nature_people_sharp,
-                isSelected: currentIndex == 5,
-                onTap: () => context.go(_routes[5]),
               ),
             ],
           ),
@@ -116,7 +124,7 @@ class NavWrapper extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -134,20 +142,18 @@ class _NavItem extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isSelected ? TColors.primary : Colors.white,
+          color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               offset: const Offset(0, 4),
               blurRadius: 10,
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          color: isSelected ? Colors.white : TColors.black,
-        ),
+        child: icon,
       ),
     );
   }
 }
+

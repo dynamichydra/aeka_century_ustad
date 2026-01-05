@@ -27,8 +27,8 @@ class OnboardingPage extends StatelessWidget {
         children: [
           const Spacer(flex: 2), // Top flexible space
           Image(
-            width: THelperFunctions.screenWidth(context) * 0.4,
-            height: 100,
+            width: THelperFunctions.screenWidth(context) * 0.6,
+            height: 180,
             image: AssetImage(
               dark ? TImages.lightAppLogo : TImages.darkAppLogo,
             ),

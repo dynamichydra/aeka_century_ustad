@@ -101,7 +101,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                   SizedBox(width: 5),
                   GestureDetector(
                     onTap: () {
-                      context.go("/");
+                      Scaffold.of(context).openDrawer();
                     },
                     child: Container(
                       width: 50,
@@ -121,7 +121,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                         ],
                         color: Colors.white,
                       ),
-                      child: const Center(child: Icon(Icons.home, size: 24)),
+                      child: const Center(child: Icon(Icons.menu, size: 24)),
                     ),
                   ),
                   GestureDetector(
@@ -171,7 +171,10 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                         color: Colors.white,
                       ),
                       child: Center(
-                        child: SvgPicture.asset("assets/icons/app_icons/images.svg"),
+                        // child: SvgPicture.asset(
+                        //   "assets/icons/app_icons/images.svg",
+                        // ),
+                        child: Icon(Icons.file_upload_outlined),
                       ),
                     ),
                   ),
@@ -190,16 +193,12 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Iconsax.menu_1, color: Colors.black),
-                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                  icon: Icon(Icons.clear, color: Colors.white),
+                  onPressed: () => {context.pop()},
                 ),
-                Padding(
-                  padding: EdgeInsets.only(right: TSizes.defaultSpace),
-                  child: Image(
-                    image: AssetImage(TImages.smallLogo),
-                    width: 30,
-                    height: 30,
-                  ),
+                IconButton(
+                  icon: Icon(Icons.flash_off_rounded, color: Colors.white),
+                  onPressed: () => {},
                 ),
               ],
             ),
@@ -272,4 +271,3 @@ class _OverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(_) => false;
 }
-

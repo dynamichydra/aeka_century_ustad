@@ -46,6 +46,7 @@ dependencies:
   data_table_2: ^2.7.2
   go_router: ^17.0.1
 
+
   path_provider: ^2.1.2
   path: ^1.9.0
   image_picker: ^1.0.7
@@ -58,6 +59,7 @@ dependencies:
   flutter_portal: ^1.1.4
   share_plus: ^7.2.1
   flutter_launcher_icons: ^0.14.4
+
 
 
 
@@ -93,6 +95,7 @@ flutter:
     - assets/images/animations/
     - assets/icons/payment_methods/
     - assets/icons/app_icons/
+    - assets/icons/app_icons/person.svg
     - assets/images/furniture/
     - assets/images/lamination/
     - assets/images/vectors/

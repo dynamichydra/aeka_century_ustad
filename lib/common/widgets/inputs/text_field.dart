@@ -18,6 +18,9 @@ class TTextField extends StatelessWidget {
     this.contentPadding = const EdgeInsets.symmetric(vertical: TSizes.md, horizontal: TSizes.md),
     this.prefixPadding = const EdgeInsets.all(TSizes.sm),
     this.shadows,
+
+    this.suffixIcon,
+    this.suffixPadding = const EdgeInsets.all(TSizes.sm),
   });
 
   final TextEditingController? controller;
@@ -33,6 +36,10 @@ class TTextField extends StatelessWidget {
   final EdgeInsetsGeometry contentPadding;
   final EdgeInsetsGeometry prefixPadding;
   final List<BoxShadow>? shadows;
+
+  final Widget? suffixIcon;
+  final EdgeInsetsGeometry suffixPadding;
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +91,10 @@ class TTextField extends StatelessWidget {
                   child: prefixIcon,
                 )
               : prefixIcon,
+          /// SUFFIX ✅
+          suffixIcon: isCircularIcon && suffixIcon != null
+              ? _buildCircularIcon(suffixIcon!, suffixPadding)
+              : suffixIcon,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(100),
             borderSide: borderSide ?? const BorderSide(color: Color(0xFFFFFFFF), width: 4),
@@ -108,4 +119,27 @@ class TTextField extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildCircularIcon(Widget icon, EdgeInsetsGeometry padding) {
+    return Container(
+      width: 45,
+      height: 45,
+      margin: const EdgeInsets.all(8),
+      padding: padding,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: TColors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: icon,
+    );
+  }
+
 }

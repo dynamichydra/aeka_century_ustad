@@ -83,6 +83,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
       setState(() => setVisible(maxScroll > 0));
     });
   }
+  List<bool> _isSelected = [true, false];
 
   @override
   void initState() {
@@ -174,7 +175,7 @@ Rules:
                             before: _originalImage!,
                             after: _editedImage!,
                           )
-                        : Image.file(_originalImage!, fit: BoxFit.cover),
+                        : Image.file(_originalImage!, fit: BoxFit.contain),
                   ),
                 ),
 
@@ -187,13 +188,6 @@ Rules:
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
-                          blurRadius: 12,
-                          offset: const Offset(0, -4),
-                        ),
-                      ],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -208,7 +202,45 @@ Rules:
                           ),
                         ),
 
-                        Text("AI Based Color & Pattern Search"),
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                "AI Based Color & Pattern Search",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+
+                            ToggleButtons(
+                              isSelected: _isSelected,
+                              onPressed: (index) {
+                                setState(() {
+                                  // allow only one selected at a time
+                                  for (int i = 0; i < _isSelected.length; i++) {
+                                    _isSelected[i] = i == index;
+                                  }
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              constraints: const BoxConstraints(
+                                minHeight: 24,
+                                minWidth: 56,
+                              ),
+                              selectedColor: Colors.white,
+                              fillColor: const Color(0xFF8A660),
+                              color: const Color(0xFFA3A1A1),
+                              children: const [
+                                Text("Interior"),
+                                Text("Exterior"),
+                              ],
+                            ),
+                          ],
+                        ),
+
+
                         SizedBox(height: 5),
                         const TTextField(
                           labelText: 'Search',
@@ -267,7 +299,10 @@ Rules:
                           children: [
                             InkWell(
                               onTap: () {
-                                context.go("/");
+                                // context.go("/");
+                                setState(() {
+                                  isBookmarkPopupOpen = true;
+                                });
                               },
                               child: Container(
                                 width: 50,
@@ -288,7 +323,7 @@ Rules:
                                   color: Colors.white,
                                 ),
                                 child: const Center(
-                                  child: Icon(Icons.home, size: 24),
+                                  child: Icon(Icons.bookmark, size: 24),
                                 ),
                               ),
                             ),
@@ -299,16 +334,21 @@ Rules:
                                 style: ElevatedButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(20),
+                                    ),
                                   ),
                                 ),
                                 onPressed: () {
                                   if (_loading) return;
 
-                                  if (_selectedColor == null || _selectedLamination == null) {
+                                  if (_selectedColor == null ||
+                                      _selectedLamination == null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text("Please select color and texture"),
+                                        content: Text(
+                                          "Please select color and texture",
+                                        ),
                                       ),
                                     );
                                     return;
@@ -318,20 +358,21 @@ Rules:
                                 },
                                 child: _loading
                                     ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
                                     : const Text(
-                                  "Apply",
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
+                                        "Apply",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
                               ),
                             ),
-
 
                             SizedBox(width: 50, height: 50),
 
@@ -548,14 +589,17 @@ Rules:
                   ),
                 ),
               ),
-            ]
-,
+            ],
+
             /// FLOATING BUTTON
             Positioned(
               right: 16,
               bottom: 54,
               child: GestureDetector(
-                onTap: () => setState(() => isOpen = !isOpen),
+                onTap: () => { Share.share(
+                  'Check out this design!',
+                  subject: 'Furniture Design',
+                )},
                 child: Container(
                   width: 56,
                   height: 56,
@@ -567,7 +611,7 @@ Rules:
                     ],
                   ),
                   child: Icon(
-                    isOpen ? Icons.close : Icons.more_horiz,
+                    isOpen ? Icons.close : Icons.share,
                     size: 32,
                   ),
                 ),
@@ -583,14 +627,14 @@ Rules:
   Widget _colorPicker() {
     return SizedBox(
       height: 30,
-      child: Stack(
+      child: Row(
         children: [
           /// 1️⃣ The horizontal list
-          ListView.separated(
+          Expanded(child: ListView.separated(
             controller: _colorScrollController,
             scrollDirection: Axis.horizontal,
             itemCount: colorList.length,
-            padding: const EdgeInsets.only(right: 32),
+            // padding: const EdgeInsets.only(right: 32),
             // space for arrow
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, i) {
@@ -615,25 +659,27 @@ Rules:
 
                   child: selected
                       ? Container(
-                          width: 25,
-                          height: 25,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: hexToColor(c["hex"]),
-                            border: Border.all(
-                              color: selected
-                                  ? Colors.white
-                                  : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                        )
+                    width: 25,
+                    height: 25,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: hexToColor(c["hex"]),
+                      border: Border.all(
+                        color: selected
+                            ? Colors.white
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                  )
                       : null,
                 ),
               );
             },
-          ),
+          ),),
 
+
+          SizedBox(width: 10, height: 20,),
           /// 2️⃣ RIGHT ARROW OVERLAY
           if (_showColorArrow)
             Positioned(
@@ -649,7 +695,8 @@ Rules:
                   );
                 },
                 child: Container(
-                  width: 28,
+                  // color: Colors.pink,
+                  width: 15,
                   alignment: Alignment.center,
                   decoration: const BoxDecoration(
                     // gradient: LinearGradient(
@@ -657,7 +704,7 @@ Rules:
                     //   begin: Alignment.centerLeft,
                     //   end: Alignment.centerRight,
                     // ),
-                    color: Colors.white,
+                    color: Colors.pink,
                   ),
                   child: const Icon(Icons.chevron_right, size: 22),
                 ),
@@ -697,7 +744,7 @@ Rules:
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(3),
-                    child: Image.asset(l["image"], fit: BoxFit.cover),
+                    child: Image.asset(l["image"], fit: BoxFit.contain),
                   ),
                 ),
               );
@@ -759,20 +806,22 @@ class CustomPopupBar extends StatelessWidget {
         children: [
           IconButton(
             icon: Container(
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: const Icon(Icons.share, ),
-                )),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: const Icon(Icons.share),
+              ),
+            ),
             onPressed: onShare,
           ),
           IconButton(
             icon: Container(
-                color: Colors.white,
-                child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: const Icon(Icons.bookmark, ),
-            )),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: const Icon(Icons.bookmark),
+              ),
+            ),
             onPressed: onBookmark,
           ),
         ],
@@ -938,3 +987,77 @@ class _BookmarkPopupState extends State<BookmarkPopup> {
     );
   }
 }
+class ExpandingToggleSwitch extends StatefulWidget {
+  final List<String> items;
+  final ValueChanged<int> onChanged;
+  final double height;
+  final double borderRadius;
+
+  const ExpandingToggleSwitch({
+    super.key,
+    required this.items,
+    required this.onChanged,
+    this.height = 24, // 👈 smaller
+    this.borderRadius = 8,
+  }) : assert(items.length == 2);
+
+  @override
+  State<ExpandingToggleSwitch> createState() => _ExpandingToggleSwitchState();
+}
+
+class _ExpandingToggleSwitchState extends State<ExpandingToggleSwitch> {
+  int selectedIndex = 0;
+
+  static const Color selectedColor = Color(0xFF8A660);
+  static const Color unselectedColor = Color(0xFFA3A1A1);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: widget.height,
+      child: Row(
+        children: List.generate(2, (index) {
+          final bool isSelected = selectedIndex == index;
+
+          return Expanded(
+            flex: isSelected ? 4 : 1,
+            child: GestureDetector(
+              onTap: () {
+                if (selectedIndex == index) return;
+                setState(() => selectedIndex = index);
+                widget.onChanged(index);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: isSelected ? selectedColor : unselectedColor,
+                  borderRadius:
+                  BorderRadius.circular(widget.borderRadius),
+                ),
+                alignment: Alignment.center,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 150),
+                  opacity: isSelected ? 1 : 0,
+                  child: isSelected
+                      ? Text(
+                    widget.items[index],
+                    style: const TextStyle(
+                      fontSize: 12, // 👈 smaller text
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+

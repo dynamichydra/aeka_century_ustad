@@ -55,9 +55,9 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                 height: 100,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 4, // 3 images + 1 See More
+                  itemCount: 5, // 3 images + 1 See More
                   itemBuilder: (context, index) {
-                    if (index == 3) {
+                    if (index == 4) {
                       return Padding(
                         padding: const EdgeInsets.only(right: TSizes.spaceBtwItems),
                         child: Column(

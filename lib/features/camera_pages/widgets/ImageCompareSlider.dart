@@ -44,7 +44,7 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
                     widget.after,
                     width: width,
                     height: widget.height,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                   ),
                 ),
 
