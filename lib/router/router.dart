@@ -7,6 +7,7 @@ import 'package:century_ai/features/camera_pages/camera_pages_index.dart';
 import 'package:century_ai/features/camera_pages/image_edit_page.dart';
 import 'package:century_ai/features/home/screens/home.dart';
 import 'package:century_ai/features/home/screens/product_explorer.dart';
+import 'package:century_ai/features/home/screens/product_library.dart';
 import 'package:century_ai/router/shell_route.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:go_router/go_router.dart';
@@ -73,6 +74,11 @@ final GoRouter router = GoRouter(
         final product = state.extra as ProductImageModel;
         return ProductExplorerScreen(selectedProduct: product);
       },
+    ),
+    GoRoute(
+      path: "/product-library",
+      name: "product-library",
+      builder: (context, state) => const ProductLibraryScreen(),
     ),
 
   ],

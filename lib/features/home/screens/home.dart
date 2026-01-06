@@ -35,40 +35,41 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-
-                      ),
+                      decoration: BoxDecoration(shape: BoxShape.circle),
+                      child: Container(
+                        padding: const EdgeInsets.all(4), // Layer 2 (Yellow)
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFC5C3C3),
+                          shape: BoxShape.circle,
+                        ),
                         child: Container(
-                          padding: const EdgeInsets.all(4), // Layer 2 (Yellow)
-                          decoration: const BoxDecoration(
-                              color: Color(0xFFC5C3C3), shape: BoxShape.circle),
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF9A9797),
+                            shape: BoxShape.circle,
+                          ),
                           child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                                color: Color(0xFF9A9797),
-                              shape: BoxShape.circle
+                            padding: const EdgeInsets.all(8), // Layer 4 (Grey)
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF504B4B),
+                              shape: BoxShape.circle,
                             ),
                             child: Container(
-                              padding: const EdgeInsets.all(8), // Layer 4 (Grey)
+                              padding: const EdgeInsets.all(1), // Separation
                               decoration: const BoxDecoration(
-                                  color: Color(0xFF504B4B),
-                                  shape: BoxShape.circle),
-                              child: Container(
-                                padding: const EdgeInsets.all(1), // Separation
-                                decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle),
-                                child: const CircleAvatar(
-                                  radius: 40,
-                                  backgroundImage: AssetImage(TImages.user),
-                                ),
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const CircleAvatar(
+                                radius: 40,
+                                backgroundImage: AssetImage(TImages.user),
                               ),
                             ),
                           ),
                         ),
                       ),
-                   
+                    ),
+
                     const SizedBox(height: TSizes.spaceBtwItems),
                     Text(
                       "Namaste Ramesh",
@@ -85,9 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     "LET'S EXPLORE",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.headlineSmall?.copyWith(color: TColors.lightGray,letterSpacing: 2),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: TColors.lightGray,
+                      letterSpacing: 2,
+                    ),
                   ),
                 ],
               ),
@@ -130,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: TColors.inputBackground,
                             ),
                             child: IconButton(
-                              onPressed: () {},
+                              onPressed: () => context.push('/product-library'),
                               icon: const Icon(Iconsax.arrow_right_3),
                             ),
                           ),
@@ -144,7 +146,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                     final product = ProductImages.productImages[index];
                     return GestureDetector(
-                      onTap: () => context.go('/product-explorer', extra: product),
+                      onTap: () =>
+                          context.go('/product-explorer', extra: product),
                       child: Column(
                         children: [
                           Container(
@@ -234,59 +237,57 @@ class _HomeScreenState extends State<HomeScreen> {
               // Popular Image List (Vertical for now)
               _isGridView
                   ? GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4, // 👈 4 images per row
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1, // square images
-                ),
-                itemCount: ProductImages.productImages.length,
-                itemBuilder: (context, index) {
-                  final product = ProductImages.productImages[index];
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4, // 👈 4 images per row
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1, // square images
+                          ),
+                      itemCount: ProductImages.productImages.length,
+                      itemBuilder: (context, index) {
+                        final product = ProductImages.productImages[index];
 
-                  return GestureDetector(
-                    onTap: () {
-                      // open product
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        product.image,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  );
-                },
-              )
+                        return GestureDetector(
+                          onTap: () {
+                            // open product
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              product.image,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
+                    )
                   : ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: ProductImages.productImages.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final product = ProductImages.productImages[index];
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: ProductImages.productImages.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final product = ProductImages.productImages[index];
 
-                  return GestureDetector(
-                    onTap: () {
-                      // open product
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        product.image,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                        return GestureDetector(
+                          onTap: () {
+                            // open product
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              product.image,
+                              height: 180,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-
-
-
             ],
           ),
         ),
