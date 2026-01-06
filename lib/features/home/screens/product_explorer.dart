@@ -1,4 +1,5 @@
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
+import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
@@ -36,6 +37,7 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
           ),
         ],
       ),
+      drawer: const HomeDrawer(),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(TSizes.defaultSpace),
@@ -44,9 +46,14 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
             children: [
               // Search Bar
               const TTextField(
-                labelText: 'Search for images...',
+                labelText: 'Search',
                 prefixIcon: Icon(Iconsax.search_normal),
-                fillColor: Color(0xFFF9F9F9),
+                fillColor: Colors.white,
+                suffixIcon: Image(
+                  image: AssetImage(TImages.homeInputRightIcon),
+                  fit: BoxFit.cover,
+                ),
+                isCircularIcon: true,
               ),
               const SizedBox(height: TSizes.spaceBtwSections),
 
@@ -193,7 +200,7 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                   });
                 },
                 icon: Icon(
-                  _crossAxisCount == 2 ? Iconsax.grid_2 : Iconsax.grid_1,
+                  _crossAxisCount == 2 ? Icons.grid_view : Icons.view_list,
                   color: Colors.white,
                 ),
               ),

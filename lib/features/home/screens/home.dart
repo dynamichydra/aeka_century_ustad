@@ -98,10 +98,6 @@ class _HomeScreenState extends State<HomeScreen> {
               // Search Input
               const TTextField(
                 labelText: 'Search',
-                // prefixIcon: Image(
-                //   image: AssetImage(TImages.searchIcon),
-                //   fit: BoxFit.cover,
-                // ) ,
                 prefixIcon: Icon(Iconsax.search_normal),
                 fillColor: Colors.white,
                 suffixIcon: Image(
