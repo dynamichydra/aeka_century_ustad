@@ -99,6 +99,14 @@ class _OnboardingState extends State<Onboarding> {
               ),
             ),
 
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: const Image(
+                image: AssetImage(TImages.onBoardingImageBottomRight),
+              ),
+            ),
+
             // Dot Navigation SmoothPageIndicator
             OnBoardingDotNavigation(pageController: pageController),
           ],

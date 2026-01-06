@@ -16,11 +16,11 @@ class TTextField extends StatelessWidget {
     this.fillColor,
     this.borderSide,
     this.contentPadding = const EdgeInsets.symmetric(vertical: TSizes.md, horizontal: TSizes.md),
-    this.prefixPadding = const EdgeInsets.all(TSizes.sm),
+    this.prefixPadding = const EdgeInsets.all(4),
     this.shadows,
 
     this.suffixIcon,
-    this.suffixPadding = const EdgeInsets.all(TSizes.sm),
+    this.suffixPadding = const EdgeInsets.all(6),
   });
 
   final TextEditingController? controller;
@@ -71,27 +71,8 @@ class TTextField extends StatelessWidget {
           filled: true,
           fillColor: TColors.inputBackground, // Controlled by container
           prefixIcon: isCircularIcon && prefixIcon != null
-              ? Container(
-                  width: 45,
-                  height: 45,
-                  margin: const EdgeInsets.all(8),
-                  padding: prefixPadding,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: TColors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2), // Updated from withOpacity
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: prefixIcon,
-                )
-              : prefixIcon,
-          /// SUFFIX ✅
+          ? _buildCircularIcon(prefixIcon!, prefixPadding)
+          : prefixIcon,
           suffixIcon: isCircularIcon && suffixIcon != null
               ? _buildCircularIcon(suffixIcon!, suffixPadding)
               : suffixIcon,
@@ -122,8 +103,8 @@ class TTextField extends StatelessWidget {
 
   Widget _buildCircularIcon(Widget icon, EdgeInsetsGeometry padding) {
     return Container(
-      width: 45,
-      height: 45,
+      width: 35,
+      height: 35,
       margin: const EdgeInsets.all(8),
       padding: padding,
       decoration: BoxDecoration(
