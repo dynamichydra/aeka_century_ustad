@@ -57,18 +57,22 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                           vertical: 0,
                         ),
                         color: TColors.primary,
-                        child: Text(
-                          "USTAAD",
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 36,
-                                color: Colors.white,
-                                fontFamily: "Helvatica",
-                              ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Text(
+                            "USTAAD",
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 32,
+                                  color: Colors.white,
+                                  fontFamily: "Helvatica",
+                              height: 1
+                                ),
+                          ),
                         ),
                       ),
-                      SizedBox(height: 6),
+                      SizedBox(height: 3),
                       const Divider(
                         color: TColors.primary,
                         thickness: 2,

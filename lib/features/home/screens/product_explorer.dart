@@ -92,7 +92,7 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                       );
                     }
 
-                    final product = TProductImages.productImages[index];
+                    final product = ProductImages.productImages[index];
                     final isSelected = _currentProduct.id == product.id;
 
                     return GestureDetector(
