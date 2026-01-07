@@ -167,17 +167,28 @@ Rules:
             Stack(
               children: [
                 /// ---------------- IMAGE AREA ----------------
-                Positioned.fill(
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
                   child: SafeArea(
                     bottom: false,
-                    child: (_editedImage != _originalImage)
-                        ? ImageCompareSlider(
-                            before: _originalImage!,
-                            after: _editedImage!,
-                          )
-                        : Image.file(_originalImage!, fit: BoxFit.contain),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.45, // 👈 KEY FIX
+                      child: (_editedImage != _originalImage)
+                          ? ImageCompareSlider(
+                        before: _originalImage!,
+                        after: _editedImage!,
+                      )
+                          : Image.file(
+                        _originalImage!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    ),
                   ),
                 ),
+
 
                 /// ---------------- BOTTOM PANEL ----------------
                 Positioned(
@@ -704,7 +715,6 @@ Rules:
                     //   begin: Alignment.centerLeft,
                     //   end: Alignment.centerRight,
                     // ),
-                    color: Colors.pink,
                   ),
                   child: const Icon(Icons.chevron_right, size: 22),
                 ),
@@ -744,7 +754,7 @@ Rules:
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(3),
-                    child: Image.asset(l["image"], fit: BoxFit.contain),
+                    child: Image.asset(l["image"], fit: BoxFit.cover),
                   ),
                 ),
               );

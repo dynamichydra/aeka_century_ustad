@@ -23,103 +23,71 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, c) {
-        final width = c.maxWidth;
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
 
         return GestureDetector(
-          onHorizontalDragUpdate: (d) {
+          onHorizontalDragUpdate: (details) {
             setState(() {
-              _pos += d.delta.dx / width;
+              _pos += details.delta.dx / width;
               _pos = _pos.clamp(0.0, 1.0);
             });
           },
-          child: SizedBox(
-            height: widget.height,
-            child: Stack(
-              children: [
-                /// AFTER image (background)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.file(
-                    widget.after,
-                    width: width,
-                    height: widget.height,
-                    fit: BoxFit.contain,
-                  ),
+          child: Stack(
+            children: [
+              /// AFTER image (background)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.file(
+                  widget.after,
+                  width: width,
+                  height: widget.height,
+                  fit: BoxFit.cover,
                 ),
+              ),
 
-                /// BEFORE image (clipped)
-                ClipRect(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: _pos,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.file(
-                        widget.before,
-                        width: width,
-                        height: widget.height,
-                        fit: BoxFit.cover,
-                      ),
+              /// BEFORE image (clipped — SAME AS WORKING VERSION)
+              ClipRect(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: _pos,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.file(
+                      widget.before,
+                      width: width,
+                      height: widget.height,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
+              ),
 
-                /// DASHED DIVIDER
-                Positioned(
-                  left: width * _pos - 1,
-                  top: 0,
-                  bottom: 0,
-                  child: CustomPaint(
-                    size: Size(2, widget.height),
-                    painter: DashedLinePainter(),
-                  ),
+              /// DIVIDER
+              Positioned(
+                left: width * _pos - 1,
+                top: 0,
+                bottom: 0,
+                child: CustomPaint(
+                  size: Size(2, widget.height),
+                  painter: DashedLinePainter(),
                 ),
+              ),
 
-                /// HANDLE
-                Positioned(
-                  left: width * _pos - 18,
-                  top: widget.height / 2 - 18,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: Color(0x7DFFFFFF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 6,
-                            )
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.arrow_back_ios, size: 8),
-                            Icon(Icons.arrow_forward_ios, size: 8),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              /// HANDLE
+              Positioned(
+                left: width * _pos - 18,
+                top: widget.height / 2 - 18,
+                child: _SliderHandle(),
+              ),
+            ],
           ),
         );
       },
     );
   }
 }
+
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -151,4 +119,50 @@ class DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
+}
+
+class _SliderHandle extends StatelessWidget {
+  const _SliderHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: const BoxDecoration(
+        color: Color(0x7DFFFFFF), // semi-transparent white
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.arrow_back_ios,
+                size: 8,
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 8,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
