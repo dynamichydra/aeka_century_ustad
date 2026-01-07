@@ -110,89 +110,112 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SizedBox(
                 height: 120,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 5,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(width: TSizes.spaceBtwItems),
-                  itemBuilder: (context, index) {
-                    if (index == 4) {
-                      // See More Button at end of row (5th element)
-                      return Column(
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: TColors.inputBackground,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final itemWidth = constraints.maxWidth / 5;
+
+                    return Row(
+                      children: List.generate(5, (index) {
+                        /// SEE MORE
+                        if (index == 4) {
+                          return SizedBox(
+                            width: itemWidth,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      4,
+                                    ), // SAME gap
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: TColors.inputBackground,
+                                      ),
+                                      child: IconButton(
+                                        onPressed: () =>
+                                            context.push('/product-library'),
+                                        icon: const Icon(
+                                          Iconsax.arrow_right_3,
+                                          size: 22,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: TSizes.spaceBtwItems / 2,
+                                ),
+                                Text(
+                                  "See more",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                ),
+                              ],
                             ),
-                            child: IconButton(
-                              onPressed: () => context.push('/product-library'),
-                              icon: const Icon(Iconsax.arrow_right_3),
+                          );
+                        }
+
+                        /// PRODUCT ITEM
+                        final product = ProductImages.productImages[index];
+
+                        return SizedBox(
+                          width: itemWidth,
+                          child: GestureDetector(
+                            onTap: () =>
+                                context.go('/product-explorer', extra: product),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      4,
+                                    ), // SAME gap
+                                    child: ClipOval(
+                                      child: Image.asset(
+                                        product.image,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: TSizes.spaceBtwItems / 2,
+                                ),
+                                Text(
+                                  product.name,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: TSizes.spaceBtwItems / 2),
-                          Text(
-                            "See more",
-                            style: Theme.of(context).textTheme.labelMedium,
-                          ),
-                        ],
-                      );
-                    }
-                    final product = ProductImages.productImages[index];
-                    return GestureDetector(
-                      onTap: () =>
-                          context.go('/product-explorer', extra: product),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            padding: const EdgeInsets.all(TSizes.xs),
-                            decoration: BoxDecoration(shape: BoxShape.circle),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(100),
-                              child: Image(
-                                image: AssetImage(product.image),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: TSizes.spaceBtwItems / 2),
-                          Text(
-                            product.name,
-                            style: Theme.of(context).textTheme.labelMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+                        );
+                      }),
                     );
                   },
                 ),
               ),
 
-              // const SizedBox(height: TSizes.spaceBtwSections),
-
-              // "Popular image list" Section
-              // Row(
-              //    mainAxisAlignment: MainAxisAlignment.start,
-              //    children: [
-              //      // "left side see more button"
-              //      TextButton(
-              //        onPressed: (){},
-              //        child: const Row(
-              //          children: [
-              //            Text("See More"),
-              //            SizedBox(width: 4),
-              //            Icon(Iconsax.arrow_right_3, size: 16),
-              //          ],
-              //        )
-              //      ),
-              //    ],
-              // ),
-              // const SizedBox(height: TSizes.spaceBtwItems),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
