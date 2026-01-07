@@ -129,8 +129,8 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                       ClipPath(
                         clipper: TImagePopOutClipper(),
                         child: Image(
-                          width: THelperFunctions.screenWidth(context) * 0.6,
-                          height: THelperFunctions.screenWidth(context) * 0.6,
+                          width: THelperFunctions.screenWidth(context) * 0.55,
+                          height: THelperFunctions.screenWidth(context) * 0.55,
                           fit: BoxFit.contain,
                           alignment: Alignment.bottomCenter,
                           image: AssetImage(widget.image),

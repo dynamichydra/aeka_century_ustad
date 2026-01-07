@@ -56,91 +56,126 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                 isCircularIcon: true,
               ),
               const SizedBox(height: TSizes.spaceBtwSections),
-
-              // Horizontal Category/Product List
               SizedBox(
                 height: 100,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 5, // 3 images + 1 See More
-                  itemBuilder: (context, index) {
-                    if (index == 4) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: TSizes.spaceBtwItems),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: TColors.inputBackground,
-                              ),
-                              child: IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Iconsax.arrow_right_3, color: Colors.black),
-                              ),
-                            ),
-                            const SizedBox(height: TSizes.spaceBtwItems / 2),
-                            Text(
-                              "See more",
-                              style: Theme.of(context).textTheme.labelMedium,
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    final product = ProductImages.productImages[index];
-                    final isSelected = _currentProduct.id == product.id;
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _currentProduct = product;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: TSizes.spaceBtwItems),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected ? TColors.productSelectedColor : Colors.transparent,
-                                  width: 4,
-                                ),
-                              ),
-                              child: Center(
-                                child: Container(
-                                  padding: const EdgeInsets.all(4), // Hollow ring gap
-                                  decoration: const BoxDecoration(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final itemWidth = constraints.maxWidth / 5;
+                    return Row(
+                      children: List.generate(5, (index) {
+                        /// SEE MORE (LAST ITEM)
+                        if (index == 4) {
+                          return SizedBox(
+                            width: itemWidth,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
                                     shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.transparent,
+                                      width: 4,
+                                    ),
                                   ),
-                                  child: CircleAvatar(
-                                    radius: 30,
-                                    backgroundImage: AssetImage(product.image),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      4,
+                                    ), // SAME inner gap
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: TColors.inputBackground,
+                                      ),
+                                      child: IconButton(
+                                        onPressed: () {},
+                                        icon: const Icon(
+                                          Iconsax.arrow_right_3,
+                                          size: 22,
+                                          color: Colors.black,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                                const SizedBox(
+                                  height: TSizes.spaceBtwItems / 2,
+                                ),
+                                Text(
+                                  "See more",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: TSizes.spaceBtwItems / 2),
-                            Text(
-                              product.name,
-                              style: Theme.of(context).textTheme.labelMedium,
+                          );
+                        }
+
+                        /// PRODUCT ITEM
+                        final product = ProductImages.productImages[index];
+                        final isSelected = _currentProduct.id == product.id;
+
+                        return SizedBox(
+                          width: itemWidth,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _currentProduct = product;
+                              });
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? TColors.productSelectedColor
+                                          : Colors.transparent,
+                                      width: 6,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      2,
+                                    ), // hollow ring gap
+                                    child: CircleAvatar(
+                                      backgroundImage: AssetImage(
+                                        product.image,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: TSizes.spaceBtwItems / 2,
+                                ),
+                                Text(
+                                  product.name,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      }),
                     );
                   },
                 ),
               ),
+
               const SizedBox(height: TSizes.spaceBtwSections),
 
               // Grid View or List View of related images
@@ -158,7 +193,8 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(TSizes.md),
                     child: Image.asset(
-                      _currentProduct.image, // In a real app, these might be different sub-images
+                      _currentProduct
+                          .image, // In a real app, these might be different sub-images
                       fit: BoxFit.cover,
                     ),
                   );
