@@ -1,21 +1,5 @@
-import type { ItemStatus, UserType } from "@/lib/types";
-export type ImportedUser = {
-  id: number;
-  code: string;
-  name: string;
-  email: string;
-  phone: string;
-  pwd: string;
-  address: string;
-  state: string;
-  city: string;
-  zip: string;
-  created_by: string;
-  created_at: string;
-  status: ItemStatus;
-  type: UserType;
-  branch: string[];
-};
+import type { User as ImportedUser } from "@/features/users/types";
+
 export interface User extends ImportedUser {
   access_token: string;
 }

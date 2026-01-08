@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -258,6 +256,7 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
+  
   const { toggleSidebar } = useSidebar()
 
   return (
@@ -266,7 +265,7 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn("size-7", className)}
+      className={cn("size-9", className)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
@@ -456,10 +455,13 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
     <ul
       data-slot="sidebar-menu"
       data-sidebar="menu"
-      className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+      className={cn(
+        "flex w-full min-w-0 flex-col gap-1",
+        className
+      )}
       {...props}
     />
-  )
+  );
 }
 
 function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {

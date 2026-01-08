@@ -6,14 +6,12 @@ import {
 } from "@/components/ui/sidebar";
 import { Outlet, } from "react-router";
 import Header from "./header";
-// import { useUser } from "@/hooks/use-user";
+import { useUser } from "@/hooks/use-user";
 
 
 export function dashboard() {
-  // const { user } = useUser();
- const user = {
-  type:'Admin'
- }
+  const { user } = useUser();
+
 
 
   return (

@@ -2,7 +2,7 @@ import * as React from "react";
 import { LogOut } from "lucide-react";
 
 import { NavProjects } from "@/components/nav-projects";
-import icon from "@/assets/dokume_logo_black_plain.png";
+import icon from "@/assets/centuryply_icon.png";
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TeamSwitcher } from "./team-switcher";
@@ -25,22 +24,12 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 };
 
 export function AppSidebar({ userType, ...props }: AppSidebarProps) {
-  const { open,setOpen } = useSidebar()
   return (
-    <Sidebar
-      collapsible="icon"
-      {...props}
-      onMouseEnter={() => {
-        if (!open) setOpen(true);
-      }}
-      onMouseLeave={() => {
-        if (open) setOpen(false);
-      }}
-    >
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher
           teams={{
-            name: "Hotel Management",
+            name: "CENTURYPLY",
             logo: icon,
             plan: "",
           }}

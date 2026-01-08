@@ -17,7 +17,7 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((config) => {
-  const user = LocalStorage.get("dm-hotel-mang");
+  const user = LocalStorage.get("cnpl-inv-ur");
   if (user?.access_token) {
     config.headers.Authorization = `Bearer ${user.access_token}`;
   }
@@ -39,7 +39,7 @@ API.interceptors.response.use(
         // Token expired or unauthorized
         toast.error(`Session expired or unauthorized access.`);
         LogOut();
-        window.location.href = "/login";
+        window.location.href = '/login'
       }
 
       // Optional: You can handle other status codes globally

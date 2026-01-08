@@ -2,7 +2,9 @@ import API from "@/lib/api";
 import type { LoginData, User } from "./types";
 import { LocalStorage } from "@/lib/utils";
 
-export async function Login(loginData: LoginData): Promise<User | null> {
+export async function Login(
+  loginData: LoginData
+): Promise<User | null> {
   try {
     const response = await API.post("", {
       TYPE: "auth",
@@ -15,8 +17,8 @@ export async function Login(loginData: LoginData): Promise<User | null> {
     const {
       data: { SUCCESS, MESSAGE },
     } = response;
-    if (SUCCESS) {
-      LocalStorage.set("dm-hotel-mang", MESSAGE);
+    if (SUCCESS) {      
+      LocalStorage.set("cnpl-inv-ur", MESSAGE);
       return MESSAGE;
     } else {
       throw new Error(MESSAGE || "Login failed");
@@ -28,17 +30,17 @@ export async function Login(loginData: LoginData): Promise<User | null> {
 }
 
 export function LogOut() {
-  LocalStorage.remove("dm-hotel-mang");
+  LocalStorage.remove("cnpl-inv-ur");
   window.location.href = "/login";
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  const data: User = LocalStorage.get("dm-hotel-mang");
-  return { ...data, access_token: data.access_token };
+  const data: User = LocalStorage.get("cnpl-inv-ur");
+  return {...data, access_token:data.access_token};
 }
 
 export async function fetchCurrentUser(): Promise<User | null> {
-  const data: User = LocalStorage.get("dm-hotel-mang");
+  const data: User = LocalStorage.get("cnpl-inv-ur");
   if (!data || data.access_token == "") return null;
   try {
     const response = await API.post("", {
@@ -49,7 +51,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
           {
             key: "id",
             operator: "id",
-            value: data,
+            value: data.id,
           },
         ],
       },
@@ -58,7 +60,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
       data: { SUCCESS, MESSAGE },
     } = response;
     if (SUCCESS) {
-      return { ...MESSAGE, access_token: data.access_token };
+      return {...MESSAGE, access_token:data.access_token};
     } else {
       throw new Error(MESSAGE || "User not found");
     }

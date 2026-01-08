@@ -35,7 +35,7 @@ const OrderChart = ({branch, type}:{branch:number, type:string}) => {
   return (
     <Card className="col-span-12 md:col-span-6">
       <CardHeader className="flex justify-between items-center">
-        <CardTitle>Daily Sales Chart</CardTitle>
+        <CardTitle>Orders Trend</CardTitle>
         <Link to={"/branch/order"}>
           <Button
             variant="outline"

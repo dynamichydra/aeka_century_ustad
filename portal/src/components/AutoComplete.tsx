@@ -27,14 +27,13 @@ export interface AutocompleteProps {
   emptyMessage?: string;
   disabled?: boolean;
   className?: string;
-  inputclassName?: string;
   renderOption?: (option: AutocompleteOption) => React.ReactNode;
   getDisplayValue?: (option: AutocompleteOption | null) => string;
   debounceDelay?: number;
   defaultLabel?: string;
   error: string;
   showDescription?: boolean;
-  queryLength?: number;
+  queryLength?:number
 }
 
 const DefaultOptionRenderer = ({ option }: { option: AutocompleteOption }) => (
@@ -60,7 +59,6 @@ export const Autocomplete = forwardRef<HTMLDivElement, AutocompleteProps>(
       emptyMessage = "No results found.",
       disabled = false,
       className,
-      inputclassName,
       renderOption = (option) => <DefaultOptionRenderer option={option} />,
       getDisplayValue = defaultGetDisplayValue,
       debounceDelay = 300,
@@ -175,7 +173,7 @@ export const Autocomplete = forwardRef<HTMLDivElement, AutocompleteProps>(
               onFocus={() => setOpen(true)}
               placeholder={placeholder}
               disabled={disabled}
-              className={cn("pr-10", inputclassName)}
+              className="pr-10"
             />
             <Button
               type="button"

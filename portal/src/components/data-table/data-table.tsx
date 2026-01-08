@@ -25,6 +25,7 @@ import {
 
 import Paginator from "./paginator";
 import DM_CORE_CONFIG from "@/constant";
+import { cn } from "@/lib/utils";
 
 type DataTableProps<TData> = {
   columns: ColumnDef<TData, any>[];
@@ -33,6 +34,8 @@ type DataTableProps<TData> = {
   onPageChange: (pageIndex: number) => void;
   onRowClick?: (row: TData) => void;
   pageCount: number;
+  fixedHeader?: boolean
+  needPagination?:boolean
 };
 
 export function DataTable<TData>({
@@ -42,6 +45,8 @@ export function DataTable<TData>({
   onPageChange,
   onRowClick,
   pageCount,
+  fixedHeader = false,
+  needPagination = true,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -81,17 +86,21 @@ export function DataTable<TData>({
   });
 
   return (
-    <div className="w-full">
-      <div className="overflow-x-auto rounded-md border border-border">
-        <Table className="border-collapse border border-border w-full">
-          <TableHeader className="bg-popover-foreground/10">
+    <div>
+      <div className="overflow-hidden rounded-md border ">
+        <Table
+          containerClass={cn(fixedHeader && "max-h-[500px] overflow-y-auto")}
+        >
+          <TableHeader
+            className={cn(
+              "bg-popover-foreground/10",
+              fixedHeader && "sticky top-0 z-20 backdrop-blur-3xl"
+            )}
+          >
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="border-b border-border">
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="border-r border-border last:border-r-0 text-sm font-semibold text-nowrap"
-                  >
+                  <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -110,17 +119,15 @@ export function DataTable<TData>({
                   key={row.id}
                   onClick={() => onRowClick?.(row.original)}
                   data-state={row.getIsSelected() && "selected"}
-                  className="border-b border-border hover:bg-muted/30 transition"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="
-                        border-r border-border last:border-r-0 
-                        text-sm align-top
-                        whitespace-normal break-words p-2
-                        max-w-[250px]  // adjust width limit
-                      "
+                      style={{
+                        maxWidth: cell.column.columnDef.size
+                          ? cell.column.columnDef.size
+                          : undefined,
+                      }}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -134,7 +141,7 @@ export function DataTable<TData>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center border-b border-border"
+                  className="h-24 text-center"
                 >
                   No results.
                 </TableCell>
@@ -144,7 +151,7 @@ export function DataTable<TData>({
         </Table>
       </div>
 
-      <div className="flex items-center justify-end space-x-2 py-4">
+      { needPagination && <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length
             ? `${table.getFilteredSelectedRowModel().rows.length} of `
@@ -159,7 +166,8 @@ export function DataTable<TData>({
             showPreviousNext
           />
         </div>
-      </div>
+      </div>}
+
     </div>
   );
 }

@@ -21,7 +21,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { UserSchema } from "../schema";
 import { useNavigate } from "react-router";
-import { useSetData } from "@/lib/hooks";
+import type { Branch } from "@/features/branche/types";
+import { usePatchData, useSetData } from "@/lib/hooks";
 import { itemStatusOptions, UserTypeOptions } from "@/lib/types";
 import { hashStringSHA256 } from "@/lib/utils";
 import { Loader2Icon } from "lucide-react";
@@ -29,19 +30,29 @@ import { useUser } from "@/hooks/use-user";
 import toast from "react-hot-toast";
 
 import { LocationField } from "@/components/location";
+import { BranchMultiSelect } from "@/components/BranchMultiSelect";
+import type { PatchPayload } from "../types";
 
 type FormValues = z.infer<typeof UserSchema>;
 
 export default function UserForm({
   user,
   mode,
+  branch,
 }: {
   user?: FormValues;
   mode: string;
+  branch: Branch[];
 }) {
   const navigate = useNavigate();
 
   const { user: createdUser } = useUser();
+  
+
+
+  const { patchData } = usePatchData("user_branch_access");
+  let request_user_Id:number | undefined;
+
   
 
   const form = useForm<FormValues>({
@@ -58,9 +69,12 @@ export default function UserForm({
       zip: user?.zip?.toString() ?? "",
       status: user?.status ?? "active",
       type: user?.type ?? "Sales",
+      branch: user?.branch ?? [],
       ziplabel: user?.ziplabel ?? "",
     },
   });
+
+  const userType = form.watch("type");
 
   const { setData, isLoading } = useSetData<FormValues>("user");
 
@@ -76,13 +90,43 @@ export default function UserForm({
         id: user?.id ?? undefined,
         pwd: finalPwd,
         created_by: createdUser?.id.toString(),
+        branch:undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (response: any) => {
+
+          request_user_Id = response[0]?.id;
+
+          if (mode=="edit") {
+            request_user_Id = user?.id;
+          }
+
+          if (!request_user_Id) {
+            console.error("No request_id found in response");
+            return;
+          }
+          const patchPayload: PatchPayload = [];
+          user?.uba_id?.map((b)=>{
+            patchPayload.push({
+              BACKEND_ACTION: "delete",
+              ID_RESPONSE: `item_${b}`,
+              id: b,
+            });
+          })
+          values.branch.map((b, index) => (patchPayload.push({
+            BACKEND_ACTION: "update",
+            ID_RESPONSE: `item_${index + 1}`,
+            user_id: request_user_Id,
+            branch_id: b,
+            created_by: createdUser?.id,
+          })));          
+          patchData(patchPayload, {
+            onSuccess: () => {
               toast.success("Data updated successfully");
               form.reset();
               navigate(-1);
-          
+            },
+          });
         },
       }
     );
@@ -217,6 +261,89 @@ export default function UserForm({
                 </FormItem>
               )}
             />
+            {/* Branch */}
+            {/* {userType === "Sales" && (
+              <FormField
+                control={form.control}
+                name="branch"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Branch</FormLabel>
+                    <Select
+                      value={field.value != null ? String(field.value) : ""}
+                      onValueChange={(val) =>
+                        field.onChange(val ? String(val) : null)
+                      }
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select branch" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {branch?.map((b) => (
+                          <SelectItem key={b.id} value={`${b.id}`}>
+                            {b.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )} */}
+
+            {/* ✅ Branch (multi-select if Sales) */}
+            {(userType === "Sales" || userType === "BAT") && (
+              <FormField
+                control={form.control}
+                name="branch"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {userType === "Sales"
+                        ? "Branch"
+                        : userType === "BAT"
+                        ? "Branches"
+                        : ""}
+                    </FormLabel>
+                    <FormControl>
+                      {userType === "Sales" ? (
+                        // 🔹 Single-select for Sales
+                        <Select
+                          value={field.value?.[0] ?? ""}
+                          onValueChange={(val) => field.onChange([val])}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select branch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {branch.map((b) => (
+                              <SelectItem key={b.id} value={String(b.id)}>
+                                {b.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <BranchMultiSelect
+                          options={branch.map((b) => ({
+                            label: b.name,
+                            value: String(b.id),
+                          }))}
+                          value={field.value ?? []}
+                          onChange={field.onChange}
+                          placeholder="Select branches"
+                        />
+                      )}
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             {/* Address */}
             <FormField
               control={form.control}

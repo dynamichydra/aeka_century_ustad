@@ -1,0 +1,79 @@
+
+{
+  "general comment" : {
+    "USER_TYPE": "1 (super admin, 2= admin, 3=Sales, 4=BAT, 5=PMG, 6=STO, 7=Factory)"
+  },
+  "IP": "localhost",
+  "PORT": "8000",
+  "USER_TYPE": [ "Admin", "Sales", "BAT", "PMG", "STO", "Factory"],
+  "PRODUCT_TYPE": [ "1 MM", "0.8 MM", "Recon"],
+  "STATUS": [ "active", "inactive", "deleted" ],
+  "TABLE_DEFINITION": {
+    "request_approved_log": [ "id", "request_item", "qnt", "remarks", "status", "created_at", "created_by"],
+    "order_approved_log": [ "id", "order_item", "type", "remarks", "status", "created_at", "created_by"],
+    "branch": [ "id", "code", "name", "email", "phone", "address", "state", "city", "zip", "created_by", "created_at", "status", "region"],
+    "branch_stock": [ "id", "branch", "prod_id", "qnt"],
+    "damage_book": [ "id", "branch", "qnt", "prod_id", "remarks", "created_by", "created_at"],
+    "influencer": [ "id", "code", "name", "company", "email", "phone", "address", "state", "city", "zip", "created_by", "created_at", "status", "project_id", "type"],
+    "notes" : [ "id", "text", "type", "created_by", "created_at", "status"],
+    "order_item": [ "id", "branch", "qnt", "remarks", "prod_id", "created_at", "status", "courier_name", "pod_no", "sto_no", "pmg_status", "pmg_date", "pmg_remarks", "commercial_status", "commercial_remarks", "commercial_date", "factory_status", "factory_remarks", "factory_manufac_date", "factory_delivery_date", "bat_status", "bat_date", "bat_remarks"],
+    "product": [ "id", "code", "name", "sku_no", "specification", "img", "created_by", "created_at", "status", "type"],
+    "project": [ "id", "name", "lead_no", "lead_qnt", "created_by", "created_at", "status", "sales_id"],
+    "request_delivery": [ "id", "sample_request", "address", "landmark", "zip", "district"  ,"state", "city"],
+    "request_item": [ "id", "sample_request", "prod_id", "qnt", "status", "approve_qnt", "receive_qnt","delivery_date", "delivery_time", "remarks"],
+    "sample_request": [ "id", "request_by", "request_at", "branch", "influencer", "status", "project_id", "delivery_type", "delivery_at", "type"],
+    "settings": [ "id", "sender_email", "email_cc", "email_api", "sendgrid", "smtp_host", "smtp_port", "smtp_user", "smtp_pwd", "max_order_qnt" , "reorder_qnt", "max_stock_level", "creation_last_update"],
+    "user": [ "id", "code", "name", "email", "phone", "pwd", "address", "state", "city", "zip", "created_by", "created_at", "status" , "type", "tag"],
+    "state": [ "id", "name", "code", "status", "created_by", "created_at" ],
+    "city": [ "id", "name", "code", "state", "status", "created_by", "created_at" ],
+    "zip": [ "id", "code", "city", "status", "state", "created_by", "created_at" ],
+    "notification_template": ["id", "type", "category", "subject", "body"],
+    "region": ["id", "name", "status"],
+    "user_branch_access": ["id", "user_id", "branch_id", "created_at", "created_by"]
+  },
+  "notification": {
+    "type": { 
+      "newSampleRequest": { "label": "New Sample Request", "tag": 1, "allow": ["user"] },
+      "sampleRequestApprove": { "label": "Sample Request Approve", "tag": 1, "allow": ["user"] },
+      "orderStatus": { "label": "Order status", "tag": 1, "allow": ["user"] }
+    },
+    "template_field": {
+      "User Name": { "table": "user", "field": "name", "used": ["newSampleRequest","orderStatus"] },
+      "User Email": { "table": "user", "field": "email", "used": [ "newSampleRequest","orderStatus"] }
+    }
+  },
+  "dashboard": [
+    { "name": "customer", "type": "card", "see_more": "customer" },
+    { "name": "branche", "type": "card", "see_more": "branche" },
+    { "name": "delivery_boy", "type": "card", "see_more": "branche/delivery_boy" },
+    { "name": "user", "type": "card", "see_more": "branche/user" },
+    { "name": "consignment", "type": "table", "see_more": "consignment" }
+  ],
+  "sendgrid_api_key": ".",
+  "db": {
+     "pg_":{
+      "host":"localhost",
+      "user":"postgres",
+      "pass":"rubel@123",
+      "db":"centuryply",
+      "port":5432,
+      "schemas":"inventory"
+    },
+    "pg":{
+      "host":"llmpragyandbpost.postgres.database.azure.com",
+      "user":"postdbadmin",
+      "pass":"CpiL@1984#N@w",
+      "db":"etl-db",
+      "port":5432,
+      "dstPort":5433,
+      "dstHost":"127.0.0.1",
+      "schemas":"inventory",
+      "ssh": {
+        "host": "20.41.245.93",
+        "port": 2226,
+        "username": "devops",
+        "password": "LlmDevOps@2025#"
+      }
+    }
+  }
+}

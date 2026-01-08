@@ -25,6 +25,7 @@ export class LocalStorage {
 
   // Set a value in local storage by key
   static set(key: string, value: any) {
+    
     if (!isBrowser) return;
     localStorage.setItem(key, btoa(JSON.stringify(value)));
   }

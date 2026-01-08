@@ -23,21 +23,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserSchema } from "../schema";
 import { useNavigate } from "react-router";
 import { useUser } from "@/hooks/use-user";
-import { useSetData } from "@/lib/hooks";
+import { usePatchData, useSetData } from "@/lib/hooks";
 import toast from "react-hot-toast";
 import { LocationField } from "@/components/location";
+import type { Branch } from "@/features/branche/types";
 
 import { itemStatusOptions, UserTypeOptions } from "@/lib/types";
+import { BranchMultiSelect } from "@/components/BranchMultiSelect";
+import type { PatchPayload } from "../types";
 
 type ProfileFormValues = z.infer<typeof UserSchema>;
 
 export default function ProfileForm({
   initial,
+  branch,
 }: {
   initial?: ProfileFormValues;
+  branch: Branch[];
 }) {
   const navigate = useNavigate();
+
   const { user: createdUser } = useUser();
+
+  const { patchData } = usePatchData("user_branch_access");
+  let request_user_Id: number | undefined = initial?.id;
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(UserSchema),
     defaultValues: {
@@ -48,11 +58,13 @@ export default function ProfileForm({
       status: initial?.status || "active",
       type: initial?.type || "Sales",
 
+      branch: initial?.branch ?? [],
       created_by: initial?.created_by?.toString(),
       ziplabel: initial?.ziplabel ?? "",
     },
   });
 
+  const userType = form.watch("type");
 
   const { setData } = useSetData<ProfileFormValues>("user");
 
@@ -65,12 +77,39 @@ export default function ProfileForm({
         ...data,
         id: initial?.id ?? undefined,
         created_by: createdUser?.id.toString(),
+        branch: undefined,
       },
       {
         onSuccess: () => {
-          toast.success("Data updated successfully");
-          form.reset();
-          navigate(-1);
+          if (!request_user_Id) {
+            console.error("No request_id found in response");
+            return;
+          }
+          console.log("requestId: ", request_user_Id, createdUser?.id);
+          const patchPayload: PatchPayload = [];
+          initial?.uba_id?.map((b) => {
+            patchPayload.push({
+              BACKEND_ACTION: "delete",
+              ID_RESPONSE: `item_${b}`,
+              id: b,
+            });
+          });
+          data.branch.map((b, index) =>
+            patchPayload.push({
+              BACKEND_ACTION: "update",
+              ID_RESPONSE: `item_${index + 1}`,
+              user_id: request_user_Id,
+              branch_id: b,
+              created_by: createdUser?.id,
+            })
+          );   
+          patchData(patchPayload, {
+            onSuccess: () => {
+              toast.success("Data updated successfully");
+              form.reset();
+              navigate(-1);
+            },
+          });
         },
       }
     );
@@ -255,6 +294,126 @@ export default function ProfileForm({
                   </FormItem>
                 )}
               />
+
+              {/* Branch */}
+              {/* <FormField
+                control={form.control}
+                name="branch"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Branch</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Branch name"
+                        {...field}
+                        value={field.value != null ? String(field.value) : ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              /> */}
+
+              {/* Branch */}
+              {/* {(userType === "Sales" || userType === "BAT") && (
+                <FormField
+                  control={form.control}
+                  name="branch"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {userType === "Sales"
+                          ? "Branch"
+                          : userType === "BAT"
+                          ? "Branches"
+                          : ""}
+                      </FormLabel>
+                      <FormControl>
+                        {userType === "Sales" ? (
+                          // 🔹 Single-select for Sales
+                          <Select
+                            value={field.value?.[0] ?? ""}
+                            onValueChange={(val) => field.onChange([val])}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select branch" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {branch.map((b) => (
+                                <SelectItem key={b.id} value={String(b.id)}>
+                                  {b.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <BranchMultiSelect
+                            options={branch.map((b) => ({
+                              label: b.name,
+                              value: String(b.id),
+                            }))}
+                            value={field.value ?? []}
+                            onChange={field.onChange}
+                            placeholder="Select branches"
+                          />
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )} */}
+              {(userType === "Sales" || userType === "BAT") && (
+                <FormField
+                  control={form.control}
+                  name="branch"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {userType === "Sales"
+                          ? "Branch"
+                          : userType === "BAT"
+                          ? "Branches"
+                          : ""}
+                      </FormLabel>
+                      <FormControl>
+                        {userType === "Sales" ? (
+                          // 🔹 Single-select for Sales
+                          <Select
+                            value={field.value?.[0] ?? ""}
+                            onValueChange={(val) => field.onChange([val])}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select branch" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {branch.map((b) => (
+                                <SelectItem key={b.id} value={String(b.id)}>
+                                  {b.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <BranchMultiSelect
+                            options={branch.map((b) => ({
+                              label: b.name,
+                              value: String(b.id),
+                            }))}
+                            value={field.value ?? []}
+                            onChange={field.onChange}
+                            placeholder="Select branches"
+                          />
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Branch -- end*/}
+              {/* Save Button */}
               <div className="md:col-span-2 flex justify-end">
                 <Button type="submit">Save Changes</Button>
               </div>

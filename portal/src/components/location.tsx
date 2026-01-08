@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { type UseFormSetValue, type UseFormWatch } from "react-hook-form";
 import { getData } from "@/lib/commonApi";
+import type { Zip } from "@/features/location/schema";
 import {
   FormControl,
   FormField,
@@ -10,7 +11,6 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { fetchData, type AutocompleteOption } from "@/lib/hooks";
-import type { Zip } from "@/features/admin/components/location/schema";
 import { Autocomplete } from "./AutoComplete";
 
 interface LocationFieldProps {
@@ -44,16 +44,16 @@ export function LocationField({
         where: query
           ? [
               {
-                key: "zip##code",
+                key: "zip##code::text",
                 operator: "like",
                 value: query,
               },
             ]
           : [],
-        select: "zip.*, state.name as sname, city.name as cname",
+        select: "zip.*, s.name as sname, c.name as cname",
         reference: [
-          { type: "JOIN", obj: "state", a: "id", b: "zip.state" },
-          { type: "JOIN", obj: "city", a: "id", b: "zip.city" },
+          { type: "JOIN", obj: "state s", a: "s.id", b: "zip.state" },
+          { type: "JOIN", obj: "city c", a: "c.id", b: "zip.city" },
         ],
       },
       (zip) => ({
@@ -74,10 +74,10 @@ export function LocationField({
 
     // Try fetch by ID first
     getData<Zip[]>("zip", {
-      select: "zip.*, state.name as sname, city.name as cname",
+      select: "zip.*, s.name as sname, c.name as cname",
       reference: [
-        { type: "JOIN", obj: "state", a: "id", b: "zip.state" },
-        { type: "JOIN", obj: "city", a: "id", b: "zip.city" },
+        { type: "JOIN", obj: "state s", a: "s.id", b: "zip.state" },
+        { type: "JOIN", obj: "city c", a: "c.id", b: "zip.city" },
       ],
       where: [{ key: "zip##id", operator: "is", value: Number(zipValue) || 0 }],
     }).then((res) => {
@@ -87,10 +87,10 @@ export function LocationField({
         getData<Zip[]>("zip", {
           select: "zip.*, s.name as sname, c.name as cname",
           reference: [
-            { type: "JOIN", obj: "state", a: "id", b: "zip.state" },
-            { type: "JOIN", obj: "city", a: "id", b: "zip.city" },
+            { type: "JOIN", obj: "state s", a: "s.id", b: "zip.state" },
+            { type: "JOIN", obj: "city c", a: "c.id", b: "zip.city" },
           ],
-          where: [{ key: "zip##code", operator: "is", value: zipValue }],
+          where: [{ key: "zip##code::text", operator: "is", value: zipValue }],
         }).then((res2) => {
           zipObj = res2?.message?.[0];
           if (zipObj) {

@@ -132,7 +132,7 @@ const statusMap: Record<
   },
   partial: {
     label: "Partial",
-    color: "bg-yellow-100 text-yellow-800",
+    color: "bg-orange-200 text-orange-800",
     icon: Loader,
   },
   done: {

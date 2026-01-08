@@ -15,20 +15,23 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { formSchema } from "@/features/auth/schema";
 import { useLogin } from "../hooks";
-import { AlertCircleIcon, LoaderCircle, Lock, MailIcon } from "lucide-react";
+import { AlertCircleIcon, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Alert, AlertTitle } from "@/components/ui/alert";
+import { useState } from "react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,13 +43,16 @@ export function LoginForm({
   const navigate = useNavigate();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
     const hashPassword = await hashStringSHA256(values.password);
     login(
       { email: values.email.trim(), password: hashPassword },
       {
-        onSuccess: () => {
-          navigate("/", { replace: true });
+        onSuccess: (res) => {
+          if (res?.type == 'Sales') {
+            navigate("/salesrequest", { replace: true });
+          }else{
+            navigate("/", { replace: true });
+          }
         },
         onError: () => {
          form.reset();
@@ -61,7 +67,9 @@ export function LoginForm({
         <CardHeader className="text-center">
           <CardTitle>Login to your account</CardTitle>
           <CardDescription className="flex flex-col gap-2">
-            <span>Enter your email below to login to your account</span>
+            <span>
+              Enter your E-mail / Phone No below to login to your account
+            </span>
             {isError && (
               <Alert variant="destructive" className="bg-destructive/20">
                 <AlertCircleIcon />
@@ -78,14 +86,12 @@ export function LoginForm({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>E-mail / Phone No.</FormLabel>
                     <FormControl>
-                      <InputGroup>
-                        <InputGroupInput placeholder="Enter email" {...field} />
-                        <InputGroupAddon>
-                          <MailIcon />
-                        </InputGroupAddon>
-                      </InputGroup>
+                      <Input
+                        placeholder="Enter E-mail / Phone No."
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -100,12 +106,20 @@ export function LoginForm({
                     <FormControl>
                       <InputGroup>
                         <InputGroupInput
-                          placeholder="Enter password"
+                          placeholder="Enter Password"
                           {...field}
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                         />
-                        <InputGroupAddon>
-                          <Lock />
+                        <InputGroupAddon
+                          align="inline-end"
+                          className="cursor-pointer"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="size-5" />
+                          ) : (
+                            <Eye className="size-5" />
+                          )}
                         </InputGroupAddon>
                       </InputGroup>
                     </FormControl>

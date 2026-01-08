@@ -49,7 +49,7 @@ export function SearchList({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full md:w-[200px] justify-between"
+          className="w-[200px] justify-between overflow-hidden"
         >
           {value
             ? lists?.find((list) => list.value === value)?.label
@@ -57,7 +57,7 @@ export function SearchList({
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full md:w-[200px] p-0">
+      <PopoverContent className="w-[200px] p-0">
         <Command>
           <CommandInput
             placeholder={placeholder}

@@ -97,4 +97,23 @@ export type FilterField = {
 
 export type FilterConfig = FilterField[];
 
-export const productTypes = ["1mm" , "0.8mm", "Recon", "EGL", "Cubicle", "Sainik Laminates"];
+export const productTypes = [
+  "Century Laminate 1mm",
+  "Starline -  .8mm",
+  "Recon - Senzura",
+  "EGL",
+  "Cubicle",
+  "Sainik Laminates",
+];
+
+export const RequetsForDef = makeZodEnum([
+  "Influencer",
+  "Retailer",
+  "Distributor",
+  "Dealer",
+  "Scouting",
+  "Owner",
+] as const);
+export type RequestForType = typeof RequetsForDef.type;
+export const RequestForSchema = RequetsForDef.schema;
+export const RequestForOptions = RequestForSchema.options;

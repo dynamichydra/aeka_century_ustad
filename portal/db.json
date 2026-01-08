@@ -1,0 +1,260 @@
+{
+  "user": [
+    {
+      "id": 1,
+      "code": "ADM001",
+      "name": "Alice Johnson",
+      "email": "alice.johnson@example.com",
+      "phone": "+1234567890",
+      "pwd": "hashed_password_1",
+      "address": "123 Admin St",
+      "state": "California",
+      "city": "Los Angeles",
+      "zip": "90001",
+      "created_by": "system",
+      "created_at": "2024-01-10T10:15:30Z",
+      "status": "active",
+      "type": "Admin",
+      "branche_id": null
+    },
+    {
+      "id": 2,
+      "code": "SAL001",
+      "name": "Bob Smith",
+      "email": "bob.smith@example.com",
+      "phone": "+1987654321",
+      "pwd": "hashed_password_2",
+      "address": "456 Sales Rd",
+      "state": "Texas",
+      "city": "Houston",
+      "zip": "77001",
+      "created_by": "ADM001",
+      "created_at": "2024-02-15T09:20:00Z",
+      "status": "active",
+      "type": "Sales",
+      "branche_id": 101
+    },
+    {
+      "id": 3,
+      "code": "BAT001",
+      "name": "Charlie Davis",
+      "email": "charlie.davis@example.com",
+      "phone": "+1230984567",
+      "pwd": "hashed_password_3",
+      "address": "789 Branch Ave",
+      "state": "New York",
+      "city": "New York City",
+      "zip": "10001",
+      "created_by": "ADM001",
+      "created_at": "2024-03-20T11:30:45Z",
+      "status": "active",
+      "type": "BAT",
+      "branche_id": 102
+    },
+    {
+      "id": 4,
+      "code": "PMG001",
+      "name": "Diana Evans",
+      "email": "diana.evans@example.com",
+      "phone": "+1123456789",
+      "pwd": "hashed_password_4",
+      "address": "101 Production Blvd",
+      "state": "Illinois",
+      "city": "Chicago",
+      "zip": "60601",
+      "created_by": "ADM001",
+      "created_at": "2024-04-05T14:10:00Z",
+      "status": "active",
+      "type": "PMG",
+      "branche_id": null
+    },
+    {
+      "id": 5,
+      "code": "STO001",
+      "name": "Evan Ford",
+      "email": "evan.ford@example.com",
+      "phone": "+1098765432",
+      "pwd": "hashed_password_5",
+      "address": "202 Commerce St",
+      "state": "Florida",
+      "city": "Miami",
+      "zip": "33101",
+      "created_by": "ADM001",
+      "created_at": "2024-05-12T08:45:00Z",
+      "status": "active",
+      "type": "STO",
+      "branche_id": null
+    },
+    {
+      "id": 6,
+      "code": "FAC001",
+      "name": "Fiona Green",
+      "email": "fiona.green@example.com",
+      "phone": "+1012345678",
+      "pwd": "hashed_password_6",
+      "address": "303 Factory Ln",
+      "state": "Ohio",
+      "city": "Columbus",
+      "zip": "43085",
+      "created_by": "ADM001",
+      "created_at": "2024-06-01T12:00:00Z",
+      "status": "active",
+      "type": "Factory",
+      "branche_id": null
+    }
+  ],
+  "skus": [
+    {
+      "id":1,
+      "sku": "SKU001",
+      "name": "Product A",
+      "min_stock": 10
+    },
+    {
+      "id":2,
+      "sku": "SKU002",
+      "name": "Product B",
+      "min_stock": 10
+    }
+  ],
+  "stock": [
+    {
+      "id":1,
+      "branche_id": 101,
+      "sku": "SKU001",
+      "quantity": 15
+    },
+    {
+      "id":2,
+      "branche_id": 101,
+      "sku": "SKU002",
+      "quantity": 15
+    }
+  ],
+  "sample_requests": [
+    {
+      "id": 101,
+      "requested_by": 2,
+      "branche_id": 101,
+      "sku": "SKU001",
+      "quantity": 3,
+      "status": "pending",
+      "approved_by": null,
+      "dispatched_by": null,
+      "received_by": null,
+      "created_at": "2024-09-01T10:00:00Z"
+    },
+    {
+      "id": 102,
+      "requested_by": 2,
+      "branche_id": 101,
+      "sku": "SKU002",
+      "quantity": 5,
+      "status": "approved",
+      "approved_by": 3,
+      "dispatched_by": null,
+      "received_by": null,
+      "created_at": "2024-09-02T11:00:00Z"
+    },
+    {
+      "id": 101,
+      "requested_by": 2,
+      "branche_id": 101,
+      "sku": "SKU001",
+      "quantity": 3,
+      "status": "pending",
+      "approved_by": null,
+      "dispatched_by": null,
+      "received_by": null,
+      "created_at": "2024-09-01T10:00:00Z"
+    },
+    {
+      "id": 102,
+      "requested_by": 2,
+      "branche_id": 101,
+      "sku": "SKU002",
+      "quantity": 5,
+      "status": "approved",
+      "approved_by": 3,
+      "dispatched_by": null,
+      "received_by": null,
+      "created_at": "2024-09-02T11:00:00Z"
+    },
+    {
+      "id": 103,
+      "requested_by": 2,
+      "branche_id": 101,
+      "sku": "SKU001",
+      "quantity": 2,
+      "status": "dispatched",
+      "approved_by": 3,
+      "dispatched_by": 3,
+      "received_by": null,
+      "created_at": "2024-09-03T09:30:00Z"
+    },
+    {
+      "id": 104,
+      "requested_by": 2,
+      "branche_id": 101,
+      "sku": "SKU002",
+      "quantity": 4,
+      "status": "received",
+      "approved_by": 3,
+      "dispatched_by": 3,
+      "received_by": 2,
+      "created_at": "2024-09-04T14:00:00Z"
+    }
+  ],
+  "production_requests": [
+    {
+      "id": 201,
+      "requested_by": 3,
+      "sku": "SKU001",
+      "quantity": 50,
+      "status": "pending",
+      "approved_by": null,
+      "sto_id": null,
+      "created_at": "2024-09-01T12:00:00Z"
+    },
+    {
+      "id": 202,
+      "requested_by": 3,
+      "sku": "SKU002",
+      "quantity": 30,
+      "status": "approved",
+      "approved_by": 4,
+      "sto_id": 301,
+      "created_at": "2024-09-02T13:00:00Z"
+    }
+  ],
+  "sto_orders": [
+    {
+      "id": 301,
+      "production_request_id": 202,
+      "sto_number": "STO-20240903-001",
+      "input_by": 5,
+      "created_at": "2024-09-03T09:00:00Z"
+    }
+  ],
+  "factory_dispatches": [
+    {
+      "id": 401,
+      "sto_id": 301,
+      "branche_id": 101,
+      "sku": "SKU002",
+      "quantity": 30,
+      "docket_number": "DCK-20240904-001",
+      "dispatched_at": "2024-09-04T14:00:00Z"
+    }
+  ],
+  "grn": [
+    {
+      "id": 501,
+      "branche_id": 101,
+      "sku": "SKU002",
+      "quantity": 30,
+      "received_at": "2024-09-05T09:00:00Z",
+      "acknowledged_by": 3
+    }
+  ]
+}

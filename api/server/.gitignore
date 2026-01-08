@@ -1,0 +1,8 @@
+
+.env
+.env_taskexecutor
+node_modules
+img/.DS_Store
+pdf/.DS_Store
+pdf/finance/.DS_Store
+pdf/ziener/catalog/.DS_Store

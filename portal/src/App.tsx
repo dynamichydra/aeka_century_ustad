@@ -8,7 +8,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <AppRoutes />
-        <Toaster />
+        <Toaster/>
       </ThemeProvider>
     </QueryClientProvider>
   );

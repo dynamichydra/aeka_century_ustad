@@ -1,14 +1,18 @@
 import { useUser } from "@/hooks/use-user";
 import { LoginForm } from "../components/loginFrom";
-import logo from "@/assets/CompanyLogo.jpeg";
+import logo from "@/assets/centuryply.png";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 const Login = () => {
-  const  navigate = useNavigate();
+  const navigate = useNavigate();
   const {user,isLoading} = useUser();
   useEffect(() => {
     if (!isLoading && user) {
-      navigate("/", { replace: true });
+       if (user.type==='Sales') {
+         navigate("/salesrequest", { replace: true });
+       }else{
+         navigate("/", { replace: true });
+       }
     }
   }, [isLoading, user, navigate]);
   return (

@@ -4,6 +4,11 @@ import { ItemStatusSchema, UserTypeSchema } from "@/lib/types";
 export const UserSchema = z.object({
   id: z.number().optional(),
 
+  // code: z.string(),
+  // name: z.string(),
+  // email: z.string().email(),
+  // phone: z.string(),
+  // pwd: z.string(),
   code: z.string().min(1, "User code is required"),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
@@ -19,6 +24,8 @@ export const UserSchema = z.object({
   created_by: z.string().optional(),
   status: ItemStatusSchema,
   type: UserTypeSchema,
+  branch: z.array(z.string()).transform((val) => val ?? []),
+  uba_id: z.array(z.string()).transform((val) => val ?? []).optional(),
   ziplabel: z.string().optional()
 });
 export type User = z.infer<typeof UserSchema>;
