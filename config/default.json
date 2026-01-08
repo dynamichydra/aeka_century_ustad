@@ -1,0 +1,56 @@
+{
+  "general comment": {
+    "USER_TYPE": "1 (super admin, 2= admin, 3=Sales, 4=BAT, 5=PMG, 6=STO, 7=Factory)"
+  },
+  "IP": "localhost",
+  "PORT": "8000",
+  "USER_TYPE": ["Admin", "Sales", "BAT", "PMG", "STO", "Factory"],
+  "STATUS": ["active", "inactive", "deleted"],
+  "TABLE_DEFINITION": {
+   "settings": [ "id", "sender_email", "email_cc", "email_api", "sendgrid", "smtp_host", "smtp_port", "smtp_user", "smtp_pwd", "max_order_qnt" , "reorder_qnt", "max_stock_level", "creation_last_update"],
+    "user": [ "id", "code", "name", "full_name", "email", "phone", "pwd", "address", "state", "city", "zip", "created_by", "created_at", "status" , "type", "role", "report_reset", "bulk_payment_reverse"],
+    "state": [ "id", "name", "code", "status", "created_by", "created_at" ],
+    "city": [ "id", "name", "code", "state", "region", "status", "created_by", "created_at" ],
+    "zip": [ "id", "code", "city", "status", "state", "created_by", "created_at" ],
+    "region": ["id", "name", "status"]
+  },
+  "notification": {
+    "type": {
+      "newSampleRequest": {
+        "label": "New Sample Request",
+        "tag": 1,
+        "allow": ["user"]
+      },
+      "sampleRequestApprove": {
+        "label": "Sample Request Approve",
+        "tag": 1,
+        "allow": ["user"]
+      },
+      "orderStatus": { "label": "Order status", "tag": 1, "allow": ["user"] }
+    },
+    "template_field": {
+      "User Name": {
+        "table": "user",
+        "field": "name",
+        "used": ["newSampleRequest", "orderStatus"]
+      },
+      "User Email": {
+        "table": "user",
+        "field": "email",
+        "used": ["newSampleRequest", "orderStatus"]
+      }
+    }
+  },
+  "dashboard": [],
+  "sendgrid_api_key": ".",
+  "db": {
+    "mysql": {
+      "host": "localhost",
+      "user": "root",
+      "pass": "",
+      "dbname": "hotel_management",
+      "schemas": "hotel_management",
+      "port": 3306
+    }
+  }
+}
