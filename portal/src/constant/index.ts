@@ -1,8 +1,8 @@
 const DM_CORE_CONFIG = {
-  // SERVER_URL: 'http://localhost:8000/',
-  // BACKEND_URL: 'http://localhost:8000/',
-  SERVER_URL: 'https://matlab.centuryply.com/',
-  BACKEND_URL: 'https://deco-2.delightfulpebble-041124b2.southindia.azurecontainerapps.io/',
+  SERVER_URL: 'http://localhost:8000/',
+  BACKEND_URL: 'http://localhost:8000/',
+  // SERVER_URL: 'https://matlab.centuryply.com/',
+  // BACKEND_URL: 'https://deco-2.delightfulpebble-041124b2.southindia.azurecontainerapps.io/',
   URL_SUFIX: 'api',
   APP_PLATFORM: 'private',
   AUTH_MODE: 'private', // private, landing, public, mix

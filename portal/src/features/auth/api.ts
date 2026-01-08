@@ -18,7 +18,7 @@ export async function Login(
       data: { SUCCESS, MESSAGE },
     } = response;
     if (SUCCESS) {      
-      LocalStorage.set("cnpl-inv-ur", MESSAGE);
+      LocalStorage.set("cnpl-ustad-ur", MESSAGE);
       return MESSAGE;
     } else {
       throw new Error(MESSAGE || "Login failed");
@@ -30,17 +30,17 @@ export async function Login(
 }
 
 export function LogOut() {
-  LocalStorage.remove("cnpl-inv-ur");
+  LocalStorage.remove("cnpl-ustad-ur");
   window.location.href = "/login";
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  const data: User = LocalStorage.get("cnpl-inv-ur");
+  const data: User = LocalStorage.get("cnpl-ustad-ur");
   return {...data, access_token:data.access_token};
 }
 
 export async function fetchCurrentUser(): Promise<User | null> {
-  const data: User = LocalStorage.get("cnpl-inv-ur");
+  const data: User = LocalStorage.get("cnpl-ustad-ur");
   if (!data || data.access_token == "") return null;
   try {
     const response = await API.post("", {

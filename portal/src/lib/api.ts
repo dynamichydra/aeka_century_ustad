@@ -17,7 +17,7 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((config) => {
-  const user = LocalStorage.get("cnpl-inv-ur");
+  const user = LocalStorage.get("cnpl-ustad-ur");
   if (user?.access_token) {
     config.headers.Authorization = `Bearer ${user.access_token}`;
   }

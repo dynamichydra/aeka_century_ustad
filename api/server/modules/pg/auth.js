@@ -42,21 +42,12 @@ exports.init = {
                 ];
 
                 let user = await commonObj.getData("user", { where: wr });
-                console.log("auth user", user);
                 if (user.SUCCESS && user.MESSAGE.id) {
-                  const userBranches = await commonObj.getData("user_branch_access", { where: [
-                    { key: "user_id", operator: "is", value: user.MESSAGE.id },
-                  ] });
-                  const branchAccessArray = userBranches.SUCCESS
-                    ? userBranches.MESSAGE.map((item) => item.branch_id)
-                    : [];
-
                   result({
                     SUCCESS: true,
                     MESSAGE: {
                       access_token: accessToken,
                       ...user.MESSAGE,
-                      branch: branchAccessArray,
                     },
                   });
                 } else {
