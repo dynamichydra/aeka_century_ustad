@@ -1,4 +1,6 @@
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
+import 'package:century_ai/common/widgets/profile/profile.dart';
+import 'package:century_ai/common/widgets/search_input/search_input.dart';
 import 'package:century_ai/features/home/screens/widgets/before_after_slider.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:century_ai/utils/constants/colors.dart';
@@ -31,53 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // User Profile Section
-              Center(
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(shape: BoxShape.circle),
-                      child: Container(
-                        padding: const EdgeInsets.all(4), // Layer 2 (Yellow)
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFC5C3C3),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF9A9797),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(8), // Layer 4 (Grey)
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF504B4B),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Container(
-                              padding: const EdgeInsets.all(1), // Separation
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const CircleAvatar(
-                                radius: 40,
-                                backgroundImage: AssetImage(TImages.user),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: TSizes.spaceBtwItems),
-                    Text(
-                      "Namaste Ramesh",
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  ],
-                ),
-              ),
+              Profile(),
               const SizedBox(height: TSizes.spaceBtwSections),
 
               // "Let’s explore" Section
@@ -96,16 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: TSizes.spaceBtwItems),
 
               // Search Input
-              const TTextField(
-                labelText: 'Search',
-                prefixIcon: Icon(Iconsax.search_normal),
-                fillColor: Colors.white,
-                suffixIcon: Image(
-                  image: AssetImage(TImages.homeInputRightIcon),
-                  fit: BoxFit.cover,
-                ),
-                isCircularIcon: true,
-              ),
+              SearchInput(),
               const SizedBox(height: TSizes.spaceBtwSections),
 
               SizedBox(

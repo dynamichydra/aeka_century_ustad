@@ -21,6 +21,8 @@ class TTextField extends StatelessWidget {
 
     this.suffixIcon,
     this.suffixPadding = const EdgeInsets.all(6),
+    this.onTap,
+    this.readOnly = false,
   });
 
   final TextEditingController? controller;
@@ -39,7 +41,8 @@ class TTextField extends StatelessWidget {
 
   final Widget? suffixIcon;
   final EdgeInsetsGeometry suffixPadding;
-
+  final VoidCallback? onTap;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +66,8 @@ class TTextField extends StatelessWidget {
         keyboardType: keyboardType,
         validator: validator,
         onChanged: onChanged,
+        onTap: onTap,
+        readOnly: readOnly,
         textAlign: TextAlign.start,
         style: const TextStyle(fontWeight: FontWeight.w500),
         decoration: InputDecoration(

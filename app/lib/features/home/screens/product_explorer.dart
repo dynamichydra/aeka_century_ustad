@@ -1,4 +1,5 @@
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
+import 'package:century_ai/common/widgets/search_input/search_input.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
@@ -45,16 +46,7 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Search Bar
-              const TTextField(
-                labelText: 'Search',
-                prefixIcon: Icon(Iconsax.search_normal),
-                fillColor: Colors.white,
-                suffixIcon: Image(
-                  image: AssetImage(TImages.homeInputRightIcon),
-                  fit: BoxFit.cover,
-                ),
-                isCircularIcon: true,
-              ),
+              SearchInput(),
               const SizedBox(height: TSizes.spaceBtwSections),
               SizedBox(
                 height: 100,
