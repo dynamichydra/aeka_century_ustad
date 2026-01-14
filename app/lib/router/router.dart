@@ -6,6 +6,7 @@ import 'package:century_ai/features/camera_pages/image_edit_page.dart';
 import 'package:century_ai/features/home/screens/home.dart';
 import 'package:century_ai/features/home/screens/product_explorer.dart';
 import 'package:century_ai/features/home/screens/product_library.dart';
+import 'package:century_ai/features/profile/profile_screent.dart';
 import 'package:century_ai/features/search/search_page.dart';
 import 'package:century_ai/router/shell_route.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
@@ -83,6 +84,11 @@ final GoRouter router = GoRouter(
       path: "/product-library",
       name: "product-library",
       builder: (context, state) => const ProductLibraryScreen(),
+    ),
+    GoRoute(
+      path: "/profile",
+      name: "profile",
+      builder: (context, state) => const ProfileScreen(),
     ),
   ],
 );

@@ -1,6 +1,6 @@
 import 'package:century_ai/features/content/screens/inspiration_wall/inspiration_wall.dart';
 import 'package:century_ai/features/content/screens/tips/tips.dart';
-import 'package:century_ai/features/personalization/screens/profile/profile.dart';
+import 'package:century_ai/features/profile/profile_screent.dart';
 import 'package:century_ai/features/projects/screens/my_work/my_work.dart';
 import 'package:century_ai/features/projects/screens/quotation/quotation.dart';
 import 'package:century_ai/features/shop/screens/favorites/favorites.dart';

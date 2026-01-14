@@ -10,11 +10,13 @@ class Profile extends StatelessWidget {
     this.avatarRadius = 40,
     this.nameAlignment = NameAlignment.center,
     this.userName = 'Namaste Ramesh',
+    this.needUserName = true
   });
 
   final double avatarRadius;
   final NameAlignment nameAlignment;
   final String userName;
+  final bool needUserName;
 
   @override
   Widget build(BuildContext context) {
@@ -27,14 +29,15 @@ class Profile extends StatelessWidget {
         const SizedBox(height: TSizes.spaceBtwItems),
 
         /// ✅ NAME ALIGNMENT ONLY
-        Align(
-          alignment: _getNameAlignment(),
-          child: Text(
-            userName,
-            style: Theme.of(context).textTheme.headlineMedium,
-            textAlign: _getTextAlign(),
+       if (needUserName)
+          Align(
+            alignment: _getNameAlignment(),
+            child: Text(
+              userName,
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: _getTextAlign(),
+            ),
           ),
-        ),
       ],
     );
   }
