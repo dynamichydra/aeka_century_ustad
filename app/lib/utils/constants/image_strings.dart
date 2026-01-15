@@ -15,6 +15,8 @@ class TImages {
   static const String defaultMultiImageIcon = "assets/images/content/default-images-icon.png";
   static const String defaultAttributeColorsImageIcon = "assets/images/content/tiny-color-palette.png";
   static const String defaultVariationImageIcon = "assets/images/content/tiny-man-maintaining-a-work-life-balance.png";
+  static const String blankImageFull = "assets/images/vectors/blank_img_full_width.png";
+  static const String blankImage = "assets/images/vectors/blank_img.png";
 
   // -- Social Logos
   static const String google = "assets/logos/google-icon.png";

@@ -55,7 +55,7 @@ class HomeDrawer extends StatelessWidget {
                 contentPadding: const EdgeInsets.only(left: TSizes.xl),
                 leading: const Icon(Iconsax.document),
                 title: const Text("Quotation"),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuotationScreen())),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuotationPage())),
               ),
             ],
           ),
