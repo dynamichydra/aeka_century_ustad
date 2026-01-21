@@ -141,7 +141,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                 ),
                 const SizedBox(height: TSizes.spaceBtwItems),
                 Text(
-                  "LAMINATES IDEA IN ONE TAP",
+                  "Design furniture. Made easy.",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: TColors.black,
                     fontWeight: FontWeight.bold,
