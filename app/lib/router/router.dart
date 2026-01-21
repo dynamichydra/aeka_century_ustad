@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:century_ai/features/authentication/screens/onboarding.dart';
 import 'package:century_ai/features/camera_pages/camera_pages_index.dart';
 import 'package:century_ai/features/camera_pages/image_edit_page.dart';
+import 'package:century_ai/features/camera_pages/image_color_picker.dart';
+import 'package:century_ai/features/camera_pages/image_finalize_page.dart';
 import 'package:century_ai/features/home/screens/home.dart';
 import 'package:century_ai/features/home/screens/product_explorer.dart';
 import 'package:century_ai/features/home/screens/product_library.dart';
@@ -23,7 +26,23 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: "/camera",
       name: "camera",
-      builder: (context, state) => CameraPagesIndex(),
+      builder: (context, state) {
+        bool fromColorPicker = false;
+        File? originalImage;
+        
+        if (state.extra is bool) {
+          fromColorPicker = state.extra as bool;
+        } else if (state.extra is Map<String, dynamic>) {
+          final data = state.extra as Map<String, dynamic>;
+          fromColorPicker = data['fromColorPicker'] as bool? ?? false;
+          originalImage = data['originalImage'] as File?;
+        }
+        
+        return CameraPagesIndex(
+          fromColorPicker: fromColorPicker,
+          originalImage: originalImage,
+        );
+      },
     ),
     ShellRoute(
       builder: (context, state, child) {
@@ -68,8 +87,52 @@ final GoRouter router = GoRouter(
       path: "/image_edit_page",
       name: "Image Edit Page",
       builder: (context, state) {
-        final File imageFile = state.extra as File;
-        return ImageEditPage(imageFile: imageFile);
+        File? imageFile;
+        Color? pickedColor;
+        
+        if (state.extra is File) {
+          imageFile = state.extra as File;
+        } else if (state.extra is Map<String, dynamic>) {
+          final data = state.extra as Map<String, dynamic>;
+          imageFile = data['imageFile'] as File?;
+          pickedColor = data['pickedColor'] as Color?;
+        }
+        
+        return ImageEditPage(
+          imageFile: imageFile!,
+          pickedColor: pickedColor,
+        );
+      },
+    ),
+    GoRoute(
+      path: "/image_color_picker",
+      name: "Image Color Picker",
+      builder: (context, state) {
+        File? imageFile;
+        File? originalImage;
+        
+        if (state.extra is Map<String, dynamic>) {
+          final data = state.extra as Map<String, dynamic>;
+          imageFile = data['imageFile'] as File?;
+          originalImage = data['originalImage'] as File?;
+        }
+        
+        return ImageColorPickerPage(
+          imageFile: imageFile!,
+          originalImage: originalImage,
+        );
+      },
+    ),
+    GoRoute(
+      path: "/image_finalize",
+      name: "Image Finalize",
+      builder: (context, state) {
+        final data = state.extra as Map<String, dynamic>;
+        return ImageFinalizePage(
+          editedImage: data['editedImage'] as File,
+          selectedColor: data['selectedColor'] as Map<String, dynamic>,
+          selectedLamination: data['selectedLamination'] as Map<String, dynamic>,
+        );
       },
     ),
     GoRoute(

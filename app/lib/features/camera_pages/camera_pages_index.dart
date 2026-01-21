@@ -7,9 +7,12 @@ import 'package:go_router/go_router.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CameraPagesIndex extends StatefulWidget {
-  const CameraPagesIndex({super.key});
+  final bool fromColorPicker;
+  final File? originalImage;
+  const CameraPagesIndex({super.key, this.fromColorPicker = false, this.originalImage});
 
   @override
   State<CameraPagesIndex> createState() => _CameraPagesIndexState();
@@ -56,7 +59,32 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     final XFile file = await _controller!.takePicture();
 
     // Navigate to edit page (example)
-    context.push("/image_edit_page", extra: File(file.path));
+    if (!mounted) return;
+    if (widget.fromColorPicker) {
+      context.push("/image_color_picker", extra: {
+        'imageFile': File(file.path),
+        'originalImage': widget.originalImage,
+      });
+    } else {
+      context.push("/image_edit_page", extra: File(file.path));
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      if (!mounted) return;
+      if (widget.fromColorPicker) {
+        context.push("/image_color_picker", extra: {
+          'imageFile': File(image.path),
+          'originalImage': widget.originalImage,
+        });
+      } else {
+        context.push("/image_edit_page", extra: File(image.path));
+      }
+    }
   }
 
   @override
@@ -151,7 +179,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: _pickFromGallery,
                     child: Container(
                       width: 50,
                       height: 50,
@@ -220,7 +248,6 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         ],
       ),
     );
-    ;
   }
 }
 

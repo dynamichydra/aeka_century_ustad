@@ -26,8 +26,9 @@ Color hexToColor(String hex) {
 
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
+  final Color? pickedColor;
 
-  const ImageEditPage({super.key, required this.imageFile});
+  const ImageEditPage({super.key, required this.imageFile, this.pickedColor});
 
   @override
   State<ImageEditPage> createState() => _ImageEditPageState();
@@ -41,6 +42,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   ByteData? _pixelData;
   Offset _touchPos = Offset.zero;
   Color _pickedColor = Colors.transparent;
+  bool _showComparison = false;
 
   bool _isInterior = true;
 
@@ -90,6 +92,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
     super.initState();
     _originalImage = widget.imageFile;
     _editedImage = widget.imageFile;
+
+    if (widget.pickedColor != null) {
+      _pickedColor = widget.pickedColor!;
+      _pickingColor = true;
+    }
 
     _checkOverflow(
       controller: _colorScrollController,
@@ -173,18 +180,93 @@ Rules:
                   right: 0,
                   child: SafeArea(
                     bottom: false,
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.45, // 👈 KEY FIX
-                      child: (_editedImage != _originalImage)
-                          ? ImageCompareSlider(
-                        before: _originalImage!,
-                        after: _editedImage!,
-                      )
-                          : Image.file(
-                        _originalImage!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
+                    child: Builder(
+                      builder: (context) {
+                        final imageAreaHeight = MediaQuery.of(context).size.height * 0.45;
+                        return SizedBox(
+                          height: imageAreaHeight,
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: (_showComparison && _editedImage != _originalImage)
+                                    ? ImageCompareSlider(
+                                        before: _originalImage!,
+                                        after: _editedImage!,
+                                        height: imageAreaHeight,
+                                      )
+                                    : Image.file(
+                                        _showComparison ? _editedImage! : _originalImage!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      ),
+                              ),
+                              // Compare Button Pill
+                              Positioned(
+                                bottom: 16,
+                                right: 16,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    if (_editedImage == _originalImage) {
+                                      if (_selectedColor == null || _selectedLamination == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Select color and texture first.")),
+                                        );
+                                        return;
+                                      }
+                                      await _applyAI();
+                                      setState(() => _showComparison = true);
+                                    } else {
+                                      setState(() => _showComparison = !_showComparison);
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.9),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_loading)
+                                          const SizedBox(
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                          )
+                                        else
+                                          Icon(
+                                            _showComparison ? Icons.close : Iconsax.frame_1,
+                                            size: 18,
+                                            color: Colors.black,
+                                          ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          _loading 
+                                            ? "Generating..." 
+                                            : (_showComparison ? "Close" : "Compare"),
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                     ),
                   ),
                 ),
@@ -204,7 +286,7 @@ Rules:
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         const Text(
                           "Design",
                           style: TextStyle(
@@ -240,8 +322,8 @@ Rules:
                                 minHeight: 24,
                                 minWidth: 56,
                               ),
-                              selectedColor: Colors.white,
-                              fillColor: const Color(0xFF8A660),
+                              selectedColor: Colors.black,
+                              fillColor: const Color(0x0ff8a660),
                               color: const Color(0xFFA3A1A1),
                               children: const [
                                 Text("Interior"),
@@ -252,7 +334,7 @@ Rules:
                         ),
 
 
-                        SizedBox(height: 5),
+                        const SizedBox(height: 5),
                         const TTextField(
                           labelText: 'Search',
                           prefixIcon: Icon(
@@ -261,7 +343,7 @@ Rules:
                           ),
                           isCircularIcon: true,
                         ),
-                        SizedBox(height: 5),
+                        const SizedBox(height: 5),
 
                         /// -------- COLORS --------
                         Row(
@@ -280,10 +362,9 @@ Rules:
                               ),
                               tooltip: "Pick color from screen",
                               onPressed: () {
-                                setState(() {
-                                  _pickingColor = true;
-                                  _screenImage = null; // force fresh capture
-                                  _pixelData = null;
+                                context.push("/camera", extra: {
+                                  'fromColorPicker': true,
+                                  'originalImage': widget.imageFile,
                                 });
                               },
                             ),
@@ -327,7 +408,7 @@ Rules:
                                   boxShadow: [
                                     BoxShadow(
                                       blurRadius: 3,
-                                      color: Color(0xFF646464),
+                                      color: const Color(0xFF646464),
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
@@ -351,37 +432,25 @@ Rules:
                                   ),
                                 ),
                                 onPressed: () {
-                                  if (_loading) return;
-
-                                  if (_selectedColor == null ||
-                                      _selectedLamination == null) {
+                                  if (_selectedColor == null || _selectedLamination == null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          "Please select color and texture",
-                                        ),
-                                      ),
+                                      const SnackBar(content: Text("Please select color and texture first.")),
                                     );
                                     return;
                                   }
 
-                                  _applyAI();
+                                  context.push("/image_finalize", extra: {
+                                    'editedImage': _editedImage,
+                                    'selectedColor': _selectedColor,
+                                    'selectedLamination': _selectedLamination,
+                                  });
                                 },
-                                child: _loading
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Text(
-                                        "Apply",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
+                                child: const Text(
+                                  "Apply",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
                             ),
 
@@ -634,19 +703,16 @@ Rules:
     );
   }
 
-  /// ---------------- COLOR PICKER ----------------
   Widget _colorPicker() {
     return SizedBox(
       height: 30,
-      child: Row(
+      child: Stack(
         children: [
-          /// 1️⃣ The horizontal list
-          Expanded(child: ListView.separated(
+          ListView.separated(
             controller: _colorScrollController,
             scrollDirection: Axis.horizontal,
             itemCount: colorList.length,
-            // padding: const EdgeInsets.only(right: 32),
-            // space for arrow
+            padding: const EdgeInsets.only(right: 32),
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, i) {
               final c = colorList[i];
@@ -687,10 +753,7 @@ Rules:
                 ),
               );
             },
-          ),),
-
-
-          SizedBox(width: 10, height: 20,),
+          ),
           /// 2️⃣ RIGHT ARROW OVERLAY
           if (_showColorArrow)
             Positioned(
@@ -706,16 +769,8 @@ Rules:
                   );
                 },
                 child: Container(
-                  // color: Colors.pink,
                   width: 15,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    // gradient: LinearGradient(
-                    //   colors: [Colors.transparent, Colors.white],
-                    //   begin: Alignment.centerLeft,
-                    //   end: Alignment.centerRight,
-                    // ),
-                  ),
                   child: const Icon(Icons.chevron_right, size: 22),
                 ),
               ),
