@@ -27,8 +27,8 @@ class HomeDrawer extends StatelessWidget {
           // Header
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: Colors.white),
-            accountName: Text("John Doe", style: Theme.of(context).textTheme.titleLarge),
-            accountEmail: Text("john.doe@example.com", style: Theme.of(context).textTheme.bodyMedium),
+            accountName: Text("Ramesh", style: Theme.of(context).textTheme.titleLarge),
+            accountEmail: Text("Ramesh.doe@example.com", style: Theme.of(context).textTheme.bodyMedium),
             currentAccountPicture: const CircleAvatar(
               backgroundImage: AssetImage(TImages.user),
             ),

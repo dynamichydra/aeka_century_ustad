@@ -15,6 +15,7 @@ class NavWrapper extends StatelessWidget {
   static const List<String> _routes = [
     "/",
     "/camera",
+    "/upload",
     "/heart",
     "/people",
   ];
@@ -94,12 +95,22 @@ class NavWrapper extends StatelessWidget {
               ),
 
               _NavItem(
+                icon: Image.asset(
+                  "assets/icons/app_icons/upload.png",
+                  height: 24,
+                  width: 24,
+                ),
+                isSelected: currentIndex == 2,
+                onTap: () => context.go(_routes[2]),
+              ),
+
+              _NavItem(
                 icon: Icon(
                   Icons.favorite,
                   color: TColors.black,
                 ),
-                isSelected: currentIndex == 2,
-                onTap: () => context.go(_routes[2]),
+                isSelected: currentIndex == 3,
+                onTap: () => context.go(_routes[3]),
               ),
 
               _NavItem(
@@ -112,8 +123,8 @@ class NavWrapper extends StatelessWidget {
                     BlendMode.srcIn,
                   ),
                 ),
-                isSelected: currentIndex == 3,
-                onTap: () => context.go(_routes[3]),
+                isSelected: currentIndex == 4,
+                onTap: () => context.go(_routes[4]),
               ),
             ],
           ),

@@ -40,7 +40,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
               children: [
                 SizedBox(height: 62.01),
                 Image(
-                  width: THelperFunctions.screenWidth(context) * 0.6,
+                  width: THelperFunctions.screenWidth(context) * 0.4,
                   height: 100,
                   image: AssetImage(
                     dark ? TImages.lightAppLogo : TImages.darkAppLogo,
