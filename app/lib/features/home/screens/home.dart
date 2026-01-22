@@ -1,3 +1,4 @@
+import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
 import 'package:century_ai/common/widgets/profile/profile.dart';
 import 'package:century_ai/common/widgets/search_input/search_input.dart';
@@ -47,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       letterSpacing: 2,
                     ),
                   ),
+                  ExteriorInteriorSwitchSlider()
                 ],
               ),
               const SizedBox(height: TSizes.spaceBtwItems),

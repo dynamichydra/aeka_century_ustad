@@ -40,7 +40,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
               children: [
                 SizedBox(height: 62.01),
                 Image(
-                  width: THelperFunctions.screenWidth(context) * 0.6,
+                  width: THelperFunctions.screenWidth(context) * 0.4,
                   height: 100,
                   image: AssetImage(
                     dark ? TImages.lightAppLogo : TImages.darkAppLogo,
@@ -141,7 +141,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                 ),
                 const SizedBox(height: TSizes.spaceBtwItems),
                 Text(
-                  "LAMINATES IDEA IN ONE TAP",
+                  "Design furniture. Made easy.",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: TColors.black,
                     fontWeight: FontWeight.bold,

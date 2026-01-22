@@ -1,6 +1,7 @@
 import 'package:century_ai/features/content/screens/inspiration_wall/inspiration_wall.dart';
 import 'package:century_ai/features/content/screens/tips/tips.dart';
 import 'package:century_ai/features/profile/profile_screent.dart';
+import 'package:century_ai/features/projects/screens/business_card/business_card.dart';
 import 'package:century_ai/features/projects/screens/my_work/my_work.dart';
 import 'package:century_ai/features/projects/screens/quotation/quotation.dart';
 import 'package:century_ai/features/shop/screens/favorites/favorites.dart';
@@ -27,8 +28,8 @@ class HomeDrawer extends StatelessWidget {
           // Header
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: Colors.white),
-            accountName: Text("John Doe", style: Theme.of(context).textTheme.titleLarge),
-            accountEmail: Text("john.doe@example.com", style: Theme.of(context).textTheme.bodyMedium),
+            accountName: Text("Ramesh", style: Theme.of(context).textTheme.titleLarge),
+            accountEmail: Text("Ramesh.doe@example.com", style: Theme.of(context).textTheme.bodyMedium),
             currentAccountPicture: const CircleAvatar(
               backgroundImage: AssetImage(TImages.user),
             ),
@@ -45,6 +46,12 @@ class HomeDrawer extends StatelessWidget {
             leading: const Icon(Iconsax.folder),
             title: const Text("My Project"),
             children: [
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                leading: const Icon(Iconsax.personalcard),
+                title: const Text("Business card"),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessCardScreen())),
+              ),
               ListTile(
                 contentPadding: const EdgeInsets.only(left: TSizes.xl),
                 leading: const Icon(Iconsax.briefcase),

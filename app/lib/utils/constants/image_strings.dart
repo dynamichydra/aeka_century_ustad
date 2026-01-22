@@ -5,8 +5,8 @@
 class TImages {
 
   // -- App Logos
-  static const String darkAppLogo = "assets/logos/Century_Laminates_with_tagline__Eng__page-0001-removebg-preview.png";
-  static const String lightAppLogo = "assets/logos/Century_Laminates_with_tagline__Eng__page-0001-removebg-preview.png";
+  static const String darkAppLogo = "assets/logos/CenturyDecoratives_Logo.png";
+  static const String lightAppLogo = "assets/logos/CenturyDecoratives_Logo.png";
   static const String smallLogo = "assets/logos/small_logo.png";
 
   // -- Default Images
