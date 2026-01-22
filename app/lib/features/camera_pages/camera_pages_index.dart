@@ -61,12 +61,12 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     // Navigate to edit page (example)
     if (!mounted) return;
     if (widget.fromColorPicker) {
-      context.push("/image_color_picker", extra: {
+      context.pushReplacement("/image_color_picker", extra: {
         'imageFile': File(file.path),
         'originalImage': widget.originalImage,
       });
     } else {
-      context.push("/image_edit_page", extra: File(file.path));
+      context.pushReplacement("/image_edit_page", extra: File(file.path));
     }
   }
 
@@ -77,12 +77,12 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     if (image != null) {
       if (!mounted) return;
       if (widget.fromColorPicker) {
-        context.push("/image_color_picker", extra: {
+        context.pushReplacement("/image_color_picker", extra: {
           'imageFile': File(image.path),
           'originalImage': widget.originalImage,
         });
       } else {
-        context.push("/image_edit_page", extra: File(image.path));
+        context.pushReplacement("/image_edit_page", extra: File(image.path));
       }
     }
   }

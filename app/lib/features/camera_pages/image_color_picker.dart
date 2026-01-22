@@ -22,7 +22,7 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
   Color _primaryColor = const Color(0xFFE5E5E5);
   Color _complimentaryColor1 = const Color(0xFFE5E5E5);
   Color _complimentaryColor2 = const Color(0xFFCDCDCD);
-  
+
   ui.Image? _cachedImage;
   ByteData? _pixelData;
 
@@ -52,9 +52,9 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
 
       final int x = localPos.dx.toInt().clamp(0, _cachedImage!.width - 1);
       final int y = localPos.dy.toInt().clamp(0, _cachedImage!.height - 1);
-      
+
       final int byteOffset = (y * _cachedImage!.width + x) * 4;
-      
+
       if (byteOffset + 3 >= _pixelData!.lengthInBytes) return;
 
       final int r = _pixelData!.getUint8(byteOffset);
@@ -282,7 +282,7 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      context.push("/image_edit_page", extra: {
+                      context.pushReplacement("/image_edit_page", extra: {
                         'imageFile': widget.originalImage ?? widget.imageFile,
                         'pickedColor': _primaryColor,
                       });

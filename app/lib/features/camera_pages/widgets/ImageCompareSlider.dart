@@ -1,24 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
-class ImageCompareSlider extends StatefulWidget {
+class ImageCompareSlider extends StatelessWidget {
   final File before;
   final File after;
   final double height;
+  final double position;
+  final ValueChanged<double> onChanged;
 
   const ImageCompareSlider({
     super.key,
     required this.before,
     required this.after,
+    required this.position,
+    required this.onChanged,
     this.height = 360,
   });
-
-  @override
-  State<ImageCompareSlider> createState() => _ImageCompareSliderState();
-}
-
-class _ImageCompareSliderState extends State<ImageCompareSlider> {
-  double _pos = 0.5;
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +25,8 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
 
         return GestureDetector(
           onHorizontalDragUpdate: (details) {
-            setState(() {
-              _pos += details.delta.dx / width;
-              _pos = _pos.clamp(0.0, 1.0);
-            });
+            final newPos = (position + details.delta.dx / width).clamp(0.0, 1.0);
+            onChanged(newPos);
           },
           child: Stack(
             children: [
@@ -39,24 +34,24 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.file(
-                  widget.after,
+                  after,
                   width: width,
-                  height: widget.height,
+                  height: height,
                   fit: BoxFit.cover,
                 ),
               ),
 
-              /// BEFORE image (clipped — SAME AS WORKING VERSION)
+              /// BEFORE image (clipped)
               ClipRect(
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  widthFactor: _pos,
+                  widthFactor: position,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.file(
-                      widget.before,
+                      before,
                       width: width,
-                      height: widget.height,
+                      height: height,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -65,20 +60,20 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
 
               /// DIVIDER
               Positioned(
-                left: width * _pos - 1,
+                left: width * position - 1,
                 top: 0,
                 bottom: 0,
                 child: CustomPaint(
-                  size: Size(2, widget.height),
+                  size: Size(2, height),
                   painter: DashedLinePainter(),
                 ),
               ),
 
               /// HANDLE
               Positioned(
-                left: width * _pos - 18,
-                top: widget.height / 2 - 18,
-                child: _SliderHandle(),
+                left: width * position - 18,
+                top: height / 2 - 18,
+                child: const _SliderHandle(),
               ),
             ],
           ),

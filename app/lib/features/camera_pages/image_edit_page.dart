@@ -19,11 +19,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_portal/flutter_portal.dart';
 import 'package:share_plus/share_plus.dart';
 
-Color hexToColor(String hex) {
-  hex = hex.replaceAll("#", "");
-  return Color(int.parse("FF$hex", radix: 16));
-}
-
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
   final Color? pickedColor;
@@ -40,11 +35,18 @@ class _ImageEditPageState extends State<ImageEditPage> {
   bool _pickingColor = false;
   ui.Image? _screenImage;
   ByteData? _pixelData;
-  Offset _touchPos = Offset.zero;
+  final Offset _touchPos = Offset.zero;
   Color _pickedColor = Colors.transparent;
   bool _showComparison = false;
 
   bool _isInterior = true;
+  final List<File> _savedVersions = [];
+  int? _comparingIndex;
+
+  // Track indices for comparison halves
+  int _leftIndex = -1; // -1 for original image
+  int _rightIndex = 0; // Index in _savedVersions for right side
+  double _comparePos = 0.5;
 
   Color _getPixelColor(ByteData data, ui.Image img, Offset pos) {
     final x = pos.dx.round().clamp(0, img.width - 1);
@@ -85,7 +87,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
       setState(() => setVisible(maxScroll > 0));
     });
   }
-  List<bool> _isSelected = [true, false];
+  final List<bool> _isSelected = [true, false];
 
   @override
   void initState() {
@@ -143,13 +145,18 @@ Rules:
 
     setState(() {
       _editedImage = result;
+      if (result != null) {
+        _savedVersions.add(result);
+        _comparingIndex = _savedVersions.length - 1;
+        _rightIndex = _savedVersions.length - 1;
+      }
       _loading = false;
     });
   }
 
   Future<ui.Image> _captureScreen() async {
     final boundary =
-        _screenKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    _screenKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
 
     return await boundary.toImage(pixelRatio: 3.0);
   }
@@ -171,430 +178,509 @@ Rules:
         backgroundColor: Colors.white,
         body: Stack(
           children: [
-            Stack(
+            Column(
               children: [
                 /// ---------------- IMAGE AREA ----------------
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: SafeArea(
-                    bottom: false,
-                    child: Builder(
+                SafeArea(
+                  child: Builder(
                       builder: (context) {
-                        final imageAreaHeight = MediaQuery.of(context).size.height * 0.45;
+                        final imageAreaHeight = MediaQuery.of(context).size.height * 0.40;
                         return SizedBox(
                           height: imageAreaHeight,
                           child: Stack(
                             children: [
                               Positioned.fill(
-                                child: (_showComparison && _editedImage != _originalImage)
-                                    ? ImageCompareSlider(
-                                        before: _originalImage!,
-                                        after: _editedImage!,
-                                        height: imageAreaHeight,
-                                      )
+                                child: (_showComparison && _savedVersions.isNotEmpty)
+                                    ? LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final width = constraints.maxWidth;
+                                      return Stack(
+                                        children: [
+                                          ImageCompareSlider(
+                                            before: _leftIndex == -1 ? _originalImage! : _savedVersions[_leftIndex],
+                                            after: _savedVersions[_rightIndex.clamp(0, _savedVersions.length - 1)],
+                                            height: imageAreaHeight,
+                                            position: _comparePos,
+                                            onChanged: (val) => setState(() => _comparePos = val),
+                                          ),
+
+                                          /// ---------------- IMAGE OVERLAY CONTROLS ----------------
+                                          // TOP-RIGHT of Left Image (X)
+                                          Positioned(
+                                            top: 10,
+                                            left: (width * _comparePos) - 34,
+                                            child: _buildSmallRoundButton(
+                                              icon: Icons.close,
+                                              onTap: () => setState(() => _showComparison = false),
+                                              size: 24,
+                                              iconSize: 14,
+                                            ),
+                                          ),
+
+                                          // TOP-RIGHT of Right Image (X)
+                                          Positioned(
+                                            top: 10,
+                                            right: 10,
+                                            child: _buildSmallRoundButton(
+                                              icon: Icons.close,
+                                              onTap: () => setState(() => _showComparison = false),
+                                              size: 24,
+                                              iconSize: 14,
+                                            ),
+                                          ),
+
+                                          // BOTTOM-LEFT CONTROLS (for Before image)
+                                          Positioned(
+                                            bottom: 10,
+                                            left: 10,
+                                            child: Row(
+                                              children: [
+                                                _buildImageControlCircle(
+                                                  icon: Icons.swap_horiz,
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _leftIndex++;
+                                                      if (_leftIndex >= _savedVersions.length) {
+                                                        _leftIndex = -1; // Cycle back to original
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+                                                const SizedBox(width: 8),
+                                                _buildImageControlCircle(
+                                                  icon: Icons.check,
+                                                  onTap: () => _finalizeImage(_leftIndex == -1 ? _originalImage! : _savedVersions[_leftIndex]),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          // BOTTOM-RIGHT CONTROLS (for After image)
+                                          Positioned(
+                                            bottom: 10,
+                                            right: 10,
+                                            child: Row(
+                                              children: [
+                                                _buildImageControlCircle(
+                                                  icon: Icons.swap_horiz,
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _rightIndex++;
+                                                      if (_rightIndex >= _savedVersions.length) {
+                                                        _rightIndex = 0;
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+                                                const SizedBox(width: 8),
+                                                _buildImageControlCircle(
+                                                  icon: Icons.check,
+                                                  onTap: () => _finalizeImage(_savedVersions[_rightIndex]),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                )
                                     : Image.file(
-                                        _showComparison ? _editedImage! : _originalImage!,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                      ),
+                                  (_showComparison && _comparingIndex != null && _savedVersions.isNotEmpty)
+                                      ? _savedVersions[_comparingIndex!]
+                                      : _originalImage!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
                               ),
-                              // Compare Button Pill
-                              Positioned(
-                                bottom: 16,
-                                right: 16,
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    if (_editedImage == _originalImage) {
+
+
+                              // Compare Button Pill (Conditional, hide if comparison is active to avoid clutter)
+                              if (!_showComparison || _savedVersions.isEmpty)
+                                Positioned(
+                                  bottom: 16,
+                                  right: 16,
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      if (_loading) return;
+                                      if (_savedVersions.isEmpty) {
+                                        if (_selectedColor == null || _selectedLamination == null) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text("Select color and texture first.")),
+                                          );
+                                          return;
+                                        }
+                                        await _applyAI();
+                                        setState(() => _showComparison = true);
+                                      } else {
+                                        setState(() => _showComparison = !_showComparison);
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.9),
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.1),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (_loading)
+                                            const SizedBox(
+                                              width: 14,
+                                              height: 14,
+                                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                            )
+                                          else
+                                            Icon(
+                                              _showComparison ? Icons.close : Iconsax.frame_1,
+                                              size: 18,
+                                              color: Colors.black,
+                                            ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            _loading
+                                                ? "Generating..."
+                                                : (_showComparison ? "Close" : "Compare"),
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      }
+                  ),
+                ),
+
+                /// ---------------- SAVED VERSIONS LIST ----------------
+                if (_savedVersions.isNotEmpty)
+                  Container(
+                    height: 48,
+                    padding: EdgeInsets.zero,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _savedVersions.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        final isSelected = _comparingIndex == index;
+                        return Center(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _comparingIndex = index;
+                                  _showComparison = true;
+                                });
+                              },
+                              child:
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected ? Colors.black : Colors.transparent,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(2.0),
+                                  child: ClipOval(
+                                    child: Image.file(
+                                      _savedVersions[index],
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                        );
+                      },
+                    ),
+                  ),
+
+                /// ---------------- BOTTOM PANEL ----------------
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Design",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 24,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  "AI Based Color & Pattern Search",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              ToggleButtons(
+                                isSelected: _isSelected,
+                                onPressed: (index) {
+                                  setState(() {
+                                    for (int i = 0; i < _isSelected.length; i++) {
+                                      _isSelected[i] = i == index;
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                constraints: const BoxConstraints(
+                                  minHeight: 24,
+                                  minWidth: 56,
+                                ),
+                                selectedColor: Colors.black,
+                                fillColor: const Color(0xff808080),
+                                color: const Color(0xFFA3A1A1),
+                                children: const [
+                                  Text("Interior"),
+                                  Text("Exterior"),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          const TTextField(
+                            labelText: 'Search',
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: TColors.darkerGrey,
+                            ),
+                            isCircularIcon: true,
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Select Color",
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.colorize,
+                                  color: _pickingColor ? Colors.blue : Colors.black,
+                                ),
+                                tooltip: "Pick color from screen",
+                                onPressed: () {
+                                  context.pushReplacement("/camera", extra: {
+                                    'fromColorPicker': true,
+                                    'originalImage': widget.imageFile,
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          _colorPicker(),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "Pattern & Texture",
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          _laminationPicker(),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              // Bookmark Button
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    isBookmarkPopupOpen = true;
+                                  });
+                                },
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        blurRadius: 3,
+                                        color: const Color(0xFF646464),
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.bookmark, size: 24),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
+                              // Apply Button
+                              Expanded(
+                                child: SizedBox(
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                    onPressed: () async {
+                                      if (_loading) return;
+
+                                      // If selection is incomplete, show snackbar
                                       if (_selectedColor == null || _selectedLamination == null) {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Select color and texture first.")),
+                                          const SnackBar(content: Text("Please select both color and texture.")),
                                         );
                                         return;
                                       }
+
+                                      // Complete selection: Apply AI
                                       await _applyAI();
-                                      setState(() => _showComparison = true);
-                                    } else {
-                                      setState(() => _showComparison = !_showComparison);
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.9),
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
+                                    },
+                                    child: FittedBox(
+                                      child: Text(
+                                        _loading ? "Generating..." : "Apply",
+                                        style: const TextStyle(fontWeight: FontWeight.w700),
+                                      ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (_loading)
-                                          const SizedBox(
-                                            width: 14,
-                                            height: 14,
-                                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                                          )
-                                        else
-                                          Icon(
-                                            _showComparison ? Icons.close : Iconsax.frame_1,
-                                            size: 18,
-                                            color: Colors.black,
-                                          ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          _loading 
-                                            ? "Generating..." 
-                                            : (_showComparison ? "Close" : "Compare"),
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
+                              // Share Button
+                              InkWell(
+                                onTap: () {
+                                  Share.share(
+                                    'Check out this design!',
+                                    subject: 'Furniture Design',
+                                  );
+                                },
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        blurRadius: 3,
+                                        color: const Color(0xFF646464),
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.share, size: 24),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
+                              // Proceed/Forward Arrow
+                              InkWell(
+                                onTap: () {
+                                  final currentIdx = _rightIndex.clamp(0, _savedVersions.length - 1);
+                                  _finalizeImage(_savedVersions.isNotEmpty ? _savedVersions[currentIdx] : _originalImage!);
+                                },
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        blurRadius: 3,
+                                        color: const Color(0xFF646464),
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.arrow_forward, size: 24),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      }
-                    ),
-                  ),
-                ),
-
-
-                /// ---------------- BOTTOM PANEL ----------------
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
-                        const Text(
-                          "Design",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 24,
-                          ),
-                        ),
-
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                "AI Based Color & Pattern Search",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-
-                            ToggleButtons(
-                              isSelected: _isSelected,
-                              onPressed: (index) {
-                                setState(() {
-                                  // allow only one selected at a time
-                                  for (int i = 0; i < _isSelected.length; i++) {
-                                    _isSelected[i] = i == index;
-                                  }
-                                });
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              constraints: const BoxConstraints(
-                                minHeight: 24,
-                                minWidth: 56,
-                              ),
-                              selectedColor: Colors.black,
-                              fillColor: const Color(0x0ff8a660),
-                              color: const Color(0xFFA3A1A1),
-                              children: const [
-                                Text("Interior"),
-                                Text("Exterior"),
-                              ],
-                            ),
-                          ],
-                        ),
-
-
-                        const SizedBox(height: 5),
-                        const TTextField(
-                          labelText: 'Search',
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: TColors.darkerGrey,
-                          ),
-                          isCircularIcon: true,
-                        ),
-                        const SizedBox(height: 5),
-
-                        /// -------- COLORS --------
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Select Color",
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.colorize,
-                                color: _pickingColor
-                                    ? Colors.blue
-                                    : Colors.black,
-                              ),
-                              tooltip: "Pick color from screen",
-                              onPressed: () {
-                                context.push("/camera", extra: {
-                                  'fromColorPicker': true,
-                                  'originalImage': widget.imageFile,
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        _colorPicker(),
-
-                        const SizedBox(height: 16),
-
-                        /// -------- LAMINATIONS --------
-                        const Text(
-                          "Pattern & Texture",
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
-                        _laminationPicker(),
-
-                        const SizedBox(height: 20),
-
-                        /// -------- APPLY BUTTON --------
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                // context.go("/");
-                                setState(() {
-                                  isBookmarkPopupOpen = true;
-                                });
-                              },
-                              child: Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFFE5E5E5),
-                                    width: 0,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      blurRadius: 3,
-                                      color: const Color(0xFF646464),
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                  color: Colors.white,
-                                ),
-                                child: const Center(
-                                  child: Icon(Icons.bookmark, size: 24),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 180,
-                              height: 50,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(20),
-                                    ),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  if (_selectedColor == null || _selectedLamination == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Please select color and texture first.")),
-                                    );
-                                    return;
-                                  }
-
-                                  context.push("/image_finalize", extra: {
-                                    'editedImage': _editedImage,
-                                    'selectedColor': _selectedColor,
-                                    'selectedLamination': _selectedLamination,
-                                  });
-                                },
-                                child: const Text(
-                                  "Apply",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(width: 50, height: 50),
-
-                            // Portal(
-                            //
-                            //   child: PortalTarget(
-                            //     visible: isOpen,
-                            //     anchor: const Aligned(
-                            //       follower: Alignment.bottomCenter,
-                            //       target: Alignment.topCenter,
-                            //     ),
-                            //
-                            //     portalFollower:  Stack(
-                            //       children: [
-                            //         /// 🔒 FULL SCREEN MODAL BARRIER
-                            //         Positioned.fill(
-                            //           child: GestureDetector(
-                            //             behavior: HitTestBehavior.opaque,
-                            //             onTap: () => setState(() => isOpen = false),
-                            //             child: const SizedBox(),
-                            //           ),
-                            //         ),
-                            //
-                            //         /// 🔝 POPUP MENU (aligned above button)
-                            //         Align(
-                            //           alignment: Alignment.topCenter,
-                            //           child: Transform.translate(
-                            //             offset: const Offset(0, -12),
-                            //             child: Material(
-                            //               color: const Color(0xFFF1F1F1),
-                            //               elevation: 12,
-                            //               borderRadius: BorderRadius.circular(5),
-                            //               child: Padding(
-                            //                 padding: const EdgeInsets.all(5),
-                            //                 child: Column(
-                            //                   mainAxisSize: MainAxisSize.min,
-                            //                   children: [
-                            //                     IconButton(
-                            //                       icon: Container(
-                            //                           color: Colors.white,
-                            //                           child: Padding(
-                            //                             padding: const EdgeInsets.all(12.0),
-                            //                             child: const Icon(Icons.share),
-                            //                           )),
-                            //                       onPressed: () {
-                            //                         setState(() => print("object"));
-                            //                       },
-                            //                     ),
-                            //                     IconButton(
-                            //                       icon: Container(
-                            //                           color: Colors.white,
-                            //                           child: Padding(
-                            //                             padding: const EdgeInsets.all(12.0),
-                            //                             child: const Icon(Icons.bookmark),
-                            //                           )),
-                            //                       onPressed: () {
-                            //                         setState(() => isOpen = false);
-                            //                       },
-                            //                     ),
-                            //                   ],
-                            //                 ),
-                            //               ),
-                            //             ),
-                            //           ),
-                            //         ),
-                            //       ],
-                            //     ),
-                            //
-                            //     child: GestureDetector(
-                            //       onTap: () => setState(() => isOpen = !isOpen),
-                            //       child: Container(
-                            //         width: 50,
-                            //         height: 50,
-                            //         decoration: const BoxDecoration(
-                            //           shape: BoxShape.circle,
-                            //           color: Colors.white,
-                            //           boxShadow: [
-                            //             BoxShadow(blurRadius: 4, color: Colors.black26),
-                            //           ],
-                            //         ),
-                            //         child: Icon(
-                            //           isOpen ? Icons.close : Icons.more_horiz,
-                            //           size: 32,
-                            //         ),
-                            //       ),
-                            //     ),
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                        const SizedBox(height: 30),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Custom App Button
-                Positioned(
-                  top: 40,
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: Icon(Iconsax.menu_1, color: Colors.black),
-                        onPressed: () =>
-                            _scaffoldKey.currentState?.openDrawer(),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(right: TSizes.defaultSpace),
-                        child: Image(
-                          image: AssetImage(TImages.smallLogo),
-                          width: 30,
-                          height: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                if (_pickingColor)
-                  Positioned(
-                    left: _touchPos.dx - 18,
-                    top: _touchPos.dy - 48,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: _pickedColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 6),
+                          const SizedBox(height: 30),
                         ],
                       ),
                     ),
                   ),
+                ),
               ],
             ),
 
-            /// TAP BARRIER
+            // Top Buttons (Menu & Logo)
+            Positioned(
+              top: 40,
+              left: 16,
+              right: 16,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Iconsax.menu_1, color: Colors.black),
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                  ),
+                  Image(
+                    image: AssetImage(TImages.smallLogo),
+                    width: 30,
+                    height: 30,
+                  ),
+                ],
+              ),
+            ),
+
+            if (_pickingColor)
+              Positioned(
+                left: _touchPos.dx - 18,
+                top: _touchPos.dy - 48,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: _pickedColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black26, blurRadius: 6),
+                    ],
+                  ),
+                ),
+              ),
+
+            /// TAP BARRIER for Share Popup
             if (isOpen)
               Positioned.fill(
                 child: GestureDetector(
@@ -615,10 +701,6 @@ Rules:
                       'Check out this design!',
                       subject: 'Furniture Design',
                     );
-
-                    // setState(() {
-                    //   isOpen = false; // close popup after share
-                    // });
                   },
                   onBookmark: () {
                     setState(() {
@@ -628,19 +710,6 @@ Rules:
                 ),
               ),
 
-            // if (isBookmarkPopupOpen)
-            //   Positioned.fill(
-            //     child: Center(
-            //       child: BookmarkPopup(
-            //         onClose: () {
-            //           setState(() {
-            //             isBookmarkPopupOpen = false;
-            //             isOpen = false;
-            //           });
-            //         },
-            //       ),
-            //     ),
-            //   ),
             if (isBookmarkPopupOpen) ...[
               /// 🔒 TAP BARRIER (behind popup)
               Positioned.fill(
@@ -671,32 +740,6 @@ Rules:
               ),
             ],
 
-            /// FLOATING BUTTON
-            Positioned(
-              right: 16,
-              bottom: 54,
-              child: GestureDetector(
-                onTap: () => { Share.share(
-                  'Check out this design!',
-                  subject: 'Furniture Design',
-                )},
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(blurRadius: 6, color: Colors.black26),
-                    ],
-                  ),
-                  child: Icon(
-                    isOpen ? Icons.close : Icons.share,
-                    size: 32,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -713,7 +756,7 @@ Rules:
             scrollDirection: Axis.horizontal,
             itemCount: colorList.length,
             padding: const EdgeInsets.only(right: 32),
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, i) {
               final c = colorList[i];
               final selected = _selectedColor?["id"] == c["id"];
@@ -791,7 +834,7 @@ Rules:
             scrollDirection: Axis.horizontal,
             itemCount: laminationList.length,
             padding: const EdgeInsets.only(right: 36),
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, i) {
               final l = laminationList[i];
               final selected = _selectedLamination?["id"] == l["id"];
@@ -831,13 +874,7 @@ Rules:
                   );
                 },
                 child: Container(
-                  // width: 36,
                   decoration: const BoxDecoration(
-                    // gradient: LinearGradient(
-                    //   colors: [Colors.transparent, Colors.white],
-                    //   begin: Alignment.centerLeft,
-                    //   end: Alignment.centerRight,
-                    // ),
                     color: Colors.white,
                   ),
                   child: const Icon(Icons.chevron_right),
@@ -845,6 +882,59 @@ Rules:
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  void _finalizeImage(File image) {
+    context.push("/image_finalize", extra: {
+      'editedImage': image,
+      'selectedColor': _selectedColor,
+      'selectedLamination': _selectedLamination,
+    });
+  }
+
+  Widget _buildSmallRoundButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    double size = 30,
+    double iconSize = 18,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.8),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: iconSize, color: Colors.black),
+      ),
+    );
+  }
+
+  Widget _buildImageControlCircle({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 20, color: Colors.black),
       ),
     );
   }
@@ -893,6 +983,11 @@ class CustomPopupBar extends StatelessWidget {
       ),
     );
   }
+}
+
+Color hexToColor(String hex) {
+  hex = hex.replaceAll("#", "");
+  return Color(int.parse("FF$hex", radix: 16));
 }
 
 class BookmarkPopup extends StatefulWidget {
@@ -1073,7 +1168,7 @@ class ExpandingToggleSwitch extends StatefulWidget {
 class _ExpandingToggleSwitchState extends State<ExpandingToggleSwitch> {
   int selectedIndex = 0;
 
-  static const Color selectedColor = Color(0xFF8A660);
+  static const Color selectedColor = Color(0x0ff8a660);
   static const Color unselectedColor = Color(0xFFA3A1A1);
 
   @override
@@ -1124,5 +1219,3 @@ class _ExpandingToggleSwitchState extends State<ExpandingToggleSwitch> {
     );
   }
 }
-
-
