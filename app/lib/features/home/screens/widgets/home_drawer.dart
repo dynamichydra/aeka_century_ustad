@@ -1,3 +1,4 @@
+import 'package:century_ai/features/content/screens/inspiration_wall/art_gallery.dart';
 import 'package:century_ai/features/content/screens/inspiration_wall/inspiration_wall.dart';
 import 'package:century_ai/features/content/screens/tips/tips.dart';
 import 'package:century_ai/features/profile/profile_screent.dart';
@@ -12,7 +13,7 @@ import 'package:century_ai/utils/constants/image_strings.dart';
 import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-
+import 'package:flutter/cupertino.dart';
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({super.key});
 
@@ -67,10 +68,44 @@ class HomeDrawer extends StatelessWidget {
             ],
           ),
 
-          ListTile(
+          ExpansionTile(
             leading: const Icon(Iconsax.lamp_on),
             title: const Text("Inspiration Wall"),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InspirationWallScreen())),
+            children: [
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                leading: const Icon(
+                  CupertinoIcons.plus_square_fill_on_square_fill,
+                ),
+                title: const Text("Art Gallery"),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ArtGallery()),
+                ),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                leading: const Icon(
+                  CupertinoIcons.plus_square_fill_on_square_fill,
+                ),
+                title: const Text("Color Horoscope"),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyWorkScreen()),
+                ),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                leading: const Icon(
+                  CupertinoIcons.plus_square_fill_on_square_fill
+                ),
+                title: const Text("Blogs"),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const QuotationPage()),
+                ),
+              ),
+            ],
           ),
           ListTile(
             leading: const Icon(Iconsax.info_circle),
