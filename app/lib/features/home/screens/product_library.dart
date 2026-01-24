@@ -1,3 +1,6 @@
+import 'package:century_ai/common/widgets/layout/grid_view_toggle_bar.dart';
+import 'package:century_ai/common/widgets/section/section_header.dart';
+import 'package:century_ai/common/widgets/section/section_list.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
@@ -46,77 +49,50 @@ class _ProductLibraryScreenState extends State<ProductLibraryScreen> {
                 ),
                 const SizedBox(height: TSizes.spaceBtwSections),
 
-                // Repeating Sections for each Category
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: allCategories.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: TSizes.spaceBtwSections),
-                  itemBuilder: (context, index) {
-                    final category = allCategories[index];
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Section Header: Title and View All
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                category.name.toUpperCase(),
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.2,
-                                      color: Color(0xFFA39F9F),
-                                    ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {},
-                              child: const Text(
-                                "view all",
-                                style: TextStyle(color: TColors.textSecondary),
-                              ),
-                            ),
-                          ],
+               SectionList(
+                  items: allCategories,
+                  headerBuilder: (context, category) {
+                    return SectionHeader(
+                      leading: sectionTitleText(context, category.name),
+                      trailing: TextButton(
+                        onPressed: () {},
+                        child: const Text(
+                          'view all',
+                          style: TextStyle(color: TColors.textSecondary),
                         ),
-                        const SizedBox(height: TSizes.spaceBtwItems),
+                      ),
+                    );
+                  },
 
-                        // Grid showing the SAME image 4 times
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: _crossAxisCount,
-                                crossAxisSpacing: TSizes.spaceBtwItems,
-                                mainAxisSpacing: TSizes.spaceBtwItems,
-                                childAspectRatio: 1,
-                              ),
-                          itemCount: 4, // Always show 4 images (repeated)
-                          itemBuilder: (context, _) {
-                            return GestureDetector(
-                              onTap: () => context.push(
-                                '/product-explorer',
-                                extra: category,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                  TSizes.borderRadiusLg,
-                                ),
-                                child: Image.asset(
-                                  category.image,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                  /// CONTENT
+                  itemBuilder: (context, category) {
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _crossAxisCount,
+                        crossAxisSpacing: TSizes.spaceBtwItems,
+                        mainAxisSpacing: TSizes.spaceBtwItems,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: 4,
+                      itemBuilder: (context, _) {
+                        return GestureDetector(
+                          onTap: () => context.push(
+                            '/product-explorer',
+                            extra: category,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              TSizes.borderRadiusLg,
+                            ),
+                            child: Image.asset(
+                              category.image,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -125,49 +101,27 @@ class _ProductLibraryScreenState extends State<ProductLibraryScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: TSizes.defaultSpace,
-          vertical: TSizes.md,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Menu Button
-            Builder(
-              builder: (context) => Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: TColors.grey),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                  icon: const Icon(Iconsax.menu_1, color: Colors.black),
-                ),
-              ),
-            ),
-            const SizedBox(width: TSizes.spaceBtwSections),
-            // toggle between 2 and 4 images in a row
-            Container(
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                onPressed: () {
-                  setState(() {
-                    _crossAxisCount = (_crossAxisCount == 2) ? 4 : 2;
-                  });
-                },
-                icon: Icon(
-                  _crossAxisCount == 2 ? Icons.grid_view : Icons.view_list,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
+      bottomNavigationBar: GridViewToggleBar(
+        isGridView: _crossAxisCount == 2,
+        onMenuTap: () => Scaffold.of(context).openDrawer(),
+        onToggleView: () {
+          setState(() {
+            _crossAxisCount = _crossAxisCount == 2 ? 4 : 2;
+          });
+        },
       ),
     );
   }
+}
+
+Widget sectionTitleText(BuildContext context, String text) {
+  return Text(
+    text.toUpperCase(),
+    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1.2,
+      color: const Color(0xFFA39F9F),
+    ),
+    overflow: TextOverflow.ellipsis,
+  );
 }

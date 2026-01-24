@@ -4,10 +4,7 @@ class OnboardingState {
   final int pageIndex;
   final bool isOtpStage;
 
-  OnboardingState({
-    required this.pageIndex,
-    this.isOtpStage = false,
-  });
+  OnboardingState({required this.pageIndex, this.isOtpStage = false});
 
   @override
   bool operator ==(Object other) =>
@@ -32,10 +29,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   }
 
   void setOtpStage(bool value) {
-    emit(OnboardingState(
-      pageIndex: state.pageIndex,
-      isOtpStage: value,
-    ));
+    emit(OnboardingState(pageIndex: state.pageIndex, isOtpStage: value));
   }
 
   void nextPage() {

@@ -1,4 +1,7 @@
-import 'package:century_ai/common/widgets/inputs/text_field.dart';
+import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
+import 'package:century_ai/common/widgets/horizontal_icon_grid/horizontal_icon_grid.dart';
+import 'package:century_ai/common/widgets/layout/adaptive_grid_view.dart';
+import 'package:century_ai/common/widgets/layout/grid_view_toggle_bar.dart';
 import 'package:century_ai/common/widgets/search_input/search_input.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:century_ai/utils/constants/colors.dart';
@@ -45,148 +48,56 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search Bar
               SearchInput(),
               const SizedBox(height: TSizes.spaceBtwSections),
               SizedBox(
                 height: 100,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final itemWidth = constraints.maxWidth / 5;
-                    return Row(
-                      children: List.generate(5, (index) {
-                        /// SEE MORE (LAST ITEM)
-                        if (index == 4) {
-                          return SizedBox(
-                            width: itemWidth,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.transparent,
-                                      width: 4,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(
-                                      4,
-                                    ), // SAME inner gap
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: TColors.inputBackground,
-                                      ),
-                                      child: IconButton(
-                                        onPressed: () {},
-                                        icon: const Icon(
-                                          Iconsax.arrow_right_3,
-                                          size: 22,
-                                          color: Colors.black,
-                                        ),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: TSizes.spaceBtwItems / 2,
-                                ),
-                                Text(
-                                  "See more",
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.labelMedium,
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        /// PRODUCT ITEM
-                        final product = ProductImages.productImages[index];
-                        final isSelected = _currentProduct.id == product.id;
-
-                        return SizedBox(
-                          width: itemWidth,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _currentProduct = product;
-                              });
-                            },
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? TColors.productSelectedColor
-                                          : Colors.transparent,
-                                      width: 6,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(
-                                      2,
-                                    ), // hollow ring gap
-                                    child: CircleAvatar(
-                                      backgroundImage: AssetImage(
-                                        product.image,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: TSizes.spaceBtwItems / 2,
-                                ),
-                                Text(
-                                  product.name,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.labelMedium,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
+                child: HorizontalIconGrid(
+                  itemCount: 5,
+                  itemBuilder: (context, index) {
+                    if (index == 4) {
+                      return CircularIconItem(
+                        label: 'See more',
+                        onTap: () {},
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: TColors.inputBackground,
                           ),
-                        );
-                      }),
+                          child: const Icon(
+                            Iconsax.arrow_right_3,
+                            size: 22,
+                            color: Colors.black,
+                          ),
+                        ),
+                      );
+                    }
+                    final product = ProductImages.productImages[index];
+                    return CircularIconItem(
+                      label: product.name,
+                      isSelected: _currentProduct.id == product.id,
+                      selectedBorderColor: TColors.productSelectedColor,
+                      onTap: () {
+                        setState(() {
+                          _currentProduct = product;
+                        });
+                      },
+                      child: ClipOval(
+                        child: Image.asset(product.image, fit: BoxFit.cover),
+                      ),
                     );
                   },
                 ),
               ),
-
               const SizedBox(height: TSizes.spaceBtwSections),
-
-              // Grid View or List View of related images
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _crossAxisCount,
-                  crossAxisSpacing: TSizes.spaceBtwItems,
-                  mainAxisSpacing: TSizes.spaceBtwItems,
-                  childAspectRatio: 1,
-                ),
-                itemCount: 8, // Representative number
+              AdaptiveGridView(
+                crossAxisCount: _crossAxisCount,
+                itemCount: 8,
                 itemBuilder: (context, index) {
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(TSizes.md),
                     child: Image.asset(
-                      _currentProduct
-                          .image, // In a real app, these might be different sub-images
+                      _currentProduct.image,
                       fit: BoxFit.cover,
                     ),
                   );
@@ -196,45 +107,14 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(TSizes.defaultSpace),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Menu Button (Left)
-            Builder(
-              builder: (context) => Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                  icon: const Icon(Iconsax.menu_1, color: Colors.black),
-                ),
-              ),
-            ),
-            const SizedBox(width: TSizes.spaceBtwSections),
-            // Change View Button (Right)
-            Container(
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                onPressed: () {
-                  setState(() {
-                    _crossAxisCount = (_crossAxisCount == 2) ? 4 : 2;
-                  });
-                },
-                icon: Icon(
-                  _crossAxisCount == 2 ? Icons.grid_view : Icons.view_list,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
+      bottomNavigationBar: GridViewToggleBar(
+        isGridView: _crossAxisCount == 2,
+        onMenuTap: () => Scaffold.of(context).openDrawer(),
+        onToggleView: () {
+          setState(() {
+            _crossAxisCount = _crossAxisCount == 2 ? 4 : 2;
+          });
+        },
       ),
     );
   }

@@ -67,7 +67,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                                   fontSize: 32,
                                   color: Colors.white,
                                   fontFamily: "Helvatica",
-                              height: 1
+                                  height: 1,
                                 ),
                           ),
                         ),

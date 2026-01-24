@@ -1,8 +1,8 @@
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
-import 'package:century_ai/common/widgets/inputs/text_field.dart';
+import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
+import 'package:century_ai/common/widgets/horizontal_icon_grid/horizontal_icon_grid.dart';
 import 'package:century_ai/common/widgets/profile/profile.dart';
 import 'package:century_ai/common/widgets/search_input/search_input.dart';
-import 'package:century_ai/features/home/screens/widgets/before_after_slider.dart';
 import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
 import 'package:century_ai/utils/constants/colors.dart';
 import 'package:century_ai/utils/constants/image_strings.dart';
@@ -10,7 +10,6 @@ import 'package:century_ai/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cupertino_icons/cupertino_icons.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
       body: SingleChildScrollView(
         child: Padding(
@@ -33,11 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // User Profile Section
               Profile(),
               const SizedBox(height: TSizes.spaceBtwSections),
-
-              // "Let’s explore" Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -48,118 +43,45 @@ class _HomeScreenState extends State<HomeScreen> {
                       letterSpacing: 2,
                     ),
                   ),
-                  ExteriorInteriorSwitchSlider()
+                  ExteriorInteriorSwitchSlider(),
                 ],
               ),
               const SizedBox(height: TSizes.spaceBtwItems),
-
-              // Search Input
               SearchInput(),
               const SizedBox(height: TSizes.spaceBtwSections),
-
               SizedBox(
                 height: 120,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final itemWidth = constraints.maxWidth / 5;
-
-                    return Row(
-                      children: List.generate(5, (index) {
-                        /// SEE MORE
-                        if (index == 4) {
-                          return SizedBox(
-                            width: itemWidth,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(
-                                      4,
-                                    ), // SAME gap
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: TColors.inputBackground,
-                                      ),
-                                      child: IconButton(
-                                        onPressed: () =>
-                                            context.push('/product-library'),
-                                        icon: const Icon(
-                                          Iconsax.arrow_right_3,
-                                          size: 22,
-                                        ),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: TSizes.spaceBtwItems / 2,
-                                ),
-                                Text(
-                                  "See more",
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.labelMedium,
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        /// PRODUCT ITEM
-                        final product = ProductImages.productImages[index];
-
-                        return SizedBox(
-                          width: itemWidth,
-                          child: GestureDetector(
-                            onTap: () =>
-                                context.go('/product-explorer', extra: product),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(
-                                      4,
-                                    ), // SAME gap
-                                    child: ClipOval(
-                                      child: Image.asset(
-                                        product.image,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: TSizes.spaceBtwItems / 2,
-                                ),
-                                Text(
-                                  product.name,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.labelMedium,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
+                child: HorizontalIconGrid(
+                  itemCount: 5,
+                  itemBuilder: (context, index) {
+                    if (index == 4) {
+                      return CircularIconItem(
+                        label: 'See more',
+                        onTap: () => context.push('/product-library'),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: TColors.inputBackground,
                           ),
-                        );
-                      }),
+                          child: IconButton(
+                            onPressed: () => context.push('/product-library'),
+                            icon: const Icon(Iconsax.arrow_right_3, size: 22),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ),
+                      );
+                    }
+
+                    final product = ProductImages.productImages[index];
+
+                    return CircularIconItem(
+                      label: product.name,
+                      onTap: () =>
+                          context.go('/product-explorer', extra: product),
+                      child: ClipOval(
+                        child: Image.asset(product.image, fit: BoxFit.cover),
+                      ),
                     );
                   },
                 ),
