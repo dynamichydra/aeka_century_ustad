@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../utils/constants/colors.dart';
+import '../../../utils/constants/colors.dart';
 
 /// A circular container widget with optional child, border, and styling.
 class TCircularContainer extends StatelessWidget {
@@ -24,8 +24,8 @@ class TCircularContainer extends StatelessWidget {
     this.height = 400,
     this.radius = 400,
     this.showBorder = false,
-    this.backgroundColor = TColors.white,
-    this.borderColor = TColors.borderPrimary,
+    this.backgroundColor = TColors.pureWhite,
+    this.borderColor = TColors.lightGray,
   });
 
   final Widget? child;

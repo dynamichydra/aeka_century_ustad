@@ -56,7 +56,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                           horizontal: 20,
                           vertical: 0,
                         ),
-                        color: TColors.primary,
+                        color: TColors.dangerRed,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Text(
@@ -74,7 +74,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                       ),
                       SizedBox(height: 3),
                       const Divider(
-                        color: TColors.primary,
+                        color: TColors.dangerRed,
                         thickness: 2,
                         height: 2,
                       ),
@@ -87,12 +87,12 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                             vertical: 4,
                           ),
                           margin: EdgeInsets.only(right: 8),
-                          color: TColors.primary,
+                          color: TColors.dangerRed,
                           child: Text(
                             "APKA APNA DESIGN GUIDE",
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
-                                  color: TColors.white,
+                                  color: TColors.pureWhite,
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
@@ -114,11 +114,11 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                         width: THelperFunctions.screenWidth(context) * 0.5,
                         height: THelperFunctions.screenWidth(context) * 0.5,
                         decoration: BoxDecoration(
-                          color: TColors.white,
+                          color: TColors.pureWhite,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: TColors.black.withValues(alpha: 0.1),
+                              color: TColors.nearBlack.withValues(alpha: 0.1),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),
@@ -143,7 +143,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                 Text(
                   "Design furniture. Made easy.",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: TColors.black,
+                    color: TColors.nearBlack,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -152,7 +152,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                 if (!isOtpStage) ...[
                   const TTextField(
                     labelText: 'Mobile Number',
-                    prefixIcon: Icon(Iconsax.call, color: TColors.black),
+                    prefixIcon: Icon(Iconsax.call, color: TColors.nearBlack),
                     // prefixIcon: SvgPicture.asset("/"),
                     isCircularIcon: true,
                     keyboardType: TextInputType.phone,
@@ -162,7 +162,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                     labelText: 'Enter OTP',
                     prefixIcon: Icon(
                       Icons.more_horiz_rounded,
-                      color: TColors.black,
+                      color: TColors.nearBlack,
                     ),
                     isCircularIcon: true,
                     keyboardType: TextInputType.number,
@@ -181,8 +181,8 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: TColors.primary,
-                      side: const BorderSide(color: TColors.primary),
+                      backgroundColor: TColors.dangerRed,
+                      side: const BorderSide(color: TColors.dangerRed),
                     ),
                     child: Text(isOtpStage ? 'Send' : 'Get OTP'),
                   ),
@@ -196,7 +196,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                     child: Text(
                       'Resend OTP',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: TColors.black,
+                        color: TColors.nearBlack,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

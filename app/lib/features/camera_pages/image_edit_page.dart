@@ -473,7 +473,7 @@ Rules:
                             labelText: 'Search',
                             prefixIcon: Icon(
                               Icons.search,
-                              color: TColors.darkerGrey,
+                              color: TColors.darkGray,
                             ),
                             isCircularIcon: true,
                           ),

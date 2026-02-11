@@ -5,7 +5,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../../../common/widgets/icons/t_circular_icon.dart';
 import '../../../../../../common/widgets/images/t_circular_image.dart';
-import '../../../../../../utils/constants/colors.dart';
+import '../../../utils/constants/colors.dart';
 import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import 't_rounded_image.dart';
@@ -76,7 +76,7 @@ class TImageUploader extends StatelessWidget {
                 height: height,
                 imageType: imageType,
                 memoryImage: memoryImage,
-                backgroundColor: TColors.primaryBackground,
+                backgroundColor: TColors.warmGray,
               )
             : TRoundedImage(
                 image: image,
@@ -84,7 +84,7 @@ class TImageUploader extends StatelessWidget {
                 height: height,
                 imageType: imageType,
                 memoryImage: memoryImage,
-                backgroundColor: TColors.primaryBackground,
+                backgroundColor: TColors.warmGray,
               ),
         // Display the edit icon button on top of the image
         Positioned(
@@ -97,7 +97,7 @@ class TImageUploader extends StatelessWidget {
             size: TSizes.md,
             color: Colors.white,
             onPressed: onIconButtonPressed,
-            backgroundColor: TColors.primary.withOpacity(0.9),
+            backgroundColor: TColors.dangerRed.withOpacity(0.9),
           ),
         )
       ],

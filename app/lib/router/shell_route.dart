@@ -80,7 +80,7 @@ class NavWrapper extends StatelessWidget {
               _NavItem(
                 icon: Icon(
                   Icons.image,
-                  color: TColors.black,
+                  color: TColors.nearBlack,
                 ),
                 isSelected: currentIndex == 0,
                 onTap: () => context.go(_routes[0]),
@@ -88,7 +88,7 @@ class NavWrapper extends StatelessWidget {
               _NavItem(
                 icon: Icon(
                   Icons.camera_alt,
-                  color: TColors.black,
+                  color: TColors.nearBlack,
                 ),
                 isSelected: currentIndex == 1,
                 onTap: () => context.push(_routes[1]),
@@ -107,7 +107,7 @@ class NavWrapper extends StatelessWidget {
               _NavItem(
                 icon: Icon(
                   Icons.favorite,
-                  color: TColors.black,
+                  color: TColors.nearBlack,
                 ),
                 isSelected: currentIndex == 3,
                 onTap: () => context.go(_routes[3]),

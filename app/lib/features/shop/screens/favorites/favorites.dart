@@ -40,7 +40,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         onPressed: () {},
                         child: const Text(
                           'view all',
-                          style: TextStyle(color: TColors.textSecondary),
+                          style: TextStyle(color: TColors.mediumDarkGray),
                         ),
                       ),
                     );
@@ -89,8 +89,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: TColors.primary,
-                side: const BorderSide(color: TColors.primary),
+                backgroundColor: TColors.dangerRed,
+                side: const BorderSide(color: TColors.dangerRed),
               ),
               child: const Text("+ Create a new Collection"),
             ),

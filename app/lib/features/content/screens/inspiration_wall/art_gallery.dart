@@ -42,7 +42,7 @@ class _ArtGalleryState extends State<ArtGallery> {
                         onPressed: () {},
                         child: const Text(
                           'View all',
-                          style: TextStyle(color: TColors.textSecondary,fontSize: 16),
+                          style: TextStyle(color: TColors.mediumDarkGray,fontSize: 16),
                         ),
                       ),
                     );

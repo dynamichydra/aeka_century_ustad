@@ -20,7 +20,7 @@ class TLoaders {
           margin: const EdgeInsets.symmetric(horizontal: 30),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
-            color: THelperFunctions.isDarkMode(context) ? TColors.darkerGrey.withOpacity(0.9) : TColors.grey.withOpacity(0.9),
+            color: THelperFunctions.isDarkMode(context) ? TColors.darkGray.withOpacity(0.9) : TColors.lightGray.withOpacity(0.9),
           ),
           child: Center(child: Text(message, style: Theme.of(context).textTheme.labelLarge)),
         ),
@@ -33,21 +33,21 @@ class TLoaders {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Iconsax.check, color: TColors.white),
+            const Icon(Iconsax.check, color: TColors.pureWhite),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: TColors.white, fontWeight: FontWeight.bold)),
-                  if (message.isNotEmpty) Text(message, style: const TextStyle(color: TColors.white)),
+                  Text(title, style: const TextStyle(color: TColors.pureWhite, fontWeight: FontWeight.bold)),
+                  if (message.isNotEmpty) Text(message, style: const TextStyle(color: TColors.pureWhite)),
                 ],
               ),
             ),
           ],
         ),
-        backgroundColor: TColors.primary,
+        backgroundColor: TColors.dangerRed,
         duration: Duration(seconds: duration),
         margin: const EdgeInsets.all(10),
         behavior: SnackBarBehavior.floating,
@@ -60,15 +60,15 @@ class TLoaders {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Iconsax.warning_2, color: TColors.white),
+            const Icon(Iconsax.warning_2, color: TColors.pureWhite),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: TColors.white, fontWeight: FontWeight.bold)),
-                  if (message.isNotEmpty) Text(message, style: const TextStyle(color: TColors.white)),
+                  Text(title, style: const TextStyle(color: TColors.pureWhite, fontWeight: FontWeight.bold)),
+                  if (message.isNotEmpty) Text(message, style: const TextStyle(color: TColors.pureWhite)),
                 ],
               ),
             ),
@@ -87,15 +87,15 @@ class TLoaders {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Iconsax.warning_2, color: TColors.white),
+            const Icon(Iconsax.warning_2, color: TColors.pureWhite),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: TColors.white, fontWeight: FontWeight.bold)),
-                  if (message.isNotEmpty) Text(message, style: const TextStyle(color: TColors.white)),
+                  Text(title, style: const TextStyle(color: TColors.pureWhite, fontWeight: FontWeight.bold)),
+                  if (message.isNotEmpty) Text(message, style: const TextStyle(color: TColors.pureWhite)),
                 ],
               ),
             ),

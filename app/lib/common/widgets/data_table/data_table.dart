@@ -34,7 +34,7 @@ class TDataTable extends StatelessWidget {
         // Set the horizontal margin of the data table
         horizontalMargin: 12,
         // Set the color of the heading row
-        headingRowColor: WidgetStateProperty.resolveWith((states) => TColors.primary),
+        headingRowColor: WidgetStateProperty.resolveWith((states) => TColors.dangerRed),
         // Set the decoration for the data table
         decoration: const BoxDecoration(
           color: Colors.white,

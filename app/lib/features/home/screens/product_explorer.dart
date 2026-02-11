@@ -62,7 +62,7 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                         child: Container(
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: TColors.inputBackground,
+                            color: TColors.lightGray,
                           ),
                           child: const Icon(
                             Iconsax.arrow_right_3,
@@ -76,7 +76,7 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                     return CircularIconItem(
                       label: product.name,
                       isSelected: _currentProduct.id == product.id,
-                      selectedBorderColor: TColors.productSelectedColor,
+                      selectedBorderColor: TColors.warmBeige,
                       onTap: () {
                         setState(() {
                           _currentProduct = product;

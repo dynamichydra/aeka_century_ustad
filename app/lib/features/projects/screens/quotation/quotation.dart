@@ -102,8 +102,8 @@ class QuotationPage extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: TColors.primary,
-                      side: const BorderSide(color: TColors.primary),
+                      backgroundColor: TColors.dangerRed,
+                      side: const BorderSide(color: TColors.dangerRed),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),

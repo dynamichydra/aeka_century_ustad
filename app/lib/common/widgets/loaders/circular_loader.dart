@@ -12,8 +12,8 @@ class TCircularLoader extends StatelessWidget {
   ///   - backgroundColor: The background color of the circular loader.
   const TCircularLoader({
     super.key,
-    this.foregroundColor = TColors.white,
-    this.backgroundColor = TColors.primary,
+    this.foregroundColor = TColors.pureWhite,
+    this.backgroundColor = TColors.dangerRed,
   });
 
   final Color? foregroundColor;

@@ -42,7 +42,7 @@ class _OnboardingState extends State<Onboarding> {
       create: (_) => controller,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: TColors.onboardingBackground,
+        backgroundColor: TColors.paleGray,
         body: Stack(
           children: [
             // Horizontal Scrollable Page
@@ -134,7 +134,7 @@ class OnBoardingSkip extends StatelessWidget {
             child: Text(
               'Skip',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: TColors.black,
+                color: TColors.nearBlack,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -172,8 +172,8 @@ class OnBoardingDotNavigation extends StatelessWidget {
                   count: 3,
                   effect: WormEffect(
                     activeDotColor: dark
-                        ? TColors.light
-                        : TColors.dotActiveColor,
+                        ? TColors.snowWhite
+                        : TColors.coolGray,
                     dotHeight: 12,
                     dotWidth: 12,
                   ),
@@ -193,7 +193,7 @@ class OnBoardingDotNavigation extends StatelessWidget {
                       child: Text(
                         'Next',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: TColors.black,
+                          color: TColors.nearBlack,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

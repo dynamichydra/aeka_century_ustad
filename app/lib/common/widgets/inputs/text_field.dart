@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../utils/constants/colors.dart';
+import '../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 
 class TTextField extends StatelessWidget {
@@ -74,7 +74,7 @@ class TTextField extends StatelessWidget {
           labelText: labelText,
           contentPadding: contentPadding,
           filled: true,
-          fillColor: TColors.inputBackground, // Controlled by container
+          fillColor: TColors.lightGray, // Controlled by container
           prefixIcon: isCircularIcon && prefixIcon != null
           ? _buildCircularIcon(prefixIcon!, prefixPadding)
           : prefixIcon,
@@ -91,15 +91,15 @@ class TTextField extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(100),
-            borderSide: borderSide ?? const BorderSide(color: TColors.white, width: 4),
+            borderSide: borderSide ?? const BorderSide(color: TColors.pureWhite, width: 4),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(100),
-            borderSide: const BorderSide(color: TColors.error, width: 4),
+            borderSide: const BorderSide(color: TColors.deepRed, width: 4),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(100),
-            borderSide: const BorderSide(color: TColors.error, width: 4),
+            borderSide: const BorderSide(color: TColors.deepRed, width: 4),
           ),
         ),
       ),
@@ -114,7 +114,7 @@ class TTextField extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: TColors.white,
+        color: TColors.pureWhite,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),

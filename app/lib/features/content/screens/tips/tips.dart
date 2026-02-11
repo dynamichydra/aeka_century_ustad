@@ -64,7 +64,7 @@ class _PillLabel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: TColors.grey,
+        color: TColors.lightGray,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

@@ -84,7 +84,7 @@ class _MyWorkScreenState extends State<MyWorkScreen> {
                               onPressed: () {},
                               child: const Text(
                                 "view all",
-                                style: TextStyle(color: TColors.textSecondary),
+                                style: TextStyle(color: TColors.mediumDarkGray),
                               ),
                             ),
                           ],
@@ -142,7 +142,7 @@ class _MyWorkScreenState extends State<MyWorkScreen> {
             Builder(
               builder: (context) => Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: TColors.grey),
+                  border: Border.all(color: TColors.lightGray),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(

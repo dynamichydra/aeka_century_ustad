@@ -1,59 +1,46 @@
 import 'package:flutter/material.dart';
 
 class TColors {
-  // App theme colors
-  static const Color primary = Color(0xFFD0232A);
-  static const Color secondary = Color(0xFFFFE24B);
-  static const Color accent = Color(0xFFb0c7ff);
-
-  // Icon colors
-  static const Color iconPrimary = Color(0xFF8D8D8D);
-  static const Color bgPrimary = Color(0xFF);
-
-  // Text colors
-  static const Color textPrimary = Color(0xFF000000);
-  static const Color textSecondary = Color(0xFF656565);
-  static const Color textWhite = Colors.white;
-
-  // Background colors
-  static const Color light = Color(0xFFF6F6F6);
-  static const Color dark = Color(0xFF000000);
-  static const Color primaryBackground = Color(0xFFF0EDED);
-
-  // Background Container colors
-  static const Color lightContainer = Color(0xFFF6F6F6);
-  static Color darkContainer = TColors.white.withOpacity(0.1);
-
-  // Button colors
-  static const Color buttonPrimary = Color(0xFFD0232A);
-  static const Color buttonSecondary = Color(0xFF6C757D);
-  static const Color buttonDisabled = Color(0xFFC4C4C4);
-
-  // Border colors
-  static const Color borderPrimary = Color(0xFFD9D9D9);
-  static const Color borderSecondary = Color(0xFF313131);
-
-  // Error and validation colors
-  static const Color error = Color(0xFFD32F2F);
-  static const Color success = Color(0xFF388E3C);
-  static const Color warning = Color(0xFFF57C00);
-  static const Color info = Color(0xFF1976D2);
-
-  // Neutral Shades
-  static const Color black = Color(0xFF232323);
-  static const Color darkerGrey = Color(0xFF4F4F4F);
-  static const Color darkGrey = Color(0xFF939393);
-  static const Color grey = Color(0xFFD9D9D9);
-  static const Color softGrey = Color(0xFFF4F4F4);
-  static const Color lightGrey = Color(0xFFF9F9F9);
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color inputBackground = Color(0xFFD9D9D9);
-  static const Color onboardingBackground = Color(0xFFEDEAEA);
-  static const Color dotActiveColor = Color(0xFF898888);
-  static const Color lightGray = Color(0xFFA39F9F);
-  static const Color productSelectedColor = Color(0xFFE1DAD0);
-
+  static const Color pureBlack = Color(0xFF000000);
+  static const Color pureWhite = Color(0xFFFFFFFF);
+  static const Color coolGray = Color(0xFF898888);
+  static const Color lightGray = Color(0xFFD9D9D9);
+  static const Color dangerRed = Color(0xFFD0232A);
+  static const Color blushWhite = Color(0xFFFEF7F7);
+  static const Color warmGray = Color(0xFFF0EDED);
+  static const Color darkGray = Color(0xFF494747);
+  static const Color offWhite = Color(0xFFF3F3F3);
+  static const Color nearBlack = Color(0xFF1F1919);
+  static const Color warmBrown = Color(0xFF92654B);
+  static const Color bronzeBrown = Color(0xFFA3724B);
+  static const Color warmTaupe = Color(0xFFA39F9F);
+  static const Color paleBlueGray = Color(0xFFC5D1D3);
+  static const Color silverGray = Color(0xFFBEBDBD);
+  static const Color softGray = Color(0xFFEBE7E7);
+  static const Color charcoalGray = Color(0xFF333333);
+  static const Color warmBeige = Color(0xFFE1DAD0);
+  static const Color deepTeal = Color(0xFF234B4F);
+  static const Color mediumGray = Color(0xFF979797);
+  static const Color cloudGray = Color(0xFFC3C2C2);
+  static const Color softSilver = Color(0xFFC9C9C9);
+  static const Color sunsetOrange = Color(0xFFE7873F);
+  static const Color paleGray = Color(0xFFEDEAEA);
+  static const Color vividRed = Color(0xFFF01C23);
+  static const Color teal = Color(0xFF009688);
+  static const Color brightGreen = Color(0xFF07BC71);
+  static const Color almostBlack = Color(0xFF181816);
+  static const Color brightBlue = Color(0xFF1877F2);
+  static const Color vividGreen = Color(0xFF34A853);
+  static const Color vividBlue = Color(0xFF4285F4);
+  static const Color neonGreen = Color(0xFF44FF00);
+  static const Color graphiteGray = Color(0xFF474747);
+  static const Color mediumDarkGray = Color(0xFF6D6C6C);
+  static const Color deepRed = Color(0xFFC5221F);
+  static const Color smokeGray = Color(0xFFCCCCCC);
+  static const Color alertRed = Color(0xFFEA4335);
+  static const Color brightRed = Color(0xFFEB1D24);
+  static const Color ultraLightGray = Color(0xFFF1F1F1);
+  static const Color ivoryWhite = Color(0xFFF4F2ED);
+  static const Color snowWhite = Color(0xFFF8F8F8);
+  static const Color brightYellow = Color(0xFFFBBC04);
 }
-
-
-

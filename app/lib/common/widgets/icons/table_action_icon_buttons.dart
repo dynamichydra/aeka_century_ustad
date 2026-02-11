@@ -39,17 +39,17 @@ class TTableActionButtons extends StatelessWidget {
         if (view)
           IconButton(
             onPressed: onViewPressed,
-            icon: const Icon(Iconsax.eye, color: TColors.darkerGrey),
+            icon: const Icon(Iconsax.eye, color: TColors.darkGray),
           ),
         if (edit)
           IconButton(
             onPressed: onEditPressed,
-            icon: const Icon(Iconsax.pen_add, color: TColors.primary),
+            icon: const Icon(Iconsax.pen_add, color: TColors.dangerRed),
           ),
         if (delete)
           IconButton(
             onPressed: onDeletePressed,
-            icon: const Icon(Iconsax.trash, color: TColors.error),
+            icon: const Icon(Iconsax.trash, color: TColors.deepRed),
           ),
       ],
     );

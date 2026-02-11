@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../utils/constants/colors.dart';
+import '../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 
 /// A container widget with rounded corners and customizable properties.
@@ -25,9 +25,9 @@ class TRoundedContainer extends StatelessWidget {
     this.showShadow = true,
     this.showBorder = false,
     this.padding = const EdgeInsets.all(TSizes.md),
-    this.borderColor = TColors.borderPrimary,
+    this.borderColor = TColors.lightGray,
     this.radius = TSizes.cardRadiusLg,
-    this.backgroundColor = TColors.white,
+    this.backgroundColor = TColors.pureWhite,
     this.onTap,
   });
 
@@ -59,7 +59,7 @@ class TRoundedContainer extends StatelessWidget {
           boxShadow: [
             if (showShadow)
               BoxShadow(
-                color: TColors.grey.withOpacity(0.1),
+                color: TColors.lightGray.withOpacity(0.1),
                 spreadRadius: 5,
                 blurRadius: 8,
                 offset: const Offset(0, 3),

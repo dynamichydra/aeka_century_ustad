@@ -58,7 +58,7 @@ class _ProductLibraryScreenState extends State<ProductLibraryScreen> {
                         onPressed: () {},
                         child: const Text(
                           'view all',
-                          style: TextStyle(color: TColors.textSecondary),
+                          style: TextStyle(color: TColors.mediumDarkGray),
                         ),
                       ),
                     );

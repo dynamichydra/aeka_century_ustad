@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     "LET'S EXPLORE",
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: TColors.lightGray,
+                      color: TColors.warmTaupe,
                       letterSpacing: 2,
                     ),
                   ),
@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Container(
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: TColors.inputBackground,
+                            color: TColors.lightGray,
                           ),
                           child: IconButton(
                             onPressed: () => context.push('/product-library'),
