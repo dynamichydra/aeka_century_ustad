@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:century_ai/utils/constants/image_strings.dart';
-import 'package:century_ai/utils/constants/sizes.dart';
+import 'package:century_ai/core/constants/image_strings.dart';
+import 'package:century_ai/core/constants/sizes.dart';
 
 enum NameAlignment { left, center, right }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
-import '../constants/colors.dart';
+import '../../core/constants/colors.dart';
 import '../helpers/helper_functions.dart';
 
 class TLoaders {

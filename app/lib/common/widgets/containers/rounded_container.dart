@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../utils/constants/colors.dart';
-import '../../../../utils/constants/sizes.dart';
+import '../../../core/constants/colors.dart';
+import '../../../../core/constants/sizes.dart';
 
 /// A container widget with rounded corners and customizable properties.
 class TRoundedContainer extends StatelessWidget {

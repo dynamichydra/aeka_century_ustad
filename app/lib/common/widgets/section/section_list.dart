@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:century_ai/utils/constants/sizes.dart';
+import 'package:century_ai/core/constants/sizes.dart';
 
 class SectionList<T> extends StatelessWidget {
   final List<T> items;

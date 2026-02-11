@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 
-import '../constants/sizes.dart';
+import '../../core/constants/sizes.dart';
 
 class TDeviceUtils {
   static void hideKeyboard(BuildContext context) {

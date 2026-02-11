@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:century_ai/utils/constants/colors.dart';
-import 'package:century_ai/utils/constants/sizes.dart';
+import 'package:century_ai/core/constants/colors.dart';
+import 'package:century_ai/core/constants/sizes.dart';
 
 class SectionHeader extends StatelessWidget {
   /// Left side (text / avatar / custom)

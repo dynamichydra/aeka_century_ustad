@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
+import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:century_ai/utils/constants/sizes.dart';
-import 'package:century_ai/utils/constants/image_strings.dart';
+import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 

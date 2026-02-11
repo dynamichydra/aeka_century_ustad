@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../utils/constants/enums.dart';
-import '../../../utils/constants/sizes.dart';
+import '../../../core/constants/enums.dart';
+import '../../../core/constants/sizes.dart';
 import '../shimmers/shimmer.dart';
 
 class TCircularImage extends StatelessWidget {

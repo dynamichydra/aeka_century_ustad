@@ -5,9 +5,9 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../../../common/widgets/icons/t_circular_icon.dart';
 import '../../../../../../common/widgets/images/t_circular_image.dart';
-import '../../../utils/constants/colors.dart';
-import '../../../../../../utils/constants/enums.dart';
-import '../../../../../../utils/constants/sizes.dart';
+import '../../../core/constants/colors.dart';
+import '../../../../../../core/constants/enums.dart';
+import '../../../../../../core/constants/sizes.dart';
 import 't_rounded_image.dart';
 
 /// Widget for uploading images with optional editing functionality

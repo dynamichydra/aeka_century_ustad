@@ -1,5 +1,5 @@
 import 'package:century_ai/router/router.dart';
-import 'package:century_ai/utils/theme/theme.dart';
+import 'package:century_ai/core/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:century_ai/utils/helpers/network_manager.dart';

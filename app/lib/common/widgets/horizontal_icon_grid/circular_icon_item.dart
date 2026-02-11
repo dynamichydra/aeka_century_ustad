@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../utils/constants/sizes.dart';
+import '../../../core/constants/sizes.dart';
 
 class CircularIconItem extends StatelessWidget {
   final Widget child;

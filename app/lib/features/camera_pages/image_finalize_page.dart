@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:century_ai/features/home/screens/widgets/home_drawer.dart';
-import 'package:century_ai/utils/constants/image_strings.dart';
-import 'package:century_ai/utils/constants/sizes.dart';
+import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
+import 'package:century_ai/core/constants/image_strings.dart';
+import 'package:century_ai/core/constants/sizes.dart';
 
 class ImageFinalizePage extends StatelessWidget {
   final File editedImage;

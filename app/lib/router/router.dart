@@ -1,18 +1,16 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:century_ai/features/authentication/screens/onboarding.dart';
+import 'package:century_ai/features/authentication/presentation/pages/onboarding.dart';
 import 'package:century_ai/features/camera_pages/camera_pages_index.dart';
 import 'package:century_ai/features/camera_pages/image_edit_page.dart';
 import 'package:century_ai/features/camera_pages/image_color_picker.dart';
 import 'package:century_ai/features/camera_pages/image_finalize_page.dart';
-import 'package:century_ai/features/home/screens/home.dart';
-import 'package:century_ai/features/home/screens/product_explorer.dart';
-import 'package:century_ai/features/home/screens/product_library.dart';
-import 'package:century_ai/features/profile/profile_screent.dart';
-import 'package:century_ai/features/search/search_page.dart';
+import 'package:century_ai/features/home/home.dart';
+import 'package:century_ai/features/profile/presentation/pages/profile_screent.dart';
+import 'package:century_ai/features/search/presentation/pages/search_page.dart';
 import 'package:century_ai/router/shell_route.dart';
-import 'package:century_ai/utils/constants/image_strings.dart';
+import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(

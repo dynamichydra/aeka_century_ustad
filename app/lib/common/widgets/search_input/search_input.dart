@@ -1,5 +1,5 @@
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
-import 'package:century_ai/utils/constants/image_strings.dart';
+import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';

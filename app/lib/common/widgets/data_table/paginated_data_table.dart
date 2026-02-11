@@ -2,9 +2,9 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
-import '../../../utils/constants/colors.dart';
-import '../../../utils/constants/image_strings.dart';
-import '../../../utils/constants/sizes.dart';
+import '../../../core/constants/colors.dart';
+import '../../../core/constants/image_strings.dart';
+import '../../../core/constants/sizes.dart';
 import '../loaders/animation_loader.dart';
 
 /// Custom PaginatedDataTable widget with additional features

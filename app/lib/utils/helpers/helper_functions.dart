@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../constants/enums.dart';
+import '../../core/constants/enums.dart';
 
 class THelperFunctions {
 

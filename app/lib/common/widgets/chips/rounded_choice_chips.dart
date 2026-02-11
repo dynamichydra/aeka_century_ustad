@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../utils/constants/colors.dart';
+import '../../../core/constants/colors.dart';
 import '../../../utils/helpers/helper_functions.dart';
 import '../containers/circular_container.dart';
 

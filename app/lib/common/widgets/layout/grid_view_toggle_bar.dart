@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import '../../../utils/constants/sizes.dart';
+import '../../../core/constants/sizes.dart';
 
 class GridViewToggleBar extends StatelessWidget {
   final VoidCallback onMenuTap;

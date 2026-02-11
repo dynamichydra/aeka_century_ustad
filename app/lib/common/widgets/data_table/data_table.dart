@@ -1,8 +1,8 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import '../../../utils/constants/colors.dart';
-import '../../../utils/constants/sizes.dart';
+import '../../../core/constants/colors.dart';
+import '../../../core/constants/sizes.dart';
 
 class TDataTable extends StatelessWidget {
   const TDataTable({
