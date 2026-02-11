@@ -1,10 +1,10 @@
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
-import 'package:century_ai/data/repositories/product_repository.dart';
-import 'package:century_ai/data/services/api_service.dart';
+import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -17,28 +17,13 @@ class MyWorkScreen extends StatefulWidget {
 
 class _MyWorkScreenState extends State<MyWorkScreen> {
   int _crossAxisCount = 2;
-  late final ProductRepository _productRepository;
-  List<ProductImageModel> _allCategories = ProductImages.productImages;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _productRepository = ProductRepository(ApiService());
-    _loadProducts();
-  }
-
-  Future<void> _loadProducts() async {
-    final products = await _productRepository.getProducts(limit: 18);
-    if (!mounted) return;
-    setState(() {
-      _allCategories = products;
-      _isLoading = false;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<ProductsCubit>().state;
+    final allCategories = state.products.isEmpty
+        ? ProductImages.productImages
+        : state.products;
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Work'),
@@ -68,7 +53,7 @@ class _MyWorkScreenState extends State<MyWorkScreen> {
                     Text('Private - 209 items', style: TextStyle(fontSize: 12)),
                   ],
                 ),
-                if (_isLoading)
+                if (state.isLoading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Center(child: CircularProgressIndicator()),
@@ -76,11 +61,11 @@ class _MyWorkScreenState extends State<MyWorkScreen> {
                 ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _allCategories.length,
+                  itemCount: allCategories.length,
                   separatorBuilder: (_, __) =>
                       const SizedBox(height: TSizes.spaceBtwSections),
                   itemBuilder: (context, index) {
-                    final category = _allCategories[index];
+                    final category = allCategories[index];
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

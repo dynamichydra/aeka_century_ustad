@@ -1,8 +1,11 @@
 import 'package:century_ai/common/widgets/inputs/text_field.dart';
 import 'package:century_ai/common/widgets/profile/profile.dart';
-import 'package:century_ai/features/search/presentation/widgets/search_result_items.dart';
+import 'package:century_ai/cubit/products/products_cubit.dart';
+import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/features/search/presentation/widgets/search_result_items.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -12,8 +15,19 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  String _query = '';
+
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<ProductsCubit>().state;
+    final products = state.products.isEmpty
+        ? ProductImages.productImages
+        : state.products;
+    final normalized = _query.trim().toLowerCase();
+    final filtered = normalized.isEmpty
+        ? products
+        : products.where((p) => p.name.toLowerCase().contains(normalized)).toList();
+
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -29,26 +43,39 @@ class _SearchScreenState extends State<SearchScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Profile(
+                    children: [
+                      const Profile(
                         nameAlignment: NameAlignment.left,
                         avatarRadius: 20,
                       ),
-                      SizedBox(height: TSizes.sm),
-                      _SearchInput(),
+                      const SizedBox(height: TSizes.sm),
+                      _SearchInput(
+                        onChanged: (value) {
+                          setState(() => _query = value);
+                        },
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
-
-            /// 🔽 LIST SECTION
+            if (state.isLoading)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
-                  return const SearchResultItem();
-                }, childCount: 10),
+                  final product = filtered[index];
+                  return SearchResultItem(
+                    title: product.name,
+                    image: product.image,
+                  );
+                }, childCount: filtered.length),
               ),
             ),
           ],
@@ -58,12 +85,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
-
-
-
-
 class _SearchInput extends StatelessWidget {
-  const _SearchInput();
+  const _SearchInput({required this.onChanged});
+
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -71,9 +96,7 @@ class _SearchInput extends StatelessWidget {
       labelText: 'Search',
       prefixIcon: const Icon(Icons.search),
       isCircularIcon: true,
-      onChanged: (value) {
-        // 🔍 handle search
-      },
+      onChanged: onChanged,
     );
   }
 }

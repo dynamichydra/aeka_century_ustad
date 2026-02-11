@@ -1,10 +1,11 @@
 import 'package:century_ai/common/widgets/profile/profile.dart';
+import 'package:century_ai/cubit/profile/profile_cubit.dart';
+import 'package:century_ai/cubit/profile/profile_state.dart';
 import 'package:century_ai/data/models/user_profile_model.dart';
-import 'package:century_ai/data/repositories/user_profile_repository.dart';
-import 'package:century_ai/data/services/api_service.dart';
 import 'package:century_ai/features/profile/presentation/widgets/otp_page.dart';
 import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,10 +19,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final lastName = TextEditingController();
   final email = TextEditingController();
   final phone = TextEditingController();
-  late final UserProfileRepository _profileRepository;
-  bool _isLoading = true;
-  bool _isSaving = false;
   int _profileId = 1;
+  bool _formInitialized = false;
 
   String? motherTongue;
   String? occupation;
@@ -29,8 +28,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _profileRepository = UserProfileRepository(ApiService());
-    _loadProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<ProfileCubit>().loadProfile(userId: 1);
+    });
   }
 
   @override
@@ -42,63 +43,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _loadProfile() async {
-    setState(() => _isLoading = true);
-    try {
-      final profile = await _profileRepository.getProfile(userId: 1);
-      _profileId = profile.id;
-      firstName.text = profile.firstName;
-      lastName.text = profile.lastName;
-      email.text = profile.email;
-      phone.text = profile.phone;
-      const occupations = ["Student", "Developer", "Designer", "Business"];
-      occupation = occupations.contains(profile.companyTitle)
-          ? profile.companyTitle
-          : null;
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _submitProfile() async {
-    if (_isSaving) return;
-    setState(() => _isSaving = true);
-    try {
-      final input = UserProfileModel(
-        id: _profileId,
-        firstName: firstName.text.trim(),
-        lastName: lastName.text.trim(),
-        email: email.text.trim(),
-        phone: phone.text.trim(),
-        companyTitle: occupation,
-      );
-      await _profileRepository.updateProfile(input);
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profile updated successfully')));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+  void _bindForm(UserProfileModel profile) {
+    _profileId = profile.id;
+    firstName.text = profile.firstName;
+    lastName.text = profile.lastName;
+    email.text = profile.email;
+    phone.text = profile.phone;
+    const occupations = ["Student", "Developer", "Designer", "Business"];
+    occupation = occupations.contains(profile.companyTitle) ? profile.companyTitle : null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("My Profile")),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+      body: BlocConsumer<ProfileCubit, ProfileState>(
+        listener: (context, state) {
+          if (state.profile != null && !_formInitialized) {
+            _bindForm(state.profile!);
+            _formInitialized = true;
+          }
+          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          }
+          if (state.isSaved) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Profile updated successfully')));
+            context.read<ProfileCubit>().clearSavedFlag();
+          }
+        },
+        builder: (context, state) {
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,8 +133,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: SizedBox(
                 width: THelperFunctions.screenWidth(context) * 0.6,
                 child: ElevatedButton(
-                  onPressed: _isSaving ? null : _submitProfile,
-                  child: Text(_isSaving ? "Saving..." : "Submit"),
+                  onPressed: state.isSaving
+                      ? null
+                      : () {
+                          context.read<ProfileCubit>().updateProfile(
+                                UserProfileModel(
+                                  id: _profileId,
+                                  firstName: firstName.text.trim(),
+                                  lastName: lastName.text.trim(),
+                                  email: email.text.trim(),
+                                  phone: phone.text.trim(),
+                                  companyTitle: occupation,
+                                ),
+                              );
+                        },
+                  child: Text(state.isSaving ? "Saving..." : "Submit"),
                 ),
               ),
             ),
@@ -205,6 +199,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
+      ),
+        },
       ),
     );
   }

@@ -1,9 +1,9 @@
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
+import 'package:century_ai/cubit/tips/tips_cubit.dart';
 import 'package:century_ai/data/models/tip_model.dart';
-import 'package:century_ai/data/repositories/tips_repository.dart';
-import 'package:century_ai/data/services/api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TipsScreen extends StatefulWidget {
   const TipsScreen({super.key});
@@ -13,37 +13,19 @@ class TipsScreen extends StatefulWidget {
 }
 
 class _TipsScreenState extends State<TipsScreen> {
-  late final TipsRepository _tipsRepository;
-  List<TipModel> _tips = const <TipModel>[];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _tipsRepository = TipsRepository(ApiService());
-    _loadTips();
-  }
-
-  Future<void> _loadTips() async {
-    final tips = await _tipsRepository.getTips(limit: 6);
-    if (!mounted) return;
-    setState(() {
-      _tips = tips;
-      _isLoading = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final doTip = _tips.isNotEmpty
-        ? _tips.first
+    final state = context.watch<TipsCubit>().state;
+    final tips = state.tips;
+    final doTip = tips.isNotEmpty
+        ? tips.first
         : const TipModel(
             id: 'fallback-do',
             title: 'Capture clear images',
             body: 'Capture clear images in good lighting for accurate results.',
           );
-    final dontTip1 = _tips.length > 1 ? _tips[1] : doTip;
-    final dontTip2 = _tips.length > 2 ? _tips[2] : doTip;
+    final dontTip1 = tips.length > 1 ? tips[1] : doTip;
+    final dontTip2 = tips.length > 2 ? tips[2] : doTip;
 
     return Scaffold(
       appBar: AppBar(
@@ -64,7 +46,7 @@ class _TipsScreenState extends State<TipsScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
               ),
-              if (_isLoading)
+              if (state.isLoading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: CircularProgressIndicator(),

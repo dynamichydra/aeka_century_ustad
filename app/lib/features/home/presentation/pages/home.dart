@@ -3,13 +3,14 @@ import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_ite
 import 'package:century_ai/common/widgets/horizontal_icon_grid/horizontal_icon_grid.dart';
 import 'package:century_ai/common/widgets/profile/profile.dart';
 import 'package:century_ai/common/widgets/search_input/search_input.dart';
+import 'package:century_ai/cubit/products/products_cubit.dart';
+import 'package:century_ai/cubit/products/products_state.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
-import 'package:century_ai/data/repositories/product_repository.dart';
-import 'package:century_ai/data/services/api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
 
@@ -22,29 +23,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isGridView = false;
-  late final ProductRepository _productRepository;
-  List<ProductImageModel> _products = ProductImages.productImages;
-  bool _isLoadingProducts = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _productRepository = ProductRepository(ApiService());
-    _loadProducts();
-  }
-
-  Future<void> _loadProducts() async {
-    final items = await _productRepository.getProducts(limit: 18);
-    if (!mounted) return;
-    setState(() {
-      _products = items;
-      _isLoadingProducts = false;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    final quickProducts = _products.take(4).toList();
+    final ProductsState productsState = context.watch<ProductsCubit>().state;
+    final products = productsState.products.isEmpty
+        ? ProductImages.productImages
+        : productsState.products;
+    final quickProducts = products.take(4).toList();
     return Scaffold(
       drawer: const HomeDrawer(),
       body: SingleChildScrollView(
@@ -71,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: TSizes.spaceBtwItems),
               SearchInput(),
               const SizedBox(height: TSizes.spaceBtwSections),
-              if (_isLoadingProducts)
+              if (productsState.isLoading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(child: CircularProgressIndicator()),
@@ -163,9 +149,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             mainAxisSpacing: 12,
                             childAspectRatio: 1, // square images
                           ),
-                      itemCount: _products.length,
+                      itemCount: products.length,
                       itemBuilder: (context, index) {
-                        final product = _products[index];
+                        final product = products[index];
 
                         return GestureDetector(
                           onTap: () {
@@ -184,10 +170,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   : ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _products.length,
+                      itemCount: products.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
-                        final product = _products[index];
+                        final product = products[index];
 
                         return GestureDetector(
                           onTap: () {

@@ -1,13 +1,13 @@
 import 'package:century_ai/common/widgets/layout/grid_view_toggle_bar.dart';
 import 'package:century_ai/common/widgets/section/section_header.dart';
 import 'package:century_ai/common/widgets/section/section_list.dart';
+import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
-import 'package:century_ai/data/repositories/product_repository.dart';
-import 'package:century_ai/data/services/api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,28 +20,13 @@ class ProductLibraryScreen extends StatefulWidget {
 
 class _ProductLibraryScreenState extends State<ProductLibraryScreen> {
   int _crossAxisCount = 2;
-  late final ProductRepository _productRepository;
-  List<ProductImageModel> _categories = ProductImages.productImages;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _productRepository = ProductRepository(ApiService());
-    _loadProducts();
-  }
-
-  Future<void> _loadProducts() async {
-    final products = await _productRepository.getProducts(limit: 18);
-    if (!mounted) return;
-    setState(() {
-      _categories = products;
-      _isLoading = false;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<ProductsCubit>().state;
+    final categories = state.products.isEmpty
+        ? ProductImages.productImages
+        : state.products;
     return Scaffold(
       drawer: const HomeDrawer(),
       body: SafeArea(
@@ -66,13 +51,13 @@ class _ProductLibraryScreenState extends State<ProductLibraryScreen> {
                   ],
                 ),
                 const SizedBox(height: TSizes.spaceBtwSections),
-                if (_isLoading)
+                if (state.isLoading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Center(child: CircularProgressIndicator()),
                   ),
                 SectionList(
-                  items: _categories,
+                  items: categories,
                   headerBuilder: (context, category) {
                     return SectionHeader(
                       leading: sectionTitleText(context, category.name),
