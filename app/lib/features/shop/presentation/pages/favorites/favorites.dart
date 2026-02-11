@@ -5,9 +5,9 @@ import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
-import 'package:century_ai/utils/helpers/helper_functions.dart';
+import 'package:century_ai/data/repositories/product_repository.dart';
+import 'package:century_ai/data/services/api_service.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -18,10 +18,28 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
+  late final ProductRepository _productRepository;
+  List<ProductImageModel> _favorites = ProductImages.productImages.take(4).toList();
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _productRepository = ProductRepository(ApiService());
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final favorites = await _productRepository.getFavoriteProducts(limit: 8);
+    if (!mounted) return;
+    setState(() {
+      _favorites = favorites;
+      _isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final allCategories = ProductImages.productImages;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Favorites')),
       body: SafeArea(
@@ -31,8 +49,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
                 SectionList(
-                  items: allCategories.take(1).toList(),
+                  items: _favorites.take(1).toList(),
                   headerBuilder: (context, category) {
                     return SectionHeader(
                       leading: sectionTitleText(context, "My Collection"),

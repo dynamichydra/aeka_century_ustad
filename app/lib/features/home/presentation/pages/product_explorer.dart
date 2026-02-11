@@ -7,6 +7,8 @@ import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/data/repositories/product_repository.dart';
+import 'package:century_ai/data/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -21,12 +23,28 @@ class ProductExplorerScreen extends StatefulWidget {
 
 class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
   late ProductImageModel _currentProduct;
+  late final ProductRepository _productRepository;
+  List<ProductImageModel> _products = ProductImages.productImages;
   int _crossAxisCount = 2;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _currentProduct = widget.selectedProduct;
+    _productRepository = ProductRepository(ApiService());
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    final products = await _productRepository.getProducts(limit: 18);
+    if (!mounted) return;
+    final selected = products.where((p) => p.id == _currentProduct.id);
+    setState(() {
+      _products = products;
+      if (selected.isNotEmpty) _currentProduct = selected.first;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -50,12 +68,18 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
             children: [
               SearchInput(),
               const SizedBox(height: TSizes.spaceBtwSections),
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
               SizedBox(
                 height: 100,
                 child: HorizontalIconGrid(
-                  itemCount: 5,
+                  itemCount: _products.take(4).length + 1,
                   itemBuilder: (context, index) {
-                    if (index == 4) {
+                    final quickProducts = _products.take(4).toList();
+                    if (index == quickProducts.length) {
                       return CircularIconItem(
                         label: 'See more',
                         onTap: () {},
@@ -72,7 +96,7 @@ class _ProductExplorerScreenState extends State<ProductExplorerScreen> {
                         ),
                       );
                     }
-                    final product = ProductImages.productImages[index];
+                    final product = quickProducts[index];
                     return CircularIconItem(
                       label: product.name,
                       isSelected: _currentProduct.id == product.id,

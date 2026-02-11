@@ -1,10 +1,12 @@
-import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/data/repositories/product_repository.dart';
+import 'package:century_ai/data/services/api_service.dart';
+import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 
 class MyWorkScreen extends StatefulWidget {
   const MyWorkScreen({super.key});
@@ -15,56 +17,73 @@ class MyWorkScreen extends StatefulWidget {
 
 class _MyWorkScreenState extends State<MyWorkScreen> {
   int _crossAxisCount = 2;
+  late final ProductRepository _productRepository;
+  List<ProductImageModel> _allCategories = ProductImages.productImages;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _productRepository = ProductRepository(ApiService());
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    final products = await _productRepository.getProducts(limit: 18);
+    if (!mounted) return;
+    setState(() {
+      _allCategories = products;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Get all category products from the data source
-    final allCategories = ProductImages.productImages;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Work'),
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
-      drawer: HomeDrawer(),
+      drawer: const HomeDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric( horizontal:TSizes.defaultSpace),
+            padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'My Collection',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
-                SizedBox(height: 2),
-                Row(
+                const SizedBox(height: 2),
+                const Row(
                   children: [
                     Icon(Icons.lock, size: 14),
                     SizedBox(width: 4),
-                    Text('Private · 209 items', style: TextStyle(fontSize: 12)),
+                    Text('Private - 209 items', style: TextStyle(fontSize: 12)),
                   ],
                 ),
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
                 ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: allCategories.length,
+                  itemCount: _allCategories.length,
                   separatorBuilder: (_, __) =>
                       const SizedBox(height: TSizes.spaceBtwSections),
                   itemBuilder: (context, index) {
-                    final category = allCategories[index];
-
+                    final category = _allCategories[index];
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Section Header: Title and View All
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -75,7 +94,7 @@ class _MyWorkScreenState extends State<MyWorkScreen> {
                                     ?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.2,
-                                      color: Color(0xFFA39F9F),
+                                      color: const Color(0xFFA39F9F),
                                     ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -90,19 +109,16 @@ class _MyWorkScreenState extends State<MyWorkScreen> {
                           ],
                         ),
                         const SizedBox(height: TSizes.spaceBtwItems),
-
-                        // Grid showing the SAME image 4 times
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: _crossAxisCount,
-                                crossAxisSpacing: TSizes.spaceBtwItems,
-                                mainAxisSpacing: TSizes.spaceBtwItems,
-                                childAspectRatio: 1,
-                              ),
-                          itemCount: 4, // Always show 4 images (repeated)
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: _crossAxisCount,
+                            crossAxisSpacing: TSizes.spaceBtwItems,
+                            mainAxisSpacing: TSizes.spaceBtwItems,
+                            childAspectRatio: 1,
+                          ),
+                          itemCount: 4,
                           itemBuilder: (context, _) {
                             return GestureDetector(
                               onTap: () => context.push(
@@ -138,7 +154,6 @@ class _MyWorkScreenState extends State<MyWorkScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Menu Button
             Builder(
               builder: (context) => Container(
                 decoration: BoxDecoration(
@@ -152,7 +167,6 @@ class _MyWorkScreenState extends State<MyWorkScreen> {
               ),
             ),
             const SizedBox(width: TSizes.spaceBtwSections),
-            // toggle between 2 and 4 images in a row
             Container(
               decoration: const BoxDecoration(
                 color: Colors.black,

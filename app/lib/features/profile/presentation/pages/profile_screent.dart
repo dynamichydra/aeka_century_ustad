@@ -1,4 +1,7 @@
 import 'package:century_ai/common/widgets/profile/profile.dart';
+import 'package:century_ai/data/models/user_profile_model.dart';
+import 'package:century_ai/data/repositories/user_profile_repository.dart';
+import 'package:century_ai/data/services/api_service.dart';
 import 'package:century_ai/features/profile/presentation/widgets/otp_page.dart';
 import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
@@ -14,17 +17,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final firstName = TextEditingController();
   final lastName = TextEditingController();
   final email = TextEditingController();
-  final note = TextEditingController();
   final phone = TextEditingController();
+  late final UserProfileRepository _profileRepository;
+  bool _isLoading = true;
+  bool _isSaving = false;
+  int _profileId = 1;
 
   String? motherTongue;
   String? occupation;
 
   @override
+  void initState() {
+    super.initState();
+    _profileRepository = UserProfileRepository(ApiService());
+    _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    firstName.dispose();
+    lastName.dispose();
+    email.dispose();
+    phone.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() => _isLoading = true);
+    try {
+      final profile = await _profileRepository.getProfile(userId: 1);
+      _profileId = profile.id;
+      firstName.text = profile.firstName;
+      lastName.text = profile.lastName;
+      email.text = profile.email;
+      phone.text = profile.phone;
+      const occupations = ["Student", "Developer", "Designer", "Business"];
+      occupation = occupations.contains(profile.companyTitle)
+          ? profile.companyTitle
+          : null;
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _submitProfile() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+    try {
+      final input = UserProfileModel(
+        id: _profileId,
+        firstName: firstName.text.trim(),
+        lastName: lastName.text.trim(),
+        email: email.text.trim(),
+        phone: phone.text.trim(),
+        companyTitle: occupation,
+      );
+      await _profileRepository.updateProfile(input);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile updated successfully')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("My Profile")),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,8 +152,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: SizedBox(
                 width: THelperFunctions.screenWidth(context) * 0.6,
                 child: ElevatedButton(
-                  onPressed: () {},
-                  child: const Text("Submit"),
+                  onPressed: _isSaving ? null : _submitProfile,
+                  child: Text(_isSaving ? "Saving..." : "Submit"),
                 ),
               ),
             ),

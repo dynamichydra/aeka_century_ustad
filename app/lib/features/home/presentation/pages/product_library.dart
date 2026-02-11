@@ -5,6 +5,8 @@ import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/data/repositories/product_repository.dart';
+import 'package:century_ai/data/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
@@ -18,12 +20,28 @@ class ProductLibraryScreen extends StatefulWidget {
 
 class _ProductLibraryScreenState extends State<ProductLibraryScreen> {
   int _crossAxisCount = 2;
+  late final ProductRepository _productRepository;
+  List<ProductImageModel> _categories = ProductImages.productImages;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _productRepository = ProductRepository(ApiService());
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    final products = await _productRepository.getProducts(limit: 18);
+    if (!mounted) return;
+    setState(() {
+      _categories = products;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Get all category products from the data source
-    final allCategories = ProductImages.productImages;
-
     return Scaffold(
       drawer: const HomeDrawer(),
       body: SafeArea(
@@ -48,9 +66,13 @@ class _ProductLibraryScreenState extends State<ProductLibraryScreen> {
                   ],
                 ),
                 const SizedBox(height: TSizes.spaceBtwSections),
-
-               SectionList(
-                  items: allCategories,
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                SectionList(
+                  items: _categories,
                   headerBuilder: (context, category) {
                     return SectionHeader(
                       leading: sectionTitleText(context, category.name),

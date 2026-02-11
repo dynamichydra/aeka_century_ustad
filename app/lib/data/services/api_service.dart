@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:century_ai/core/constants/api_constants.dart';
 
 class ApiService {
   late final Dio _dio;
@@ -6,7 +7,7 @@ class ApiService {
   ApiService() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'https://dummyjson.com/products',
+        baseUrl: TApiConstants.baseUrl,
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {'Content-Type': 'application/json'},
@@ -24,8 +25,66 @@ class ApiService {
     );
   }
 
+  Future<Map<String, dynamic>> requestOtp(String phone) async {
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    return {
+      'success': true,
+      'phone': phone,
+      'otp': '1234',
+      'message': 'Dummy OTP sent',
+    };
+  }
+
+  Future<Map<String, dynamic>> verifyOtp({
+    required String phone,
+    required String otp,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    if (otp.trim() != '1234') {
+      throw Exception('Invalid OTP. Use 1234 for dummy flow.');
+    }
+
+    return {
+      'token': 'dummy-token-${DateTime.now().millisecondsSinceEpoch}',
+      'refreshToken': 'dummy-refresh-token',
+      'userId': 1,
+      'phone': phone,
+    };
+  }
+
+  Future<Map<String, dynamic>> getUserById(int id) async {
+    final response = await _dio.get('${TApiConstants.users}/$id');
+    return (response.data as Map).cast<String, dynamic>();
+  }
+
+  Future<Map<String, dynamic>> updateUserById(
+    int id,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _dio.put('${TApiConstants.users}/$id', data: payload);
+    return (response.data as Map).cast<String, dynamic>();
+  }
+
+  Future<List<dynamic>> getProducts({int limit = 20, int skip = 0}) async {
+    final response = await _dio.get(
+      TApiConstants.products,
+      queryParameters: {'limit': limit, 'skip': skip},
+    );
+    final data = (response.data as Map).cast<String, dynamic>();
+    return (data['products'] as List?) ?? <dynamic>[];
+  }
+
+  Future<List<dynamic>> getPosts({int limit = 10}) async {
+    final response = await _dio.get(
+      TApiConstants.posts,
+      queryParameters: {'limit': limit},
+    );
+    final data = (response.data as Map).cast<String, dynamic>();
+    return (data['posts'] as List?) ?? <dynamic>[];
+  }
+
+  // Legacy method for old repository usage.
   Future<List<dynamic>> fetchPeople() async {
-    final response = await _dio.get('', queryParameters: {'page': 1});
-    return response.data['products'];
+    return getProducts(limit: 20, skip: 0);
   }
 }

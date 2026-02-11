@@ -7,6 +7,8 @@ import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/data/repositories/product_repository.dart';
+import 'package:century_ai/data/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
@@ -20,9 +22,29 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isGridView = false;
+  late final ProductRepository _productRepository;
+  List<ProductImageModel> _products = ProductImages.productImages;
+  bool _isLoadingProducts = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _productRepository = ProductRepository(ApiService());
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    final items = await _productRepository.getProducts(limit: 18);
+    if (!mounted) return;
+    setState(() {
+      _products = items;
+      _isLoadingProducts = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final quickProducts = _products.take(4).toList();
     return Scaffold(
       drawer: const HomeDrawer(),
       body: SingleChildScrollView(
@@ -49,12 +71,17 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: TSizes.spaceBtwItems),
               SearchInput(),
               const SizedBox(height: TSizes.spaceBtwSections),
+              if (_isLoadingProducts)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
               SizedBox(
                 height: 120,
                 child: HorizontalIconGrid(
-                  itemCount: 5,
+                  itemCount: quickProducts.length + 1,
                   itemBuilder: (context, index) {
-                    if (index == 4) {
+                    if (index == quickProducts.length) {
                       return CircularIconItem(
                         label: 'See more',
                         onTap: () => context.push('/product-library'),
@@ -73,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }
 
-                    final product = ProductImages.productImages[index];
+                    final product = quickProducts[index];
 
                     return CircularIconItem(
                       label: product.name,
@@ -136,9 +163,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             mainAxisSpacing: 12,
                             childAspectRatio: 1, // square images
                           ),
-                      itemCount: ProductImages.productImages.length,
+                      itemCount: _products.length,
                       itemBuilder: (context, index) {
-                        final product = ProductImages.productImages[index];
+                        final product = _products[index];
 
                         return GestureDetector(
                           onTap: () {
@@ -157,10 +184,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   : ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: ProductImages.productImages.length,
+                      itemCount: _products.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
-                        final product = ProductImages.productImages[index];
+                        final product = _products[index];
 
                         return GestureDetector(
                           onTap: () {

@@ -3,10 +3,11 @@ import 'package:century_ai/common/widgets/inputs/text_field.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/data/repositories/auth_repository.dart';
+import 'package:century_ai/data/services/api_service.dart';
 import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -25,6 +26,56 @@ class OnboardingInputPage extends StatefulWidget {
 }
 
 class _OnboardingInputPageState extends State<OnboardingInputPage> {
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+  late final AuthRepository _authRepository;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _authRepository = AuthRepository(ApiService());
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _otpController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleAction(BuildContext context, bool isOtpStage) async {
+    if (_isSubmitting) return;
+
+    final phone = _phoneController.text.trim();
+    final otp = _otpController.text.trim();
+
+    setState(() => _isSubmitting = true);
+    try {
+      if (!isOtpStage) {
+        if (phone.isEmpty) throw Exception('Please enter mobile number.');
+        await _authRepository.requestOtp(phone);
+        if (!mounted) return;
+        context.read<OnboardingCubit>().setOtpStage(true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Dummy OTP sent. Use 1234 to continue.')),
+        );
+      } else {
+        if (otp.isEmpty) throw Exception('Please enter OTP.');
+        await _authRepository.verifyOtp(phone: phone, otp: otp);
+        if (!mounted) return;
+        context.go('/');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
@@ -150,16 +201,17 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                 ),
                 const SizedBox(height: TSizes.spaceBtwSections),
                 if (!isOtpStage) ...[
-                  const TTextField(
+                  TTextField(
                     labelText: 'Mobile Number',
+                    controller: _phoneController,
                     prefixIcon: Icon(Iconsax.call, color: TColors.nearBlack),
-                    // prefixIcon: SvgPicture.asset("/"),
                     isCircularIcon: true,
                     keyboardType: TextInputType.phone,
                   ),
                 ] else ...[
-                  const TTextField(
+                  TTextField(
                     labelText: 'Enter OTP',
+                    controller: _otpController,
                     prefixIcon: Icon(
                       Icons.more_horiz_rounded,
                       color: TColors.nearBlack,
@@ -173,18 +225,18 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                 SizedBox(
                   width: THelperFunctions.screenWidth(context) * 0.6,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (!isOtpStage) {
-                        context.read<OnboardingCubit>().setOtpStage(true);
-                      } else {
-                        context.go('/');
-                      }
-                    },
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => _handleAction(context, isOtpStage),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: TColors.dangerRed,
                       side: const BorderSide(color: TColors.dangerRed),
                     ),
-                    child: Text(isOtpStage ? 'Send' : 'Get OTP'),
+                    child: Text(
+                      _isSubmitting
+                          ? 'Please wait...'
+                          : (isOtpStage ? 'Send' : 'Get OTP'),
+                    ),
                   ),
                 ),
                 if (isOtpStage) ...[
