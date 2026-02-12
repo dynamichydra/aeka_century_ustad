@@ -65,13 +65,35 @@ class ApiService {
     return (response.data as Map).cast<String, dynamic>();
   }
 
-  Future<List<dynamic>> getProducts({int limit = 20, int skip = 0}) async {
+  Future<List<dynamic>> getProducts({
+    int limit = 20,
+    int skip = 0,
+    int? page,
+  }) async {
+    final pageData = await getProductsPage(limit: limit, skip: skip, page: page);
+    return (pageData['products'] as List?) ?? <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> getProductsPage({
+    int limit = 20,
+    int skip = 0,
+    int? page,
+  }) async {
+    // dummyjson uses skip+limit pagination, not page directly.
+    final effectiveSkip = page != null && page > 0 ? (page - 1) * limit : skip;
     final response = await _dio.get(
       TApiConstants.products,
-      queryParameters: {'limit': limit, 'skip': skip},
+      queryParameters: {'limit': limit, 'skip': effectiveSkip},
     );
-    final data = (response.data as Map).cast<String, dynamic>();
-    return (data['products'] as List?) ?? <dynamic>[];
+    return (response.data as Map).cast<String, dynamic>();
+  }
+
+  Future<List<dynamic>> getProductsByPage({
+    int limit = 20,
+    int page = 1,
+  }) async {
+    final pageData = await getProductsPage(limit: limit, page: page);
+    return (pageData['products'] as List?) ?? <dynamic>[];
   }
 
   Future<List<dynamic>> getPosts({int limit = 10}) async {

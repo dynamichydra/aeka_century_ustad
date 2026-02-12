@@ -19,6 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final lastName = TextEditingController();
   final email = TextEditingController();
   final phone = TextEditingController();
+
   int _profileId = 1;
   bool _formInitialized = false;
 
@@ -63,15 +64,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _bindForm(state.profile!);
             _formInitialized = true;
           }
+
           if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage!)),
+            );
           }
+
           if (state.isSaved) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Profile updated successfully')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Profile updated successfully')),
+            );
             context.read<ProfileCubit>().clearSavedFlag();
           }
         },
@@ -79,127 +82,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
+
           return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Profile(needUserName: false),
-            const SizedBox(height: 4),
-            Center(
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                onPressed: () {},
-                child: const Text("Edit"),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            _input("First Name", firstName),
-            _input("Last Name", lastName),
-            _input("Email", email),
-            SizedBox(height: 8),
-            Text(
-              "Take PersonaliZation to next lable to adding more details to your profile",
-            ),
-            SizedBox(height: 8),
-            _dropdown(
-              label: "Mother Tongue",
-              value: motherTongue,
-              items: ["English", "Hindi", "Bengali", "Tamil"],
-              onChanged: (v) => setState(() => motherTongue = v),
-            ),
-            SizedBox(height: 4),
-
-            _dropdown(
-              label: "Occupation",
-              value: occupation,
-              items: ["Student", "Developer", "Designer", "Business"],
-              onChanged: (v) => setState(() => occupation = v),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// SUBMIT BUTTON
-            Center(
-              child: SizedBox(
-                width: THelperFunctions.screenWidth(context) * 0.6,
-                child: ElevatedButton(
-                  onPressed: state.isSaving
-                      ? null
-                      : () {
-                          context.read<ProfileCubit>().updateProfile(
-                                UserProfileModel(
-                                  id: _profileId,
-                                  firstName: firstName.text.trim(),
-                                  lastName: lastName.text.trim(),
-                                  email: email.text.trim(),
-                                  phone: phone.text.trim(),
-                                  companyTitle: occupation,
-                                ),
-                              );
-                        },
-                  child: Text(state.isSaving ? "Saving..." : "Submit"),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            /// CHANGE NUMBER
-            const Text(
-              "Change Registered Number",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 8),
-
-            TextField(
-              controller: phone,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                hintText: "Enter mobile number",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF737373)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF737373),
-                    width: 1.5,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Profile(needUserName: false),
+                const SizedBox(height: 4),
+                Center(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () {},
+                    child: const Text("Edit"),
                   ),
                 ),
-                suffixIcon: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const OtpPage()),
-                    );
-                  },
-                  child: const Text("Get OTP"),
+                const SizedBox(height: 12),
+                _input("First Name", firstName),
+                _input("Last Name", lastName),
+                _input("Email", email),
+                const SizedBox(height: 8),
+                const Text(
+                  "Take PersonaliZation to next lable to adding more details to your profile",
                 ),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
+                const SizedBox(height: 8),
+                _dropdown(
+                  label: "Mother Tongue",
+                  value: motherTongue,
+                  items: const ["English", "Hindi", "Bengali", "Tamil"],
+                  onChanged: (v) => setState(() => motherTongue = v),
                 ),
-              ),
+                const SizedBox(height: 4),
+                _dropdown(
+                  label: "Occupation",
+                  value: occupation,
+                  items: const ["Student", "Developer", "Designer", "Business"],
+                  onChanged: (v) => setState(() => occupation = v),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: SizedBox(
+                    width: THelperFunctions.screenWidth(context) * 0.6,
+                    child: ElevatedButton(
+                      onPressed: state.isSaving
+                          ? null
+                          : () {
+                              context.read<ProfileCubit>().updateProfile(
+                                    UserProfileModel(
+                                      id: _profileId,
+                                      firstName: firstName.text.trim(),
+                                      lastName: lastName.text.trim(),
+                                      email: email.text.trim(),
+                                      phone: phone.text.trim(),
+                                      companyTitle: occupation,
+                                    ),
+                                  );
+                            },
+                      child: Text(state.isSaving ? "Saving..." : "Submit"),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  "Change Registered Number",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: phone,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    hintText: "Enter mobile number",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFF737373)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFF737373), width: 1.5),
+                    ),
+                    suffixIcon: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const OtpPage()),
+                        );
+                      },
+                      child: const Text("Get OTP"),
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          );
         },
       ),
     );
@@ -239,11 +223,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         decoration: dropdownDecoration(label),
-        items: items
-            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-            .toList(),
+        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
         onChanged: onChanged,
       ),
     );

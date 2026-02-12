@@ -33,10 +33,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final quickProducts = products.take(4).toList();
     return Scaffold(
       drawer: const HomeDrawer(),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(TSizes.defaultSpace),
-          child: Column(
+      body: RefreshIndicator(
+        onRefresh: () => context.read<ProductsCubit>().refreshProducts(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(TSizes.defaultSpace),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Profile(),
@@ -192,6 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
             ],
+            ),
           ),
         ),
       ),
