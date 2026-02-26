@@ -146,46 +146,48 @@ class ProductImageModel {
   final String id;
   final String name;
   final String image;
+  final bool isTrending;
 
-  ProductImageModel({required this.id, required this.name, required this.image});
+
+  ProductImageModel({required this.id, required this.name, required this.image, required this.isTrending});
 }
 
 class TProductImages {
   static List<ProductImageModel> productImages = [
-    ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/images/furniture/1.jpg'),
-    ProductImageModel(id: '2', name: 'Dining', image: 'assets/images/furniture/2.jpg'),
-    ProductImageModel(id: '3', name: 'Dining', image: 'assets/images/furniture/3.jpg'),
-    ProductImageModel(id: '4', name: 'Study', image: 'assets/images/furniture/4.jpg'),
-    ProductImageModel(id: '5', name: 'Table', image: 'assets/images/furniture/5.jpg'),
-    ProductImageModel(id: '6', name: 'Furniture', image: 'assets/images/furniture/6.jpg'),
-    ProductImageModel(id: '7', name: 'Furniture 7', image: 'assets/images/furniture/7.jpg'),
-    ProductImageModel(id: '8', name: 'Furniture 8', image: 'assets/images/furniture/8.jpg'),
-    ProductImageModel(id: '9', name: 'Furniture 9', image: 'assets/images/furniture/9.jpg'),
-    ProductImageModel(id: '10', name: 'Furniture 10', image: 'assets/images/furniture/10.jpg'),
+    ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/images/furniture/1.jpg', isTrending: true),
+    ProductImageModel(id: '2', name: 'Dining', image: 'assets/images/furniture/2.jpg', isTrending: false),
+    ProductImageModel(id: '3', name: 'Dining', image: 'assets/images/furniture/3.jpg', isTrending: false),
+    ProductImageModel(id: '4', name: 'Study', image: 'assets/images/furniture/4.jpg', isTrending: true),
+    ProductImageModel(id: '5', name: 'Table', image: 'assets/images/furniture/5.jpg', isTrending: false),
+    ProductImageModel(id: '6', name: 'Furniture', image: 'assets/images/furniture/6.jpg', isTrending: false),
+    ProductImageModel(id: '7', name: 'Furniture 7', image: 'assets/images/furniture/7.jpg', isTrending: true),
+    ProductImageModel(id: '8', name: 'Furniture 8', image: 'assets/images/furniture/8.jpg', isTrending: false),
+    ProductImageModel(id: '9', name: 'Furniture 9', image: 'assets/images/furniture/9.jpg', isTrending: true),
+    ProductImageModel(id: '10', name: 'Furniture 10', image: 'assets/images/furniture/10.jpg', isTrending: false),
   ];
 }
 
 
 class ProductImages {
   static List<ProductImageModel> productImages = [
-    ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/images/furniture/page_13_r.jpg'),
-    ProductImageModel(id: '2', name: 'Dining', image: 'assets/images/furniture/page_23_r.jpg'),
-    ProductImageModel(id: '3', name: 'Dining', image: 'assets/images/furniture/page_24_l.jpg'),
-    ProductImageModel(id: '4', name: 'Study', image: 'assets/images/furniture/page_43_r.jpg'),
-    ProductImageModel(id: '5', name: 'Living Space', image: 'assets/images/furniture/page_51_r.jpg'),
-    ProductImageModel(id: '6', name: 'Table', image: 'assets/images/furniture/page_76_l.jpg'),
-    ProductImageModel(id: '7', name: 'Furniture', image: 'assets/images/furniture/page_88_l.jpg'),
-    ProductImageModel(id: '8', name: 'Page 90 Left', image: 'assets/images/furniture/page_90_l.jpg'),
-    ProductImageModel(id: '9', name: 'Page 125 Right', image: 'assets/images/furniture/page_125_r.jpg'),
-    ProductImageModel(id: '10', name: 'Page 135 Right', image: 'assets/images/furniture/page_135_r.jpg'),
-    ProductImageModel(id: '11', name: 'Page 139 Right', image: 'assets/images/furniture/page_139_r.jpg'),
-    ProductImageModel(id: '12', name: 'Page 146 Left', image: 'assets/images/furniture/page_146_l.jpg'),
-    ProductImageModel(id: '13', name: 'Page 150 Left', image: 'assets/images/furniture/page_150_l.jpg'),
-    ProductImageModel(id: '14', name: 'Page 155 Right', image: 'assets/images/furniture/page_155_r.jpg'),
-    ProductImageModel(id: '15', name: 'Page 168 Left', image: 'assets/images/furniture/page_168_l.jpg'),
-    ProductImageModel(id: '16', name: 'Page 171 Right', image: 'assets/images/furniture/page_171_r.jpg'),
-    ProductImageModel(id: '17', name: 'Page 175 Left', image: 'assets/images/furniture/page_175_l.jpg'),
-    ProductImageModel(id: '18', name: 'Page 186 Left', image: 'assets/images/furniture/page_186_l.jpg'),
+    ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/images/furniture/page_13_r.jpg', isTrending: true),
+    ProductImageModel(id: '2', name: 'Dining', image: 'assets/images/furniture/page_23_r.jpg', isTrending: true),
+    ProductImageModel(id: '3', name: 'Dining', image: 'assets/images/furniture/page_24_l.jpg', isTrending: false),
+    ProductImageModel(id: '4', name: 'Study', image: 'assets/images/furniture/page_43_r.jpg', isTrending: true),
+    ProductImageModel(id: '5', name: 'Living Space', image: 'assets/images/furniture/page_51_r.jpg', isTrending: false),
+    ProductImageModel(id: '6', name: 'Table', image: 'assets/images/furniture/page_76_l.jpg', isTrending: false),
+    ProductImageModel(id: '7', name: 'Furniture', image: 'assets/images/furniture/page_88_l.jpg', isTrending: true),
+    ProductImageModel(id: '8', name: 'Page 90 Left', image: 'assets/images/furniture/page_90_l.jpg', isTrending: false),
+    ProductImageModel(id: '9', name: 'Page 125 Right', image: 'assets/images/furniture/page_125_r.jpg', isTrending: true),
+    ProductImageModel(id: '10', name: 'Page 135 Right', image: 'assets/images/furniture/page_135_r.jpg', isTrending: true),
+    ProductImageModel(id: '11', name: 'Page 139 Right', image: 'assets/images/furniture/page_139_r.jpg', isTrending: true),
+    ProductImageModel(id: '12', name: 'Page 146 Left', image: 'assets/images/furniture/page_146_l.jpg', isTrending: false),
+    ProductImageModel(id: '13', name: 'Page 150 Left', image: 'assets/images/furniture/page_150_l.jpg', isTrending: true),
+    ProductImageModel(id: '14', name: 'Page 155 Right', image: 'assets/images/furniture/page_155_r.jpg', isTrending: false),
+    ProductImageModel(id: '15', name: 'Page 168 Left', image: 'assets/images/furniture/page_168_l.jpg', isTrending: true),
+    ProductImageModel(id: '16', name: 'Page 171 Right', image: 'assets/images/furniture/page_171_r.jpg', isTrending: true),
+    ProductImageModel(id: '17', name: 'Page 175 Left', image: 'assets/images/furniture/page_175_l.jpg', isTrending: true),
+    ProductImageModel(id: '18', name: 'Page 186 Left', image: 'assets/images/furniture/page_186_l.jpg', isTrending: true),
   ];
 }
 

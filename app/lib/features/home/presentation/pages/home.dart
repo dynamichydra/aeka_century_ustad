@@ -9,6 +9,7 @@ import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/features/home/widgets/product_containers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
@@ -86,67 +87,126 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                const SizedBox(height: TSizes.spaceBtwSections),
-                if (productsState.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                SizedBox(
-                  height: 120,
-                  child: HorizontalIconGrid(
-                    itemCount: quickProducts.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == quickProducts.length) {
-                        return CircularIconItem(
-                          label: 'See more',
-                          onTap: () => context.push('/product-library'),
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: TColors.lightGray,
-                            ),
-                            child: IconButton(
-                              onPressed: () => context.push('/product-library'),
-                              icon: const Icon(Iconsax.arrow_right_3, size: 22),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final product = quickProducts[index];
-
-                      return CircularIconItem(
-                        label: product.name,
-                        onTap: () =>
-                            context.go('/product-explorer', extra: product),
-                        child: ClipOval(
-                          child: Image.asset(product.image, fit: BoxFit.cover),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
+                // const SizedBox(height: TSizes.spaceBtwSections),
+                // if (productsState.isLoading)
+                //   const Padding(
+                //     padding: EdgeInsets.symmetric(vertical: 16),
+                //     child: Center(child: CircularProgressIndicator()),
+                //   ),
+                // SizedBox(
+                //   height: 120,
+                //   child: HorizontalIconGrid(
+                //     itemCount: quickProducts.length + 1,
+                //     itemBuilder: (context, index) {
+                //       if (index == quickProducts.length) {
+                //         return CircularIconItem(
+                //           label: 'See more',
+                //           onTap: () => context.push('/product-library'),
+                //           child: Container(
+                //             decoration: const BoxDecoration(
+                //               shape: BoxShape.circle,
+                //               color: TColors.lightGray,
+                //             ),
+                //             child: IconButton(
+                //               onPressed: () => context.push('/product-library'),
+                //               icon: const Icon(Iconsax.arrow_right_3, size: 22),
+                //               padding: EdgeInsets.zero,
+                //               constraints: const BoxConstraints(),
+                //             ),
+                //           ),
+                //         );
+                //       }
+                //
+                //       final product = quickProducts[index];
+                //
+                //       return CircularIconItem(
+                //         label: product.name,
+                //         onTap: () =>
+                //             context.go('/product-explorer', extra: product),
+                //         child: ClipOval(
+                //           child: Image.asset(product.image, fit: BoxFit.cover),
+                //         ),
+                //       );
+                //     },
+                //   ),
+                // ),
+                SizedBox(height: 20,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
-                      children: const [
-                        Icon(
-                          Icons.local_fire_department_sharp,
-                          color: Color(0xFFF29D38),
+                      children: [
+                        TextButton(
+                          onPressed: () {},
+                          child: Text(
+                            "Interior",
+                            style: TextStyle(
+                              color: Colors.black,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
                         ),
-                        SizedBox(width: 4),
-                        Text("POPULAR"),
+                        TextButton(
+                          onPressed: () {},
+                          child: Text(
+                            "Furniture",
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
                       ],
                     ),
 
                     Row(
                       children: [
-                        const Text("See all"),
+                        InkWell(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 3,
+                                  spreadRadius: 2,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child:  Image.asset(
+                                "assets/icons/app_icons/trendng2.png",
+                                width: 20,
+                                height: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        InkWell(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 3,
+                                  spreadRadius: 2,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Icon(
+                                Icons.favorite,
+                                size: 18,
+                                color: Color(0xFF898888),
+                              ),
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 8),
 
                         /// 🔲 Layout toggle button
@@ -174,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4, // 👈 4 images per row
+                              crossAxisCount: 2, // 👈 4 images per row
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 12,
                               childAspectRatio: 1, // square images
@@ -189,9 +249,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.asset(
-                                product.image,
-                                fit: BoxFit.cover,
+                              child: ProductContainers(
+                                imagePath: product.image,
+                                isTrending: product.isTrending,
                               ),
                             ),
                           );
@@ -211,11 +271,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                product.image,
-                                height: 180,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
+                              child: ProductContainers(
+                                imagePath: product.image,
+                                isTrending: product.isTrending,
                               ),
                             ),
                           );
