@@ -66,7 +66,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         'originalImage': widget.originalImage,
       });
     } else {
-      context.pushReplacement("/image_edit_page", extra: File(file.path));
+      context.pushReplacement("/image_preview", extra: File(file.path));
     }
   }
 
@@ -82,7 +82,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
           'originalImage': widget.originalImage,
         });
       } else {
-        context.pushReplacement("/image_edit_page", extra: File(image.path));
+        context.pushReplacement("/image_preview", extra: File(image.path));
       }
     }
   }
