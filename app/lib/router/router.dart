@@ -6,6 +6,8 @@ import 'package:century_ai/features/camera_pages/camera_pages_index.dart';
 import 'package:century_ai/features/camera_pages/image_edit_page.dart';
 import 'package:century_ai/features/camera_pages/image_color_picker.dart';
 import 'package:century_ai/features/camera_pages/image_finalize_page.dart';
+import 'package:century_ai/features/camera_pages/compare_image_page.dart';
+import 'package:century_ai/features/camera_pages/image_preview_page.dart';
 import 'package:century_ai/features/home/home.dart';
 import 'package:century_ai/features/profile/presentation/pages/profile_screent.dart';
 import 'package:century_ai/features/search/presentation/pages/search_page.dart';
@@ -82,6 +84,14 @@ final GoRouter router = GoRouter(
     //   builder: (context, state) => LoginPage(),
     // ),
     GoRoute(
+      path: "/image_preview",
+      name: "Image Preview",
+      builder: (context, state) {
+        final imageFile = state.extra as File;
+        return ImagePreviewPage(imageFile: imageFile);
+      },
+    ),
+    GoRoute(
       path: "/image_edit_page",
       name: "Image Edit Page",
       builder: (context, state) {
@@ -127,7 +137,7 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         final data = state.extra as Map<String, dynamic>;
         return ImageFinalizePage(
-          editedImage: data['editedImage'] as File,
+          editedImage: data['editedImage'],
           selectedColor: data['selectedColor'] as Map<String, dynamic>,
           selectedLamination: data['selectedLamination'] as Map<String, dynamic>,
         );
@@ -150,6 +160,14 @@ final GoRouter router = GoRouter(
       path: "/profile",
       name: "profile",
       builder: (context, state) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: "/compare_image",
+      name: "Compare Image",
+      builder: (context, state) {
+        final imageFile = state.extra as File;
+        return CompareImagePage(originalImage: imageFile);
+      },
     ),
   ],
 );

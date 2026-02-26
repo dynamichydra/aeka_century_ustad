@@ -8,7 +8,7 @@ import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
 
 class ImageFinalizePage extends StatelessWidget {
-  final File editedImage;
+  final dynamic editedImage;
   final Map<String, dynamic> selectedColor;
   final Map<String, dynamic> selectedLamination;
 
@@ -36,11 +36,7 @@ class ImageFinalizePage extends StatelessWidget {
                 bottom: false,
                 child: SizedBox(
                   height: MediaQuery.of(context).size.height * 0.45,
-                  child: Image.file(
-                    editedImage,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
+                  child: _buildFinalImage(),
                 ),
               ),
 
@@ -124,7 +120,12 @@ class ImageFinalizePage extends StatelessWidget {
                           _buildActionButton(Icons.bookmark_outline, () {}),
                           _buildActionButton(Icons.delete_outline, () => context.pop()),
                           _buildActionButton(Icons.share_outlined, () {
-                            Share.shareXFiles([XFile(editedImage.path)], text: 'Check out my design!');
+                            final image = editedImage;
+                            if (image is File) {
+                              Share.shareXFiles([XFile(image.path)], text: 'Check out my design!');
+                            } else if (image is String) {
+                              Share.share('Check out this design: $image');
+                            }
                           }),
                         ],
                       ),
@@ -230,5 +231,23 @@ class ImageFinalizePage extends StatelessWidget {
         child: Icon(icon, size: 24, color: Colors.black),
       ),
     );
+  }
+
+  Widget _buildFinalImage() {
+    final image = editedImage;
+    if (image is File) {
+      return Image.file(
+        image,
+        fit: BoxFit.cover,
+        width: double.infinity,
+      );
+    } else if (image is String) {
+      return Image.asset(
+        image,
+        fit: BoxFit.cover,
+        width: double.infinity,
+      );
+    }
+    return const Center(child: Icon(Icons.image_not_supported));
   }
 }

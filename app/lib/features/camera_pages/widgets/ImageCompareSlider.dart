@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ImageCompareSlider extends StatelessWidget {
-  final File before;
-  final File after;
+  final dynamic before;
+  final dynamic after;
   final double height;
   final double position;
   final ValueChanged<double> onChanged;
@@ -17,14 +17,25 @@ class ImageCompareSlider extends StatelessWidget {
     this.height = 360,
   });
 
+  Widget _buildImage(dynamic source, double width, double height) {
+    if (source is File) {
+      return Image.file(source, width: width, height: height, fit: BoxFit.cover);
+    } else if (source is String) {
+      return Image.asset(source, width: width, height: height, fit: BoxFit.cover);
+    }
+    return const SizedBox();
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
+        final actualHeight = (height != 360) ? height : constraints.maxHeight;
 
         return GestureDetector(
           onHorizontalDragUpdate: (details) {
+            if (width == 0) return;
             final newPos = (position + details.delta.dx / width).clamp(0.0, 1.0);
             onChanged(newPos);
           },
@@ -32,13 +43,8 @@ class ImageCompareSlider extends StatelessWidget {
             children: [
               /// AFTER image (background)
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.file(
-                  after,
-                  width: width,
-                  height: height,
-                  fit: BoxFit.cover,
-                ),
+                borderRadius: BorderRadius.circular(0),
+                child: _buildImage(after, width, actualHeight),
               ),
 
               /// BEFORE image (clipped)
@@ -47,13 +53,8 @@ class ImageCompareSlider extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   widthFactor: position,
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.file(
-                      before,
-                      width: width,
-                      height: height,
-                      fit: BoxFit.cover,
-                    ),
+                    borderRadius: BorderRadius.circular(0),
+                    child: _buildImage(before, width, actualHeight),
                   ),
                 ),
               ),
@@ -64,7 +65,7 @@ class ImageCompareSlider extends StatelessWidget {
                 top: 0,
                 bottom: 0,
                 child: CustomPaint(
-                  size: Size(2, height),
+                  size: Size(2, actualHeight),
                   painter: DashedLinePainter(),
                 ),
               ),
@@ -72,7 +73,7 @@ class ImageCompareSlider extends StatelessWidget {
               /// HANDLE
               Positioned(
                 left: width * position - 18,
-                top: height / 2 - 18,
+                top: actualHeight / 2 - 18,
                 child: const _SliderHandle(),
               ),
             ],
