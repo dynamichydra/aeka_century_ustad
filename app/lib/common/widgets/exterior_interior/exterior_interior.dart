@@ -27,7 +27,7 @@ class _ExteriorInteriorSwitchSliderState
         decoration: BoxDecoration(
           color: const Color(0xFFD9D9D9), // background color
           borderRadius: BorderRadius.circular(14), // half height for pill
-          border: Border.all(color: const Color(0xFFD9D9D9), width: 1),
+          border: Border.all(color: const Color(0xFFD9D9D9), width: 0),
         ),
         child: Stack(
           children: [
@@ -60,7 +60,7 @@ class _ExteriorInteriorSwitchSliderState
                 Expanded(
                   child: Center(
                     child: Text(
-                      'Exterior',
+                      'Interior',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -74,7 +74,7 @@ class _ExteriorInteriorSwitchSliderState
                 Expanded(
                   child: Center(
                     child: Text(
-                      'Interior',
+                      'Exterior',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,

@@ -10,7 +10,7 @@ class AppTheme {
       fontFamily: 'Roboto', // Assuming default, can be changed
       appBarTheme: const AppBarTheme(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Colors.black),
         titleTextStyle: TextStyle(
           color: Colors.black,

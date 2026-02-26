@@ -104,6 +104,7 @@ flutter:
     - assets/images/furniture/
     - assets/images/lamination/
     - assets/images/vectors/
+    - assets/icons/app_icons/ai_search.png
 
   #--------------- LOCAL FONTS ------------------#
   fonts:
