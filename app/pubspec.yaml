@@ -62,6 +62,8 @@ dependencies:
   file_picker: ^10.3.8
   dio: ^5.9.0
   equatable: ^2.0.8
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
 
 
 
