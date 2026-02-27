@@ -172,7 +172,7 @@ class ProductImages {
   static List<ProductImageModel> productImages = [
     ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/images/furniture/page_13_r.jpg', isTrending: true),
     ProductImageModel(id: '2', name: 'Dining', image: 'assets/images/furniture/page_23_r.jpg', isTrending: true),
-    ProductImageModel(id: '3', name: 'Dining', image: 'assets/images/furniture/page_24_l.jpg', isTrending: false),
+    ProductImageModel(id: '3', name: 'Bedroom', image: 'assets/images/furniture/page_24_l.jpg', isTrending: false),
     ProductImageModel(id: '4', name: 'Study', image: 'assets/images/furniture/page_43_r.jpg', isTrending: true),
     ProductImageModel(id: '5', name: 'Living Space', image: 'assets/images/furniture/page_51_r.jpg', isTrending: false),
     ProductImageModel(id: '6', name: 'Table', image: 'assets/images/furniture/page_76_l.jpg', isTrending: false),

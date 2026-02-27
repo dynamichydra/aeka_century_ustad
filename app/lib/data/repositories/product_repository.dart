@@ -52,7 +52,7 @@ class ProductRepository {
         final asset = assets[(skip + index) % assets.length];
         return ProductImageModel(
           id: (item['id'] ?? (skip + index + 1)).toString(),
-          name: (item['title'] ?? asset.name).toString(),
+          name: asset.name.toString(),
           image: asset.image,
           isTrending: asset.isTrending
         );
