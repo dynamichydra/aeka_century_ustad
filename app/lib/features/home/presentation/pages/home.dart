@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/horizontal_icon_grid.dart';
@@ -10,6 +12,7 @@ import 'package:century_ai/core/constants/sizes.dart';
 import 'package:century_ai/features/home/widgets/product_containers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
 
@@ -23,6 +26,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isGridView = false;
   int _selectedIndex = 0;
+
+  Future<void> _pickFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null && mounted) {
+      context.push("/image_preview", extra: File(image.path));
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final ProductsState productsState = context.watch<ProductsCubit>().state;
@@ -354,9 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: _PremiumActionButton(
                       icon: Icons.camera_alt,
                       label: "Take Photo",
-                      onTap: () {
-                        // Placeholder function
-                      },
+                      onTap: () => context.push("/camera"),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -364,9 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: _PremiumActionButton(
                       icon: Icons.image,
                       label: "Upload Photo",
-                      onTap: () {
-                        // Placeholder function
-                      },
+                      onTap: _pickFromGallery,
                     ),
                   ),
                 ],
