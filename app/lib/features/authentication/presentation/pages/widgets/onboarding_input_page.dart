@@ -7,6 +7,7 @@ import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
 import 'package:century_ai/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
@@ -29,6 +30,10 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
 
+  final _formKey = GlobalKey<FormState>();
+
+  final RegExp indianMobileRegex = RegExp(r'^[6-9]\d{9}$');
+
   @override
   void dispose() {
     _phoneController.dispose();
@@ -40,13 +45,37 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
     final phone = _phoneController.text.trim();
     final otp = _otpController.text.trim();
     final authCubit = context.read<AuthCubit>();
+    // if (!isOtpStage) {
+    //   if (phone.isEmpty) {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       const SnackBar(content: Text('Please enter mobile number.')),
+    //     );
+    //     return;
+    //   }
+    //   await authCubit.requestOtp(phone);
+    //   return;
+    // }
     if (!isOtpStage) {
+      final RegExp indianMobileRegex = RegExp(r'^[6-9]\d{9}$');
+
       if (phone.isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Please enter mobile number.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter mobile number.')),
+        );
         return;
       }
+
+      if (!indianMobileRegex.hasMatch(phone)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Enter a valid mobile number.',
+            ),
+          ),
+        );
+        return;
+      }
+
       await authCubit.requestOtp(phone);
       return;
     }
@@ -70,7 +99,9 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
           if (authState.status == AuthStatus.otpSent) {
             context.read<OnboardingCubit>().setOtpStage(true);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Dummy OTP sent. Use 1234 to continue.')),
+              const SnackBar(
+                content: Text('Dummy OTP sent. Use 1234 to continue.'),
+              ),
             );
           }
           if (authState.status == AuthStatus.authenticated) {
@@ -90,175 +121,222 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
               final isOtpStage = state.isOtpStage;
               final isSubmitting =
                   context.watch<AuthCubit>().state.status == AuthStatus.loading;
-              return Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: 62.01),
-                Image(
-                  width: THelperFunctions.screenWidth(context) * 0.4,
-                  height: 100,
-                  image: AssetImage(
-                    dark ? TImages.lightAppLogo : TImages.darkAppLogo,
-                  ),
-                ),
-                SizedBox(
-                  width: THelperFunctions.screenWidth(context) * 0.6,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 0,
-                        ),
-                        color: TColors.dangerRed,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Text(
-                            "USTAAD",
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 32,
-                                  color: Colors.white,
-                                  fontFamily: "Helvatica",
-                                  height: 1,
-                                ),
-                          ),
-                        ),
+              return Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(height: 62.01),
+                    Image(
+                      width: THelperFunctions.screenWidth(context) * 0.4,
+                      height: 100,
+                      image: AssetImage(
+                        dark ? TImages.lightAppLogo : TImages.darkAppLogo,
                       ),
-                      SizedBox(height: 3),
-                      const Divider(
-                        color: TColors.dangerRed,
-                        thickness: 2,
-                        height: 2,
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          margin: EdgeInsets.only(right: 8),
-                          color: TColors.dangerRed,
-                          child: Text(
-                            "APKA APNA DESIGN GUIDE",
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  color: TColors.pureWhite,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: TSizes.spaceBtwItems),
-
-                SizedBox(
-                  width: THelperFunctions.screenWidth(context),
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
-                    clipBehavior: Clip.none,
-                    children: [
-                      // White Circular Background
-                      Container(
-                        width: THelperFunctions.screenWidth(context) * 0.5,
-                        height: THelperFunctions.screenWidth(context) * 0.5,
-                        decoration: BoxDecoration(
-                          color: TColors.pureWhite,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: TColors.nearBlack.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
+                    ),
+                    SizedBox(
+                      width: THelperFunctions.screenWidth(context) * 0.6,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 0,
                             ),
-                          ],
+                            color: TColors.dangerRed,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Text(
+                                "USTAAD",
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 32,
+                                      color: Colors.white,
+                                      fontFamily: "Helvatica",
+                                      height: 1,
+                                    ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          const Divider(
+                            color: TColors.dangerRed,
+                            thickness: 2,
+                            height: 2,
+                          ),
+                          Align(
+                            alignment: Alignment.centerRight,
+
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              margin: EdgeInsets.only(right: 8),
+                              color: TColors.dangerRed,
+                              child: Text(
+                                "APKA APNA DESIGN GUIDE",
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(
+                                      color: TColors.pureWhite,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: TSizes.spaceBtwItems),
+
+                    SizedBox(
+                      width: THelperFunctions.screenWidth(context),
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        clipBehavior: Clip.none,
+                        children: [
+                          // White Circular Background
+                          Container(
+                            width: THelperFunctions.screenWidth(context) * 0.5,
+                            height: THelperFunctions.screenWidth(context) * 0.5,
+                            decoration: BoxDecoration(
+                              color: TColors.pureWhite,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: TColors.nearBlack.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Overflowing Image with Bottom Clipping
+                          ClipPath(
+                            clipper: TImagePopOutClipper(),
+                            child: Image(
+                              width:
+                                  THelperFunctions.screenWidth(context) * 0.55,
+                              height:
+                                  THelperFunctions.screenWidth(context) * 0.55,
+                              fit: BoxFit.contain,
+                              alignment: Alignment.bottomCenter,
+                              image: AssetImage(widget.image),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: TSizes.spaceBtwItems),
+                    Text(
+                      "Design furniture. Made easy.",
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: TColors.nearBlack,
+                            fontWeight: FontWeight.bold,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: TSizes.spaceBtwSections),
+                    if (!isOtpStage) ...[
+                      TTextField(
+                        labelText: 'Mobile Number',
+                        controller: _phoneController,
+                        prefixIcon: Icon(
+                          Iconsax.call,
+                          color: TColors.nearBlack,
+                        ),
+                        isCircularIcon: true,
+                        keyboardType: TextInputType.phone,
+
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        validator: (value) {
+                          final regex = RegExp(r'^[6-9]\d{9}$');
+
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter mobile number';
+                          }
+
+                          if (!regex.hasMatch(value)) {
+                            return 'Enter valid 10-digit number starting with 6-9';
+                          }
+
+                          return null;
+                        },
+                      ),
+                    ] else ...[
+                      TTextField(
+                        labelText: 'Enter OTP',
+                        controller: _otpController,
+                        prefixIcon: Icon(
+                          Icons.more_horiz_rounded,
+                          color: TColors.nearBlack,
+                        ),
+                        isCircularIcon: true,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(4),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter OTP';
+                          }
+
+                          if (value.length != 4) {
+                            return 'OTP must be 4 digits';
+                          }
+
+                          return null;
+                        },
+
+
+                      ),
+                    ],
+                    const SizedBox(height: TSizes.spaceBtwItems),
+                    // Button
+                    SizedBox(
+                      width: THelperFunctions.screenWidth(context) * 0.6,
+                      child: ElevatedButton(
+                        onPressed: isSubmitting
+                            ? null
+                            : () => _handleAction(context, isOtpStage),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: TColors.dangerRed,
+                          side: const BorderSide(color: TColors.dangerRed),
+                        ),
+                        child: Text(
+                          isSubmitting
+                              ? 'Please wait...'
+                              : (isOtpStage ? 'Send' : 'Get OTP'),
                         ),
                       ),
-                      // Overflowing Image with Bottom Clipping
-                      ClipPath(
-                        clipper: TImagePopOutClipper(),
-                        child: Image(
-                          width: THelperFunctions.screenWidth(context) * 0.55,
-                          height: THelperFunctions.screenWidth(context) * 0.55,
-                          fit: BoxFit.contain,
-                          alignment: Alignment.bottomCenter,
-                          image: AssetImage(widget.image),
+                    ),
+                    if (isOtpStage) ...[
+                      const SizedBox(height: TSizes.spaceBtwItems),
+                      TextButton(
+                        onPressed: () {
+                          // Handle Resend OTP logic
+                        },
+                        child: Text(
+                          'Resend OTP',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: TColors.nearBlack,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
-                const SizedBox(height: TSizes.spaceBtwItems),
-                Text(
-                  "Design furniture. Made easy.",
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: TColors.nearBlack,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: TSizes.spaceBtwSections),
-                if (!isOtpStage) ...[
-                  TTextField(
-                    labelText: 'Mobile Number',
-                    controller: _phoneController,
-                    prefixIcon: Icon(Iconsax.call, color: TColors.nearBlack),
-                    isCircularIcon: true,
-                    keyboardType: TextInputType.phone,
-                  ),
-                ] else ...[
-                  TTextField(
-                    labelText: 'Enter OTP',
-                    controller: _otpController,
-                    prefixIcon: Icon(
-                      Icons.more_horiz_rounded,
-                      color: TColors.nearBlack,
-                    ),
-                    isCircularIcon: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                ],
-                const SizedBox(height: TSizes.spaceBtwItems),
-                // Button
-                SizedBox(
-                  width: THelperFunctions.screenWidth(context) * 0.6,
-                  child: ElevatedButton(
-                    onPressed: isSubmitting
-                        ? null
-                        : () => _handleAction(context, isOtpStage),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TColors.dangerRed,
-                      side: const BorderSide(color: TColors.dangerRed),
-                    ),
-                    child: Text(
-                      isSubmitting
-                          ? 'Please wait...'
-                          : (isOtpStage ? 'Send' : 'Get OTP'),
-                    ),
-                  ),
-                ),
-                if (isOtpStage) ...[
-                  const SizedBox(height: TSizes.spaceBtwItems),
-                  TextButton(
-                    onPressed: () {
-                      // Handle Resend OTP logic
-                    },
-                    child: Text(
-                      'Resend OTP',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: TColors.nearBlack,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
               );
             },
           ),

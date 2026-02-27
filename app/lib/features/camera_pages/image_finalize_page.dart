@@ -27,8 +27,7 @@ class ImageFinalizePage extends StatelessWidget {
       key: scaffoldKey,
       drawer: const HomeDrawer(),
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
+      body: 
           Column(
             children: [
               /// ---------------- IMAGE AREA ----------------
@@ -43,7 +42,7 @@ class ImageFinalizePage extends StatelessWidget {
               /// ---------------- BOTTOM PANEL ----------------
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                   ),
@@ -136,32 +135,7 @@ class ImageFinalizePage extends StatelessWidget {
               ),
             ],
           ),
-
-          // Custom Header (Menu & Logo)
-          Positioned(
-            top: 40,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Iconsax.menu_1, color: Colors.black),
-                  onPressed: () => scaffoldKey.currentState?.openDrawer(),
-                ),
-                const Padding(
-                  padding: EdgeInsets.only(right: TSizes.defaultSpace),
-                  child: Image(
-                    image: AssetImage(TImages.smallLogo),
-                    width: 30,
-                    height: 30,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/colors.dart';
 import '../../../../core/constants/sizes.dart';
 
@@ -15,9 +16,13 @@ class TTextField extends StatelessWidget {
     this.onChanged,
     this.fillColor,
     this.borderSide,
-    this.contentPadding = const EdgeInsets.symmetric(vertical: TSizes.md, horizontal: TSizes.md),
+    this.contentPadding = const EdgeInsets.symmetric(
+      vertical: TSizes.md,
+      horizontal: TSizes.md,
+    ),
     this.prefixPadding = const EdgeInsets.all(4),
     this.shadows,
+    this.inputFormatters,
 
     this.suffixIcon,
     this.suffixPadding = const EdgeInsets.all(6),
@@ -38,6 +43,7 @@ class TTextField extends StatelessWidget {
   final EdgeInsetsGeometry contentPadding;
   final EdgeInsetsGeometry prefixPadding;
   final List<BoxShadow>? shadows;
+  final List<TextInputFormatter>? inputFormatters;
 
   final Widget? suffixIcon;
   final EdgeInsetsGeometry suffixPadding;
@@ -48,12 +54,16 @@ class TTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: fillColor ?? const Color(0xFFE8E8E8), // Light grey matching image
-        borderRadius: BorderRadius.circular(100), // Pill shape
-        boxShadow: shadows ??
+        color: fillColor ?? const Color(0xFFE8E8E8),
+        // Light grey matching image
+        borderRadius: BorderRadius.circular(100),
+        // Pill shape
+        boxShadow:
+            shadows ??
             [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2), // Updated from withOpacity
+                color: Colors.black.withValues(alpha: 0.2),
+                // Updated from withOpacity
                 spreadRadius: 2,
                 blurRadius: 20,
                 offset: const Offset(0, 10),
@@ -65,6 +75,7 @@ class TTextField extends StatelessWidget {
         obscureText: obscureText,
         keyboardType: keyboardType,
         validator: validator,
+        inputFormatters: inputFormatters,
         onChanged: onChanged,
         onTap: onTap,
         readOnly: readOnly,
@@ -74,24 +85,31 @@ class TTextField extends StatelessWidget {
           labelText: labelText,
           contentPadding: contentPadding,
           filled: true,
-          fillColor: TColors.lightGray, // Controlled by container
+          fillColor: TColors.lightGray,
+          // Controlled by container
           prefixIcon: isCircularIcon && prefixIcon != null
-          ? _buildCircularIcon(prefixIcon!, prefixPadding)
-          : prefixIcon,
+              ? _buildCircularIcon(prefixIcon!, prefixPadding)
+              : prefixIcon,
           suffixIcon: isCircularIcon && suffixIcon != null
               ? _buildCircularIcon(suffixIcon!, suffixPadding)
               : suffixIcon,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(100),
-            borderSide: borderSide ?? const BorderSide(color: Color(0xFFFFFFFF), width: 4),
+            borderSide:
+                borderSide ??
+                const BorderSide(color: Color(0xFFFFFFFF), width: 4),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(100),
-            borderSide: borderSide ?? const BorderSide(color: Color(0xFFFFFFFF), width: 4),
+            borderSide:
+                borderSide ??
+                const BorderSide(color: Color(0xFFFFFFFF), width: 4),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(100),
-            borderSide: borderSide ?? const BorderSide(color: TColors.pureWhite, width: 4),
+            borderSide:
+                borderSide ??
+                const BorderSide(color: TColors.pureWhite, width: 4),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(100),
@@ -127,5 +145,4 @@ class TTextField extends StatelessWidget {
       child: icon,
     );
   }
-
 }
