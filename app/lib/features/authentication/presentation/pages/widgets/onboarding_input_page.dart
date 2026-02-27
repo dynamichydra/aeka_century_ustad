@@ -10,7 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:century_ai/common/widgets/loaders/button_loader.dart';
 import 'package:iconsax/iconsax.dart';
+
 
 class OnboardingInputPage extends StatefulWidget {
   const OnboardingInputPage({
@@ -100,7 +102,7 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
             context.read<OnboardingCubit>().setOtpStage(true);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Dummy OTP sent. Use 1234 to continue.'),
+                content: Text('OTP sent your phone number'),
               ),
             );
           }
@@ -306,17 +308,16 @@ class _OnboardingInputPageState extends State<OnboardingInputPage> {
                       width: THelperFunctions.screenWidth(context) * 0.6,
                       child: ElevatedButton(
                         onPressed: isSubmitting
-                            ? null
+                            ? () {}
                             : () => _handleAction(context, isOtpStage),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: TColors.dangerRed,
                           side: const BorderSide(color: TColors.dangerRed),
                         ),
-                        child: Text(
-                          isSubmitting
-                              ? 'Please wait...'
-                              : (isOtpStage ? 'Send' : 'Get OTP'),
-                        ),
+                        child: isSubmitting
+                            ? const TButtonLoader()
+                            : Text(isOtpStage ? 'Send' : 'Get OTP'),
+
                       ),
                     ),
                     if (isOtpStage) ...[
