@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:century_ai/features/camera_pages/widgets/ImageCompareSlider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/features/camera_pages/dummy_data.dart';
 
@@ -22,6 +23,26 @@ class _ImageEditPageState extends State<ImageEditPage> {
   String _selectedCategory = "Woodgrains";
   Map<String, dynamic>? _selectedTexture;
   String? _currentAssetPreview; // Track the design selected from comparison
+
+  bool _compareExpanded = false;
+  bool _editExpanded = true;
+  final List<int> _selectedIndices = [0]; 
+  double _sliderPosition = 0.5;
+  final List<ProductImageModel> _savedVersions = ProductImages.productImages;
+
+  void _toggleSelection(int index) {
+    setState(() {
+      if (_selectedIndices.contains(index)) {
+        if (_selectedIndices.length > 1) {
+          _selectedIndices.remove(index);
+        }
+      } else {
+        if (_selectedIndices.length < 3) {
+          _selectedIndices.add(index);
+        }
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -53,46 +74,18 @@ class _ImageEditPageState extends State<ImageEditPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Image Preview Area (matches image_preview_page)
-            _buildImageOverlaySection(),
+            // Top Image Preview Area (Fixed Height)
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.45,
+              child: _compareExpanded ? _buildTopComparisonSection() : _buildImageOverlaySection(),
+            ),
 
-            // Design Tools Section
+            // Collapsible Headers & Content (Accordion Style)
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Iconsax.edit_2, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          "Edit & Design",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSearchBar(),
-                    
-                    const SizedBox(height: 20),
-                    const Text("Select Color", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 10),
-                    _buildColorSelection(),
-
-                    const SizedBox(height: 20),
-                    const Text("Select Categories", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 10),
-                    _buildCategorySelection(),
-
-                    const SizedBox(height: 20),
-                    const Text("Select Textures & Patterns", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 10),
-                    _buildTextureSelection(),
-                    
-                    const SizedBox(height: 80), // Padding for bottom bar
-                  ],
+              child: Container(
+                color: Colors.white,
+                child: SingleChildScrollView(
+                  child: _buildCollapsibleHeaders(),
                 ),
               ),
             ),
@@ -102,6 +95,287 @@ class _ImageEditPageState extends State<ImageEditPage> {
       bottomNavigationBar: _buildBottomBar(),
     );
   }
+
+  Widget _buildCollapsibleHeaders() {
+    return Column(
+      children: [
+        // Compare & select Header
+        _buildHeaderTile(
+          title: "Compare & select",
+          icon: Iconsax.maximize_1,
+          isActive: _compareExpanded,
+          onTap: () => setState(() => _compareExpanded = !_compareExpanded),
+        ),
+        if (_compareExpanded) _buildCompareContent(),
+        
+        const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+        
+        // Edit & Design Header
+        _buildHeaderTile(
+          title: "Edit & Design",
+          icon: Iconsax.edit_2,
+          isActive: _editExpanded,
+          onTap: () => setState(() => _editExpanded = !_editExpanded),
+        ),
+        if (_editExpanded) _buildEditContent(),
+      ],
+    );
+  }
+
+  Widget _buildHeaderTile({
+    required String title,
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        color: Colors.white,
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: Colors.black),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black),
+            ),
+            const Spacer(),
+            Icon(isActive ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, color: Colors.black, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditContent() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 4),
+          _buildSearchBar(),
+          const SizedBox(height: 20),
+          const Text("Select Color", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          _buildColorSelection(),
+          const SizedBox(height: 20),
+          const Text("Select Categories", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          _buildCategorySelection(),
+          const SizedBox(height: 20),
+          const Text("Select Textures & Patterns", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          _buildTextureSelection(),
+          const SizedBox(height: 10), // Padding for bottom bar
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompareContent() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          const SizedBox(height: 4),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _savedVersions.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.8,
+            ),
+            itemBuilder: (context, index) {
+              final version = _savedVersions[index];
+              final isSelected = _selectedIndices.contains(index);
+              return GestureDetector(
+                onTap: () => _toggleSelection(index),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        version.image,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      left: 4,
+                      child: Icon(
+                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                        size: 18,
+                        color: isSelected ? Colors.black : Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopComparisonSection() {
+    final totalItems = 1 + _selectedIndices.length;
+
+    if (_selectedIndices.length == 1) {
+      return Stack(
+        children: [
+          ImageCompareSlider(
+            before: widget.imageFile,
+            after: _savedVersions[_selectedIndices[0]].image,
+            position: _sliderPosition,
+            onChanged: (val) => setState(() => _sliderPosition = val),
+          ),
+          Positioned(
+            bottom: 24,
+            right: 16,
+            child: _buildCircleButton(
+              icon: Iconsax.edit_2, 
+              onTap: () {
+                setState(() {
+                  _currentAssetPreview = _savedVersions[_selectedIndices[0]].image;
+                  _compareExpanded = false;
+                  _editExpanded = true;
+                });
+              },
+              size: 20,
+              padding: 8,
+            ),
+          ),
+        ],
+      );
+    } else {
+      return Container(
+        color: Colors.white,
+        child: GridView.builder(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 1.0, // Fixed aspect ratio to match original dense grid
+          ),
+          itemCount: totalItems,
+          itemBuilder: (context, index) {
+            final isOriginal = index == 0;
+            final imageUrl = isOriginal ? null : _savedVersions[_selectedIndices[index - 1]].image;
+            
+            return Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white, width: 0.5),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  isOriginal
+                      ? Image.file(widget.imageFile, fit: BoxFit.cover)
+                      : Image.asset(imageUrl!, fit: BoxFit.cover),
+                  
+                  _buildOverlayButtons(
+                    bottom: 8, 
+                    isGrid: true, 
+                    showRemove: !isOriginal, 
+                    onRemove: () => _toggleSelection(_selectedIndices[index - 1]),
+                    onEdit: () {
+                      setState(() {
+                        _currentAssetPreview = imageUrl;
+                        _compareExpanded = false;
+                        _editExpanded = true;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+  }
+
+  Widget _buildOverlayButtons({
+    required double bottom, 
+    required bool isGrid,
+    bool showRemove = false,
+    VoidCallback? onRemove,
+    VoidCallback? onEdit,
+  }) {
+    final double iconSize = isGrid ? 16 : 20;
+    final double padding = isGrid ? 6 : 8;
+
+    return Positioned(
+      bottom: bottom,
+      left: 0,
+      right: 0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildCircleButton(
+            icon: Iconsax.edit_2, 
+            onTap: onEdit ?? () => setState(() {
+              _compareExpanded = false;
+              _editExpanded = true;
+            }),
+            size: iconSize,
+            padding: padding,
+          ),
+          const SizedBox(width: 8),
+          _buildCircleButton(
+            icon: Iconsax.tick_circle,
+            onTap: () {}, 
+            size: iconSize,
+            padding: padding,
+          ),
+          if (showRemove) ...[
+            const SizedBox(width: 8),
+            _buildCircleButton(
+              icon: Iconsax.close_circle,
+              onTap: onRemove ?? () {},
+              size: iconSize,
+              padding: padding,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCircleButton({
+    required IconData icon, 
+    required VoidCallback onTap, 
+    required double size, 
+    required double padding,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(padding),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+          ],
+        ),
+        child: Icon(icon, size: size, color: Colors.black),
+      ),
+    );
+  }
+
 
   Widget _buildImageOverlaySection() {
     return Stack(
@@ -147,36 +421,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-        // Compare Button (Bottom Right)
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: GestureDetector(
-            onTap: () async {
-              final result = await context.push("/compare_image", extra: widget.imageFile);
-              if (result != null && result is String) {
-                setState(() {
-                  _currentAssetPreview = result;
-                });
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(Iconsax.copy, color: Colors.black, size: 20),
             ),
           ),
         ),
