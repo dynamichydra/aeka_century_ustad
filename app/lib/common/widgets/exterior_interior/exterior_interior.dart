@@ -21,7 +21,7 @@ class _ExteriorInteriorSwitchSliderState
         });
       },
       child: Container(
-        width: 100, // smaller width to fit row
+        width: 140, // smaller width to fit row
         height: 28, // smaller height
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
@@ -38,7 +38,7 @@ class _ExteriorInteriorSwitchSliderState
                   ? Alignment.centerLeft
                   : Alignment.centerRight,
               child: Container(
-                width: 48, // half of container width
+                width: 70, // half of container width
                 height: 24,
                 decoration: BoxDecoration(
                   color: const Color(0xFFEEEEEE),

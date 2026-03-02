@@ -446,18 +446,41 @@ class _ImageEditPageState extends State<ImageEditPage> {
         color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: TextField(
-        controller: _searchController,
+      child:  TextField(
         decoration: InputDecoration(
-          hintText: "Search categories",
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          prefixIcon: null,
-          suffixIcon: const Padding(
-            padding: EdgeInsets.only(right: 8.0),
-            child: Icon(Iconsax.setting_4, color: Colors.grey, size: 20),
+          filled: true,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 20,
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          suffixIcon: Container(
+            margin: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 1,
+                  spreadRadius: 1,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: Image.asset(
+                "assets/icons/app_icons/ai_search.png",
+                width: 20,
+                height: 20,
+              ),
+            ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
     );
@@ -482,9 +505,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2)],
+                      // boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2)],
                     ),
-                    child: const Icon(Iconsax.pen_tool, color: Colors.blue),
+                    child: Image.asset(
+                                "assets/icons/app_icons/color-picker.png",
+                                width: 30,
+                                height: 30,
+                              ),
                   ),
                   const SizedBox(height: 4),
                   const Text("Colour Picker", style: TextStyle(fontSize: 10, color: Colors.grey)),

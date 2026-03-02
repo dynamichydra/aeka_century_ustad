@@ -80,14 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black26,
-                                  blurRadius: 8,
+                                  blurRadius: 1,
                                   spreadRadius: 2,
-                                  offset: Offset(0, 3),
+                                  offset: Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(8),
+                              padding: EdgeInsets.all(8),
                               child: Image.asset(
                                 "assets/icons/app_icons/ai_search.png",
                                 width: 20,
