@@ -104,6 +104,10 @@ flutter:
     - assets/images/furniture/
     - assets/images/lamination/
     - assets/images/vectors/
+    - assets/DECO/0.8mm LAM/
+    - assets/DECO/1mm LAM/
+    - assets/DECO/NATZURA/
+    - assets/DECO/SENZURA/
     - assets/icons/app_icons/ai_search.png
 
   #--------------- LOCAL FONTS ------------------#
