@@ -74,9 +74,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Image Preview Area (Fixed Height)
+            // Top Image Preview Area (Fixed Height - Redesigned to fit bottom options without scroll)
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.45,
+              height: MediaQuery.of(context).size.height * 0.40,
               child: _compareExpanded ? _buildTopComparisonSection() : _buildImageOverlaySection(),
             ),
 
@@ -92,7 +92,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
@@ -131,7 +130,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 50,
+        height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         color: Colors.white,
         child: Row(
@@ -140,7 +139,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             const SizedBox(width: 8),
             Text(
               title,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black),
             ),
             const Spacer(),
             Icon(isActive ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, color: Colors.black, size: 20),
@@ -158,19 +157,21 @@ class _ImageEditPageState extends State<ImageEditPage> {
         children: [
           const SizedBox(height: 4),
           _buildSearchBar(),
-          const SizedBox(height: 20),
-          const Text("Select Color", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 10),
+          const Text("Select Color", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
           _buildColorSelection(),
-          const SizedBox(height: 20),
-          const Text("Select Categories", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
+          const Text("Select Categories", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
           _buildCategorySelection(),
-          const SizedBox(height: 20),
-          const Text("Select Textures & Patterns", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+          const Text("Select Textures & Patterns", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
           _buildTextureSelection(),
-          const SizedBox(height: 10), // Padding for bottom bar
+          const SizedBox(height: 10),
+          _buildBottomBar(),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -384,14 +385,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
           Image.asset(
             _currentAssetPreview!,
             width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.45,
+            height: MediaQuery.of(context).size.height * 0.40,
             fit: BoxFit.cover,
           )
         else
           Image.file(
             widget.imageFile,
             width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.45,
+            height: MediaQuery.of(context).size.height * 0.40,
             fit: BoxFit.cover,
           ),
         
@@ -441,21 +442,24 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildSearchBar() {
     return Container(
-      height: 45,
+      height: 35,
       decoration: BoxDecoration(
         color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(20),
       ),
-      child:  TextField(
+      child: TextField(
+        style: const TextStyle(fontSize: 10),
         decoration: InputDecoration(
           filled: true,
+          fillColor: Colors.transparent,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 20,
+            vertical: 10,
+            horizontal: 16,
           ),
+          suffixIconConstraints: const BoxConstraints(maxWidth: 32, maxHeight: 32),
           suffixIcon: Container(
-            margin: const EdgeInsets.all(6),
+            margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
@@ -469,16 +473,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
               ],
             ),
             child: Padding(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               child: Image.asset(
                 "assets/icons/app_icons/ai_search.png",
-                width: 20,
-                height: 20,
+                width: 14,
+                height: 14,
               ),
             ),
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
             borderSide: BorderSide.none,
           ),
         ),
@@ -488,7 +492,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildColorSelection() {
     return SizedBox(
-      height: 80,
+      height: 48,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: featuredColors.length + 1,
@@ -500,8 +504,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 50,
-                    height: 45,
+                    width: 30,
+                    height: 24,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -522,18 +526,18 @@ class _ImageEditPageState extends State<ImageEditPage> {
           final colorData = featuredColors[index - 1];
           final isSelected = _selectedColor?["id"] == colorData["id"];
           return Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 5),
             child: GestureDetector(
               onTap: () => setState(() => _selectedColor = colorData),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 75,
-                    height: 45,
+                    width: 60,
+                    height: 30,
                     decoration: BoxDecoration(
                       color: Color(int.parse(colorData["hex"].replaceFirst('#', '0xFF'))),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(4),
                       border: isSelected ? Border.all(color: Colors.black, width: 2) : null,
                     ),
                   ),
@@ -541,7 +545,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   Text(
                     colorData["name"],
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 8,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                       color: isSelected ? Colors.black : Colors.grey,
                     ),
@@ -557,9 +561,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildCategorySelection() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildChipRow(categoriesRow1),
-        const SizedBox(height: 8),
+        const SizedBox(height: 0),
         _buildChipRow(categoriesRow2),
       ],
     );
@@ -572,13 +577,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
         children: labels.map((label) {
           final isSelected = _selectedCategory == label;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 6),
             child: ChoiceChip(
+              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+              padding: EdgeInsets.zero,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: -2),
               label: Text(
                 label,
                 style: TextStyle(
                   color: isSelected ? Colors.black : Colors.grey[600],
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
@@ -600,7 +608,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildTextureSelection() {
     return SizedBox(
-      height: 100,
+      height: 55,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: laminationList.length,
@@ -608,7 +616,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           final texture = laminationList[index];
           final isSelected = _selectedTexture?["id"] == texture["id"];
           return Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               onTap: () => setState(() => _selectedTexture = texture),
               child: Column(
@@ -618,8 +626,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     borderRadius: BorderRadius.circular(4),
                     child: Image.asset(
                       texture["image"],
-                      width: 80,
-                      height: 60,
+                      width: 60,
+                      height: 30,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -627,7 +635,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   Text(
                     "1553 MI", // Placeholder ID from design
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       color: isSelected ? Colors.black : Colors.grey,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                     ),
@@ -642,53 +650,64 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Widget _buildBottomBar() {
-    return Container(
-      height: 80,
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 45,
-            height: 45,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.black12, width: 1),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.menu, color: Colors.black, size: 20),
+            onPressed: () {},
+          ),
+        ),
+        const SizedBox(width: 16),
+        SizedBox(
+          width: 120,
+          height: 40,
+          child: ElevatedButton(
+            onPressed: () {
+              // Navigate to finalize page with the current edited state
+              context.push("/image_finalize", extra: {
+                'editedImage': _currentAssetPreview ?? widget.imageFile, 
+                'selectedColor': _selectedColor ?? featuredColors[0],
+                'selectedLamination': _selectedTexture ?? laminationList[0],
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 0,
+              side: const BorderSide(color: Colors.black12, width: 1),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.menu, color: Colors.black),
-              onPressed: () {},
+            child: const Text(
+              "Apply",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {
-                // Navigate to finalize page with the current edited state
-                context.push("/image_finalize", extra: {
-                  'editedImage': _currentAssetPreview ?? widget.imageFile, 
-                  'selectedColor': _selectedColor ?? featuredColors[0],
-                  'selectedLamination': _selectedTexture ?? laminationList[0],
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                elevation: 4,
-                side: BorderSide.none,
-                shadowColor: Colors.black26,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Text(
-                "Apply",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 16),
+        // Container(
+        //   width: 45,
+        //   height: 45,
+        //   decoration: BoxDecoration(
+        //     color: Colors.white,
+        //     shape: BoxShape.circle,
+        //     border: Border.all(color: Colors.black12, width: 1),
+        //   ),
+        //   child: IconButton(
+        //     icon: const Icon(Icons.arrow_forward, color: Colors.black, size: 20),
+        //     onPressed: () {},
+        //   ),
+        // ),
+      ],
     );
   }
 }

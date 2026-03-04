@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path_provider/path_provider.dart';
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/horizontal_icon_grid.dart';
@@ -33,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final result = await db.query("products");
 
-    print("Db Res: ");
     print("===================================");
     print(result);
     print("===================================");
@@ -46,6 +47,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (image != null && mounted) {
       context.push("/image_preview", extra: File(image.path));
+    }
+  }
+
+  Future<void> _openProductForEditing(String assetPath) async {
+    try {
+      final byteData = await rootBundle.load(assetPath);
+      final tempDir = await getTemporaryDirectory();
+      final fileName = assetPath.replaceAll("/", "_");
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+      if (mounted) {
+        context.push("/image_preview", extra: file);
+      }
+    } catch (e) {
+      debugPrint("Error loading asset: $e");
     }
   }
   @override
@@ -303,9 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               isSelected: index == 2,
                               selectedBorderColor: TColors.warmBeige,
                               onTap: () {
-                                // setState(() {
-                                //   _currentProduct = product;
-                                // });
+                                _openProductForEditing(product.image);
                               },
                               child: ClipOval(
                                 child: Image.asset(
@@ -337,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 return GestureDetector(
                                   onTap: () {
-                                    // open product
+                                    _openProductForEditing(product.image);
                                   },
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
@@ -360,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 return GestureDetector(
                                   onTap: () {
-                                    // open product
+                                    _openProductForEditing(product.image);
                                   },
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),

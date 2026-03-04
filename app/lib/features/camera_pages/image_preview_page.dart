@@ -30,32 +30,35 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Image Section with Overlays
-                Stack(
-                  children: [
-                    Image.file(
-                      widget.imageFile,
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.55,
-                      fit: BoxFit.cover,
-                    ),
-                    // -- Overlays based on screenshot --
-                    // Visual bounding boxes (simulated with CustomPaint or Containers)
-                    _buildBoundingBox(top: 50, left: 30, width: 120, height: 150),
-                    _buildBoundingBox(top: 140, left: 210, width: 150, height: 80),
-                    _buildBoundingBox(top: 250, left: 10, width: 120, height: 180),
-                    _buildBoundingBox(top: 350, left: 150, width: 200, height: 100),
-                    
-                    // Center Instruction
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Image Section with Overlays
+                  Stack(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1,
+                        child: Image.file(
+                          widget.imageFile,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      // -- Overlays based on screenshot --
+                      // Visual bounding boxes (simulated with CustomPaint or Containers)
+                      _buildBoundingBox(top: 50, left: 30, width: 120, height: 120),
+                      _buildBoundingBox(top: 140, left: 210, width: 120, height: 80),
+                      _buildBoundingBox(top: 250, left: 10, width: 100, height: 100),
+                      
+                      // Center Instruction
+                      Positioned(
+                        bottom: 40,
+                        left: 0,
+                        right: 0,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -79,104 +82,118 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
-                  child: Text(
-                    "More Beds to Explore",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                    ],
+                  ),
+                  
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
+                    child: Text(
+                      "More Beds to Explore",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
-                ),
-                
-                // Product Grid
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.8,
-                  ),
-                  itemCount: exploreImages.length,
-                  itemBuilder: (context, index) {
-                    return Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Image.asset(
-                            exploreImages[index],
-                            fit: BoxFit.cover,
-                            height: double.infinity,
-                            width: double.infinity,
+                  
+                  // Product Grid
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: exploreImages.length,
+                    itemBuilder: (context, index) {
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Image.asset(
+                              exploreImages[index],
+                              fit: BoxFit.cover,
+                              height: double.infinity,
+                              width: double.infinity,
+                            ),
                           ),
-                        ),
-                        // Corner Icons
-                        const Positioned(
-                          top: 8,
-                          left: 8,
-                          child: Icon(Icons.local_fire_department, color: Colors.red, size: 16),
-                        ),
-                        const Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Icon(Icons.favorite_border, color: Colors.white70, size: 16),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 100), // Space for bottom button
-              ],
-            ),
-          ),
-          
-          // Floating Edit Button
-          Positioned(
-            bottom: 30,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: FloatingActionButton.extended(
-                  onPressed: () => context.push("/image_edit_page", extra: widget.imageFile),
-                  backgroundColor: Colors.white,
-                  elevation: 0,
-                  highlightElevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                          // Corner Icons
+                          const Positioned(
+                            top: 8,
+                            left: 8,
+                            child: Icon(Icons.local_fire_department, color: Colors.red, size: 16),
+                          ),
+                          const Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Icon(Icons.favorite_border, color: Colors.white70, size: 16),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                  icon: const Icon(Icons.edit_outlined, color: Colors.black, size: 20),
-                  label: const Text(
-                    "Edit",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                  const SizedBox(height: 100), // Space for bottom button
+                ],
+              ),
+            ),
+            
+            // Floating Edit Button
+            Positioned(
+              bottom: 30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: 130,
+                    height: 44,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.zero,
+                        elevation: 0,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () => context.push("/image_edit_page", extra: widget.imageFile),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 8,
+                        children: [
+                          Image.asset("assets/icons/app_icons/edit.png", height: 14,),
+                          const Text(
+                            "Edit",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
