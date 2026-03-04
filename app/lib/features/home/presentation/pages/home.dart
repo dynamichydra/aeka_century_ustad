@@ -6,6 +6,7 @@ import 'package:century_ai/common/widgets/horizontal_icon_grid/horizontal_icon_g
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/cubit/products/products_state.dart';
+import 'package:century_ai/db/db_helper.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
@@ -27,9 +28,21 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isGridView = false;
   int _selectedIndex = 0;
 
+  Future<void> logDb()async{
+    final db = await DbHelper.database;
+
+    final result = await db.query("products");
+
+    print("Db Res: ");
+    print("===================================");
+    print(result);
+    print("===================================");
+  }
+
   Future<void> _pickFromGallery() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
 
     if (image != null && mounted) {
       context.push("/image_preview", extra: File(image.path));
@@ -60,42 +73,53 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Center(child: Text("Lets design Furniture with Century Decor", style: TextStyle(fontWeight: FontWeight.w200, fontSize: 14),)),
+                      const SizedBox(height: TSizes.spaceBtwItems),
                       Center(child: ExteriorInteriorSwitchSlider()),
                       const SizedBox(height: TSizes.spaceBtwItems),
                       // SearchInput(),
                       TextField(
+                        cursorHeight: 15,
+                        style: const TextStyle(fontWeight: FontWeight.w100, fontSize: 13),
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.white,
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(
-                            vertical: 16,
+                            vertical: 13,
                             horizontal: 20,
                           ),
+                          suffixIconConstraints: const BoxConstraints(
+                            maxHeight: 36,
+                            maxWidth: 44,
+                          ),
                           suffixIcon: Container(
-                            margin: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
+                            margin: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
-                              boxShadow: const [
+                              boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black26,
+                                  color: Colors.black12,
                                   blurRadius: 1,
-                                  spreadRadius: 2,
+                                  spreadRadius: 1,
                                   offset: Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Image.asset(
-                                "assets/icons/app_icons/ai_search.png",
-                                width: 20,
-                                height: 20,
+                              padding: const EdgeInsets.all(8.0),
+                              child: Center(
+                                child: Image.asset(
+                                  "assets/icons/app_icons/ai_search.png",
+                                  width: 10,
+                                  height: 10,
+                                ),
                               ),
                             ),
                           ),
                           hintText: "Ai based furniture idea search",
+                          hintStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w100),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide.none,
@@ -150,8 +174,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       padding: const EdgeInsets.all(10),
                                       child: Image.asset(
                                         "assets/icons/app_icons/trendng2.png",
-                                        width: 20,
-                                        height: 20,
+                                        width: 12,
+                                        height: 12,
                                       ),
                                     ),
                                   ),
@@ -191,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       padding: EdgeInsets.all(10),
                                       child: Icon(
                                         Icons.favorite,
-                                        size: 18,
+                                        size: 12,
                                         color: Color(0xFF898888),
                                       ),
                                     ),
@@ -238,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         _isGridView
                                             ? Icons.view_list
                                             : Icons.grid_view,
-                                        size: 22,
+                                        size: 12,
                                         color: Colors.black87,
                                       ),
                                     ),
@@ -401,8 +425,8 @@ class _HomeScreenState extends State<HomeScreen> {
           AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 250),
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
               color: isActive ? Colors.black : Colors.grey,
             ),
             child: Text(title),
@@ -410,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 6),
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            height: 3,
+            height: 1,
             width: isActive ? 50 : 0,
             decoration: BoxDecoration(
               color: Colors.black,

@@ -12,9 +12,8 @@ class ProductContainers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 200, // 👈 set your container height
+    return AspectRatio(
+      aspectRatio: 1,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12), // optional
         child: Stack(

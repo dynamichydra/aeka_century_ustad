@@ -3,6 +3,7 @@ import 'package:century_ai/cubit/auth/auth_cubit.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/cubit/profile/profile_cubit.dart';
 import 'package:century_ai/cubit/tips/tips_cubit.dart';
+import 'package:century_ai/db/db_helper.dart';
 import 'package:century_ai/router/router.dart';
 import 'package:century_ai/core/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,9 @@ import 'package:century_ai/utils/popups/loaders.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_portal/flutter_portal.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await DbHelper.database;
   runApp(
     Portal(
       child:  MyApp(),

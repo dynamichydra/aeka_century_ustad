@@ -38,7 +38,8 @@ class NavWrapper extends StatelessWidget {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: Text("Lets design Furniture with Century Decor", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),),
+        title: Text("Century Decor Studio", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),),
+        centerTitle: true,
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: TSizes.defaultSpace),
