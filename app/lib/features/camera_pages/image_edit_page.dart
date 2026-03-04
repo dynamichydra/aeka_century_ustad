@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:century_ai/db/db_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
@@ -20,12 +21,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
   final TextEditingController _searchController = TextEditingController();
   
   Map<String, dynamic>? _selectedColor;
-  String _selectedCategory = "Woodgrains";
+  String? _selectedCategory;
+  String? _selectedSubCategory;
+  List<Map<String, dynamic>> _lamCategories = [];
   Map<String, dynamic>? _selectedTexture;
   String? _currentAssetPreview; // Track the design selected from comparison
 
   bool _compareExpanded = false;
   bool _editExpanded = true;
+  bool _isApplied = false;
   final List<int> _selectedIndices = [0]; 
   double _sliderPosition = 0.5;
   final List<ProductImageModel> _savedVersions = ProductImages.productImages;
@@ -47,6 +51,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
   @override
   void initState() {
     super.initState();
+    getLamCategory();
+    getLamSubCategory();
     if (widget.pickedColor != null) {
       _selectedColor = {
         "name": "Picked Color",
@@ -54,6 +60,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
         "id": 999,
       };
     }
+
   }
 
   final List<Map<String, dynamic>> featuredColors = [
@@ -64,8 +71,71 @@ class _ImageEditPageState extends State<ImageEditPage> {
     {"name": "Brown", "hex": "#6B271E", "id": 105},
   ];
 
-  final List<String> categoriesRow1 = ["Abstract Patterns", "Woodgrains", "Stones", "Solid"];
-  final List<String> categoriesRow2 = ["All", "Wallpaper", "Fabric", "Weave", "Artiste Collection", "Herringbone"];
+  List<String> categoriesRow1 = [""];
+  List<String> categoriesRow2 = [""];
+
+  Future<void> getLamCategory() async {
+    try {
+      final db = await DbHelper.database;
+      final result = await db.query("lam_category");
+      
+      if (result.isNotEmpty && mounted) {
+        setState(() {
+          _lamCategories = result;
+          categoriesRow1 = result.map((e) => e["name"].toString()).toList();
+        });
+        
+        // At initial launch we don't automatically load subcategories since no category is selected
+        if (_selectedCategory != null) {
+          _fetchSubCategoriesFor(_selectedCategory!);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching lam_category: $e");
+    }
+  }
+
+  void _fetchSubCategoriesFor(String categoryName) {
+    // Find matching category map
+    final match = _lamCategories.firstWhere(
+      (e) => e["name"].toString() == categoryName, 
+      orElse: () => {},
+    );
+    
+    final catId = match["id"];
+    
+    if (catId != null) {
+      getLamSubCategory(catId);
+    } else {
+      getLamSubCategory(); // Fallback incase id is completely missing
+    }
+  }
+
+  Future<void> getLamSubCategory([dynamic catId]) async {
+    try {
+      final db = await DbHelper.database;
+      List<Map<String, dynamic>> result;
+      
+      if (catId != null) {
+        result = await db.query("lam_sub_category", where: "cat_id = ?", whereArgs: [catId]);
+      } else {
+        result = await db.query("lam_sub_category");
+      }
+      
+      if (mounted) {
+        setState(() {
+          if (result.isNotEmpty) {
+            categoriesRow2 = ["All", ...result.map((e) => e["name"].toString())];
+          } else {
+             categoriesRow2 = [];
+             _selectedSubCategory = null;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching lam_sub_category: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,21 +168,23 @@ class _ImageEditPageState extends State<ImageEditPage> {
   Widget _buildCollapsibleHeaders() {
     return Column(
       children: [
-        // Compare & select Header
-        _buildHeaderTile(
-          title: "Compare & select",
-          icon: Iconsax.maximize_1,
-          isActive: _compareExpanded,
-          onTap: () => setState(() => _compareExpanded = !_compareExpanded),
-        ),
-        if (_compareExpanded) _buildCompareContent(),
-        
-        const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+        if (_isApplied) ...[
+          // Compare & select Header
+          _buildHeaderTile(
+            title: "Compare & select",
+            iconImg: "compare.png",
+            isActive: _compareExpanded,
+            onTap: () => setState(() => _compareExpanded = !_compareExpanded),
+          ),
+          if (_compareExpanded) _buildCompareContent(),
+          
+          const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+        ],
         
         // Edit & Design Header
         _buildHeaderTile(
           title: "Edit & Design",
-          icon: Iconsax.edit_2,
+          iconImg: "edit.png",
           isActive: _editExpanded,
           onTap: () => setState(() => _editExpanded = !_editExpanded),
         ),
@@ -123,7 +195,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildHeaderTile({
     required String title,
-    required IconData icon,
+    required String iconImg,
     required bool isActive,
     required VoidCallback onTap,
   }) {
@@ -135,11 +207,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
         color: Colors.white,
         child: Row(
           children: [
-            Icon(icon, size: 20, color: Colors.black),
+            Image.asset("assets/icons/app_icons/${iconImg}", height: 13,),
             const SizedBox(width: 8),
             Text(
               title,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black),
             ),
             const Spacer(),
             Icon(isActive ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, color: Colors.black, size: 20),
@@ -448,10 +520,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: TextField(
-        style: const TextStyle(fontSize: 10),
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w100),
         decoration: InputDecoration(
           filled: true,
-          fillColor: Colors.transparent,
+          fillColor: Color(0xFFF7F7F7),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             vertical: 10,
@@ -459,14 +531,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
           ),
           suffixIconConstraints: const BoxConstraints(maxWidth: 32, maxHeight: 32),
           suffixIcon: Container(
-            margin: const EdgeInsets.all(4),
+            margin: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black26,
-                  blurRadius: 1,
+                  blurRadius: 0,
                   spreadRadius: 1,
                   offset: Offset(0, 1),
                 ),
@@ -538,7 +610,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     decoration: BoxDecoration(
                       color: Color(int.parse(colorData["hex"].replaceFirst('#', '0xFF'))),
                       borderRadius: BorderRadius.circular(4),
-                      border: isSelected ? Border.all(color: Colors.black, width: 2) : null,
+                      border: isSelected ? Border.all(color: Colors.black, width: 0.5) : null,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -563,19 +635,25 @@ class _ImageEditPageState extends State<ImageEditPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildChipRow(categoriesRow1),
+        _buildChipRow(categoriesRow1, _selectedCategory, (val) {
+           setState(() => _selectedCategory = val);
+           _fetchSubCategoriesFor(val);
+        }),
         const SizedBox(height: 0),
-        _buildChipRow(categoriesRow2),
+        if (categoriesRow2.isNotEmpty)
+          _buildChipRow(categoriesRow2, _selectedSubCategory, (val) {
+             setState(() => _selectedSubCategory = val);
+          }),
       ],
     );
   }
 
-  Widget _buildChipRow(List<String> labels) {
+  Widget _buildChipRow(List<String> labels, String? selectedItem, Function(String) onSelect) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: labels.map((label) {
-          final isSelected = _selectedCategory == label;
+          final isSelected = selectedItem == label;
           return Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ChoiceChip(
@@ -591,7 +669,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 ),
               ),
               selected: isSelected,
-              onSelected: (val) => setState(() => _selectedCategory = label),
+              onSelected: (val) => onSelect(label),
               backgroundColor: Colors.white,
               selectedColor: Colors.white,
               showCheckmark: false,
@@ -608,7 +686,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildTextureSelection() {
     return SizedBox(
-      height: 55,
+      height: 72,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: laminationList.length,
@@ -627,7 +705,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     child: Image.asset(
                       texture["image"],
                       width: 60,
-                      height: 30,
+                      height: 40,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -647,6 +725,25 @@ class _ImageEditPageState extends State<ImageEditPage> {
         },
       ),
     );
+  }
+
+  void _applyChanges() {
+    if (_selectedColor == null || _selectedTexture == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a color and a texture pattern first."),
+          backgroundColor: Colors.black87,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
+    setState(() {
+      _isApplied = true;
+      _compareExpanded = true;
+      _editExpanded = false;
+    });
   }
 
   Widget _buildBottomBar() {
@@ -671,14 +768,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           width: 120,
           height: 40,
           child: ElevatedButton(
-            onPressed: () {
-              // Navigate to finalize page with the current edited state
-              context.push("/image_finalize", extra: {
-                'editedImage': _currentAssetPreview ?? widget.imageFile, 
-                'selectedColor': _selectedColor ?? featuredColors[0],
-                'selectedLamination': _selectedTexture ?? laminationList[0],
-              });
-            },
+            onPressed: _applyChanges,
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.zero,
               backgroundColor: Colors.white,
@@ -693,20 +783,22 @@ class _ImageEditPageState extends State<ImageEditPage> {
             ),
           ),
         ),
-        const SizedBox(width: 16),
-        // Container(
-        //   width: 45,
-        //   height: 45,
-        //   decoration: BoxDecoration(
-        //     color: Colors.white,
-        //     shape: BoxShape.circle,
-        //     border: Border.all(color: Colors.black12, width: 1),
-        //   ),
-        //   child: IconButton(
-        //     icon: const Icon(Icons.arrow_forward, color: Colors.black, size: 20),
-        //     onPressed: () {},
-        //   ),
-        // ),
+        if (_isApplied) ...[
+          const SizedBox(width: 16),
+          Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black12, width: 1),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_forward, color: Colors.black, size: 20),
+              onPressed: () {},
+            ),
+          ),
+        ],
       ],
     );
   }
