@@ -332,15 +332,23 @@ class _ImageEditPageState extends State<ImageEditPage> {
         ],
       );
     } else {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final screenHeight = MediaQuery.of(context).size.height;
+      // The parent box is hardcoded to 40% of screen height
+      final gridHeight = screenHeight * 0.40;
+      final cellWidth = screenWidth / 2;
+      final cellHeight = gridHeight / (totalItems > 2 ? 2 : 1);
+      final aspectRatio = cellWidth / cellHeight;
+
       return Container(
         color: Colors.white,
         child: GridView.builder(
           padding: EdgeInsets.zero,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 1.0, // Fixed aspect ratio to match original dense grid
+            childAspectRatio: aspectRatio,
           ),
           itemCount: totalItems,
           itemBuilder: (context, index) {
@@ -361,8 +369,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   _buildOverlayButtons(
                     bottom: 8, 
                     isGrid: true, 
-                    showRemove: !isOriginal, 
-                    onRemove: () => _toggleSelection(_selectedIndices[index - 1]),
+                    showRemove: true, 
+                    onRemove: isOriginal ? () {} : () => _toggleSelection(_selectedIndices[index - 1]),
+                    onSelect: () {
+                      context.push("/image_finalize", extra: {
+                        'editedImage': imageUrl ?? widget.imageFile, 
+                        'selectedColor': _selectedColor,
+                        'selectedLamination': _selectedTexture,
+                      });
+                    },
                     onEdit: () {
                       setState(() {
                         _currentAssetPreview = imageUrl;
@@ -386,6 +401,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     bool showRemove = false,
     VoidCallback? onRemove,
     VoidCallback? onEdit,
+    VoidCallback? onSelect,
   }) {
     final double iconSize = isGrid ? 16 : 20;
     final double padding = isGrid ? 6 : 8;
@@ -409,7 +425,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           const SizedBox(width: 8),
           _buildCircleButton(
             icon: Iconsax.tick_circle,
-            onTap: () {}, 
+            onTap: onSelect ?? () {}, 
             size: iconSize,
             padding: padding,
           ),
