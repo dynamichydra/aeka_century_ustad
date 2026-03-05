@@ -111,6 +111,7 @@ flutter:
     - assets/DECO/NATZURA/
     - assets/DECO/SENZURA/
     - assets/icons/app_icons/ai_search.png
+    - assets/data/
 
   #--------------- LOCAL FONTS ------------------#
   fonts:

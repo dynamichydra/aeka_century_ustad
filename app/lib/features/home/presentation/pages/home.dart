@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
@@ -28,6 +29,132 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isGridView = false;
   int _selectedIndex = 0;
+  String? _selectedCategory;
+  Map<String, List<ProductImageModel>> _productsByCategory = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProductsByCategoryFromAsset();
+  }
+
+  Future<void> _loadProductsByCategoryFromAsset() async {
+    try {
+      final rawJson = await rootBundle.loadString('assets/data/_data.json');
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final allAssets = manifest.listAssets();
+      final exactAssetMap = <String, String>{};
+      final softAssetMap = <String, String>{};
+      for (final assetPath in allAssets) {
+        final exactKey = _normalizeAssetPath(assetPath);
+        final softKey = _normalizeAssetPathSoft(assetPath);
+        exactAssetMap[exactKey] = assetPath;
+        softAssetMap.putIfAbsent(softKey, () => assetPath);
+      }
+      final decoded = jsonDecode(rawJson);
+
+      if (decoded is! Map<String, dynamic>) return;
+
+      final parsed = <String, List<ProductImageModel>>{};
+
+      decoded.forEach((category, value) {
+        if (value is! List) return;
+
+        final items = <ProductImageModel>[];
+        for (final item in value) {
+          if (item is! Map) continue;
+          final map = item.cast<String, dynamic>();
+          final rawPath = (map['image_path'] ?? '').toString().trim();
+          if (rawPath.isEmpty) continue;
+
+          final prefixedPath = rawPath.startsWith('assets/')
+              ? rawPath
+              : 'assets/$rawPath';
+          final resolvedPath =
+              exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
+              softAssetMap[_normalizeAssetPathSoft(prefixedPath)];
+          if (resolvedPath == null) continue;
+
+          items.add(
+            ProductImageModel(
+              id: (map['id'] ?? '${category}_${items.length + 1}').toString(),
+              name: category,
+              image: resolvedPath,
+              isTrending: false,
+            ),
+          );
+        }
+
+        if (items.isNotEmpty) {
+          parsed[category] = items;
+        }
+      });
+
+      if (!mounted) return;
+      setState(() {
+        _productsByCategory = parsed;
+      });
+    } catch (e) {
+      debugPrint('Error parsing assets/data/_data.json: $e');
+    }
+  }
+
+  String _normalizeAssetPath(String value) {
+    return value.replaceAll('\\', '/').trim().toLowerCase();
+  }
+
+  String _normalizeAssetPathSoft(String value) {
+    return _normalizeAssetPath(value).replaceAll(RegExp(r'[\s_\-]+'), '');
+  }
+
+  String _normalizeCategory(String value) {
+    return value.trim().toLowerCase();
+  }
+
+  List<ProductImageModel> _resolveQuickProducts(
+    List<ProductImageModel> fallbackProducts,
+  ) {
+    if (_productsByCategory.isEmpty) {
+      return fallbackProducts.take(4).toList();
+    }
+
+    final quickItems = <ProductImageModel>[];
+    for (final entry in _productsByCategory.entries) {
+      if (entry.value.isEmpty) continue;
+      quickItems.add(
+        ProductImageModel(
+          id: 'cat_${entry.key}',
+          name: entry.key,
+          image: entry.value.first.image,
+          isTrending: false,
+        ),
+      );
+      if (quickItems.length == 4) break;
+    }
+
+    return quickItems.isEmpty ? fallbackProducts.take(4).toList() : quickItems;
+  }
+
+  List<ProductImageModel> _resolveVisibleProducts(
+    List<ProductImageModel> fallbackProducts,
+  ) {
+    final selectedCategory = _selectedCategory;
+    if (selectedCategory == null) {
+      return fallbackProducts;
+    }
+    final filtered = _productsByCategory[selectedCategory];
+    if (filtered == null || filtered.isEmpty) {
+      final normalizedSelected = _normalizeCategory(selectedCategory);
+      for (final entry in _productsByCategory.entries) {
+        if (_normalizeCategory(entry.key) == normalizedSelected &&
+            entry.value.isNotEmpty) {
+          return entry.value;
+        }
+      }
+      return fallbackProducts;
+    }
+    return filtered;
+  }
 
   Future<void> logDb() async {
     final db = await DbHelper.database;
@@ -74,7 +201,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final products = productsState.products.isEmpty
         ? ProductImages.productImages
         : productsState.products;
-    final quickProducts = products.take(4).toList();
+    final quickProducts = _resolveQuickProducts(products);
+    final visibleProducts = _resolveVisibleProducts(products);
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
@@ -342,13 +470,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(
                         height: 100,
                         child: HorizontalIconGrid(
-                          itemCount: products.take(4).length + 1,
+                          itemCount: quickProducts.length + 1,
                           itemBuilder: (context, index) {
-                            final quickProducts = products.take(4).toList();
                             if (index == quickProducts.length) {
                               return CircularIconItem(
                                 label: 'See more',
-                                onTap: () {},
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCategory = null;
+                                  });
+                                },
                                 child: Container(
                                   decoration: const BoxDecoration(
                                     shape: BoxShape.circle,
@@ -365,10 +496,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             final product = quickProducts[index];
                             return CircularIconItem(
                               label: product.name,
-                              isSelected: index == 2,
-                              selectedBorderColor: Color(0xFFEEEEEE),
+                              isSelected: _selectedCategory == product.name,
+                              selectedBorderColor: const Color(0xFFEEEEEE),
                               onTap: () {
-                                _openProductForEditing(product.image);
+                                setState(() {
+                                  _selectedCategory = product.name;
+                                });
                               },
                               child: ClipOval(
                                 child: Image.asset(
@@ -394,9 +527,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     mainAxisSpacing: 12,
                                     childAspectRatio: 1, // square images
                                   ),
-                              itemCount: products.length,
+                              itemCount: visibleProducts.length,
                               itemBuilder: (context, index) {
-                                final product = products[index];
+                                final product = visibleProducts[index];
 
                                 return GestureDetector(
                                   onTap: () {
@@ -415,11 +548,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           : ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: products.length,
+                              itemCount: visibleProducts.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
-                                final product = products[index];
+                                final product = visibleProducts[index];
 
                                 return GestureDetector(
                                   onTap: () {

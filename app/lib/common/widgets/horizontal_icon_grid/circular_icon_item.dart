@@ -43,11 +43,13 @@ class CircularIconItem extends StatelessWidget {
           const SizedBox(height: TSizes.spaceBtwItems / 2),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelMedium,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-          ),
+          )
         ],
       ),
     );
