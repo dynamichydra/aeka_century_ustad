@@ -403,7 +403,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             bottom: 24,
             right: 16,
             child: _buildCircleButton(
-              icon: Iconsax.edit_2, 
+              icon: "edit.png",
               onTap: () {
                 setState(() {
                   _currentAssetPreview = _savedVersions[_selectedIndices[0]].image;
@@ -500,7 +500,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildCircleButton(
-            icon: Iconsax.edit_2, 
+            icon: "edit.png",
             onTap: onEdit ?? () => setState(() {
               _compareExpanded = false;
               _editExpanded = true;
@@ -510,15 +510,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
           ),
           const SizedBox(width: 8),
           _buildCircleButton(
-            icon: Iconsax.tick_circle,
-            onTap: onSelect ?? () {}, 
+            icon: "tick.png",
+            onTap: () {},
             size: iconSize,
             padding: padding,
           ),
           if (showRemove) ...[
             const SizedBox(width: 8),
             _buildCircleButton(
-              icon: Iconsax.close_circle,
+              icon: "cross.png",
               onTap: onRemove ?? () {},
               size: iconSize,
               padding: padding,
@@ -530,7 +530,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Widget _buildCircleButton({
-    required IconData icon, 
+    required String icon,
     required VoidCallback onTap, 
     required double size, 
     required double padding,
@@ -546,7 +546,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
             BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
           ],
         ),
-        child: Icon(icon, size: size, color: Colors.black),
+        child: Padding(
+          padding: const EdgeInsets.all(2.0),
+          child: Image.asset("assets/icons/app_icons/${icon}", height: 10, width: 10,),
+        ),
       ),
     );
   }
