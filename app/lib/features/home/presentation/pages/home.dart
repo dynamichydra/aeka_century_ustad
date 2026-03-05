@@ -474,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (context, index) {
                             if (index == quickProducts.length) {
                               return CircularIconItem(
-                                label: 'See more',
+                                label: 'View More',
                                 onTap: () {
                                   setState(() {
                                     _selectedCategory = null;

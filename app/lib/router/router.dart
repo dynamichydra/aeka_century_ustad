@@ -15,7 +15,7 @@ import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/onboarding',
+  initialLocation: '/',
   routes: [
     GoRoute(
       path: '/onboarding',
