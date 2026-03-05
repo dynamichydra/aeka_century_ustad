@@ -6,6 +6,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:century_ai/features/camera_pages/widgets/ImageCompareSlider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/features/camera_pages/dummy_data.dart';
+import 'package:century_ai/core/network/apis/laminate_api.dart'; // Added API Import
 
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
@@ -26,6 +27,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
   List<Map<String, dynamic>> _lamCategories = [];
   Map<String, dynamic>? _selectedTexture;
   String? _currentAssetPreview; // Track the design selected from comparison
+
+  final LaminateService _laminateApi = LaminateService();
+  bool _isLoadingTextures = false;
+  List<dynamic> _apiTextures = [];
 
   bool _compareExpanded = false;
   bool _editExpanded = true;
@@ -59,8 +64,89 @@ class _ImageEditPageState extends State<ImageEditPage> {
         "hex": '#${widget.pickedColor!.value.toRadixString(16).padLeft(8, '0').substring(2)}',
         "id": 999,
       };
+      _fetchTexturesByColor();
     }
+  }
 
+  Future<void> _fetchTextures() async {
+    if (_selectedCategory == null) return;
+    
+    setState(() => _isLoadingTextures = true);
+    
+    String subCat = (_selectedSubCategory == "All" || _selectedSubCategory == null) 
+        ? "" 
+        : _selectedSubCategory!;
+
+    try {
+      final response = await _laminateApi.fetchByCategory(
+        category: _selectedCategory!,
+        subcategory: subCat,
+        itemType: "Laminates", // Default itemType, adjust if needed
+      );
+      
+      if (mounted) {
+        setState(() {
+          if (response != null && response is Map && response['laminates'] != null) {
+            _apiTextures = response['laminates'] as List<dynamic>;
+          } else {
+            _apiTextures = [];
+          }
+          _isLoadingTextures = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching textures: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingTextures = false;
+          _apiTextures = [];
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchTexturesByColor() async {
+    if (_selectedColor == null) return;
+    
+    setState(() => _isLoadingTextures = true);
+    
+    try {
+      final response = await _laminateApi.fetchByHex(
+        hexCodes: [_selectedColor!["hex"]],
+        itemType: "Laminates", 
+      );
+      
+      if (mounted) {
+        setState(() {
+          if (response != null && response is Map && response.isNotEmpty) {
+            // Check if it's the category response structure first just in case
+            if (response.containsKey('laminates') && response['laminates'] != null) {
+               _apiTextures = response['laminates'] as List<dynamic>;
+            } else {
+               // The response for find-nearest-laminates has the format: {"#FFB84D": [ {...}, {...} ]}
+               // We can grab the first value because we only sent one hex code.
+               final key = response.keys.first;
+               if (response[key] is List) {
+                 _apiTextures = response[key] as List<dynamic>;
+               } else {
+                 _apiTextures = [];
+               }
+            }
+          } else {
+            _apiTextures = [];
+          }
+          _isLoadingTextures = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching textures by color: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingTextures = false;
+          _apiTextures = [];
+        });
+      }
+    }
   }
 
   final List<Map<String, dynamic>> featuredColors = [
@@ -616,7 +702,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
           return Padding(
             padding: const EdgeInsets.only(right: 5),
             child: GestureDetector(
-              onTap: () => setState(() => _selectedColor = colorData),
+              onTap: () {
+                setState(() => _selectedColor = colorData);
+                _fetchTexturesByColor();
+              },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -652,13 +741,18 @@ class _ImageEditPageState extends State<ImageEditPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildChipRow(categoriesRow1, _selectedCategory, (val) {
-           setState(() => _selectedCategory = val);
+           setState(() { 
+             _selectedCategory = val;
+             _selectedSubCategory = "All"; // Revert to "All" when category changes
+           });
            _fetchSubCategoriesFor(val);
+           _fetchTextures(); // Fetch API when category changes
         }),
         const SizedBox(height: 0),
         if (categoriesRow2.isNotEmpty)
           _buildChipRow(categoriesRow2, _selectedSubCategory, (val) {
              setState(() => _selectedSubCategory = val);
+             _fetchTextures(); // Fetch API when subcategory changes
           }),
       ],
     );
@@ -701,14 +795,36 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Widget _buildTextureSelection() {
+    if (_isLoadingTextures) {
+      return const SizedBox(
+        height: 72,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFEA202C), )),
+      );
+    }
+
+    if (_apiTextures.isEmpty) {
+      return SizedBox(
+        height: 72,
+        child: Center(
+          child: Text(
+            (_selectedCategory == null && _selectedColor == null) ? "Select a color or category first." : "No laminates found.", 
+            style: const TextStyle(fontSize: 10, color: Colors.grey)
+          )
+        ),
+      );
+    }
+
     return SizedBox(
       height: 72,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: laminationList.length,
+        itemCount: _apiTextures.length,
         itemBuilder: (context, index) {
-          final texture = laminationList[index];
+          final texture = _apiTextures[index];
           final isSelected = _selectedTexture?["id"] == texture["id"];
+          final imageUrl = texture["coverImage"] ?? "";
+          final label = texture["sku"] ?? texture["name"] ?? "";
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
@@ -718,22 +834,31 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
-                    child: Image.asset(
-                      texture["image"],
-                      width: 60,
-                      height: 40,
-                      fit: BoxFit.cover,
-                    ),
+                    child: imageUrl.isNotEmpty
+                        ? Image.network(
+                            imageUrl,
+                            width: 60,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, stack) => Container(width: 60, height: 40, color: Colors.grey[300]),
+                          )
+                        : Container(width: 60, height: 40, color: Colors.grey[300]),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    "1553 MI", // Placeholder ID from design
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isSelected ? Colors.black : Colors.grey,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                  SizedBox(
+                    width: 60,
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isSelected ? Colors.black : Colors.grey,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
+                  )
                 ],
               ),
             ),
@@ -744,10 +869,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   void _applyChanges() {
-    if (_selectedColor == null || _selectedTexture == null) {
+    if (_selectedTexture == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Please select a color and a texture pattern first."),
+          content: Text("Please select a texture pattern first."),
           backgroundColor: Colors.black87,
           duration: Duration(seconds: 2),
         ),
