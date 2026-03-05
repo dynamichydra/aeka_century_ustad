@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/horizontal_icon_grid.dart';
-import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/cubit/products/products_state.dart';
 import 'package:century_ai/db/db_helper.dart';
@@ -30,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isGridView = false;
   int _selectedIndex = 0;
 
-  Future<void> logDb()async{
+  Future<void> logDb() async {
     final db = await DbHelper.database;
 
     final result = await db.query("products");
@@ -44,7 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-
     if (image != null && mounted) {
       context.push("/image_preview", extra: File(image.path));
     }
@@ -56,7 +54,12 @@ class _HomeScreenState extends State<HomeScreen> {
       final tempDir = await getTemporaryDirectory();
       final fileName = assetPath.replaceAll("/", "_");
       final file = File('${tempDir.path}/$fileName');
-      await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+      await file.writeAsBytes(
+        byteData.buffer.asUint8List(
+          byteData.offsetInBytes,
+          byteData.lengthInBytes,
+        ),
+      );
       if (mounted) {
         context.push("/image_preview", extra: file);
       }
@@ -64,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       debugPrint("Error loading asset: $e");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final ProductsState productsState = context.watch<ProductsCubit>().state;
@@ -89,43 +93,80 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(child: Text("Lets design Furniture with Century Decor", style: TextStyle(fontWeight: FontWeight.w200, fontSize: 14),)),
+                      Center(
+                        child: Text(
+                          "Lets design Furniture with Century Decor",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w200,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: TSizes.spaceBtwItems),
                       Center(child: ExteriorInteriorSwitchSlider()),
                       const SizedBox(height: TSizes.spaceBtwItems),
                       // SearchInput(),
-                      TextField(
-                        cursorHeight: 15,
-                        style: const TextStyle(fontWeight: FontWeight.w100, fontSize: 13),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 13,
-                            horizontal: 20,
-                          ),
-                          suffixIconConstraints: const BoxConstraints(
-                            maxHeight: 36,
-                            maxWidth: 44,
-                          ),
-                          suffixIcon: Container(
-                            margin: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 1,
-                                  spreadRadius: 1,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              blurRadius: 4,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 0),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Center(
+                          ],
+                        ),
+                        child: TextField(
+                          cursorHeight: 15,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w100,
+                            fontSize: 13,
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 13,
+                              horizontal: 20,
+                            ),
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+
+                            suffixIconConstraints: const BoxConstraints(
+                              maxHeight: 36,
+                              maxWidth: 44,
+                            ),
+                            suffixIcon: Container(
+                              margin: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.12),
+                                    blurRadius: 4,
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 0),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
                                 child: Image.asset(
                                   "assets/icons/app_icons/ai_search.png",
                                   width: 10,
@@ -133,161 +174,169 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             ),
-                          ),
-                          hintText: "Ai based furniture idea search",
-                          hintStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w100),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide.none,
+
+                            hintText: "Ai based furniture idea search",
+                            hintStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w100,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Row(
-                            children: [
-                              _buildTab("Interior", 0),
-                              const SizedBox(width: 16),
-                              _buildTab("Furniture", 1),
-                            ],
-                          ),
+                      DefaultTabController(
+                        length: 2,
+                        initialIndex: _selectedIndex,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            SizedBox(
+                              width: 150,
+                              height: 30,
+                              child: TabBar(
+                                isScrollable: true,
+                                padding: EdgeInsets.zero,
+                                labelPadding: const EdgeInsets.only(right: 16),
+                                tabAlignment: TabAlignment.start,
+                                indicator: const UnderlineTabIndicator(
+                                  borderSide: BorderSide(
+                                    width: 1.5,
+                                    color: Color(0xFF5D5D5D),
+                                  ),
+                                ),
+                                indicatorSize: TabBarIndicatorSize.label,
+                                dividerColor: Colors.transparent,
+                                labelColor: const Color(0xFF5D5D5D),
+                                unselectedLabelColor: const Color(
+                                  0xFF5D5D5D,
+                                ).withOpacity(0.5),
+                                labelStyle: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                tabs: const [
+                                  Tab(text: "Interiors"),
+                                  Tab(text: "Furnitures"),
+                                ],
+                                onTap: (index) {
+                                  setState(() {
+                                    _selectedIndex = index;
+                                  });
+                                },
+                              ),
+                            ),
 
-                          Row(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.black.withOpacity(
-                                      0.08,
-                                    ), // light border
-                                    width: 1,
+                            Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.25),
+                                        blurRadius: 2,
+                                        spreadRadius: 0,
+                                        offset: const Offset(0, 0),
+                                      ),
+                                    ],
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(
-                                        0.08,
-                                      ), // soft premium shadow
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  shape: const CircleBorder(),
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: () {
-                                      // your action here
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Image.asset(
-                                        "assets/icons/app_icons/trendng2.png",
-                                        width: 12,
-                                        height: 12,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: () {
+                                        // your action here
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Image.asset(
+                                          "assets/icons/app_icons/trendng2.png",
+                                          width: 12,
+                                          height: 12,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.black.withOpacity(
-                                      0.08,
-                                    ), // light subtle border
-                                    width: 1,
+                                const SizedBox(width: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.25),
+                                        blurRadius: 2,
+                                        spreadRadius: 0,
+                                        offset: const Offset(0, 0),
+                                      ),
+                                    ],
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(
-                                        0.08,
-                                      ), // soft premium shadow
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  shape: const CircleBorder(),
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: () {
-                                      // your action here
-                                    },
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(10),
-                                      child: Icon(
-                                        Icons.favorite,
-                                        size: 12,
-                                        color: Color(0xFF898888),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: () {
+                                        // your action here
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(10),
+                                        child: Icon(
+                                          Icons.favorite,
+                                          size: 12,
+                                          color: Color(0xFF898888),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
+                                const SizedBox(width: 8),
 
-                              /// 🔲 Layout toggle button
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.black.withOpacity(
-                                      0.08,
-                                    ), // light border
-                                    width: 1,
+                                /// 🔲 Layout toggle button
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.25),
+                                        blurRadius: 2,
+                                        spreadRadius: 0,
+                                        offset: const Offset(0, 0),
+                                      ),
+                                    ],
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(
-                                        0.08,
-                                      ), // softer premium shadow
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  shape: const CircleBorder(),
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: () {
-                                      setState(() {
-                                        _isGridView = !_isGridView;
-                                      });
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Icon(
-                                        _isGridView
-                                            ? Icons.view_list
-                                            : Icons.grid_view,
-                                        size: 12,
-                                        color: Colors.black87,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: () {
+                                        setState(() {
+                                          _isGridView = !_isGridView;
+                                        });
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Icon(
+                                          _isGridView
+                                              ? Icons.view_list
+                                              : Icons.grid_view,
+                                          size: 12,
+                                          color: Colors.black87,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: TSizes.spaceBtwItems),
                       SizedBox(
@@ -303,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Container(
                                   decoration: const BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: TColors.lightGray,
+                                    color: Color(0xFFEEEEEE),
                                   ),
                                   child: const Icon(
                                     Iconsax.arrow_right_3,
@@ -317,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             return CircularIconItem(
                               label: product.name,
                               isSelected: index == 2,
-                              selectedBorderColor: TColors.warmBeige,
+                              selectedBorderColor: Color(0xFFEEEEEE),
                               onTap: () {
                                 _openProductForEditing(product.image);
                               },
@@ -420,42 +469,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTab(String title, int index) {
-    final bool isActive = _selectedIndex == index;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 250),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: isActive ? Colors.black : Colors.grey,
-            ),
-            child: Text(title),
-          ),
-          const SizedBox(height: 6),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            height: 1,
-            width: isActive ? 50 : 0,
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ],
       ),
     );
   }
