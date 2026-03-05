@@ -34,7 +34,7 @@ class NavWrapper extends StatelessWidget {
       appBar: AppBar(
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.person, color: Colors.black),
+            icon: Image.asset("assets/images/content/user_profile.png", width: 30, height: 30,),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
