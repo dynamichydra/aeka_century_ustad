@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isGridView = false;
   int _selectedIndex = 0;
   String? _selectedCategory;
-  Map<String, List<ProductImageModel>> _productsByCategory = const {};
+  Map<int, Map<String, List<ProductImageModel>>> _productsByTabAndCategory = {};
 
   @override
   void initState() {
@@ -55,44 +55,59 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (decoded is! Map<String, dynamic>) return;
 
-      final parsed = <String, List<ProductImageModel>>{};
+      final parsed = <int, Map<String, List<ProductImageModel>>>{
+        0: {}, // Interiors
+        1: {}, // Furnitures
+      };
 
-      decoded.forEach((category, value) {
-        if (value is! List) return;
+      void parseGroup(String groupKey, int tabIndex) {
+        final groupData = decoded[groupKey];
+        if (groupData is! Map<String, dynamic>) return;
 
-        final items = <ProductImageModel>[];
-        for (final item in value) {
-          if (item is! Map) continue;
-          final map = item.cast<String, dynamic>();
-          final rawPath = (map['image_path'] ?? '').toString().trim();
-          if (rawPath.isEmpty) continue;
+        groupData.forEach((category, value) {
+          if (value is! List) return;
 
-          final prefixedPath = rawPath.startsWith('assets/')
-              ? rawPath
-              : 'assets/$rawPath';
-          final resolvedPath =
-              exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
-              softAssetMap[_normalizeAssetPathSoft(prefixedPath)];
-          if (resolvedPath == null) continue;
+          final items = <ProductImageModel>[];
+          for (final item in value) {
+            if (item is! Map) continue;
+            final map = item.cast<String, dynamic>();
+            final rawPath = (map['image_path'] ?? '').toString().trim();
+            if (rawPath.isEmpty) continue;
 
-          items.add(
-            ProductImageModel(
-              id: (map['id'] ?? '${category}_${items.length + 1}').toString(),
-              name: category,
-              image: resolvedPath,
-              isTrending: false,
-            ),
-          );
-        }
+            final prefixedPath =
+                rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
+            final resolvedPath =
+                exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
+                softAssetMap[_normalizeAssetPathSoft(prefixedPath)];
+            if (resolvedPath == null) continue;
 
-        if (items.isNotEmpty) {
-          parsed[category] = items;
-        }
-      });
+            items.add(
+              ProductImageModel(
+                id: (map['id'] ?? '${category}_${items.length + 1}').toString(),
+                name: category,
+                image: resolvedPath,
+                isTrending: false,
+              ),
+            );
+          }
+
+          if (items.isNotEmpty) {
+            parsed[tabIndex]![category] = items;
+          }
+        });
+      }
+
+      parseGroup('interiors', 0);
+      parseGroup('furnitures', 1);
 
       if (!mounted) return;
       setState(() {
-        _productsByCategory = parsed;
+        _productsByTabAndCategory = parsed;
+        // Set default category for initial tab
+        final initialTabCategories = _productsByTabAndCategory[_selectedIndex]?.keys;
+        if (initialTabCategories != null && initialTabCategories.isNotEmpty) {
+          _selectedCategory = initialTabCategories.first;
+        }
       });
     } catch (e) {
       debugPrint('Error parsing assets/data/_data.json: $e');
@@ -114,12 +129,13 @@ class _HomeScreenState extends State<HomeScreen> {
   List<ProductImageModel> _resolveQuickProducts(
     List<ProductImageModel> fallbackProducts,
   ) {
-    if (_productsByCategory.isEmpty) {
-      return fallbackProducts.toList();
+    final currentTabData = _productsByTabAndCategory[_selectedIndex];
+    if (currentTabData == null || currentTabData.isEmpty) {
+      return fallbackProducts.take(4).toList();
     }
 
     final quickItems = <ProductImageModel>[];
-    for (final entry in _productsByCategory.entries) {
+    for (final entry in currentTabData.entries) {
       if (entry.value.isEmpty) continue;
       quickItems.add(
         ProductImageModel(
@@ -129,23 +145,28 @@ class _HomeScreenState extends State<HomeScreen> {
           isTrending: false,
         ),
       );
-      // if (quickItems.length == 4) break;
     }
 
-    return quickItems.isEmpty ? fallbackProducts.toList() : quickItems;
+    return quickItems.isEmpty ? fallbackProducts.take(4).toList() : quickItems;
   }
 
   List<ProductImageModel> _resolveVisibleProducts(
     List<ProductImageModel> fallbackProducts,
   ) {
+    final currentTabData = _productsByTabAndCategory[_selectedIndex];
+    if (currentTabData == null || currentTabData.isEmpty) {
+      return fallbackProducts;
+    }
+
     final selectedCategory = _selectedCategory;
     if (selectedCategory == null) {
       return fallbackProducts;
     }
-    final filtered = _productsByCategory[selectedCategory];
+
+    final filtered = currentTabData[selectedCategory];
     if (filtered == null || filtered.isEmpty) {
       final normalizedSelected = _normalizeCategory(selectedCategory);
-      for (final entry in _productsByCategory.entries) {
+      for (final entry in currentTabData.entries) {
         if (_normalizeCategory(entry.key) == normalizedSelected &&
             entry.value.isNotEmpty) {
           return entry.value;
@@ -350,6 +371,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onTap: (index) {
                                   setState(() {
                                     _selectedIndex = index;
+                                    // Reset selected category to first of new tab
+                                    final newTabCategories =
+                                        _productsByTabAndCategory[index]?.keys;
+                                    if (newTabCategories != null &&
+                                        newTabCategories.isNotEmpty) {
+                                      _selectedCategory = newTabCategories.first;
+                                    } else {
+                                      _selectedCategory = null;
+                                    }
                                   });
                                 },
                               ),
