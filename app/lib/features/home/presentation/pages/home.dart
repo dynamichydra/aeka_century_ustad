@@ -115,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
     List<ProductImageModel> fallbackProducts,
   ) {
     if (_productsByCategory.isEmpty) {
-      return fallbackProducts.take(4).toList();
+      return fallbackProducts.toList();
     }
 
     final quickItems = <ProductImageModel>[];
@@ -129,10 +129,10 @@ class _HomeScreenState extends State<HomeScreen> {
           isTrending: false,
         ),
       );
-      if (quickItems.length == 4) break;
+      // if (quickItems.length == 4) break;
     }
 
-    return quickItems.isEmpty ? fallbackProducts.take(4).toList() : quickItems;
+    return quickItems.isEmpty ? fallbackProducts.toList() : quickItems;
   }
 
   List<ProductImageModel> _resolveVisibleProducts(
@@ -470,29 +470,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(
                         height: 100,
                         child: HorizontalIconGrid(
-                          itemCount: quickProducts.length + 1,
+                          itemCount: quickProducts.length,
                           itemBuilder: (context, index) {
-                            if (index == quickProducts.length) {
-                              return CircularIconItem(
-                                label: 'View More',
-                                onTap: () {
-                                  setState(() {
-                                    _selectedCategory = null;
-                                  });
-                                },
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFFEEEEEE),
-                                  ),
-                                  child: const Icon(
-                                    Iconsax.arrow_right_3,
-                                    size: 22,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              );
-                            }
                             final product = quickProducts[index];
                             return CircularIconItem(
                               label: product.name,
@@ -511,6 +490,26 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             );
                           },
+                          viewMoreWidget: CircularIconItem(
+                            label: 'View More',
+                            onTap: () {}, // Handled by HorizontalIconGrid's wrapper
+                            child: Container(
+                              // margin: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFFEEEEEE),
+                                border: Border.all(
+                                  color: Colors.transparent,
+                                  // width: 6,
+                                ),
+                              ),
+                              child: const Icon(
+                                Iconsax.arrow_right_3,
+                                size: 20,
+                                color: Color(0xFF5D5D5D),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: TSizes.spaceBtwItems),

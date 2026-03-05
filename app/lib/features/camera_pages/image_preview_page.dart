@@ -106,7 +106,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       crossAxisCount: 3,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 0.8,
+                      childAspectRatio: 1.0,
                     ),
                     itemCount: exploreImages.length,
                     itemBuilder: (context, index) {

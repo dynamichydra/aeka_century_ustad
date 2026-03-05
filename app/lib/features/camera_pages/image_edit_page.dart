@@ -349,7 +349,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
               crossAxisCount: 3,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.8,
+              childAspectRatio: 1.0,
             ),
             itemBuilder: (context, index) {
               final version = _savedVersions[index];

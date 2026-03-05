@@ -4790,6 +4790,69 @@
       "Wall-mounted cupboards",
       "Lower cabinet",
       "Wall-mounted TV unit"
+    ],
+    "Complete Space Solutions": [
+      {
+        "id": "119",
+        "image_path": "DECO/EXTERIA/IMAGE 5.jpg",
+        "interior_category": "Complete Space Solutions",
+        "interior_subcategories": [],
+        "product_category": "Complete Space Solutions",
+        "product_subcategories": [],
+        "exact_furniture": ["Wardrobe"]
+      },
+      {
+        "id": "125",
+        "image_path": "DECO/EXTERIA/3.jpg",
+        "interior_category": "Complete Space Solutions",
+        "interior_subcategories": [],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Wardrobe",
+          "Shoe Cabinet",
+          "Chest Of Drawers",
+          "Bathroom Cabinet",
+          "Office Cabinet",
+          "Bookshelves"
+        ],
+        "exact_furniture": [
+          "Wardrobe",
+          "Shoe Cabinet",
+          "Chest of Drawers",
+          "Bathroom Cabinet",
+          "Office Cabinet",
+          "Bookshelves",
+          "Floating bathroom cabinet",
+          "Wall-mounted TV unit",
+          "Fitted lounge unit",
+          "Nightstand"
+        ]
+      }
+    ],
+    "Other": [
+      {
+        "id": "121",
+        "image_path": "DECO/EXTERIA/IMAGE 4.jpg",
+        "interior_category": "Other",
+        "interior_subcategories": [],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Wardrobe",
+          "Shoe Cabinet",
+          "Chest Of Drawers",
+          "Bathroom Cabinet",
+          "Office Cabinet",
+          "Bookshelves"
+        ],
+        "exact_furniture": [
+          "Wardrobe",
+          "Shoe Cabinet",
+          "Chest of Drawers",
+          "Bathroom Cabinet",
+          "Office Cabinet",
+          "Bookshelves"
+        ]
+      }
     ]
   }
 ]
