@@ -4777,13 +4777,9 @@
     "id": "242",
     "image_path": "StarLine Picture 2024/Gloss Pic/Kitchen.jpg",
     "interior_category": "Kitchen",
-    "interior_subcategories": [
-      "Kitchen Cabinet"
-    ],
+    "interior_subcategories": ["Kitchen Cabinet"],
     "product_category": "Storage Units",
-    "product_subcategories": [
-      "Kitchen Cabinet Solutions"
-    ],
+    "product_subcategories": ["Kitchen Cabinet Solutions"],
     "exact_furniture": [
       "Kitchen cabinet",
       "Overhead cabinet",
@@ -4851,6 +4847,426 @@
           "Bathroom Cabinet",
           "Office Cabinet",
           "Bookshelves"
+        ]
+      }
+    ],
+    "Storage Units": [
+      {
+        "id": "140",
+        "image_path": "NV/natzura jpeg 2021/shutterstock_186530621.jpg",
+        "interior_category": "Living Room",
+        "interior_subcategories": ["Chest Of Drawers", "Wall Panelling"],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Chest Of Drawers",
+          "Shoe Cabinet",
+          "Crockery Cabinet",
+          "Bathroom Cabinet",
+          "Office Cabinet",
+          "Bookshelves"
+        ],
+        "exact_furniture": [
+          "Chair",
+          "Chest of Drawers",
+          "Wall Panelling",
+          "Display case"
+        ]
+      },
+
+      {
+        "id": "160",
+        "image_path": "NV/natzura jpeg 2021/iStock-178626183.jpg",
+        "interior_category": "Office",
+        "interior_subcategories": [
+          "Reception Area Furniture",
+          "Office Cabinet"
+        ],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Wardrobe",
+          "Shoe Cabinet",
+          "Display Case",
+          "Storage Cabinet",
+          "Office Cabinet"
+        ],
+        "exact_furniture": [
+          "Shoe Cabinet",
+          "Display case",
+          "Storage cabinet",
+          "Office Cabinet"
+        ]
+      },
+
+      {
+        "id": "189",
+        "image_path": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
+        "interior_category": "Bedroom",
+        "interior_subcategories": [
+          "Bedside Table",
+          "Headboard",
+          "Wardrobe",
+          "Dressing Unit"
+        ],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Wardrobe",
+          "Shoe Cabinet",
+          "Chest Of Drawers",
+          "Wall-mounted Cupboards",
+          "Overhead Cabinet"
+        ],
+        "exact_furniture": [
+          "Wardrobe",
+          "Desk",
+          "Chair",
+          "Bed",
+          "Headboard",
+          "Desk Chair",
+          "Storage cabinet"
+        ]
+      },
+      {
+        "id": "192",
+        "image_path": "StarLine Picture 2024/Woodgrain Pic/Kitchen-2.jpg",
+        "interior_category": "Kitchen",
+        "interior_subcategories": ["Kitchen Cabinet"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Crockery Cabinet", "Kitchen Cabinet"],
+        "exact_furniture": [
+          "Kitchen cabinet",
+          "Overhead cabinet",
+          "Lower cabinet"
+        ]
+      },
+      {
+        "id": "194",
+        "image_path": "StarLine Picture 2024/Woodgrain Pic/Wardrobe.jpg",
+        "interior_category": "Bedroom",
+        "interior_subcategories": ["Wardrobe", "Closet"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Wardrobe", "Closet"],
+        "exact_furniture": [
+          "Wardrobe",
+          "Closet",
+          "Chest of Drawers",
+          "Shoe Cabinet",
+          "Wall-mounted cupboards",
+          "Lower cabinet"
+        ]
+      },
+
+      {
+        "id": "203",
+        "image_path": "StarLine Picture 2024/Woodgrain Pic/Kids room-2.jpg",
+        "interior_category": "Kids Room",
+        "interior_subcategories": ["Kids Room Wardrobe", "Kids Room Bed"],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Kids Room Wardrobe",
+          "Shoe Cabinet",
+          "Chest Of Drawers"
+        ],
+        "exact_furniture": [
+          "Chair",
+          "Storage cabinet",
+          "Chest of Drawers",
+          "Wall Panelling",
+          "Picture frame",
+          "Wooden giraffe",
+          "Wooden toy car",
+          "White bear figure",
+          "White chair",
+          "Fabric draped on chair"
+        ]
+      },
+      {
+        "id": "207",
+        "image_path": "StarLine Picture 2024/Woodgrain Pic/Kitchen.jpg",
+        "interior_category": "Kitchen",
+        "interior_subcategories": ["Kitchen Cabinet"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Kitchen Cabinet Solutions"],
+        "exact_furniture": [
+          "Kitchen cabinet",
+          "Overhead cabinet",
+          "Wall-mounted cupboards",
+          "Lower cabinet"
+        ]
+      },
+      {
+        "id": "208",
+        "image_path": "StarLine Picture 2024/Woodgrain Pic/Reception-2.jpg",
+        "interior_category": "Office",
+        "interior_subcategories": [
+          "Reception Area Furniture",
+          "Office Cabinet"
+        ],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Wardrobe", "Shoe Cabinet", "Office Cabinet"],
+        "exact_furniture": ["Slatted bench", "Wall-mounted cupboards"]
+      },
+      {
+        "id": "210",
+        "image_path": "StarLine Picture 2024/Woodgrain Pic/Kitchen-3.jpg",
+        "interior_category": "Kitchen",
+        "interior_subcategories": ["Kitchen Cabinet"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Kitchen Cabinet"],
+        "exact_furniture": [
+          "Kitchen cabinet",
+          "Overhead cabinet",
+          "Lower cabinet"
+        ]
+      },
+      {
+        "id": "222",
+        "image_path": "StarLine Picture 2024/Texture Pic/Living room-3.jpg",
+        "interior_category": "Office",
+        "interior_subcategories": ["Office Cabinet"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Chest Of Drawers", "Office Cabinet"],
+        "exact_furniture": [
+          "Chair",
+          "Chest of Drawers",
+          "Wall Panelling",
+          "Vase",
+          "Books",
+          "Decorative Elements"
+        ]
+      },
+      {
+        "id": "224",
+        "image_path": "StarLine Picture 2024/Texture Pic/Living room.jpg",
+        "interior_category": "Living Room",
+        "interior_subcategories": ["Chest Of Drawers", "Wall Panelling"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Chest Of Drawers", "Wall-mounted Cupboards"],
+        "exact_furniture": [
+          "Chest of Drawers",
+          "Wall Panelling",
+          "Vases",
+          "Decorative Vase",
+          "Tall Vase",
+          "Dried Pampas Grass",
+          "Bird Figurines",
+          "Picture Frame",
+          "Glass Decanter",
+          "Ceramic Pitchers",
+          "Books",
+          "Woven Basket"
+        ]
+      },
+      {
+        "id": "226",
+        "image_path": "StarLine Picture 2024/Texture Pic/Texture Cover-02.jpg",
+        "interior_category": "Study",
+        "interior_subcategories": ["Study Table", "Bookshelves"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Bookshelves", "Office Cabinet"],
+        "exact_furniture": [
+          "Chair",
+          "Desk",
+          "Bookshelves",
+          "Storage cabinet",
+          "Wall-mounted cupboards"
+        ]
+      },
+      {
+        "id": "228",
+        "image_path": "StarLine Picture 2024/Texture Pic/Bedroom-2.jpg",
+        "interior_category": "Bedroom",
+        "interior_subcategories": [
+          "Bedside Table",
+          "Headboard",
+          "Wardrobe",
+          "Dressing Unit"
+        ],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Wardrobe",
+          "Shoe Cabinet",
+          "Chest Of Drawers",
+          "Bookshelves"
+        ],
+        "exact_furniture": [
+          "Chair",
+          "Side Table",
+          "Wardrobe",
+          "Bed",
+          "Bookshelf",
+          "Stool",
+          "Display case"
+        ]
+      },
+      {
+        "id": "229",
+        "image_path": "StarLine Picture 2024/Texture Pic/Living room-4.jpg",
+        "interior_category": "Kids Room",
+        "interior_subcategories": ["Kids Room Wardrobe", "Kids Room Wardrobe"],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Wardrobe",
+          "Kids Room Wardrobe",
+          "Shoe Cabinet",
+          "Bookshelves"
+        ],
+        "exact_furniture": [
+          "Wardrobe",
+          "Kids Wardrobe",
+          "Shoe Cabinet",
+          "Bookshelves"
+        ]
+      },
+      {
+        "id": "236",
+        "image_path": "StarLine Picture 2024/Gloss Pic/Kids Room-3.jpg",
+        "interior_category": "Kids Room",
+        "interior_subcategories": ["Kids Room Wardrobe", "Kids Room Bed"],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Kids Room Wardrobe",
+          "Shoe Cabinet",
+          "Chest Of Drawers",
+          "Bookshelves"
+        ],
+        "exact_furniture": [
+          "Storage cabinet",
+          "Kids Bed",
+          "Toy storage box",
+          "Chair",
+          "Crockery Cabinet",
+          "Pouf",
+          "Shoe Cabinet",
+          "Bookshelves",
+          "Toy storage box",
+          "Toy storage box",
+          "Wooden chair",
+          "Wooden chair",
+          "Storage cabinet",
+          "Storage cabinet",
+          "Toy storage box"
+        ]
+      },
+      {
+        "id": "237",
+        "image_path": "StarLine Picture 2024/Gloss Pic/Bedroom.jpg",
+        "interior_category": "Study",
+        "interior_subcategories": ["Study Table", "Bookshelves"],
+        "product_category": "Storage Units",
+        "product_subcategories": [
+          "Chest Of Drawers",
+          "Shoe Cabinet",
+          "Bookshelves"
+        ],
+        "exact_furniture": [
+          "Study Table",
+          "Chest of Drawers",
+          "Shoe Cabinet",
+          "Bookshelves",
+          "Display case",
+          "Storage cabinet"
+        ]
+      },
+      {
+        "id": "239",
+        "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
+        "interior_category": "Bathroom",
+        "interior_subcategories": ["Bathroom Cabinet"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Bathroom Cabinet"],
+        "exact_furniture": ["Storage cabinet", "Bathroom Cabinet"]
+      },
+      {
+        "id": "241",
+        "image_path": "StarLine Picture 2024/Gloss Pic/Kitchen-5.jpg",
+        "interior_category": "Kitchen",
+        "interior_subcategories": ["Kitchen Cabinet"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Kitchen Cabinet"],
+        "exact_furniture": [
+          "Kitchen cabinet",
+          "Overhead cabinet",
+          "Wall-mounted cupboards",
+          "Lower cabinet",
+          "Floating bathroom cabinet"
+        ]
+      },
+      {
+        "id": "242",
+        "image_path": "StarLine Picture 2024/Gloss Pic/Kitchen.jpg",
+        "interior_category": "Kitchen",
+        "interior_subcategories": ["Kitchen Cabinet"],
+        "product_category": "Storage Units",
+        "product_subcategories": ["Kitchen Cabinet Solutions"],
+        "exact_furniture": [
+          "Kitchen cabinet",
+          "Overhead cabinet",
+          "Wall-mounted cupboards",
+          "Lower cabinet",
+          "Wall-mounted TV unit"
+        ],
+        "Complete Space Solutions": [
+          {
+            "id": "119",
+            "image_path": "DECO/EXTERIA/IMAGE 5.jpg",
+            "interior_category": "Complete Space Solutions",
+            "interior_subcategories": [],
+            "product_category": "Complete Space Solutions",
+            "product_subcategories": [],
+            "exact_furniture": ["Wardrobe"]
+          },
+          {
+            "id": "125",
+            "image_path": "DECO/EXTERIA/3.jpg",
+            "interior_category": "Complete Space Solutions",
+            "interior_subcategories": [],
+            "product_category": "Storage Units",
+            "product_subcategories": [
+              "Wardrobe",
+              "Shoe Cabinet",
+              "Chest Of Drawers",
+              "Bathroom Cabinet",
+              "Office Cabinet",
+              "Bookshelves"
+            ],
+            "exact_furniture": [
+              "Wardrobe",
+              "Shoe Cabinet",
+              "Chest of Drawers",
+              "Bathroom Cabinet",
+              "Office Cabinet",
+              "Bookshelves",
+              "Floating bathroom cabinet",
+              "Wall-mounted TV unit",
+              "Fitted lounge unit",
+              "Nightstand"
+            ]
+          }
+        ],
+        "Other": [
+          {
+            "id": "121",
+            "image_path": "DECO/EXTERIA/IMAGE 4.jpg",
+            "interior_category": "Other",
+            "interior_subcategories": [],
+            "product_category": "Storage Units",
+            "product_subcategories": [
+              "Wardrobe",
+              "Shoe Cabinet",
+              "Chest Of Drawers",
+              "Bathroom Cabinet",
+              "Office Cabinet",
+              "Bookshelves"
+            ],
+            "exact_furniture": [
+              "Wardrobe",
+              "Shoe Cabinet",
+              "Chest of Drawers",
+              "Bathroom Cabinet",
+              "Office Cabinet",
+              "Bookshelves"
+            ]
+          }
         ]
       }
     ]
