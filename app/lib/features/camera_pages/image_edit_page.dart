@@ -260,19 +260,32 @@ class _ImageEditPageState extends State<ImageEditPage> {
             title: "Compare & select",
             iconImg: "compare.png",
             isActive: _compareExpanded,
-            onTap: () => setState(() => _compareExpanded = !_compareExpanded),
+            onTap: () {
+              setState(() {
+                _compareExpanded = !_compareExpanded;
+                _editExpanded = !_compareExpanded;
+              });
+            },
           ),
           if (_compareExpanded) _buildCompareContent(),
-          
           const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
         ],
-        
+
         // Edit & Design Header
         _buildHeaderTile(
           title: "Edit & Design",
           iconImg: "edit.png",
           isActive: _editExpanded,
-          onTap: () => setState(() => _editExpanded = !_editExpanded),
+          showArrow: _isApplied,
+          onTap: () {
+            if (!_isApplied) return; // Prevent collapse if it's the only header
+            setState(() {
+              _editExpanded = !_editExpanded;
+              if (_isApplied) {
+                _compareExpanded = !_editExpanded;
+              }
+            });
+          },
         ),
         if (_editExpanded) _buildEditContent(),
       ],
@@ -284,6 +297,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     required String iconImg,
     required bool isActive,
     required VoidCallback onTap,
+    bool showArrow = true,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -300,7 +314,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black),
             ),
             const Spacer(),
-            Icon(isActive ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, color: Colors.black, size: 20),
+            if (showArrow)
+              Icon(isActive ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, color: Colors.black, size: 20),
           ],
         ),
       ),
