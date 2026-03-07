@@ -5,19 +5,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ImageColorPickerPage extends StatefulWidget {
   final File imageFile;
   final File? originalImage;
 
-  const ImageColorPickerPage({super.key, required this.imageFile, this.originalImage});
+  const ImageColorPickerPage({
+    super.key,
+    required this.imageFile,
+    this.originalImage,
+  });
 
   @override
   State<ImageColorPickerPage> createState() => _ImageColorPickerPageState();
 }
 
 class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
-  final GlobalKey _imageKey = GlobalKey();
+  GlobalKey _imageKey = GlobalKey();
   Offset _touchPos = Offset.zero;
   Color _primaryColor = const Color(0xFFE5E5E5);
   Color _complimentaryColor1 = const Color(0xFFE5E5E5);
@@ -25,10 +30,14 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
 
   ui.Image? _cachedImage;
   ByteData? _pixelData;
+  late File _currentImage;
+  final ImagePicker _picker = ImagePicker();
+  bool _isCapturing = false;
 
   @override
   void initState() {
     super.initState();
+    _currentImage = widget.imageFile;
     // Initialize touch position to the center of the image area
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final size = MediaQuery.of(context).size;
@@ -39,13 +48,54 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
     });
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() {
+          _currentImage = File(pickedFile.path);
+          _cachedImage = null; // Force repaint
+          _pixelData = null;
+          _imageKey = GlobalKey(); // Force new RepaintBoundary
+        });
+
+        // Reset touch pos and pick new color after image has time to render
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              final size = MediaQuery.of(context).size;
+              setState(() {
+                _touchPos = Offset(size.width / 2, size.height * 0.3);
+                _cachedImage = null;
+                _pixelData = null;
+              });
+              _pickColor(_touchPos);
+            }
+          });
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking image: $e");
+    }
+  }
+
   Future<void> _pickColor(Offset localPos) async {
     try {
       if (_cachedImage == null) {
-        RenderRepaintBoundary? boundary = _imageKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-        if (boundary == null) return;
-        _cachedImage = await boundary.toImage(pixelRatio: 1.0);
-        _pixelData = await _cachedImage!.toByteData(format: ui.ImageByteFormat.rawRgba);
+        if (_isCapturing) return;
+        _isCapturing = true;
+        try {
+          RenderRepaintBoundary? boundary =
+              _imageKey.currentContext?.findRenderObject()
+                  as RenderRepaintBoundary?;
+          if (boundary == null) return;
+          _cachedImage = await boundary.toImage(pixelRatio: 1.0);
+          _pixelData = await _cachedImage!.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          );
+        } finally {
+          _isCapturing = false;
+        }
       }
 
       if (_pixelData == null || _cachedImage == null) return;
@@ -65,7 +115,12 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
       setState(() {
         _primaryColor = Color.fromARGB(a, r, g, b);
         // Simple complimentary logic for demonstration
-        _complimentaryColor1 = Color.fromARGB(a, (255 - r).clamp(0, 255), (255 - g).clamp(0, 255), (255 - b).clamp(0, 255));
+        _complimentaryColor1 = Color.fromARGB(
+          a,
+          (255 - r).clamp(0, 255),
+          (255 - g).clamp(0, 255),
+          (255 - b).clamp(0, 255),
+        );
         _complimentaryColor2 = _primaryColor.withOpacity(0.7);
       });
     } catch (e) {
@@ -89,6 +144,10 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                 RepaintBoundary(
                   key: _imageKey,
                   child: GestureDetector(
+                    onPanStart: (details) {
+                      _cachedImage = null;
+                      _pixelData = null;
+                    },
                     onPanUpdate: (details) {
                       setState(() {
                         _touchPos = details.localPosition;
@@ -96,13 +155,15 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                       _pickColor(details.localPosition);
                     },
                     onTapDown: (details) {
+                      _cachedImage = null;
+                      _pixelData = null;
                       setState(() {
                         _touchPos = details.localPosition;
                       });
                       _pickColor(details.localPosition);
                     },
                     child: Image.file(
-                      widget.imageFile,
+                      _currentImage,
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
@@ -153,7 +214,10 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                         children: [
                           const Text(
                             "Primary",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Container(
@@ -184,7 +248,10 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                         children: [
                           const Text(
                             "Complimentary",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -205,11 +272,17 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                                     const SizedBox(height: 4),
                                     const Text(
                                       "Calming Touch",
-                                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                     const Text(
                                       "8A660",
-                                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -230,11 +303,17 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                                     const SizedBox(height: 4),
                                     const Text(
                                       "Full Boom",
-                                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                     const Text(
                                       "8A660",
-                                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -257,13 +336,37 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                       ),
                       child: IconButton(
                         onPressed: () => context.pop(),
+                        icon: const Icon(Icons.arrow_back),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _pickImage(ImageSource.camera),
                         icon: const Icon(Icons.camera_alt_outlined),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pop(context, _primaryColor);
+                        },
                         icon: const Icon(Icons.gps_fixed),
                         label: const Text("Load Color"),
                         style: OutlinedButton.styleFrom(
@@ -282,10 +385,7 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      context.pushReplacement("/image_edit_page", extra: {
-                        'imageFile': widget.originalImage ?? widget.imageFile,
-                        'pickedColor': _primaryColor,
-                      });
+                      Navigator.pop(context, _primaryColor);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
@@ -306,4 +406,3 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
     );
   }
 }
-

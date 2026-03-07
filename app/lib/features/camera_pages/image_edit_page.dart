@@ -20,22 +20,23 @@ class ImageEditPage extends StatefulWidget {
 
 class _ImageEditPageState extends State<ImageEditPage> {
   final TextEditingController _searchController = TextEditingController();
-  
+
   Map<String, dynamic>? _selectedColor;
-  String? _selectedCategory;
-  String? _selectedSubCategory;
+  String? _selectedCategory = "Abstract Patterns";
+  String? _selectedSubCategory = "All";
   List<Map<String, dynamic>> _lamCategories = [];
   Map<String, dynamic>? _selectedTexture;
   String? _currentAssetPreview; // Track the design selected from comparison
 
   final LaminateService _laminateApi = LaminateService();
+  bool _isEditVisible = true;
   bool _isLoadingTextures = false;
   List<dynamic> _apiTextures = [];
 
   bool _compareExpanded = false;
   bool _editExpanded = true;
   bool _isApplied = false;
-  final List<int> _selectedIndices = [0]; 
+  final List<int> _selectedIndices = [0];
   double _sliderPosition = 0.5;
   final List<ProductImageModel> _savedVersions = ProductImages.productImages;
 
@@ -53,28 +54,35 @@ class _ImageEditPageState extends State<ImageEditPage> {
     });
   }
 
+  List<Map<String, dynamic>> _featuredColors = [
+    {"name": "Yellow/Orange", "hex": "#FFB84D", "id": 101},
+    {"name": "Reddish Brown", "hex": "#B36B5E", "id": 102},
+    {"name": "Black", "hex": "#000000", "id": 103},
+    {"name": "Blue", "hex": "#667EEA", "id": 104},
+    {"name": "Brown", "hex": "#6B271E", "id": 105},
+  ];
+
   @override
   void initState() {
     super.initState();
     getLamCategory();
-    getLamSubCategory();
     if (widget.pickedColor != null) {
-      _selectedColor = {
-        "name": "Picked Color",
-        "hex": '#${widget.pickedColor!.value.toRadixString(16).padLeft(8, '0').substring(2)}',
-        "id": 999,
-      };
+      final hex =
+          '#${widget.pickedColor!.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+      _selectedColor = {"name": "Picked Color", "hex": hex, "id": 999};
+      _featuredColors.insert(0, _selectedColor!);
       _fetchTexturesByColor();
     }
   }
 
   Future<void> _fetchTextures() async {
     if (_selectedCategory == null) return;
-    
+
     setState(() => _isLoadingTextures = true);
-    
-    String subCat = (_selectedSubCategory == "All" || _selectedSubCategory == null) 
-        ? "" 
+
+    String subCat =
+        (_selectedSubCategory == "All" || _selectedSubCategory == null)
+        ? ""
         : _selectedSubCategory!;
 
     try {
@@ -83,11 +91,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
         subcategory: subCat,
         itemType: "Laminates", // Default itemType, adjust if needed
       );
-      
+
       if (mounted) {
         setState(() {
-          if (response != null && response is Map && response['laminates'] != null) {
+          if (response != null &&
+              response is Map &&
+              response['laminates'] != null) {
             _apiTextures = response['laminates'] as List<dynamic>;
+            if (_selectedTexture == null && _apiTextures.isNotEmpty) {
+              _selectedTexture = _apiTextures[0];
+            }
           } else {
             _apiTextures = [];
           }
@@ -107,30 +120,31 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Future<void> _fetchTexturesByColor() async {
     if (_selectedColor == null) return;
-    
+
     setState(() => _isLoadingTextures = true);
-    
+
     try {
       final response = await _laminateApi.fetchByHex(
         hexCodes: [_selectedColor!["hex"]],
-        itemType: "Laminates", 
+        itemType: "Laminates",
       );
-      
+
       if (mounted) {
         setState(() {
           if (response != null && response is Map && response.isNotEmpty) {
             // Check if it's the category response structure first just in case
-            if (response.containsKey('laminates') && response['laminates'] != null) {
-               _apiTextures = response['laminates'] as List<dynamic>;
+            if (response.containsKey('laminates') &&
+                response['laminates'] != null) {
+              _apiTextures = response['laminates'] as List<dynamic>;
             } else {
-               // The response for find-nearest-laminates has the format: {"#FFB84D": [ {...}, {...} ]}
-               // We can grab the first value because we only sent one hex code.
-               final key = response.keys.first;
-               if (response[key] is List) {
-                 _apiTextures = response[key] as List<dynamic>;
-               } else {
-                 _apiTextures = [];
-               }
+              // The response for find-nearest-laminates has the format: {"#FFB84D": [ {...}, {...} ]}
+              // We can grab the first value because we only sent one hex code.
+              final key = response.keys.first;
+              if (response[key] is List) {
+                _apiTextures = response[key] as List<dynamic>;
+              } else {
+                _apiTextures = [];
+              }
             }
           } else {
             _apiTextures = [];
@@ -149,14 +163,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
     }
   }
 
-  final List<Map<String, dynamic>> featuredColors = [
-    {"name": "Yellow/Orange", "hex": "#FFB84D", "id": 101},
-    {"name": "Reddish Brown", "hex": "#B36B5E", "id": 102},
-    {"name": "Black", "hex": "#000000", "id": 103},
-    {"name": "Blue", "hex": "#667EEA", "id": 104},
-    {"name": "Brown", "hex": "#6B271E", "id": 105},
-  ];
-
   List<String> categoriesRow1 = [""];
   List<String> categoriesRow2 = [""];
 
@@ -164,16 +170,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
     try {
       final db = await DbHelper.database;
       final result = await db.query("lam_category");
-      
+
       if (result.isNotEmpty && mounted) {
         setState(() {
           _lamCategories = result;
           categoriesRow1 = result.map((e) => e["name"].toString()).toList();
         });
-        
-        // At initial launch we don't automatically load subcategories since no category is selected
+
         if (_selectedCategory != null) {
-          _fetchSubCategoriesFor(_selectedCategory!);
+          await _fetchSubCategoriesFor(_selectedCategory!);
+          await _fetchTextures();
         }
       }
     } catch (e) {
@@ -181,19 +187,19 @@ class _ImageEditPageState extends State<ImageEditPage> {
     }
   }
 
-  void _fetchSubCategoriesFor(String categoryName) {
+  Future<void> _fetchSubCategoriesFor(String categoryName) async {
     // Find matching category map
     final match = _lamCategories.firstWhere(
-      (e) => e["name"].toString() == categoryName, 
+      (e) => e["name"].toString() == categoryName,
       orElse: () => {},
     );
-    
+
     final catId = match["id"];
-    
+
     if (catId != null) {
-      getLamSubCategory(catId);
+      await getLamSubCategory(catId);
     } else {
-      getLamSubCategory(); // Fallback incase id is completely missing
+      await getLamSubCategory(); // Fallback incase id is completely missing
     }
   }
 
@@ -201,20 +207,27 @@ class _ImageEditPageState extends State<ImageEditPage> {
     try {
       final db = await DbHelper.database;
       List<Map<String, dynamic>> result;
-      
+
       if (catId != null) {
-        result = await db.query("lam_sub_category", where: "cat_id = ?", whereArgs: [catId]);
+        result = await db.query(
+          "lam_sub_category",
+          where: "cat_id = ?",
+          whereArgs: [catId],
+        );
       } else {
         result = await db.query("lam_sub_category");
       }
-      
+
       if (mounted) {
         setState(() {
           if (result.isNotEmpty) {
-            categoriesRow2 = ["All", ...result.map((e) => e["name"].toString())];
+            categoriesRow2 = [
+              "All",
+              ...result.map((e) => e["name"].toString()),
+            ];
           } else {
-             categoriesRow2 = [];
-             _selectedSubCategory = null;
+            categoriesRow2 = [];
+            _selectedSubCategory = null;
           }
         });
       }
@@ -230,10 +243,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Image Preview Area (Fixed Height - Redesigned to fit bottom options without scroll)
+            // Top Image Preview Area (Fixed Height)
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.40,
-              child: _compareExpanded ? _buildTopComparisonSection() : _buildImageOverlaySection(),
+              child: _compareExpanded
+                  ? _buildTopComparisonSection()
+                  : _buildImageOverlaySection(),
             ),
 
             // Collapsible Headers & Content (Accordion Style)
@@ -241,10 +256,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
               child: Container(
                 color: Colors.white,
                 child: SingleChildScrollView(
+                  physics: _editExpanded
+                      ? const NeverScrollableScrollPhysics()
+                      : const AlwaysScrollableScrollPhysics(),
                   child: _buildCollapsibleHeaders(),
                 ),
               ),
             ),
+
+            // Fixed Bottom Bar/Apply Button Area
+            _buildBottomBarFixed(),
           ],
         ),
       ),
@@ -260,7 +281,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
             title: "Compare & select",
             iconImg: "compare.png",
             isActive: _compareExpanded,
+            showArrow: _isEditVisible, // No arrow if it's the only header
             onTap: () {
+              if (!_isEditVisible) return; // Non-collapsible if only header
               setState(() {
                 _compareExpanded = !_compareExpanded;
                 _editExpanded = !_compareExpanded;
@@ -272,22 +295,21 @@ class _ImageEditPageState extends State<ImageEditPage> {
         ],
 
         // Edit & Design Header
-        _buildHeaderTile(
-          title: "Edit & Design",
-          iconImg: "edit.png",
-          isActive: _editExpanded,
-          showArrow: _isApplied,
-          onTap: () {
-            if (!_isApplied) return; // Prevent collapse if it's the only header
-            setState(() {
-              _editExpanded = !_editExpanded;
-              if (_isApplied) {
+        if (_isEditVisible) ...[
+          _buildHeaderTile(
+            title: "Edit & Design",
+            iconImg: "edit.png",
+            isActive: _editExpanded,
+            showArrow: _isApplied,
+            onTap: () {
+              setState(() {
+                _editExpanded = !_editExpanded;
                 _compareExpanded = !_editExpanded;
-              }
-            });
-          },
-        ),
-        if (_editExpanded) _buildEditContent(),
+              });
+            },
+          ),
+          if (_editExpanded) _buildEditContent(),
+        ],
       ],
     );
   }
@@ -307,15 +329,25 @@ class _ImageEditPageState extends State<ImageEditPage> {
         color: Colors.white,
         child: Row(
           children: [
-            Image.asset("assets/icons/app_icons/${iconImg}", height: 13,),
+            Image.asset("assets/icons/app_icons/${iconImg}", height: 13),
             const SizedBox(width: 8),
             Text(
               title,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
             ),
             const Spacer(),
             if (showArrow)
-              Icon(isActive ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, color: Colors.black, size: 20),
+              Icon(
+                isActive
+                    ? Icons.keyboard_arrow_down
+                    : Icons.keyboard_arrow_right,
+                color: Colors.black,
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -327,23 +359,31 @@ class _ImageEditPageState extends State<ImageEditPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 4),
           _buildSearchBar(),
           const SizedBox(height: 10),
-          const Text("Select Color", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+          const Text(
+            "Select Color",
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 6),
           _buildColorSelection(),
           const SizedBox(height: 6),
-          const Text("Select Categories", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+          const Text(
+            "Select Categories",
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 4),
           _buildCategorySelection(),
           const SizedBox(height: 8),
-          const Text("Select Textures & Patterns", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+          const Text(
+            "Select Textures & Patterns",
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 6),
           _buildTextureSelection(),
-          const SizedBox(height: 10),
-          _buildBottomBar(),
           const SizedBox(height: 10),
         ],
       ),
@@ -386,7 +426,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                       top: 4,
                       left: 4,
                       child: Icon(
-                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
                         size: 18,
                         color: isSelected ? Colors.black : Colors.black54,
                       ),
@@ -421,7 +463,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
               icon: "edit.png",
               onTap: () {
                 setState(() {
-                  _currentAssetPreview = _savedVersions[_selectedIndices[0]].image;
+                  _currentAssetPreview =
+                      _savedVersions[_selectedIndices[0]].image;
+                  _isEditVisible = true;
                   _compareExpanded = false;
                   _editExpanded = true;
                 });
@@ -454,8 +498,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
           itemCount: totalItems,
           itemBuilder: (context, index) {
             final isOriginal = index == 0;
-            final imageUrl = isOriginal ? null : _savedVersions[_selectedIndices[index - 1]].image;
-            
+            final imageUrl = isOriginal
+                ? null
+                : _savedVersions[_selectedIndices[index - 1]].image;
+
             return Container(
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.white, width: 0.5),
@@ -466,22 +512,28 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   isOriginal
                       ? Image.file(widget.imageFile, fit: BoxFit.cover)
                       : Image.asset(imageUrl!, fit: BoxFit.cover),
-                  
+
                   _buildOverlayButtons(
-                    bottom: 8, 
-                    isGrid: true, 
-                    showRemove: true, 
-                    onRemove: isOriginal ? () {} : () => _toggleSelection(_selectedIndices[index - 1]),
+                    bottom: 8,
+                    isGrid: true,
+                    showRemove: true,
+                    onRemove: isOriginal
+                        ? () {}
+                        : () => _toggleSelection(_selectedIndices[index - 1]),
                     onSelect: () {
-                      context.push("/image_finalize", extra: {
-                        'editedImage': imageUrl ?? widget.imageFile, 
-                        'selectedColor': _selectedColor,
-                        'selectedLamination': _selectedTexture,
-                      });
+                      context.push(
+                        "/image_finalize",
+                        extra: {
+                          'editedImage': imageUrl ?? widget.imageFile,
+                          'selectedColor': _selectedColor,
+                          'selectedLamination': _selectedTexture,
+                        },
+                      );
                     },
                     onEdit: () {
                       setState(() {
                         _currentAssetPreview = imageUrl;
+                        _isEditVisible = true;
                         _compareExpanded = false;
                         _editExpanded = true;
                       });
@@ -497,7 +549,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Widget _buildOverlayButtons({
-    required double bottom, 
+    required double bottom,
     required bool isGrid,
     bool showRemove = false,
     VoidCallback? onRemove,
@@ -516,10 +568,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
         children: [
           _buildCircleButton(
             icon: "edit.png",
-            onTap: onEdit ?? () => setState(() {
-              _compareExpanded = false;
-              _editExpanded = true;
-            }),
+            onTap:
+                onEdit ??
+                () => setState(() {
+                  _isEditVisible = true;
+                  _compareExpanded = false;
+                  _editExpanded = true;
+                }),
             size: iconSize,
             padding: padding,
           ),
@@ -546,8 +601,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildCircleButton({
     required String icon,
-    required VoidCallback onTap, 
-    required double size, 
+    required VoidCallback onTap,
+    required double size,
     required double padding,
   }) {
     return GestureDetector(
@@ -558,17 +613,24 @@ class _ImageEditPageState extends State<ImageEditPage> {
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
-            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(2.0),
-          child: Image.asset("assets/icons/app_icons/${icon}", height: 10, width: 10,),
+          child: Image.asset(
+            "assets/icons/app_icons/${icon}",
+            height: 10,
+            width: 10,
+          ),
         ),
       ),
     );
   }
-
 
   Widget _buildImageOverlaySection() {
     return Stack(
@@ -587,23 +649,32 @@ class _ImageEditPageState extends State<ImageEditPage> {
             height: MediaQuery.of(context).size.height * 0.40,
             fit: BoxFit.cover,
           ),
-        
+
         // Dashed Bounding Boxes (Simulated Positions)
         _buildDashedBox(top: 40, left: 100, width: 80, height: 100),
         _buildDashedBox(top: 150, left: 150, width: 120, height: 80),
         _buildDashedBox(top: 250, left: 50, width: 100, height: 120),
-        
+
         // Hand Icon Instruction Overlay
         Center(
           child: Padding(
-            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.3),
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).size.height * 0.3,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.touch_app_outlined, color: Colors.white, size: 36),
+                const Icon(
+                  Icons.touch_app_outlined,
+                  color: Colors.white,
+                  size: 36,
+                ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(4),
@@ -621,7 +692,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
     );
   }
 
-  Widget _buildDashedBox({required double top, required double left, required double width, required double height}) {
+  Widget _buildDashedBox({
+    required double top,
+    required double left,
+    required double width,
+    required double height,
+  }) {
     return Positioned(
       top: top,
       left: left,
@@ -649,7 +725,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
             vertical: 10,
             horizontal: 16,
           ),
-          suffixIconConstraints: const BoxConstraints(maxWidth: 32, maxHeight: 32),
+          suffixIconConstraints: const BoxConstraints(
+            maxWidth: 32,
+            maxHeight: 32,
+          ),
           suffixIcon: Container(
             margin: const EdgeInsets.all(5),
             decoration: BoxDecoration(
@@ -687,41 +766,73 @@ class _ImageEditPageState extends State<ImageEditPage> {
       height: 48,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: featuredColors.length + 1,
+        itemCount: _featuredColors.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
             return Padding(
               padding: const EdgeInsets.only(right: 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 30,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      // boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2)],
+              child: GestureDetector(
+                onTap: () async {
+                  final Color? picked = await context.push<Color>(
+                    "/image_color_picker",
+                    extra: {
+                      'imageFile': widget.imageFile,
+                      'originalImage': widget.imageFile,
+                    },
+                  );
+                  if (picked != null) {
+                    final hex =
+                        '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+                    setState(() {
+                      _selectedCategory = null;
+                      _selectedSubCategory = null;
+                      _selectedColor = {
+                        "name": "Picked Color",
+                        "hex": hex,
+                        "id": DateTime.now().millisecondsSinceEpoch,
+                      };
+                      _featuredColors.insert(0, _selectedColor!);
+                    });
+                    _fetchTexturesByColor();
+                  }
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Image.asset(
+                        "assets/icons/app_icons/color-picker.png",
+                        width: 30,
+                        height: 30,
+                      ),
                     ),
-                    child: Image.asset(
-                                "assets/icons/app_icons/color-picker.png",
-                                width: 30,
-                                height: 30,
-                              ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text("Colour Picker", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                ],
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Colour Picker",
+                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             );
           }
-          final colorData = featuredColors[index - 1];
+          final colorData = _featuredColors[index - 1];
           final isSelected = _selectedColor?["id"] == colorData["id"];
           return Padding(
             padding: const EdgeInsets.only(right: 5),
             child: GestureDetector(
               onTap: () {
-                setState(() => _selectedColor = colorData);
+                setState(() {
+                  _selectedCategory = null;
+                  _selectedSubCategory = null;
+                  _selectedColor = colorData;
+                });
                 _fetchTexturesByColor();
               },
               child: Column(
@@ -731,9 +842,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     width: 60,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: Color(int.parse(colorData["hex"].replaceFirst('#', '0xFF'))),
+                      color: Color(
+                        int.parse(colorData["hex"].replaceFirst('#', '0xFF')),
+                      ),
                       borderRadius: BorderRadius.circular(4),
-                      border: isSelected ? Border.all(color: Colors.black, width: 0.5) : null,
+                      border: isSelected
+                          ? Border.all(color: Colors.black, width: 0.5)
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -741,7 +856,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     colorData["name"],
                     style: TextStyle(
                       fontSize: 8,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w400,
                       color: isSelected ? Colors.black : Colors.grey,
                     ),
                   ),
@@ -759,55 +876,102 @@ class _ImageEditPageState extends State<ImageEditPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildChipRow(categoriesRow1, _selectedCategory, (val) {
-           setState(() { 
-             _selectedCategory = val;
-             _selectedSubCategory = "All"; // Revert to "All" when category changes
-           });
-           _fetchSubCategoriesFor(val);
-           _fetchTextures(); // Fetch API when category changes
-        }),
+          setState(() {
+            _selectedCategory = val;
+            _selectedSubCategory =
+                "All"; // Revert to "All" when category changes
+          });
+          _fetchSubCategoriesFor(val);
+          _fetchTextures(); // Fetch API when category changes
+        }, isExpandedRow: true),
         const SizedBox(height: 0),
         if (categoriesRow2.isNotEmpty)
           _buildChipRow(categoriesRow2, _selectedSubCategory, (val) {
-             setState(() => _selectedSubCategory = val);
-             _fetchTextures(); // Fetch API when subcategory changes
-          }),
+            setState(() => _selectedSubCategory = val);
+            _fetchTextures(); // Fetch API when subcategory changes
+          }, isExpandedRow: false),
       ],
     );
   }
 
-  Widget _buildChipRow(List<String> labels, String? selectedItem, Function(String) onSelect) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: labels.map((label) {
-          final isSelected = selectedItem == label;
-          return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: ChoiceChip(
-              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-              padding: EdgeInsets.zero,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: -2),
-              label: Text(
+  Widget _buildChipRow(
+    List<String> labels,
+    String? selectedItem,
+    Function(String) onSelect, {
+    bool isExpandedRow = false,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: isExpandedRow
+          ? Row(
+              children: labels.map((label) {
+                final isSelected = selectedItem == label;
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: label != labels.last ? 6.0 : 0.0,
+                    ),
+                    child: _buildChip(label, isSelected, onSelect, true),
+                  ),
+                );
+              }).toList(),
+            )
+          : Wrap(
+              spacing: 6,
+              runSpacing: 0,
+              children: labels.map((label) {
+                final isSelected = selectedItem == label;
+                return _buildChip(label, isSelected, onSelect, false);
+              }).toList(),
+            ),
+    );
+  }
+
+  Widget _buildChip(
+    String label,
+    bool isSelected,
+    Function(String) onSelect,
+    bool isExpanded,
+  ) {
+    return ChoiceChip(
+      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+      padding: EdgeInsets.zero,
+      labelPadding: isExpanded
+          ? const EdgeInsets.symmetric(horizontal: 4, vertical: -2)
+          : const EdgeInsets.symmetric(horizontal: 8, vertical: -2),
+      label: isExpanded
+          ? SizedBox(
+              width: double.infinity,
+              child: Text(
                 label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: isSelected ? Colors.black : Colors.grey[600],
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
-              selected: isSelected,
-              onSelected: (val) => onSelect(label),
-              backgroundColor: Colors.white,
-              selectedColor: Colors.white,
-              showCheckmark: false,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-                side: BorderSide(color: isSelected ? Colors.black87 : Colors.grey[200]!),
+            )
+          : Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.black : Colors.grey[600],
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
-          );
-        }).toList(),
+      selected: isSelected,
+      onSelected: (val) => onSelect(label),
+      backgroundColor: Colors.white,
+      selectedColor: Colors.white,
+      showCheckmark: false,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(5),
+        side: BorderSide(
+          color: isSelected ? Colors.black87 : Colors.grey[200]!,
+        ),
       ),
     );
   }
@@ -816,7 +980,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
     if (_isLoadingTextures) {
       return const SizedBox(
         height: 72,
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFEA202C), )),
+        child: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFFEA202C),
+          ),
+        ),
       );
     }
 
@@ -825,9 +994,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
         height: 72,
         child: Center(
           child: Text(
-            (_selectedCategory == null && _selectedColor == null) ? "Select a color or category first." : "No laminates found.", 
-            style: const TextStyle(fontSize: 10, color: Colors.grey)
-          )
+            (_selectedCategory == null && _selectedColor == null)
+                ? "Select a color or category first."
+                : "No laminates found.",
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
+          ),
         ),
       );
     }
@@ -858,9 +1029,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
                             width: 60,
                             height: 40,
                             fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, stack) => Container(width: 60, height: 40, color: Colors.grey[300]),
+                            errorBuilder: (ctx, err, stack) => Container(
+                              width: 60,
+                              height: 40,
+                              color: Colors.grey[300],
+                            ),
                           )
-                        : Container(width: 60, height: 40, color: Colors.grey[300]),
+                        : Container(
+                            width: 60,
+                            height: 40,
+                            color: Colors.grey[300],
+                          ),
                   ),
                   const SizedBox(height: 6),
                   SizedBox(
@@ -870,13 +1049,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
                       style: TextStyle(
                         fontSize: 10,
                         color: isSelected ? Colors.black : Colors.grey,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w400,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -897,68 +1078,67 @@ class _ImageEditPageState extends State<ImageEditPage> {
       );
       return;
     }
-    
+
     setState(() {
       _isApplied = true;
+      _isEditVisible = false;
       _compareExpanded = true;
       _editExpanded = false;
     });
   }
 
-  Widget _buildBottomBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.black12, width: 1),
+  Widget _buildBottomBarFixed() {
+    if (!_editExpanded) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(color: Colors.white),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Row(
+            children: [
+              const SizedBox(width: 16),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black12, width: 1),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.menu, color: Colors.black, size: 20),
+                  onPressed: () {},
+                ),
+              ),
+              const Spacer(),
+            ],
           ),
-          child: IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black, size: 20),
-            onPressed: () {},
-          ),
-        ),
-        const SizedBox(width: 16),
-        SizedBox(
-          width: 120,
-          height: 40,
-          child: ElevatedButton(
-            onPressed: _applyChanges,
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0,
-              side: const BorderSide(color: Colors.black12, width: 1),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-            ),
-            child: const Text(
-              "Apply",
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        if (_isApplied) ...[
-          const SizedBox(width: 16),
-          Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black12, width: 1),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_forward, color: Colors.black, size: 20),
-              onPressed: () {},
+          SizedBox(
+            width: 120,
+            height: 40,
+            child: ElevatedButton(
+              onPressed: _applyChanges,
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                side: const BorderSide(color: Colors.black12, width: 1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+              child: const Text(
+                "Apply",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
         ],
-      ],
+      ),
     );
   }
 }
@@ -975,29 +1155,35 @@ class _DashedRectPainter extends CustomPainter {
     const dashSpace = 5.0;
 
     final path = Path();
-    
+
     // Top line
     for (double i = 0; i < size.width; i += dashWidth + dashSpace) {
       path.moveTo(i, 0);
       path.lineTo(i + dashWidth > size.width ? size.width : i + dashWidth, 0);
     }
-    
+
     // Bottom line
     for (double i = 0; i < size.width; i += dashWidth + dashSpace) {
       path.moveTo(i, size.height);
-      path.lineTo(i + dashWidth > size.width ? size.width : i + dashWidth, size.height);
+      path.lineTo(
+        i + dashWidth > size.width ? size.width : i + dashWidth,
+        size.height,
+      );
     }
-    
+
     // Left line
     for (double i = 0; i < size.height; i += dashWidth + dashSpace) {
       path.moveTo(0, i);
       path.lineTo(0, i + dashWidth > size.height ? size.height : i + dashWidth);
     }
-    
+
     // Right line
     for (double i = 0; i < size.height; i += dashWidth + dashSpace) {
       path.moveTo(size.width, i);
-      path.lineTo(size.width, i + dashWidth > size.height ? size.height : i + dashWidth);
+      path.lineTo(
+        size.width,
+        i + dashWidth > size.height ? size.height : i + dashWidth,
+      );
     }
 
     canvas.drawPath(path, paint);
