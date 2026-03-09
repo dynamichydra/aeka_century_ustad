@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/home/home_cubit.dart';
 import 'package:century_ai/cubit/home/home_state.dart';
 import 'package:flutter/services.dart' show AssetManifest, rootBundle;
@@ -66,6 +67,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       final exactAssetMap = <String, String>{};
       final softAssetMap = <String, String>{};
 
+
       for (final assetPath in allAssets) {
         final exactKey = _normalizeAssetPath(assetPath);
         final softKey = _normalizeAssetPathSoft(assetPath);
@@ -108,8 +110,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 name: category,
                 image: resolvedPath,
                 isTrending: false,
-                imageCategory: groupKey == 'interiors' ? 'Interiors' : 'Furnitures',
-                subCategory: category,
               ),
             );
           }
@@ -126,6 +126,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       if (!mounted) return;
       setState(() {
         _productsByTabAndCategory = parsed;
+        // Set default category for initial tab
         final initialTabCategories = _productsByTabAndCategory[context.read<HomeCubit>().state.selectedIndex]?.keys;
         if (initialTabCategories != null && initialTabCategories.isNotEmpty) {
           _selectedCategory = initialTabCategories.first;
@@ -166,8 +167,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           name: entry.key,
           image: entry.value.first.image,
           isTrending: false,
-          imageCategory: selectedIndex == 0 ? 'Interiors' : 'Furnitures',
-          subCategory: entry.key,
         ),
       );
     }
@@ -203,6 +202,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     return filtered;
   }
 
+  Future<void> logDb() async {
+    final db = await DbHelper.database;
+
+    final result = await db.query("products");
+  }
+
   Future<void> _pickFromGallery() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -210,15 +215,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     if (image != null && mounted) {
       context.push("/image_preview", extra: {
         "imageFile": File(image.path),
-        "image_category": "Gallery",
-        "sub_category": "Uploaded",
+        "image_category": "asdasdasd",
+        "sub_category": "asdasdasdasd",
       });
     }
   }
 
-  Future<void> _openProductForEditing(ProductImageModel product) async {
+  Future<void> _openProductForEditing(String assetPath) async {
     try {
-      final assetPath = product.image;
       final byteData = await rootBundle.load(assetPath);
       final tempDir = await getTemporaryDirectory();
       final fileName = assetPath.replaceAll("/", "_");
@@ -231,10 +235,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       );
       if (mounted) {
         context.push("/image_preview", extra: {
-          "imageFile": file,
-          "image_category": product.imageCategory ?? "",
-          "sub_category": product.subCategory ?? "",
-        });
+        "imageFile": file,
+        "image_category": "",
+        "sub_category": "asdasdasdsa",
+      });
       }
     } catch (e) {
       debugPrint("Error loading asset: $e");
@@ -245,477 +249,481 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   Widget build(BuildContext context) {
     final homeCubit = context.watch<HomeCubit>();
     final homeState = homeCubit.state;
-    final productsState = context.watch<ProductsCubit>().state;
     
+    final ProductsState productsState = context.watch<ProductsCubit>().state;
     final products = productsState.products.isEmpty
         ? ProductImages.productImages
         : productsState.products;
-    
     final quickProducts = _resolveQuickProducts(products, homeState.selectedIndex);
     final visibleProducts = _resolveVisibleProducts(products, homeState.selectedIndex);
-
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
       body: SafeArea(
         child: Stack(
           children: [
             RefreshIndicator(
               onRefresh: () => context.read<ProductsCubit>().refreshProducts(),
-              color: const Color(0xFF1F1919),
-              child: CustomScrollView(
+              child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  _buildTopBar(),
-                  _buildHeroSection(homeState, homeCubit),
-                  _buildSearchSection(homeCubit),
-                  _buildTabsAndFilters(homeState, homeCubit),
-                  _buildCategoryGrid(quickProducts),
-                  _buildProductSection(visibleProducts),
-                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
-                ],
-              ),
-            ),
-            _buildFloatingActionButtons(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTopBar() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Builder(
-                  builder: (context) => GestureDetector(
-                    onTap: () => Scaffold.of(context).openDrawer(),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 5,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          "Lets design Furniture with Century Decor",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w200,
+                            fontSize: 14,
                           ),
-                        ],
-                      ),
-                      child: const Icon(Iconsax.menu, size: 20, color: Color(0xFF1F1919)),
-                    ),
-                  ),
-                ),
-                Image.asset(TImages.lightAppLogo, height: 24),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Iconsax.notification, size: 20, color: Color(0xFF1F1919)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 15),
-            const Text(
-              "Let's design Furniture with Century Decor",
-              style: TextStyle(
-                fontWeight: FontWeight.w400,
-                fontSize: 13,
-                color: Color(0xFF898888),
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroSection(HomeState homeState, HomeCubit homeCubit) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Center(
-          child: ExteriorInteriorSwitchSlider(
-            value: homeState.isExterior,
-            onChanged: (val) => homeCubit.setExterior(val),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchSection(HomeCubit homeCubit) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: _searchController,
-            cursorColor: const Color(0xFF1F1919),
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-            decoration: InputDecoration(
-              hintText: "AI based furniture idea search...",
-              hintStyle: TextStyle(color: Colors.black.withOpacity(0.35), fontSize: 13),
-              prefixIcon: const Icon(Iconsax.search_normal, size: 18, color: Color(0xFF898888)),
-              suffixIcon: Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: GestureDetector(
-                  onTap: () => homeCubit.fetchResults(_searchController.text),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF1F1919),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Image.asset(
-                      "assets/icons/app_icons/ai_search.png",
-                      width: 14,
-                      height: 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-            ),
-            onSubmitted: (val) => homeCubit.fetchResults(val),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabsAndFilters(HomeState homeState, HomeCubit homeCubit) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 25, 20, 15),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Tabs
-            Row(
-              children: [
-                _buildTabItem("Interiors", homeState.selectedIndex == 0, () {
-                  homeCubit.setSelectedIndex(0);
-                  _updateSelectedCategory(0);
-                }),
-                const SizedBox(width: 20),
-                _buildTabItem("Furnitures", homeState.selectedIndex == 1, () {
-                  homeCubit.setSelectedIndex(1);
-                  _updateSelectedCategory(1);
-                }),
-              ],
-            ),
-            // Filter Icons
-            Row(
-              children: [
-                _buildFilterIcon(
-                  homeState.isTrendingShowing ? "assets/icons/app_icons/trendng2_white.png" : "assets/icons/app_icons/trendng2.png",
-                  homeState.isTrendingShowing,
-                  () => homeCubit.toggleTrending(),
-                  isImage: true,
-                ),
-                const SizedBox(width: 8),
-                _buildFilterIcon(
-                  "",
-                  homeState.isLikedShowing,
-                  () => homeCubit.toggleLiked(),
-                  icon: Icons.favorite,
-                ),
-                const SizedBox(width: 8),
-                _buildFilterIcon(
-                  "",
-                  false,
-                  () => setState(() => _isGridView = !_isGridView),
-                  icon: _isGridView ? Icons.view_list : Icons.grid_view,
-                  activeColor: Colors.transparent,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _updateSelectedCategory(int index) {
-    final newTabCategories = _productsByTabAndCategory[index]?.keys;
-    if (newTabCategories != null && newTabCategories.isNotEmpty) {
-      setState(() => _selectedCategory = newTabCategories.first);
-    } else {
-      setState(() => _selectedCategory = null);
-    }
-  }
-
-  Widget _buildTabItem(String title, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-              color: isSelected ? const Color(0xFF1F1919) : const Color(0xFF898888),
-            ),
-          ),
-          if (isSelected)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              height: 2,
-              width: 20,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1F1919),
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterIcon(String path, bool isActive, VoidCallback onTap, {bool isImage = false, IconData? icon, Color? activeColor}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isActive ? (activeColor ?? const Color(0xFF1F1919)) : Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: isImage
-            ? Image.asset(path, width: 14, height: 14)
-            : Icon(icon, size: 14, color: isActive ? Colors.white : const Color(0xFF898888)),
-      ),
-    );
-  }
-
-  Widget _buildCategoryGrid(List<ProductImageModel> quickProducts) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: SizedBox(
-          height: 90,
-          child: HorizontalIconGrid(
-            itemCount: quickProducts.length,
-            itemBuilder: (context, index) {
-              final product = quickProducts[index];
-              final isSelected = _selectedCategory == product.name;
-              return CircularIconItem(
-                label: product.name,
-                isSelected: isSelected,
-                selectedBorderColor: const Color(0xFF1F1919),
-                onTap: () => setState(() => _selectedCategory = product.name),
-                child: ClipOval(
-                  child: Image.asset(product.image, fit: BoxFit.cover),
-                ),
-              );
-            },
-            viewMoreWidget: CircularIconItem(
-              label: 'Explore All',
-              onTap: () {},
-              child: Container(
-                decoration: const BoxDecoration(color: Color(0xFFF3F4F6), shape: BoxShape.circle),
-                child: const Icon(Iconsax.arrow_right_3, size: 18, color: Color(0xFF1F1919)),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProductSection(List<ProductImageModel> products) {
-    if (_isGridView) {
-      return SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        sliver: SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 15,
-            mainAxisSpacing: 15,
-            childAspectRatio: 0.85,
-          ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => _buildProductCard(products[index]),
-            childCount: products.length,
-          ),
-        ),
-      );
-    }
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: _buildProductCard(products[index], isList: true),
-        ),
-        childCount: products.length,
-      ),
-    );
-  }
-
-  Widget _buildProductCard(ProductImageModel product, {bool isList = false}) {
-    return GestureDetector(
-      onTap: () => _openProductForEditing(product),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              flex: isList ? 0 : 1,
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Hero(
-                      tag: product.id,
-                      child: Image.asset(
-                        product.image,
-                        width: double.infinity,
-                        height: isList ? 220 : double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  if (product.isTrending)
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(20),
                         ),
+                      ),
+                      const SizedBox(height: TSizes.spaceBtwItems),
+                      Center(
+                        child: ExteriorInteriorSwitchSlider(
+                          value: homeState.isExterior,
+                          onChanged: (val) => homeCubit.setExterior(val),
+                        ),
+                      ),
+                      const SizedBox(height: TSizes.spaceBtwItems),
+                      // SearchInput(),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              blurRadius: 4,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 0),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          cursorHeight: 15,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w100,
+                            fontSize: 13,
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 13,
+                              horizontal: 20,
+                            ),
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+
+                            suffixIconConstraints: const BoxConstraints(
+                              maxHeight: 36,
+                              maxWidth: 44,
+                            ),
+                            suffixIcon: GestureDetector(
+                              onTap: () => homeCubit.fetchResults(),
+                              child: Container(
+                                margin: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.12),
+                                      blurRadius: 4,
+                                      spreadRadius: 0,
+                                      offset: const Offset(0, 0),
+                                    ),
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Image.asset(
+                                    "assets/icons/app_icons/ai_search.png",
+                                    width: 10,
+                                    height: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            hintText: "Ai based furniture idea search",
+                            hintStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w100,
+                            ),
+                          ),
+                          onChanged: (val) => homeCubit.setSearchQuery(val),
+                          onSubmitted: (_) => homeCubit.fetchResults(),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      DefaultTabController(
+                        length: 2,
+                        initialIndex: homeState.selectedIndex,
                         child: Row(
-                          children: const [
-                            Icon(Iconsax.flash, size: 12, color: Colors.orange),
-                            SizedBox(width: 4),
-                            Text("Trending", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            SizedBox(
+                              width: 150,
+                              height: 30,
+                              child: TabBar(
+                                isScrollable: true,
+                                padding: EdgeInsets.zero,
+                                labelPadding: const EdgeInsets.only(right: 16),
+                                tabAlignment: TabAlignment.start,
+                                indicator: const UnderlineTabIndicator(
+                                  borderSide: BorderSide(
+                                    width: 1.5,
+                                    color: Color(0xFF5D5D5D),
+                                  ),
+                                ),
+                                indicatorSize: TabBarIndicatorSize.label,
+                                dividerColor: Colors.transparent,
+                                labelColor: const Color(0xFF5D5D5D),
+                                unselectedLabelColor: const Color(
+                                  0xFF5D5D5D,
+                                ).withOpacity(0.5),
+                                labelStyle: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                tabs: const [
+                                  Tab(text: "Interiors"),
+                                  Tab(text: "Furnitures"),
+                                ],
+                                onTap: (index) {
+                                  homeCubit.setSelectedIndex(index);
+                                  // Reset selected category to first of new tab
+                                  final newTabCategories =
+                                      _productsByTabAndCategory[index]?.keys;
+                                  if (newTabCategories != null &&
+                                      newTabCategories.isNotEmpty) {
+                                    setState(() {
+                                      _selectedCategory = newTabCategories.first;
+                                    });
+                                  } else {
+                                    setState(() {
+                                      _selectedCategory = null;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+
+                            Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.25),
+                                        blurRadius: 2,
+                                        spreadRadius: 0,
+                                        offset: const Offset(0, 0),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: homeState.isTrendingShowing ? TColors.primary : Colors.transparent,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: () {
+                                        homeCubit.toggleTrending();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Image.asset(
+                                          homeState.isTrendingShowing ? "assets/icons/app_icons/trendng2_white.png" :
+                                          "assets/icons/app_icons/trendng2.png",
+                                          width: 12,
+                                          height: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.25),
+                                        blurRadius: 2,
+                                        spreadRadius: 0,
+                                        offset: const Offset(0, 0),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: homeState.isLikedShowing ? TColors.primary : Colors.transparent,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: () {
+                                        homeCubit.toggleLiked();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Icon(
+                                          Icons.favorite,
+                                          size: 12,
+                                          color: homeState.isLikedShowing ? Colors.white : const Color(0xFF898888),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+
+                                /// 🔲 Layout toggle button
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.25),
+                                        blurRadius: 2,
+                                        spreadRadius: 0,
+                                        offset: const Offset(0, 0),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: () {
+                                        setState(() {
+                                          _isGridView = !_isGridView;
+                                        });
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Icon(
+                                          _isGridView
+                                              ? Icons.view_list
+                                              : Icons.grid_view,
+                                          size: 12,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
+                      const SizedBox(height: TSizes.spaceBtwItems),
+                      SizedBox(
+                        height: 100,
+                        child: HorizontalIconGrid(
+                          itemCount: quickProducts.length,
+                          itemBuilder: (context, index) {
+                            final product = quickProducts[index];
+                            return CircularIconItem(
+                              label: product.name,
+                              isSelected: _selectedCategory == product.name,
+                              selectedBorderColor: const Color(0xFFEEEEEE),
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = product.name;
+                                });
+                              },
+                              child: ClipOval(
+                                child: Image.asset(
+                                  product.image,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
+                          viewMoreWidget: CircularIconItem(
+                            label: 'View More',
+                            onTap: () {}, // Handled by HorizontalIconGrid's wrapper
+                            child: Container(
+                              // margin: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFFEEEEEE),
+                                border: Border.all(
+                                  color: Colors.transparent,
+                                  // width: 6,
+                                ),
+                              ),
+                              child: const Icon(
+                                Iconsax.arrow_right_3,
+                                size: 20,
+                                color: Color(0xFF5D5D5D),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: TSizes.spaceBtwItems),
+
+                      // Popular Image List (Vertical for now)
+                      _isGridView
+                          ? GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2, // 👈 4 images per row
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                    childAspectRatio: 1, // square images
+                                  ),
+                              itemCount: visibleProducts.length,
+                              itemBuilder: (context, index) {
+                                final product = visibleProducts[index];
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    _openProductForEditing(product.image);
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: ProductContainers(
+                                      imagePath: product.image,
+                                      isTrending: product.isTrending,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: visibleProducts.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 16),
+                              itemBuilder: (context, index) {
+                                final product = visibleProducts[index];
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    _openProductForEditing(product.image);
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: ProductContainers(
+                                      imagePath: product.image,
+                                      isTrending: product.isTrending,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                      const SizedBox(
+                        height: 100,
+                      ), // Spacing for floating buttons
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: TSizes.defaultSpace,
+              left: TSizes.defaultSpace,
+              right: TSizes.defaultSpace,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _PremiumActionButton(
+                      icon: Icons.camera_alt,
+                      label: "Take Photo",
+                      onTap: () => context.push("/camera"),
                     ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _PremiumActionButton(
+                      icon: Icons.image,
+                      label: "Upload Photo",
+                      onTap: _pickFromGallery,
+                    ),
+                  ),
                 ],
               ),
             ),
-            if (!isList)
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.subCategory ?? "Premium Collection",
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1F1919)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      product.imageCategory ?? "",
-                      style: const TextStyle(fontSize: 10, color: Color(0xFF898888)),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildFloatingActionButtons() {
-    return Positioned(
-      bottom: 25,
-      left: 20,
-      right: 20,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1F1919),
-          borderRadius: BorderRadius.circular(40),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildActionBtn(Iconsax.camera, "Take Photo", () => context.push("/camera")),
-            ),
-            Container(width: 1, height: 25, color: Colors.white.withOpacity(0.15)),
-            Expanded(
-              child: _buildActionBtn(Iconsax.image, "Upload", _pickFromGallery),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class _PremiumActionButton extends StatelessWidget {
+  const _PremiumActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
-  Widget _buildActionBtn(IconData icon, String label, VoidCallback onTap) {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        color: Colors.transparent,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 18, color: Colors.white),
+            Icon(icon, size: 20, color: const Color(0xFF1F1919)),
             const SizedBox(width: 10),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1F1919),
+              ),
+            ),
           ],
         ),
       ),

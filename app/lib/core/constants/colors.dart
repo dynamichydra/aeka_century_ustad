@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TColors {
+  static const Color primary = Color(0xFFE30613);
   static const Color pureBlack = Color(0xFF000000);
   static const Color pureWhite = Color(0xFFFFFFFF);
   static const Color coolGray = Color(0xFF898888);
