@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final File imageFile;
@@ -15,6 +16,9 @@ class ImagePreviewPage extends StatefulWidget {
 }
 
 class _ImagePreviewPageState extends State<ImagePreviewPage> {
+  File? _currentFile;
+  String? _currentAsset;
+
   final List<String> exploreImages = [
     'assets/images/furniture/page_13_r.jpg',
     'assets/images/furniture/page_23_r.jpg',
@@ -27,20 +31,42 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     'assets/images/furniture/page_125_r.jpg',
   ];
 
-
-  
   @override
   void initState() {
-    // TODO: implement initState
-    
+    super.initState();
+    _currentFile = widget.imageFile;
     print("==============");
     print("image_category: ${widget.image_category}");
     print("sub_category: ${widget.sub_category}");
     print("==============");
-
-    super.initState();
   }
 
+  Future<void> _handleEdit() async {
+    File? fileToEdit = _currentFile;
+
+    if (_currentAsset != null) {
+      try {
+        final byteData = await DefaultAssetBundle.of(context).load(_currentAsset!);
+        final tempDir = await getTemporaryDirectory();
+        final fileName = _currentAsset!.replaceAll("/", "_");
+        final file = File('${tempDir.path}/$fileName');
+        await file.writeAsBytes(
+          byteData.buffer.asUint8List(
+            byteData.offsetInBytes,
+            byteData.lengthInBytes,
+          ),
+        );
+        fileToEdit = file;
+      } catch (e) {
+        debugPrint("Error saving asset for editing: $e");
+        return;
+      }
+    }
+
+    if (fileToEdit != null && mounted) {
+      context.push("/image_edit_page", extra: fileToEdit);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +84,19 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                     children: [
                       AspectRatio(
                         aspectRatio: 1,
-                        child: Image.file(
-                          widget.imageFile,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
+                        child: _currentFile != null
+                            ? Image.file(
+                                _currentFile!,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                _currentAsset!,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
                       ),
-                      // -- Overlays based on screenshot --
-                      // Visual bounding boxes (simulated with CustomPaint or Containers)
+                      // -- Overlays --
                       _buildBoundingBox(top: 50, left: 30, width: 120, height: 120),
                       _buildBoundingBox(top: 140, left: 210, width: 120, height: 80),
                       _buildBoundingBox(top: 250, left: 10, width: 100, height: 100),
@@ -104,7 +135,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                   const Padding(
                     padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
                     child: Text(
-                      "More Beds to Explore",
+                      "More Products to Explore",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -126,29 +157,37 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                     ),
                     itemCount: exploreImages.length,
                     itemBuilder: (context, index) {
-                      return Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Image.asset(
-                              exploreImages[index],
-                              fit: BoxFit.cover,
-                              height: double.infinity,
-                              width: double.infinity,
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _currentAsset = exploreImages[index];
+                            _currentFile = null;
+                          });
+                        },
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.asset(
+                                exploreImages[index],
+                                fit: BoxFit.cover,
+                                height: double.infinity,
+                                width: double.infinity,
+                              ),
                             ),
-                          ),
-                          // Corner Icons
-                          const Positioned(
-                            top: 8,
-                            left: 8,
-                            child: Icon(Icons.local_fire_department, color: Colors.red, size: 16),
-                          ),
-                          const Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Icon(Icons.favorite_border, color: Colors.white70, size: 16),
-                          ),
-                        ],
+                            // Corner Icons
+                            const Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Icon(Icons.local_fire_department, color: Colors.red, size: 16),
+                            ),
+                            const Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Icon(Icons.favorite_border, color: Colors.white70, size: 16),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -187,7 +226,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      onPressed: () => context.push("/image_edit_page", extra: widget.imageFile),
+                      onPressed: _handleEdit,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         spacing: 8,
