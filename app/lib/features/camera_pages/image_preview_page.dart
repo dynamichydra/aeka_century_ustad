@@ -5,8 +5,10 @@ import 'package:iconsax/iconsax.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final File imageFile;
+  final String image_category;
+  final String? sub_category;
 
-  const ImagePreviewPage({super.key, required this.imageFile});
+  const ImagePreviewPage({super.key, required this.imageFile, required this.image_category, this.sub_category});
 
   @override
   State<ImagePreviewPage> createState() => _ImagePreviewPageState();
@@ -24,6 +26,20 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     'assets/images/furniture/page_90_l.jpg',
     'assets/images/furniture/page_125_r.jpg',
   ];
+
+
+  
+  @override
+  void initState() {
+    // TODO: implement initState
+    
+    print("==============");
+    print("image_category: ${widget.image_category}");
+    print("sub_category: ${widget.sub_category}");
+    print("==============");
+
+    super.initState();
+  }
 
 
   @override

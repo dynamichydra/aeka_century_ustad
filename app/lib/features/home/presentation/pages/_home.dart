@@ -52,16 +52,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: TSizes.spaceBtwSections),
 
                     // 2️⃣ Interior / Exterior Toggle
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: TSizes.sm),
-                        decoration: BoxDecoration(
-                          color: TColors.lightGray.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(TSizes.borderRadiusLg),
-                        ),
-                        child: const ExteriorInteriorSwitchSlider(),
-                      ),
-                    ),
+                    // Center(
+                    //   child: Container(
+                    //     padding: const EdgeInsets.symmetric(horizontal: TSizes.sm),
+                    //     decoration: BoxDecoration(
+                    //       color: TColors.lightGray.withOpacity(0.3),
+                    //       borderRadius: BorderRadius.circular(TSizes.borderRadiusLg),
+                    //     ),
+                    //     child: const ExteriorInteriorSwitchSlider(),
+                    //   ),
+                    // ),
 
                     const SizedBox(height: TSizes.spaceBtwItems),
 

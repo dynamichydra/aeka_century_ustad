@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
 
-class ExteriorInteriorSwitchSlider extends StatefulWidget {
-  const ExteriorInteriorSwitchSlider({super.key});
+class ExteriorInteriorSwitchSlider extends StatelessWidget {
+  const ExteriorInteriorSwitchSlider({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
 
-  @override
-  State<ExteriorInteriorSwitchSlider> createState() =>
-      _ExteriorInteriorSwitchSliderState();
-}
-
-class _ExteriorInteriorSwitchSliderState
-    extends State<ExteriorInteriorSwitchSlider> {
-  bool isExterior = true;
+  final bool value;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          isExterior = !isExterior;
-        });
-      },
+      onTap: () => onChanged(!value),
       child: Container(
         width: 140, // smaller width to fit row
         height: 28, // smaller height
@@ -34,9 +28,7 @@ class _ExteriorInteriorSwitchSliderState
             // Sliding selected background
             AnimatedAlign(
               duration: const Duration(milliseconds: 200),
-              alignment: isExterior
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight,
+              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
                 width: 70, // half of container width
                 height: 24,
@@ -64,7 +56,7 @@ class _ExteriorInteriorSwitchSliderState
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: isExterior
+                        color: !value
                             ? const Color(0xFF898888)
                             : const Color(0xFF898888).withOpacity(0.5),
                       ),
@@ -78,7 +70,7 @@ class _ExteriorInteriorSwitchSliderState
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: !isExterior
+                        color: value
                             ? const Color(0xFF898888)
                             : const Color(0xFF898888).withOpacity(0.5),
                       ),
