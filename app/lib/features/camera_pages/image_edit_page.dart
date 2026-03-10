@@ -1,12 +1,15 @@
 import 'dart:io';
 import 'package:century_ai/db/db_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:century_ai/features/camera_pages/widgets/ImageCompareSlider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/features/camera_pages/dummy_data.dart';
 import 'package:century_ai/core/network/apis/laminate_api.dart'; // Added API Import
+import 'package:century_ai/cubit/image_edit/image_edit_cubit.dart';
+import 'package:century_ai/cubit/image_edit/image_edit_state.dart';
 
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
@@ -40,6 +43,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
   double _sliderPosition = 0.5;
   final List<ProductImageModel> _savedVersions = ProductImages.productImages;
 
+  // Dynamic Tap Variables
+  Map<String, dynamic> _lastTapCoordinate = {"x": 423, "y": 12};
+  bool _isShortTap = true;
+  bool _isLongTap = false;
+
   void _toggleSelection(int index) {
     setState(() {
       if (_selectedIndices.contains(index)) {
@@ -49,6 +57,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
       } else {
         if (_selectedIndices.length < 3) {
           _selectedIndices.add(index);
+          
+          final selectedImage = _savedVersions[index];
+          context.read<ImageEditCubit>().compareImageSelected(selectedImage);
         }
       }
     });
@@ -238,35 +249,51 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Image Preview Area (Fixed Height)
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.40,
-              child: _compareExpanded
-                  ? _buildTopComparisonSection()
-                  : _buildImageOverlaySection(),
-            ),
-
-            // Collapsible Headers & Content (Accordion Style)
-            Expanded(
-              child: Container(
-                color: Colors.white,
-                child: SingleChildScrollView(
-                  physics: _editExpanded
-                      ? const NeverScrollableScrollPhysics()
-                      : const AlwaysScrollableScrollPhysics(),
-                  child: _buildCollapsibleHeaders(),
+    return BlocProvider(
+      create: (_) => ImageEditCubit(),
+      child: BlocListener<ImageEditCubit, ImageEditState>(
+        listener: (context, state) {
+          if (state.errorMessage != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage!), backgroundColor: Colors.red),
+            );
+          } else if (state.successMessage != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.successMessage!), backgroundColor: Colors.green),
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF8F8F8),
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Top Image Preview Area (Fixed Height)
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.40,
+                  child: _compareExpanded
+                      ? _buildTopComparisonSection()
+                      : _buildImageOverlaySection(),
                 ),
-              ),
-            ),
 
-            // Fixed Bottom Bar/Apply Button Area
-            _buildBottomBarFixed(),
-          ],
+                // Collapsible Headers & Content (Accordion Style)
+                Expanded(
+                  child: Container(
+                    color: Colors.white,
+                    child: SingleChildScrollView(
+                      physics: _editExpanded
+                          ? const NeverScrollableScrollPhysics()
+                          : const AlwaysScrollableScrollPhysics(),
+                      child: _buildCollapsibleHeaders(),
+                    ),
+                  ),
+                ),
+
+                // Fixed Bottom Bar/Apply Button Area
+                _buildBottomBarFixed(),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -396,47 +423,57 @@ class _ImageEditPageState extends State<ImageEditPage> {
       child: Column(
         children: [
           const SizedBox(height: 4),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _savedVersions.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.0,
-            ),
-            itemBuilder: (context, index) {
-              final version = _savedVersions[index];
-              final isSelected = _selectedIndices.contains(index);
-              return GestureDetector(
-                onTap: () => _toggleSelection(index),
-                child: Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        version.image,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      left: 4,
-                      child: Icon(
-                        isSelected
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_off,
-                        size: 18,
-                        color: isSelected ? Colors.black : Colors.black54,
-                      ),
-                    ),
-                  ],
+          Builder(
+            builder: (context) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _savedVersions.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.0,
                 ),
+                itemBuilder: (context, index) {
+                  final version = _savedVersions[index];
+                  final isSelected = _selectedIndices.contains(index);
+                  return GestureDetector(
+                    onTap: () {
+                      _toggleSelection(index);
+                      // Already triggering context.read<ImageEditCubit>().compareImageSelected inside _toggleSelection 
+                      // but we need context. However, context is not easily passed into _toggleSelection since it's used elsewhere too.
+                      // Let's modify _toggleSelection to accept context, or call the API directly here.
+                      // Actually, the easiest way is to pass context to _toggleSelection.
+                    },
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.asset(
+                            version.image,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          left: 4,
+                          child: Icon(
+                            isSelected
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                            size: 18,
+                            color: isSelected ? Colors.black : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               );
-            },
+            }
           ),
           const SizedBox(height: 20),
         ],
@@ -633,8 +670,29 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Widget _buildImageOverlaySection() {
-    return Stack(
-      children: [
+    return GestureDetector(
+      onTapDown: (details) {
+        setState(() {
+          _lastTapCoordinate = {
+            "x": details.localPosition.dx,
+            "y": details.localPosition.dy,
+          };
+          _isShortTap = true;
+          _isLongTap = false;
+        });
+      },
+      onLongPressStart: (details) {
+        setState(() {
+          _lastTapCoordinate = {
+            "x": details.localPosition.dx,
+            "y": details.localPosition.dy,
+          };
+          _isShortTap = false;
+          _isLongTap = true;
+        });
+      },
+      child: Stack(
+        children: [
         if (_currentAssetPreview != null)
           Image.asset(
             _currentAssetPreview!,
@@ -689,7 +747,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           ),
         ),
       ],
-    );
+    ));
   }
 
   Widget _buildDashedBox({
@@ -1067,7 +1125,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     );
   }
 
-  void _applyChanges() {
+  void _applyChanges(BuildContext context) {
     if (_selectedTexture == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1078,6 +1136,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
       );
       return;
     }
+
+    final textureId = _selectedTexture!["id"]?.toString() ?? _selectedTexture!["sku"]?.toString() ?? "unknown";
+    final textureUrl = _selectedTexture!["coverImage"]?.toString() ?? "unknown_url";
+
+    context.read<ImageEditCubit>().applyTextureSelected(
+          textureId, 
+          textureUrl,
+          _lastTapCoordinate,
+          _isShortTap,
+          _isLongTap,
+        );
 
     setState(() {
       _isApplied = true;
@@ -1091,54 +1160,69 @@ class _ImageEditPageState extends State<ImageEditPage> {
     if (!_editExpanded) {
       return const SizedBox.shrink();
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(color: Colors.white),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Row(
+    return Builder(
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: const BoxDecoration(color: Colors.white),
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              const SizedBox(width: 16),
-              Container(
-                width: 40,
+              Row(
+                children: [
+                  const SizedBox(width: 16),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black12, width: 1),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.menu, color: Colors.black, size: 20),
+                      onPressed: () {},
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+              SizedBox(
+                width: 120,
                 height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black12, width: 1),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.menu, color: Colors.black, size: 20),
-                  onPressed: () {},
+                child: ElevatedButton(
+                  onPressed: () => _applyChanges(context),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    side: const BorderSide(color: Colors.black12, width: 1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                  ),
+                  child: BlocBuilder<ImageEditCubit, ImageEditState>(
+                    builder: (context, state) {
+                      if (state.isApplyLoading) {
+                        return const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                        );
+                      }
+                      return const Text(
+                        "Apply",
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                      );
+                    },
+                  ),
                 ),
               ),
-              const Spacer(),
             ],
           ),
-          SizedBox(
-            width: 120,
-            height: 40,
-            child: ElevatedButton(
-              onPressed: _applyChanges,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                elevation: 0,
-                side: const BorderSide(color: Colors.black12, width: 1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-              ),
-              child: const Text(
-                "Apply",
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      }
     );
   }
 }
