@@ -12,17 +12,27 @@ class ImageEditService {
     required bool isLiked,
   }) async {
     // Replace with actual endpoint once available
-    var res = await api.post(
-      "/compare-image-details",
-      {
-        "image_category": imageCategory,
-        "sub_category": subCategory,
-        "interior_furniture": interiorFurniture,
-        "is_trending": isTrending,
-        "is_liked": isLiked,
-      },
-    );
-    return res;
+    print("--- ImageEditService: Sending Request ---");
+    final params = {
+      "image_category": imageCategory,
+      "sub_category": subCategory,
+      "interior_furniture": interiorFurniture,
+      "is_trending": isTrending,
+      "is_liked": isLiked,
+    };
+
+    print("Request Parameters: $params");
+    // var res = await api.post(
+    //   "/compare-image-details",
+    //   {
+    //     "image_category": imageCategory,
+    //     "sub_category": subCategory,
+    //     "interior_furniture": interiorFurniture,
+    //     "is_trending": isTrending,
+    //     "is_liked": isLiked,
+    //   },
+    // );
+    // return res;
   }
 
   /// Post Apply Texture
@@ -34,16 +44,28 @@ class ImageEditService {
     required String selectedTexturePatterns,
   }) async {
     // Replace with actual endpoint once available
-    var res = await api.post(
-      "/apply-texture",
-      {
-        "selected_id": selectedId,
-        "coordinate": coordinate,
-        "is_short_tap": isShortTap,
-        "is_long_tap": isLongTap,
-        "selected_texture_patterns": selectedTexturePatterns,
-      },
-    );
-    return res;
+
+print("--- ImageEditService: Sending Request ---");
+    final params = {
+      "selected_id": selectedId,
+      "coordinate": coordinate,
+      "is_short_tap": isShortTap,
+      "is_long_tap": isLongTap,
+      "selected_texture_patterns": selectedTexturePatterns,
+    };
+
+    print("Request Parameters: $params");
+
+    // var res = await api.post(
+    //   "/apply-texture",
+    //   {
+    //     "selected_id": selectedId,
+    //     "coordinate": coordinate,
+    //     "is_short_tap": isShortTap,
+    //     "is_long_tap": isLongTap,
+    //     "selected_texture_patterns": selectedTexturePatterns,
+    //   },
+    // );
+    // return res;
   }
 }
