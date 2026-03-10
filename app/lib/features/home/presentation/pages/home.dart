@@ -21,6 +21,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -603,8 +604,23 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     mainAxisSpacing: 12,
                                     childAspectRatio: 1, // square images
                                   ),
-                              itemCount: visibleProducts.length,
+                              itemCount: homeState.isLoading ? 6 : visibleProducts.length,
                               itemBuilder: (context, index) {
+                                if (homeState.isLoading) {
+                                  return Shimmer.fromColors(
+                                    baseColor: Colors.grey[300]!,
+                                    highlightColor: Colors.grey[100]!,
+                                    child: AspectRatio(
+                                      aspectRatio: 1.0,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
                                 final product = visibleProducts[index];
 
                                 return GestureDetector(
@@ -624,10 +640,25 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           : ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: visibleProducts.length,
+                              itemCount: homeState.isLoading ? 5 : visibleProducts.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
+                                if (homeState.isLoading) {
+                                  return Shimmer.fromColors(
+                                    baseColor: Colors.grey[300]!,
+                                    highlightColor: Colors.grey[100]!,
+                                    child: AspectRatio(
+                                      aspectRatio: 1,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
                                 final product = visibleProducts[index];
 
                                 return GestureDetector(
@@ -660,7 +691,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 children: [
                   Expanded(
                     child: _PremiumActionButton(
-                      icon: Icons.camera_alt,
+                      iconImage: "camera.png",
                       label: "Take Photo",
                       onTap: () => context.push("/camera"),
                     ),
@@ -668,7 +699,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _PremiumActionButton(
-                      icon: Icons.image,
+                      iconImage: "upload-image.png",
                       label: "Upload Photo",
                       onTap: _pickFromGallery,
                     ),
@@ -685,12 +716,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
 class _PremiumActionButton extends StatelessWidget {
   const _PremiumActionButton({
-    required this.icon,
+    required this.iconImage,
     required this.label,
     required this.onTap,
   });
 
-  final IconData icon;
+  final String iconImage;
   final String label;
   final VoidCallback onTap;
 
@@ -714,7 +745,7 @@ class _PremiumActionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: const Color(0xFF1F1919)),
+            Image.asset("assets/icons/app_icons/${iconImage}", height: 16,),
             const SizedBox(width: 10),
             Text(
               label,

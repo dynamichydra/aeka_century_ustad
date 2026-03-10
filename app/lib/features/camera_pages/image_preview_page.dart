@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shimmer/shimmer.dart';
+import 'services/preview_service.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final File imageFile;
@@ -18,6 +20,8 @@ class ImagePreviewPage extends StatefulWidget {
 class _ImagePreviewPageState extends State<ImagePreviewPage> {
   File? _currentFile;
   String? _currentAsset;
+  bool _isLoading = false;
+  final PreviewService _previewService = PreviewService();
 
   final List<String> exploreImages = [
     'assets/images/furniture/page_13_r.jpg',
@@ -39,6 +43,32 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     print("image_category: ${widget.image_category}");
     print("sub_category: ${widget.sub_category}");
     print("==============");
+  }
+
+  Future<void> _simulateApiCall(String assetPath) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // Log details as requested
+    await _previewService.logPreviewDetails(
+      imageCategory: widget.image_category,
+      subCategory: widget.sub_category ?? "N/A",
+      interiorFurniture: "Generic Furniture", // Placeholder as per user's sample
+      isTrending: true,
+      isLiked: false,
+    );
+
+    if (mounted) {
+      setState(() {
+        _currentAsset = assetPath;
+        _currentFile = null;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _handleEdit() async {
@@ -97,38 +127,40 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                               ),
                       ),
                       // -- Overlays --
-                      _buildBoundingBox(top: 50, left: 30, width: 120, height: 120),
-                      _buildBoundingBox(top: 140, left: 210, width: 120, height: 80),
-                      _buildBoundingBox(top: 250, left: 10, width: 100, height: 100),
-                      
-                      // Center Instruction
-                      Positioned(
-                        bottom: 40,
-                        left: 0,
-                        right: 0,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.touch_app_outlined, color: Colors.white, size: 40),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                "Tap on the object to apply laminates",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
+                      if (!_isLoading) ...[
+                        _buildBoundingBox(top: 50, left: 30, width: 120, height: 120),
+                        _buildBoundingBox(top: 140, left: 210, width: 120, height: 80),
+                        _buildBoundingBox(top: 250, left: 10, width: 100, height: 100),
+
+                        // Center Instruction
+                        Positioned(
+                          bottom: 40,
+                          left: 0,
+                          right: 0,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.touch_app_outlined, color: Colors.white, size: 40),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  "Tap on the object to apply laminates",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   
@@ -157,13 +189,23 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                     ),
                     itemCount: exploreImages.length,
                     itemBuilder: (context, index) {
+                      if (_isLoading) {
+                        return Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: AspectRatio(
+                            aspectRatio: 1.0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
                       return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _currentAsset = exploreImages[index];
-                            _currentFile = null;
-                          });
-                        },
+                        onTap: _isLoading ? null : () => _simulateApiCall(exploreImages[index]),
                         child: Stack(
                           children: [
                             ClipRRect(

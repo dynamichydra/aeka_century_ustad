@@ -8,13 +8,18 @@ class HomeCubit extends Cubit<HomeState> {
 
   HomeCubit() : super(const HomeState());
 
-  void fetchResults([String? query]) {
+  void fetchResults([String? query]) async {
     final effectiveQuery = query ?? state.searchQuery;
     
     // Update state so the rest of the app knows the current query
     if (query != null && query != state.searchQuery) {
-      emit(state.copyWith(searchQuery: query));
+      emit(state.copyWith(searchQuery: query, isLoading: true));
+    } else {
+      emit(state.copyWith(isLoading: true));
     }
+
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 1500));
 
     _homeService.filterProducts(
       query: effectiveQuery,
@@ -23,6 +28,8 @@ class HomeCubit extends Cubit<HomeState> {
       isLiked: state.isLikedShowing,
       category: state.selectedIndex == 0 ? 'Interiors' : 'Furnitures',
     );
+
+    emit(state.copyWith(isLoading: false));
   }
 
   void setExterior(bool value) {

@@ -6,6 +6,7 @@ class HomeState extends Equatable {
   final bool isLikedShowing;
   final int selectedIndex;
   final String searchQuery;
+  final bool isLoading;
 
   const HomeState({
     this.isExterior = true,
@@ -13,6 +14,7 @@ class HomeState extends Equatable {
     this.isLikedShowing = false,
     this.selectedIndex = 0,
     this.searchQuery = '',
+    this.isLoading = false,
   });
 
   HomeState copyWith({
@@ -21,6 +23,7 @@ class HomeState extends Equatable {
     bool? isLikedShowing,
     int? selectedIndex,
     String? searchQuery,
+    bool? isLoading,
   }) {
     return HomeState(
       isExterior: isExterior ?? this.isExterior,
@@ -28,6 +31,7 @@ class HomeState extends Equatable {
       isLikedShowing: isLikedShowing ?? this.isLikedShowing,
       selectedIndex: selectedIndex ?? this.selectedIndex,
       searchQuery: searchQuery ?? this.searchQuery,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 
@@ -38,5 +42,6 @@ class HomeState extends Equatable {
         isLikedShowing,
         selectedIndex,
         searchQuery,
+        isLoading,
       ];
 }
