@@ -1170,7 +1170,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             children: [
               Row(
                 children: [
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 50),
                   Container(
                     width: 40,
                     height: 40,

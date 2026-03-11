@@ -86,14 +86,22 @@ final GoRouter router = GoRouter(
       path: "/image_preview",
       name: "Image Preview",
       builder: (context, state) {
-        final data = state.extra as Map<String, dynamic>;
-        final imageFile = data["imageFile"] as File;
-        final imageCategory = data["image_category"] as String? ?? "";
-        final subCategory = data["sub_category"] as String?;
+        File? imageFile;
+        String imageCategory = "";
+        String? subCategory;
+
+        if (state.extra is File) {
+          imageFile = state.extra as File;
+        } else if (state.extra is Map<String, dynamic>) {
+          final data = state.extra as Map<String, dynamic>;
+          imageFile = data["imageFile"] as File?;
+          imageCategory = data["image_category"] as String? ?? "";
+          subCategory = data["sub_category"] as String?;
+        }
 
         return ImagePreviewPage(
-          imageFile: imageFile, 
-          image_category: imageCategory, 
+          imageFile: imageFile!,
+          image_category: imageCategory,
           sub_category: subCategory,
         );
       },

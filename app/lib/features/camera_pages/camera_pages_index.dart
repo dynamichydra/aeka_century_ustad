@@ -66,7 +66,11 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         'originalImage': widget.originalImage,
       });
     } else {
-      context.pushReplacement("/image_preview", extra: File(file.path));
+      context.pushReplacement("/image_preview", extra: {
+        'imageFile': File(file.path),
+        'image_category': "",
+        'sub_category': "",
+      });
     }
   }
 
@@ -82,7 +86,11 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
           'originalImage': widget.originalImage,
         });
       } else {
-        context.pushReplacement("/image_preview", extra: File(image.path));
+        context.pushReplacement("/image_preview", extra: {
+          'imageFile': File(image.path),
+          'image_category': "",
+          'sub_category': "",
+        });
       }
     }
   }
