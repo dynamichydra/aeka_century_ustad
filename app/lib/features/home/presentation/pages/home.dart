@@ -46,8 +46,15 @@ class _HomeScreenContent extends StatefulWidget {
 class _HomeScreenContentState extends State<_HomeScreenContent> {
   final TextEditingController _searchController = TextEditingController();
   bool _isGridView = false;
+  bool _quickExpanded = false;
   String? _selectedCategory;
   Map<int, Map<String, List<ProductImageModel>>> _productsByTabAndCategory = {};
+
+  double _bottomCtaReservedSpace(BuildContext context) {
+    // Keep the scrolling content from being hidden behind the bottom CTA row.
+    // Also accounts for device bottom inset (gesture nav / home indicator).
+    return MediaQuery.of(context).padding.bottom + TSizes.defaultSpace + 72;
+  }
 
   @override
   void initState() {
@@ -264,6 +271,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       drawer: const HomeDrawer(),
       body: SafeArea(
         child: Stack(
+          fit: StackFit.expand,
           children: [
             RefreshIndicator(
               onRefresh: () => context.read<ProductsCubit>().refreshProducts(),
@@ -546,51 +554,86 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         ),
                       ),
                       const SizedBox(height: TSizes.spaceBtwItems),
-                      SizedBox(
-                        height: 100,
-                        child: HorizontalIconGrid(
-                          itemCount: quickProducts.length,
-                          itemBuilder: (context, index) {
-                            final product = quickProducts[index];
-                            return CircularIconItem(
-                              label: product.name,
-                              isSelected: _selectedCategory == product.name,
-                              selectedBorderColor: const Color(0xFFEEEEEE),
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategory = product.name;
-                                });
-                              },
-                              child: ClipOval(
-                                child: Image.asset(
-                                  product.image,
-                                  fit: BoxFit.cover,
+                      if (!_quickExpanded)
+                        SizedBox(
+                          height: 100,
+                          child: HorizontalIconGrid(
+                            itemCount: quickProducts.length,
+                            itemBuilder: (context, index) {
+                              final product = quickProducts[index];
+                              return CircularIconItem(
+                                label: product.name,
+                                isSelected: _selectedCategory == product.name,
+                                selectedBorderColor: const Color(0xFFEEEEEE),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCategory = product.name;
+                                  });
+                                },
+                                child: ClipOval(
+                                  child: Image.asset(
+                                    product.image,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          viewMoreWidget: CircularIconItem(
-                            label: 'View More',
-                            onTap: () {}, // Handled by HorizontalIconGrid's wrapper
-                            child: Container(
-                              // margin: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: const Color(0xFFEEEEEE),
-                                border: Border.all(
-                                  color: Colors.transparent,
-                                  // width: 6,
+                              );
+                            },
+                            viewMoreWidget: CircularIconItem(
+                              label: 'View More',
+                              onTap: () {},
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFFEEEEEE),
+                                  border: Border.all(color: Colors.transparent),
                                 ),
-                              ),
-                              child: const Icon(
-                                Iconsax.arrow_right_3,
-                                size: 20,
-                                color: Color(0xFF5D5D5D),
+                                child: const Icon(
+                                  Iconsax.arrow_right_3,
+                                  size: 20,
+                                  color: Color(0xFF5D5D5D),
+                                ),
                               ),
                             ),
+                            onViewMoreTap: () {
+                              setState(() {
+                                _quickExpanded = true;
+                              });
+                            },
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          height: (92 * 2) + 12,
+                          child: GridView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              mainAxisExtent: 92,
+                            ),
+                            itemCount: quickProducts.length > 8 ? 8 : quickProducts.length,
+                            itemBuilder: (context, index) {
+                              final product = quickProducts[index];
+                              return CircularIconItem(
+                                label: product.name,
+                                isSelected: _selectedCategory == product.name,
+                                selectedBorderColor: const Color(0xFFEEEEEE),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCategory = product.name;
+                                  });
+                                },
+                                child: ClipOval(
+                                  child: Image.asset(
+                                    product.image,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                      ),
                       const SizedBox(height: TSizes.spaceBtwItems),
 
                       // Popular Image List (Vertical for now)
@@ -676,9 +719,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 );
                               },
                             ),
-                      const SizedBox(
-                        height: 100,
-                      ), // Spacing for floating buttons
+                      SizedBox(height: _bottomCtaReservedSpace(context)),
                     ],
                   ),
                 ),

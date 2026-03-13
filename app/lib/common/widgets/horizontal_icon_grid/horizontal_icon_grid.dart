@@ -4,12 +4,14 @@ class HorizontalIconGrid extends StatefulWidget {
   final int itemCount;
   final Widget Function(BuildContext context, int index) itemBuilder;
   final Widget? viewMoreWidget;
+  final VoidCallback? onViewMoreTap;
 
   const HorizontalIconGrid({
     super.key,
     required this.itemCount,
     required this.itemBuilder,
     this.viewMoreWidget,
+    this.onViewMoreTap,
   });
 
   @override
@@ -93,13 +95,14 @@ class _HorizontalIconGridState extends State<HorizontalIconGrid> {
               },
             ),
             
-            if (_canScrollRight && widget.viewMoreWidget != null)
+            if (widget.viewMoreWidget != null &&
+                (widget.onViewMoreTap != null || _canScrollRight))
               Positioned(
                 right: 0,
                 top: 0,
                 bottom: 0,
                 child: GestureDetector(
-                  onTap: _handleViewMoreTap,
+                  onTap: widget.onViewMoreTap ?? _handleViewMoreTap,
                   child: Container(
                     width: itemWidth,
                     alignment: Alignment.topCenter,
