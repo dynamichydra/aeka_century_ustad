@@ -1,27 +1,18 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:century_ai/features/authentication/presentation/pages/onboarding.dart';
 import 'package:century_ai/features/camera_pages/camera_pages_index.dart';
 import 'package:century_ai/features/camera_pages/image_edit_page.dart';
 import 'package:century_ai/features/camera_pages/image_color_picker.dart';
 import 'package:century_ai/features/camera_pages/image_finalize_page.dart';
 import 'package:century_ai/features/camera_pages/image_preview_page.dart';
 import 'package:century_ai/features/home/home.dart';
-import 'package:century_ai/features/profile/presentation/pages/profile_screent.dart';
-import 'package:century_ai/features/search/presentation/pages/search_page.dart';
 import 'package:century_ai/router/shell_route.dart';
-import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
   routes: [
-    GoRoute(
-      path: '/onboarding',
-      name: 'onboarding',
-      builder: (context, state) => const Onboarding(),
-    ),
     GoRoute(
       path: "/camera",
       name: "camera",
@@ -53,11 +44,6 @@ final GoRouter router = GoRouter(
           name: "home",
           builder: (context, state) => HomeScreen(),
         ),
-        // GoRoute(
-        //   path: "/camera",
-        //   name: "camera",
-        //   builder: (context, state) => CameraIndex(),
-        // ),
         GoRoute(
           path: "/heart",
           name: "heart",
@@ -68,11 +54,6 @@ final GoRouter router = GoRouter(
           name: "star",
           builder: (context, state) => HomeScreen(),
         ),
-         GoRoute(
-          path: "/search",
-          name: "search",
-          builder: (context, state) => const SearchScreen(),
-        )
       ],
     ),
 
@@ -157,24 +138,6 @@ final GoRouter router = GoRouter(
           selectedLamination: data['selectedLamination'] as Map<String, dynamic>,
         );
       },
-    ),
-    GoRoute(
-      path: "/product-explorer",
-      name: "product-explorer",
-      builder: (context, state) {
-        final product = state.extra as ProductImageModel;
-        return ProductExplorerScreen(selectedProduct: product);
-      },
-    ),
-    GoRoute(
-      path: "/product-library",
-      name: "product-library",
-      builder: (context, state) => const ProductLibraryScreen(),
-    ),
-    GoRoute(
-      path: "/profile",
-      name: "profile",
-      builder: (context, state) => const ProfileScreen(),
     ),
   ],
 );
