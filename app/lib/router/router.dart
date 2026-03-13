@@ -1,20 +1,17 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:century_ai/features/camera_pages/camera_pages_index.dart';
-import 'package:century_ai/features/camera_pages/image_edit_page.dart';
-import 'package:century_ai/features/camera_pages/image_color_picker.dart';
-import 'package:century_ai/features/camera_pages/image_finalize_page.dart';
-import 'package:century_ai/features/camera_pages/image_preview_page.dart';
+import 'package:century_ai/features/camera_pages/camera_pages.dart';
 import 'package:century_ai/features/home/home.dart';
+import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/router/shell_route.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/',
+  initialLocation: AppRoutes.home,
   routes: [
     GoRoute(
-      path: "/camera",
+      path: AppRoutes.camera,
       name: "camera",
       builder: (context, state) {
         bool fromColorPicker = false;
@@ -40,17 +37,17 @@ final GoRouter router = GoRouter(
       },
       routes: [
         GoRoute(
-          path: "/",
+          path: AppRoutes.home,
           name: "home",
           builder: (context, state) => HomeScreen(),
         ),
         GoRoute(
-          path: "/heart",
+          path: AppRoutes.heart,
           name: "heart",
           builder: (context, state) => HomeScreen(),
         ),
         GoRoute(
-          path: "/star",
+          path: AppRoutes.star,
           name: "star",
           builder: (context, state) => HomeScreen(),
         ),
@@ -64,7 +61,7 @@ final GoRouter router = GoRouter(
     //   builder: (context, state) => LoginPage(),
     // ),
     GoRoute(
-      path: "/image_preview",
+      path: AppRoutes.imagePreview,
       name: "Image Preview",
       builder: (context, state) {
         File? imageFile;
@@ -88,7 +85,7 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
-      path: "/image_edit_page",
+      path: AppRoutes.imageEdit,
       name: "Image Edit Page",
       builder: (context, state) {
         File? imageFile;
@@ -109,7 +106,7 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
-      path: "/image_color_picker",
+      path: AppRoutes.imageColorPicker,
       name: "Image Color Picker",
       builder: (context, state) {
         File? imageFile;
@@ -128,7 +125,7 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
-      path: "/image_finalize",
+      path: AppRoutes.imageFinalize,
       name: "Image Finalize",
       builder: (context, state) {
         final data = state.extra as Map<String, dynamic>;
@@ -137,6 +134,19 @@ final GoRouter router = GoRouter(
           selectedColor: data['selectedColor'] as Map<String, dynamic>,
           selectedLamination: data['selectedLamination'] as Map<String, dynamic>,
         );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.compare,
+      name: "compare",
+      builder: (context, state) {
+        File? originalImage;
+        if (state.extra is File) {
+          originalImage = state.extra as File;
+        } else if (state.extra is Map<String, dynamic>) {
+          originalImage = (state.extra as Map<String, dynamic>)['originalImage'] as File?;
+        }
+        return CompareImagePage(originalImage: originalImage!);
       },
     ),
   ],

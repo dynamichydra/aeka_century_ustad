@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:century_ai/features/camera_pages/widgets/ImageCompareSlider.dart';
+import 'package:century_ai/features/camera_pages/presentation/widgets/image_compare_slider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
-import 'package:century_ai/features/camera_pages/dummy_data.dart';
+import 'package:century_ai/features/camera_pages/data/dummy_data.dart';
 
 class CompareImagePage extends StatefulWidget {
   final File originalImage;

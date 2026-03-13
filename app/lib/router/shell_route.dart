@@ -1,6 +1,7 @@
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,10 +11,10 @@ class NavWrapper extends StatelessWidget {
   const NavWrapper({super.key, required this.child});
 
   static const List<String> _routes = [
-    "/",
-    "/camera",
+    AppRoutes.home,
+    AppRoutes.camera,
     "/upload",
-    "/heart",
+    AppRoutes.heart,
     "/people",
   ];
 

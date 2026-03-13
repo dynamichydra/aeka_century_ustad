@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:century_ai/features/camera_pages/widgets/ImageCompareSlider.dart';
+import 'package:century_ai/features/camera_pages/presentation/widgets/image_compare_slider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
-import 'package:century_ai/features/camera_pages/dummy_data.dart';
+import 'package:century_ai/features/camera_pages/data/dummy_data.dart';
 import 'package:century_ai/core/network/apis/laminate_api.dart'; // Added API Import
 import 'package:century_ai/cubit/image_edit/image_edit_cubit.dart';
 import 'package:century_ai/cubit/image_edit/image_edit_state.dart';
+import 'package:century_ai/router/app_routes.dart';
 
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
@@ -559,7 +560,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         : () => _toggleSelection(_selectedIndices[index - 1]),
                     onSelect: () {
                       context.push(
-                        "/image_finalize",
+                        AppRoutes.imageFinalize,
                         extra: {
                           'editedImage': imageUrl ?? widget.imageFile,
                           'selectedColor': _selectedColor,
@@ -832,7 +833,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
               child: GestureDetector(
                 onTap: () async {
                   final Color? picked = await context.push<Color>(
-                    "/image_color_picker",
+                    AppRoutes.imageColorPicker,
                     extra: {
                       'imageFile': widget.imageFile,
                       'originalImage': widget.imageFile,

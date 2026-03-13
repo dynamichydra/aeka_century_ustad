@@ -1,4 +1,4 @@
-import 'package:century_ai/features/camera_pages/services/image_edit_service.dart';
+import 'package:century_ai/features/camera_pages/data/services/image_edit_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'image_edit_state.dart';

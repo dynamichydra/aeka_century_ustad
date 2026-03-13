@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shimmer/shimmer.dart';
-import 'services/preview_service.dart';
+import 'package:century_ai/router/app_routes.dart';
+import 'package:century_ai/features/camera_pages/data/services/preview_service.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final File imageFile;
@@ -94,7 +95,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     }
 
     if (fileToEdit != null && mounted) {
-      context.push("/image_edit_page", extra: fileToEdit);
+      context.push(AppRoutes.imageEdit, extra: fileToEdit);
     }
   }
 

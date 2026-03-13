@@ -22,6 +22,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:century_ai/router/app_routes.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -214,7 +215,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null && mounted) {
-      context.push("/image_preview", extra: {
+      context.push(AppRoutes.imagePreview, extra: {
         "imageFile": File(image.path),
         "image_category": "asdasdasd",
         "sub_category": "asdasdasdasd",
@@ -235,7 +236,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         ),
       );
       if (mounted) {
-        context.push("/image_preview", extra: {
+        context.push(AppRoutes.imagePreview, extra: {
         "imageFile": file,
         "image_category": "",
         "sub_category": "asdasdasdsa",
@@ -693,7 +694,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     child: _PremiumActionButton(
                       iconImage: "camera.png",
                       label: "Take Photo",
-                      onTap: () => context.push("/camera"),
+                      onTap: () => context.push(AppRoutes.camera),
                     ),
                   ),
                   const SizedBox(width: 16),

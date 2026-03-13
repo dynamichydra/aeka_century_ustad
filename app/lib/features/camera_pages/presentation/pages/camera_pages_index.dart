@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:century_ai/core/constants/sizes.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
+import 'package:century_ai/router/app_routes.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -61,12 +62,12 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     // Navigate to edit page (example)
     if (!mounted) return;
     if (widget.fromColorPicker) {
-      context.pushReplacement("/image_color_picker", extra: {
+      context.pushReplacement(AppRoutes.imageColorPicker, extra: {
         'imageFile': File(file.path),
         'originalImage': widget.originalImage,
       });
     } else {
-      context.pushReplacement("/image_preview", extra: {
+      context.pushReplacement(AppRoutes.imagePreview, extra: {
         'imageFile': File(file.path),
         'image_category': "",
         'sub_category': "",
@@ -81,12 +82,12 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     if (image != null) {
       if (!mounted) return;
       if (widget.fromColorPicker) {
-        context.pushReplacement("/image_color_picker", extra: {
+        context.pushReplacement(AppRoutes.imageColorPicker, extra: {
           'imageFile': File(image.path),
           'originalImage': widget.originalImage,
         });
       } else {
-        context.pushReplacement("/image_preview", extra: {
+        context.pushReplacement(AppRoutes.imagePreview, extra: {
           'imageFile': File(image.path),
           'image_category': "",
           'sub_category': "",
