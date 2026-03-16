@@ -48,7 +48,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   bool _isGridView = false;
   bool _quickExpanded = false;
   String? _selectedCategory;
-  Map<int, Map<String, List<ProductImageModel>>> _productsByTabAndCategory = {};
+  String _selectedSubCategory = "All";
+  // TabIndex -> Category -> SubCategory -> Items
+  Map<int, Map<String, Map<String, List<ProductImageModel>>>> _productsByTabCategorySub = {};
 
   double _bottomCtaReservedSpace(BuildContext context) {
     // Keep the scrolling content from being hidden behind the bottom CTA row.
@@ -75,19 +77,24 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       final allAssets = manifest.listAssets();
       final exactAssetMap = <String, String>{};
       final softAssetMap = <String, String>{};
-
+      final fileNameAssetMap = <String, String>{};
 
       for (final assetPath in allAssets) {
         final exactKey = _normalizeAssetPath(assetPath);
         final softKey = _normalizeAssetPathSoft(assetPath);
+        final fileNameKey = _fileNameFromPath(assetPath);
+
         exactAssetMap[exactKey] = assetPath;
         softAssetMap.putIfAbsent(softKey, () => assetPath);
+        if (fileNameKey.isNotEmpty) {
+          fileNameAssetMap.putIfAbsent(fileNameKey, () => assetPath);
+        }
       }
       final decoded = jsonDecode(rawJson);
 
       if (decoded is! Map<String, dynamic>) return;
 
-      final parsed = <int, Map<String, List<ProductImageModel>>>{
+      final parsed = <int, Map<String, Map<String, List<ProductImageModel>>>>{
         0: {}, // Interiors
         1: {}, // Furnitures
       };
@@ -97,34 +104,55 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         if (groupData is! Map<String, dynamic>) return;
 
         groupData.forEach((category, value) {
-          if (value is! List) return;
+          final subGroupsMap = <String, List<ProductImageModel>>{};
 
-          final items = <ProductImageModel>[];
-          for (final item in value) {
-            if (item is! Map) continue;
-            final map = item.cast<String, dynamic>();
-            final rawPath = (map['image_path'] ?? '').toString().trim();
-            if (rawPath.isEmpty) continue;
+          void addItemsFromList(List listData, String subCategory) {
+            final items = <ProductImageModel>[];
+            for (final item in listData) {
+              if (item is! Map) continue;
+              final map = item.cast<String, dynamic>();
+              final rawPath = (map['image_path'] ?? '').toString().trim();
+              if (rawPath.isEmpty) continue;
 
-            final prefixedPath =
-                rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
-            final resolvedPath =
-                exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
-                softAssetMap[_normalizeAssetPathSoft(prefixedPath)];
-            if (resolvedPath == null) continue;
+              final prefixedPath =
+                  rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
+              
+              // 1. Try Exact match
+              // 2. Try Soft match (case-insensitive, no special chars)
+              // 3. Try Filename match (last resort if folders moved)
+              final resolvedPath =
+                  exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
+                  softAssetMap[_normalizeAssetPathSoft(prefixedPath)] ??
+                  fileNameAssetMap[_fileNameFromPath(rawPath)];
 
-            items.add(
-              ProductImageModel(
-                id: (map['id'] ?? '${category}_${items.length + 1}').toString(),
-                name: category,
-                image: resolvedPath,
-                isTrending: false,
-              ),
-            );
+              if (resolvedPath == null) continue;
+
+              items.add(
+                ProductImageModel(
+                  id: (map['id'] ?? '${category}_${subCategory}_${items.length + 1}').toString(),
+                  name: category,
+                  image: resolvedPath,
+                  isTrending: false,
+                ),
+              );
+            }
+            if (items.isNotEmpty) {
+              subGroupsMap.putIfAbsent(subCategory, () => []).addAll(items);
+            }
           }
 
-          if (items.isNotEmpty) {
-            parsed[tabIndex]![category] = items;
+          if (value is List) {
+            addItemsFromList(value, category);
+          } else if (value is Map) {
+            value.forEach((subCat, subList) {
+              if (subList is List) {
+                addItemsFromList(subList, subCat);
+              }
+            });
+          }
+
+          if (subGroupsMap.isNotEmpty) {
+            parsed[tabIndex]![category] = subGroupsMap;
           }
         });
       }
@@ -134,11 +162,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
       if (!mounted) return;
       setState(() {
-        _productsByTabAndCategory = parsed;
-        // Set default category for initial tab
-        final initialTabCategories = _productsByTabAndCategory[context.read<HomeCubit>().state.selectedIndex]?.keys;
+        _productsByTabCategorySub = parsed;
+        // Set default category and sub-category for initial tab
+        final initialTabCategories = _productsByTabCategorySub[context.read<HomeCubit>().state.selectedIndex]?.keys;
         if (initialTabCategories != null && initialTabCategories.isNotEmpty) {
           _selectedCategory = initialTabCategories.first;
+          _selectedSubCategory = "All";
         }
       });
     } catch (e) {
@@ -148,6 +177,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
   String _normalizeAssetPath(String value) {
     return value.replaceAll('\\', '/').trim().toLowerCase();
+  }
+
+  String _fileNameFromPath(String value) {
+    final normalized = value.replaceAll('\\', '/').trim().toLowerCase();
+    final index = normalized.lastIndexOf('/');
+    return index >= 0 ? normalized.substring(index + 1) : normalized;
   }
 
   String _normalizeAssetPathSoft(String value) {
@@ -162,7 +197,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     List<ProductImageModel> fallbackProducts,
     int selectedIndex,
   ) {
-    final currentTabData = _productsByTabAndCategory[selectedIndex];
+    final currentTabData = _productsByTabCategorySub[selectedIndex];
     if (currentTabData == null || currentTabData.isEmpty) {
       return fallbackProducts.take(4).toList();
     }
@@ -170,14 +205,19 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final quickItems = <ProductImageModel>[];
     for (final entry in currentTabData.entries) {
       if (entry.value.isEmpty) continue;
-      quickItems.add(
-        ProductImageModel(
-          id: 'cat_${entry.key}',
-          name: entry.key,
-          image: entry.value.first.image,
-          isTrending: false,
-        ),
-      );
+      // Get the first item from any subcategory
+      final firstSubKey = entry.value.keys.first;
+      final firstItem = entry.value[firstSubKey]?.first;
+      if (firstItem != null) {
+        quickItems.add(
+          ProductImageModel(
+            id: 'cat_${entry.key}',
+            name: entry.key,
+            image: firstItem.image,
+            isTrending: false,
+          ),
+        );
+      }
     }
 
     return quickItems.isEmpty ? fallbackProducts.take(4).toList() : quickItems;
@@ -187,7 +227,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     List<ProductImageModel> fallbackProducts,
     int selectedIndex,
   ) {
-    final currentTabData = _productsByTabAndCategory[selectedIndex];
+    final currentTabData = _productsByTabCategorySub[selectedIndex];
     if (currentTabData == null || currentTabData.isEmpty) {
       return fallbackProducts;
     }
@@ -197,18 +237,18 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       return fallbackProducts;
     }
 
-    final filtered = currentTabData[selectedCategory];
-    if (filtered == null || filtered.isEmpty) {
-      final normalizedSelected = _normalizeCategory(selectedCategory);
-      for (final entry in currentTabData.entries) {
-        if (_normalizeCategory(entry.key) == normalizedSelected &&
-            entry.value.isNotEmpty) {
-          return entry.value;
-        }
-      }
+    final categoryGroups = currentTabData[selectedCategory];
+    if (categoryGroups == null || categoryGroups.isEmpty) {
       return fallbackProducts;
     }
-    return filtered;
+
+    if (_selectedSubCategory == "All") {
+      final allItems = <ProductImageModel>[];
+      categoryGroups.values.forEach(allItems.addAll);
+      return allItems;
+    } else {
+      return categoryGroups[_selectedSubCategory] ?? [];
+    }
   }
 
   Future<void> logDb() async {
@@ -328,7 +368,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             fillColor: Colors.white,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
-                              vertical: 13,
+                              vertical: 10,
                               horizontal: 20,
                             ),
 
@@ -346,7 +386,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             ),
 
                             suffixIconConstraints: const BoxConstraints(
-                              maxHeight: 36,
+                              maxHeight: 32,
                               maxWidth: 44,
                             ),
                             suffixIcon: GestureDetector(
@@ -369,8 +409,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Image.asset(
                                     "assets/icons/app_icons/ai_search.png",
-                                    width: 10,
-                                    height: 10,
+                                    width: 12,
+                                    height: 12,
                                   ),
                                 ),
                               ),
@@ -404,7 +444,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 tabAlignment: TabAlignment.start,
                                 indicator: const UnderlineTabIndicator(
                                   borderSide: BorderSide(
-                                    width: 1.5,
+                                    width: 1.0,
                                     color: Color(0xFF5D5D5D),
                                   ),
                                 ),
@@ -426,15 +466,17 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                   homeCubit.setSelectedIndex(index);
                                   // Reset selected category to first of new tab
                                   final newTabCategories =
-                                      _productsByTabAndCategory[index]?.keys;
+                                      _productsByTabCategorySub[index]?.keys;
                                   if (newTabCategories != null &&
                                       newTabCategories.isNotEmpty) {
                                     setState(() {
                                       _selectedCategory = newTabCategories.first;
+                                      _selectedSubCategory = "All";
                                     });
                                   } else {
                                     setState(() {
                                       _selectedCategory = null;
+                                      _selectedSubCategory = "All";
                                     });
                                   }
                                 },
@@ -568,6 +610,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 onTap: () {
                                   setState(() {
                                     _selectedCategory = product.name;
+                                    _selectedSubCategory = "All";
                                   });
                                 },
                                 child: ClipOval(
@@ -622,6 +665,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 onTap: () {
                                   setState(() {
                                     _selectedCategory = product.name;
+                                    _selectedSubCategory = "All";
                                   });
                                 },
                                 child: ClipOval(
@@ -634,7 +678,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             },
                           ),
                         ),
-                      const SizedBox(height: TSizes.spaceBtwItems),
+                      const SizedBox(height: 5),
+                      _buildSubCategoryMenu(),
+                      const SizedBox(height: 15),
 
                       // Popular Image List (Vertical for now)
                       _isGridView
@@ -751,6 +797,59 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSubCategoryMenu() {
+    final selectedCategory = _selectedCategory;
+    if (selectedCategory == null) return const SizedBox.shrink();
+
+    final homeCubit = context.read<HomeCubit>();
+    final selectedIndex = homeCubit.state.selectedIndex;
+    final categoryData = _productsByTabCategorySub[selectedIndex]?[selectedCategory];
+
+    if (categoryData == null || categoryData.isEmpty) return const SizedBox.shrink();
+
+    final subCategories = ["All", ...categoryData.keys];
+
+    return SizedBox(
+      height: 22,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: subCategories.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 20),
+        itemBuilder: (context, index) {
+          final subCat = subCategories[index];
+          final isSelected = _selectedSubCategory == subCat;
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedSubCategory = subCat;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.only(bottom: 1),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: isSelected ? const Color(0xFF5D5D5D) : Colors.transparent,
+                    width: 1.0,
+                  ),
+                ),
+              ),
+              child: Text(
+                subCat,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: isSelected ? const Color(0xFF5D5D5D) : const Color(0xFF5D5D5D).withOpacity(0.5),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
