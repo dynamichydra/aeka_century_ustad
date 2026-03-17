@@ -8,6 +8,7 @@ abstract final class AppRoutes {
   static const camera = '/camera';
   static const imagePreview = '/image_preview';
   static const imageEdit = '/image_edit_page';
+  static const imageEditScroll = '/image_edit_scroll_page';
   static const imageColorPicker = '/image_color_picker';
   static const imageFinalize = '/image_finalize';
 

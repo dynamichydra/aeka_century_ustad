@@ -16,7 +16,20 @@ class ImageEditPage extends StatefulWidget {
   final File imageFile;
   final Color? pickedColor;
 
-  const ImageEditPage({super.key, required this.imageFile, this.pickedColor});
+  final bool scrollableEditSection;
+  final double textureListHeight;
+  final double textureThumbWidth;
+  final double textureThumbHeight;
+
+  const ImageEditPage({
+    super.key,
+    required this.imageFile,
+    this.pickedColor,
+    this.scrollableEditSection = false,
+    this.textureListHeight = 72,
+    this.textureThumbWidth = 60,
+    this.textureThumbHeight = 40,
+  });
 
   @override
   State<ImageEditPage> createState() => _ImageEditPageState();
@@ -288,9 +301,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   child: Container(
                     color: Colors.white,
                     child: SingleChildScrollView(
-                      physics: _editExpanded
-                          ? const NeverScrollableScrollPhysics()
-                          : const AlwaysScrollableScrollPhysics(),
+                      physics: widget.scrollableEditSection
+                          ? const AlwaysScrollableScrollPhysics()
+                          : (_editExpanded
+                                ? const NeverScrollableScrollPhysics()
+                                : const AlwaysScrollableScrollPhysics()),
                       child: _buildCollapsibleHeaders(),
                     ),
                   ),
@@ -1167,8 +1182,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildTextureSelection() {
     if (_isLoadingTextures) {
-      return const SizedBox(
-        height: 72,
+      return SizedBox(
+        height: widget.textureListHeight,
         child: Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
@@ -1180,7 +1195,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
     if (_apiTextures.isEmpty) {
       return SizedBox(
-        height: 72,
+        height: widget.textureListHeight,
         child: Center(
           child: Text(
             (_selectedCategory == null && _selectedColor == null)
@@ -1193,7 +1208,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     }
 
     return SizedBox(
-      height: 72,
+      height: widget.textureListHeight,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: _apiTextures.length,
@@ -1218,24 +1233,24 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     child: imageUrl.isNotEmpty
                         ? Image.network(
                             imageUrl,
-                            width: 60,
-                            height: 40,
+                            width: widget.textureThumbWidth,
+                            height: widget.textureThumbHeight,
                             fit: BoxFit.cover,
                             errorBuilder: (ctx, err, stack) => Container(
-                              width: 60,
-                              height: 40,
+                              width: widget.textureThumbWidth,
+                              height: widget.textureThumbHeight,
                               color: Colors.grey[300],
                             ),
                           )
                         : Container(
-                            width: 60,
-                            height: 40,
+                            width: widget.textureThumbWidth,
+                            height: widget.textureThumbHeight,
                             color: Colors.grey[300],
                           ),
                   ),
                   const SizedBox(height: 6),
                   SizedBox(
-                    width: 60,
+                    width: widget.textureThumbWidth,
                     child: Text(
                       label,
                       style: TextStyle(

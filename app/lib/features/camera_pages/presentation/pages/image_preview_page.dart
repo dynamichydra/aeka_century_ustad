@@ -12,7 +12,12 @@ class ImagePreviewPage extends StatefulWidget {
   final String image_category;
   final String? sub_category;
 
-  const ImagePreviewPage({super.key, required this.imageFile, required this.image_category, this.sub_category});
+  const ImagePreviewPage({
+    super.key,
+    required this.imageFile,
+    required this.image_category,
+    this.sub_category,
+  });
 
   @override
   State<ImagePreviewPage> createState() => _ImagePreviewPageState();
@@ -58,7 +63,8 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     await _previewService.logPreviewDetails(
       imageCategory: widget.image_category,
       subCategory: widget.sub_category ?? "N/A",
-      interiorFurniture: "Generic Furniture", // Placeholder as per user's sample
+      interiorFurniture:
+          "Generic Furniture", // Placeholder as per user's sample
       isTrending: true,
       isLiked: false,
     );
@@ -73,11 +79,21 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   }
 
   Future<void> _handleEdit() async {
+    await _handleEditRoute(AppRoutes.imageEdit);
+  }
+
+  Future<void> _handleScrollEdit() async {
+    await _handleEditRoute(AppRoutes.imageEditScroll);
+  }
+
+  Future<void> _handleEditRoute(String route) async {
     File? fileToEdit = _currentFile;
 
     if (_currentAsset != null) {
       try {
-        final byteData = await DefaultAssetBundle.of(context).load(_currentAsset!);
+        final byteData = await DefaultAssetBundle.of(
+          context,
+        ).load(_currentAsset!);
         final tempDir = await getTemporaryDirectory();
         final fileName = _currentAsset!.replaceAll("/", "_");
         final file = File('${tempDir.path}/$fileName');
@@ -95,7 +111,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     }
 
     if (fileToEdit != null && mounted) {
-      context.push(AppRoutes.imageEdit, extra: fileToEdit);
+      context.push(route, extra: fileToEdit);
     }
   }
 
@@ -129,9 +145,24 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                       // -- Overlays --
                       if (!_isLoading) ...[
-                        _buildBoundingBox(top: 50, left: 30, width: 120, height: 120),
-                        _buildBoundingBox(top: 140, left: 210, width: 120, height: 80),
-                        _buildBoundingBox(top: 250, left: 10, width: 100, height: 100),
+                        _buildBoundingBox(
+                          top: 50,
+                          left: 30,
+                          width: 120,
+                          height: 120,
+                        ),
+                        _buildBoundingBox(
+                          top: 140,
+                          left: 210,
+                          width: 120,
+                          height: 80,
+                        ),
+                        _buildBoundingBox(
+                          top: 250,
+                          left: 10,
+                          width: 100,
+                          height: 100,
+                        ),
 
                         // Center Instruction
                         Positioned(
@@ -141,10 +172,17 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.touch_app_outlined, color: Colors.white, size: 40),
+                              const Icon(
+                                Icons.touch_app_outlined,
+                                color: Colors.white,
+                                size: 40,
+                              ),
                               const SizedBox(height: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(4),
@@ -164,7 +202,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ],
                     ],
                   ),
-                  
+
                   const Padding(
                     padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
                     child: Text(
@@ -176,18 +214,19 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                     ),
                   ),
-                  
+
                   // Product Grid
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.0,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.0,
+                        ),
                     itemCount: exploreImages.length,
                     itemBuilder: (context, index) {
                       if (_isLoading) {
@@ -206,7 +245,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                         );
                       }
                       return GestureDetector(
-                        onTap: _isLoading ? null : () => _simulateApiCall(exploreImages[index]),
+                        onTap: _isLoading
+                            ? null
+                            : () => _simulateApiCall(exploreImages[index]),
                         child: Stack(
                           children: [
                             ClipRRect(
@@ -222,12 +263,20 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                             const Positioned(
                               top: 8,
                               left: 8,
-                              child: Icon(Icons.local_fire_department, color: Colors.red, size: 16),
+                              child: Icon(
+                                Icons.local_fire_department,
+                                color: Colors.red,
+                                size: 16,
+                              ),
                             ),
                             const Positioned(
                               top: 8,
                               right: 8,
-                              child: Icon(Icons.favorite_border, color: Colors.white70, size: 16),
+                              child: Icon(
+                                Icons.favorite_border,
+                                color: Colors.white70,
+                                size: 16,
+                              ),
                             ),
                           ],
                         ),
@@ -238,7 +287,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                 ],
               ),
             ),
-            
+
             // Floating Edit Button
             Positioned(
               bottom: 30,
@@ -255,37 +304,78 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                     ],
                   ),
-                  child: SizedBox(
-                    width: 130,
-                    height: 44,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.zero,
-                        elevation: 0,
-                        side: BorderSide.none,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      onPressed: _handleEdit,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 8,
-                        children: [
-                          Image.asset("assets/icons/app_icons/edit.png", height: 14,),
-                          const Text(
-                            "Edit",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 130,
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            padding: EdgeInsets.zero,
+                            elevation: 0,
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                        ],
+                          onPressed: _handleEdit,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            spacing: 8,
+                            children: [
+                              Image.asset(
+                                "assets/icons/app_icons/edit.png",
+                                height: 14,
+                              ),
+                              const Text(
+                                "Edit",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        width: 160,
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            padding: EdgeInsets.zero,
+                            elevation: 0,
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          onPressed: _handleScrollEdit,
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            spacing: 8,
+                            children: [
+                              Icon(Icons.unfold_more, size: 18),
+                              Text(
+                                "Edit Scroll",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -296,7 +386,12 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     );
   }
 
-  Widget _buildBoundingBox({required double top, required double left, required double width, required double height}) {
+  Widget _buildBoundingBox({
+    required double top,
+    required double left,
+    required double width,
+    required double height,
+  }) {
     return Positioned(
       top: top,
       left: left,
@@ -320,29 +415,35 @@ class _DashedRectPainter extends CustomPainter {
     const dashSpace = 5.0;
 
     final path = Path();
-    
+
     // Top line
     for (double i = 0; i < size.width; i += dashWidth + dashSpace) {
       path.moveTo(i, 0);
       path.lineTo(i + dashWidth > size.width ? size.width : i + dashWidth, 0);
     }
-    
+
     // Bottom line
     for (double i = 0; i < size.width; i += dashWidth + dashSpace) {
       path.moveTo(i, size.height);
-      path.lineTo(i + dashWidth > size.width ? size.width : i + dashWidth, size.height);
+      path.lineTo(
+        i + dashWidth > size.width ? size.width : i + dashWidth,
+        size.height,
+      );
     }
-    
+
     // Left line
     for (double i = 0; i < size.height; i += dashWidth + dashSpace) {
       path.moveTo(0, i);
       path.lineTo(0, i + dashWidth > size.height ? size.height : i + dashWidth);
     }
-    
+
     // Right line
     for (double i = 0; i < size.height; i += dashWidth + dashSpace) {
       path.moveTo(size.width, i);
-      path.lineTo(size.width, i + dashWidth > size.height ? size.height : i + dashWidth);
+      path.lineTo(
+        size.width,
+        i + dashWidth > size.height ? size.height : i + dashWidth,
+      );
     }
 
     canvas.drawPath(path, paint);
