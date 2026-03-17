@@ -58,7 +58,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
       } else {
         if (_selectedIndices.length < 3) {
           _selectedIndices.add(index);
-          
+
           final selectedImage = _savedVersions[index];
           context.read<ImageEditCubit>().compareImageSelected(selectedImage);
         }
@@ -256,11 +256,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
         listener: (context, state) {
           if (state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!), backgroundColor: Colors.red),
+              SnackBar(
+                content: Text(state.errorMessage!),
+                backgroundColor: Colors.red,
+              ),
             );
           } else if (state.successMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.successMessage!), backgroundColor: Colors.green),
+              SnackBar(
+                content: Text(state.successMessage!),
+                backgroundColor: Colors.green,
+              ),
             );
           }
         },
@@ -442,7 +448,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   return GestureDetector(
                     onTap: () {
                       _toggleSelection(index);
-                      // Already triggering context.read<ImageEditCubit>().compareImageSelected inside _toggleSelection 
+                      // Already triggering context.read<ImageEditCubit>().compareImageSelected inside _toggleSelection
                       // but we need context. However, context is not easily passed into _toggleSelection since it's used elsewhere too.
                       // Let's modify _toggleSelection to accept context, or call the API directly here.
                       // Actually, the easiest way is to pass context to _toggleSelection.
@@ -474,7 +480,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   );
                 },
               );
-            }
+            },
           ),
           const SizedBox(height: 20),
         ],
@@ -694,61 +700,62 @@ class _ImageEditPageState extends State<ImageEditPage> {
       },
       child: Stack(
         children: [
-        if (_currentAssetPreview != null)
-          Image.asset(
-            _currentAssetPreview!,
-            width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.40,
-            fit: BoxFit.cover,
-          )
-        else
-          Image.file(
-            widget.imageFile,
-            width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.40,
-            fit: BoxFit.cover,
-          ),
-
-        // Dashed Bounding Boxes (Simulated Positions)
-        _buildDashedBox(top: 40, left: 100, width: 80, height: 100),
-        _buildDashedBox(top: 150, left: 150, width: 120, height: 80),
-        _buildDashedBox(top: 250, left: 50, width: 100, height: 120),
-
-        // Hand Icon Instruction Overlay
-        Center(
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).size.height * 0.3,
+          if (_currentAssetPreview != null)
+            Image.asset(
+              _currentAssetPreview!,
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.40,
+              fit: BoxFit.cover,
+            )
+          else
+            Image.file(
+              widget.imageFile,
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.40,
+              fit: BoxFit.cover,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.touch_app_outlined,
-                  color: Colors.white,
-                  size: 36,
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
+
+          // Dashed Bounding Boxes (Simulated Positions)
+          _buildDashedBox(top: 40, left: 100, width: 80, height: 100),
+          _buildDashedBox(top: 150, left: 150, width: 120, height: 80),
+          _buildDashedBox(top: 250, left: 50, width: 100, height: 120),
+
+          // Hand Icon Instruction Overlay
+          Center(
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height * 0.3,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.touch_app_outlined,
+                    color: Colors.white,
+                    size: 36,
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(4),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      "Tap on the object to apply laminates",
+                      style: TextStyle(color: Colors.white, fontSize: 13),
+                    ),
                   ),
-                  child: const Text(
-                    "Tap on the object to apply laminates",
-                    style: TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    ));
+        ],
+      ),
+    );
   }
 
   Widget _buildDashedBox({
@@ -1035,6 +1042,129 @@ class _ImageEditPageState extends State<ImageEditPage> {
     );
   }
 
+  Future<void> _showTextureDetailModal(
+    BuildContext context,
+    Map<String, dynamic> texture,
+  ) async {
+    final imageUrl = (texture["coverImage"] ?? "").toString();
+    final title = (texture["sku"] ?? texture["name"] ?? "Texture").toString();
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.72,
+          minChildSize: 0.55,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 8, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: "Close",
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 360,
+                              color: Colors.grey[100],
+                              child: imageUrl.isNotEmpty
+                                  ? InteractiveViewer(
+                                      minScale: 1,
+                                      maxScale: 4,
+                                      child: Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (ctx, err, stack) =>
+                                            Container(
+                                              color: Colors.grey[300],
+                                              alignment: Alignment.center,
+                                              child: const Icon(
+                                                Icons.broken_image_outlined,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                      ),
+                                    )
+                                  : Container(
+                                      color: Colors.grey[300],
+                                      alignment: Alignment.center,
+                                      child: const Icon(
+                                        Icons.image_not_supported_outlined,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            (texture["name"] ?? "").toString(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildTextureSelection() {
     if (_isLoadingTextures) {
       return const SizedBox(
@@ -1076,7 +1206,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
-              onTap: () => setState(() => _selectedTexture = texture),
+              onTap: () {
+                setState(() => _selectedTexture = texture);
+                _showTextureDetailModal(context, texture);
+              },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1138,16 +1271,20 @@ class _ImageEditPageState extends State<ImageEditPage> {
       return;
     }
 
-    final textureId = _selectedTexture!["id"]?.toString() ?? _selectedTexture!["sku"]?.toString() ?? "unknown";
-    final textureUrl = _selectedTexture!["coverImage"]?.toString() ?? "unknown_url";
+    final textureId =
+        _selectedTexture!["id"]?.toString() ??
+        _selectedTexture!["sku"]?.toString() ??
+        "unknown";
+    final textureUrl =
+        _selectedTexture!["coverImage"]?.toString() ?? "unknown_url";
 
     context.read<ImageEditCubit>().applyTextureSelected(
-          textureId, 
-          textureUrl,
-          _lastTapCoordinate,
-          _isShortTap,
-          _isLongTap,
-        );
+      textureId,
+      textureUrl,
+      _lastTapCoordinate,
+      _isShortTap,
+      _isLongTap,
+    );
 
     setState(() {
       _isApplied = true;
@@ -1181,7 +1318,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
                       border: Border.all(color: Colors.black12, width: 1),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.menu, color: Colors.black, size: 20),
+                      icon: const Icon(
+                        Icons.menu,
+                        color: Colors.black,
+                        size: 20,
+                      ),
                       onPressed: () {},
                     ),
                   ),
@@ -1209,12 +1350,18 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         return const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.black,
+                          ),
                         );
                       }
                       return const Text(
                         "Apply",
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       );
                     },
                   ),
@@ -1223,7 +1370,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             ],
           ),
         );
-      }
+      },
     );
   }
 }
