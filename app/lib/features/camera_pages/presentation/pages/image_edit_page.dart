@@ -17,6 +17,7 @@ class ImageEditPage extends StatefulWidget {
   final Color? pickedColor;
 
   final bool scrollableEditSection;
+  final bool showTextureDetailOnTap;
   final double textureListHeight;
   final double textureThumbWidth;
   final double textureThumbHeight;
@@ -26,6 +27,7 @@ class ImageEditPage extends StatefulWidget {
     required this.imageFile,
     this.pickedColor,
     this.scrollableEditSection = false,
+    this.showTextureDetailOnTap = true,
     this.textureListHeight = 72,
     this.textureThumbWidth = 60,
     this.textureThumbHeight = 40,
@@ -1223,7 +1225,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
             child: GestureDetector(
               onTap: () {
                 setState(() => _selectedTexture = texture);
-                _showTextureDetailModal(context, texture);
+                if (widget.showTextureDetailOnTap) {
+                  _showTextureDetailModal(context, texture);
+                }
               },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
