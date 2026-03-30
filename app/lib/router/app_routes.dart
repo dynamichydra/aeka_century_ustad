@@ -1,6 +1,7 @@
 abstract final class AppRoutes {
   // Shell routes
   static const home = '/';
+  static const home2 = '/home_2';
   static const heart = '/heart';
   static const star = '/star';
 

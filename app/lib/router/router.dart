@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:century_ai/features/camera_pages/camera_pages.dart';
 import 'package:century_ai/features/home/home.dart';
+import 'package:century_ai/features/home/presentation/pages/home_2.dart';
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/router/shell_route.dart';
 import 'package:go_router/go_router.dart';
@@ -40,6 +41,10 @@ final GoRouter router = GoRouter(
           path: AppRoutes.home,
           name: "home",
           builder: (context, state) => HomeScreen(),
+        ),        GoRoute(
+          path: "/home_2",
+          name: "home 2",
+          builder: (context, state) => HomeScreen2(),
         ),
         GoRoute(
           path: AppRoutes.heart,

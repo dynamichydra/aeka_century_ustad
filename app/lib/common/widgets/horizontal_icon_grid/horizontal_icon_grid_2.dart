@@ -5,7 +5,6 @@ class HorizontalIconGrid extends StatefulWidget {
   final Widget Function(BuildContext context, int index) itemBuilder;
   final Widget? viewMoreWidget;
   final VoidCallback? onViewMoreTap;
-  final bool showViewMore;
 
   const HorizontalIconGrid({
     super.key,
@@ -13,7 +12,6 @@ class HorizontalIconGrid extends StatefulWidget {
     required this.itemBuilder,
     this.viewMoreWidget,
     this.onViewMoreTap,
-    this.showViewMore = false,
   });
 
   @override
@@ -28,9 +26,7 @@ class _HorizontalIconGridState extends State<HorizontalIconGrid> {
   void initState() {
     super.initState();
     _scrollController.addListener(_checkScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkScroll();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkScroll());
   }
 
   @override
@@ -80,9 +76,8 @@ class _HorizontalIconGridState extends State<HorizontalIconGrid> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Show 4.5 elements to peek the next one
-        const visibleItems = 4.5;
-        final itemWidth = constraints.maxWidth / visibleItems;
+        // Show exactly 4 elements + View More space (5 items total)
+        final itemWidth = constraints.maxWidth / 5;
 
         return Stack(
           children: [
@@ -100,7 +95,7 @@ class _HorizontalIconGridState extends State<HorizontalIconGrid> {
               },
             ),
             
-            if (widget.showViewMore && widget.viewMoreWidget != null &&
+            if (widget.viewMoreWidget != null &&
                 (widget.onViewMoreTap != null || _canScrollRight))
               Positioned(
                 right: 0,

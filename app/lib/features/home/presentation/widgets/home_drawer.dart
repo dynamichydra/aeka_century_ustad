@@ -1,6 +1,7 @@
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -34,9 +35,26 @@ class HomeDrawer extends StatelessWidget {
 
           // Menu Items
           ListTile(
+            leading: const Icon(Iconsax.home),
+            title: const Text("home 1"),
+            onTap: () {
+              context.go("/");
+              Scaffold.of(context).closeDrawer();
+            },
+          ),
+          
+          ListTile(
+            leading: const Icon(Iconsax.home),
+            title: const Text("home 2"),
+            onTap: () {
+              context.go("/home_2");
+              Scaffold.of(context).closeDrawer();
+            },
+          ),
+          ListTile(
             leading: const Icon(Iconsax.user),
             title: const Text("Profile"),
-            onTap: () => {}
+            onTap: () => {},
           ),
 
           ExpansionTile(
@@ -47,19 +65,19 @@ class HomeDrawer extends StatelessWidget {
                 contentPadding: const EdgeInsets.only(left: TSizes.xl),
                 leading: const Icon(Iconsax.personalcard),
                 title: const Text("Business card"),
-                onTap: () => {}
+                onTap: () => {},
               ),
               ListTile(
                 contentPadding: const EdgeInsets.only(left: TSizes.xl),
                 leading: const Icon(Iconsax.briefcase),
                 title: const Text("My Work"),
-                onTap: () => {}
+                onTap: () => {},
               ),
               ListTile(
                 contentPadding: const EdgeInsets.only(left: TSizes.xl),
                 leading: const Icon(Iconsax.document),
                 title: const Text("Quotation"),
-                onTap: () =>{}
+                onTap: () => {},
               ),
             ],
           ),
@@ -82,7 +100,7 @@ class HomeDrawer extends StatelessWidget {
                   CupertinoIcons.plus_square_fill_on_square_fill,
                 ),
                 title: const Text("Color Horoscope"),
-                onTap: () => {}
+                onTap: () => {},
               ),
               ListTile(
                 contentPadding: const EdgeInsets.only(left: TSizes.xl),
@@ -90,7 +108,7 @@ class HomeDrawer extends StatelessWidget {
                   CupertinoIcons.plus_square_fill_on_square_fill,
                 ),
                 title: const Text("Blogs"),
-                onTap: () => {}
+                onTap: () => {},
               ),
             ],
           ),
@@ -102,17 +120,17 @@ class HomeDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Iconsax.heart),
             title: const Text("Fav."),
-            onTap: () => {}
+            onTap: () => {},
           ),
           ListTile(
             leading: const Icon(Iconsax.security_safe),
             title: const Text("Tams & Condition"),
-            onTap: () => {}
+            onTap: () => {},
           ),
           ListTile(
             leading: const Icon(Iconsax.call),
             title: const Text("Contact us"),
-            onTap: () => {}
+            onTap: () => {},
           ),
           ListTile(
             leading: const Icon(Iconsax.star),
@@ -133,7 +151,7 @@ class HomeDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Iconsax.info_circle),
             title: const Text("About Us"),
-            onTap: () => {}
+            onTap: () => {},
           ),
         ],
       ),

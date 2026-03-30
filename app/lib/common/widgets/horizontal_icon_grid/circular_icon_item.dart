@@ -8,6 +8,8 @@ class CircularIconItem extends StatelessWidget {
   final bool isSelected;
   final Color? selectedBorderColor;
   final double selectedBorderWidth;
+  final double size;
+  final bool useUnderline;
 
   const CircularIconItem({
     super.key,
@@ -16,7 +18,9 @@ class CircularIconItem extends StatelessWidget {
     required this.onTap,
     this.isSelected = false,
     this.selectedBorderColor,
-    this.selectedBorderWidth = 6,
+    this.selectedBorderWidth = 2,
+    this.size = 60,
+    this.useUnderline = false,
   });
 
   @override
@@ -27,13 +31,13 @@ class CircularIconItem extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
                 color: isSelected
-                    ? (selectedBorderColor ?? Colors.black)
+                    ? (selectedBorderColor ?? const Color(0xFFEEEEEE))
                     : Colors.transparent,
                 width: selectedBorderWidth,
               ),
@@ -49,7 +53,17 @@ class CircularIconItem extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-          )
+          ),
+          if (isSelected && useUnderline)
+            Container(
+              margin: const EdgeInsets.only(top: 2),
+              width: 40,
+              height: 2,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE30613), // Brand Red
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
         ],
       ),
     );
