@@ -48,7 +48,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   String _selectedSubCategory = "All";
   // TabIndex -> Category -> SubCategory -> NestedSubCategory -> Items
   Map<int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>> _productsByTabCategorySub = {};
-  String _selectedNestedSubCategory = "All";
+  String _selectedNestedSubCategory = "";
 
   double _bottomCtaReservedSpace(BuildContext context) {
     // Keep the scrolling content from being hidden behind the bottom CTA row.
@@ -307,7 +307,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       final subCatData = categoryGroups[_selectedSubCategory];
       if (subCatData == null) return [];
 
-      if (_selectedNestedSubCategory == "All") {
+      if (_selectedNestedSubCategory == "All" || _selectedNestedSubCategory.isEmpty) {
         final allNestedItems = <ProductImageModel>[];
         for (final items in subCatData.values) {
           allNestedItems.addAll(items);
@@ -540,11 +540,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     setState(() {
                                       _selectedCategory = newTabCategories.first;
                                       _selectedSubCategory = "All";
+                                      _selectedNestedSubCategory = "";
                                     });
                                   } else {
                                     setState(() {
                                       _selectedCategory = null;
                                       _selectedSubCategory = "All";
+                                      _selectedNestedSubCategory = "";
                                     });
                                   }
                                 },
@@ -683,7 +685,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     _selectedCategory = product.name;
                                   }
                                   _selectedSubCategory = "All";
-                                  _selectedNestedSubCategory = "All";
+                                  _selectedNestedSubCategory = "";
                                 });
                               },
                               child: ClipOval(
@@ -832,7 +834,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final subCategories = ["All", ...categoryData.keys];
     
     // Determine nested subcategories if a subcategory is selected
-    List<String> nestedSubCategories = ["All"];
+    List<String> nestedSubCategories = [];
     if (_selectedSubCategory != "All") {
       final nestedData = categoryData[_selectedSubCategory];
       if (nestedData != null) {
@@ -853,29 +855,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
               final subCat = subCategories[index];
               final isSelected = _selectedSubCategory == subCat;
               
-              // For "All", we can pick a random image from the entire categoryData
-              String iconImage;
-              if (subCat == "All") {
-                final allProducts = <ProductImageModel>[];
-                for (final subCatMap in categoryData.values) {
-                  for (final items in subCatMap.values) {
-                    allProducts.addAll(items);
-                  }
-                }
-                // Deterministic "All" icon based on Room name
-                final stableIndex = _selectedCategory!.hashCode.abs() % allProducts.length;
-                iconImage = allProducts.isNotEmpty ? allProducts[stableIndex].image : "";
-              } else {
-                iconImage = _getSubCategoryIcon(subCat, categoryData);
-              }
+              // Pick a random transparent icon based on subcategory name for stability
+              final iconIndex = subCat.hashCode.abs() % 9;
+              final iconImage = "assets/transparent/${iconIndex + 1}.png";
 
               return CircularIconItem(
                 label: subCat,
                 isSelected: isSelected,
                 size: 52, // Slightly smaller than main categories
                 useUnderline: true, // Enable underline style
-                selectedBorderColor: Colors.transparent,
-                selectedBorderWidth: 2,
+                isCircular: false, // Disable circular background for subcategories
                 onTap: () {
                   setState(() {
                     if (_selectedSubCategory == subCat) {
@@ -883,12 +872,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     } else {
                       _selectedSubCategory = subCat;
                     }
-                    _selectedNestedSubCategory = "All"; // Reset nested
+                    _selectedNestedSubCategory = ""; // Reset nested
                   });
                 },
-                child: iconImage.isNotEmpty 
-                  ? ClipOval(child: Image.asset(iconImage, fit: BoxFit.cover))
-                  : const Icon(Icons.category_outlined),
+                child: Image.asset(
+                  iconImage,
+                  fit: BoxFit.contain,
+                ),
               );
             },
           ),
@@ -912,12 +902,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   onTap: () {
                     setState(() {
                       if (_selectedNestedSubCategory == nSubCat) {
-                        _selectedNestedSubCategory = "All";
+                        _selectedNestedSubCategory = "";
                       } else {
                         _selectedNestedSubCategory = nSubCat;
                       }
                     });
                   },
+                  // UI Design Tip: Customize the design of these Choice Chips/Pills here.
+                  // You can change the decoration, padding, and text style to match your preference.
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(
@@ -925,11 +917,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected ? const Color(0xFFB5B5B5) : const Color(0xFFD9D9D9),
-                        width: 1.0,
+                        width: 0.5,
                       ),
                       boxShadow: isSelected ? [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withOpacity(0.075),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -940,8 +932,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         nSubCat,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          color: isSelected ? const Color(0xFF5D5D5D) : const Color(0xFFB5B5B5),
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color: const Color(0xFF5D5D5D),
                         ),
                       ),
                     ),

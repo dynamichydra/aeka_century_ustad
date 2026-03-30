@@ -10,6 +10,7 @@ class CircularIconItem extends StatelessWidget {
   final double selectedBorderWidth;
   final double size;
   final bool useUnderline;
+  final bool isCircular;
 
   const CircularIconItem({
     super.key,
@@ -21,6 +22,7 @@ class CircularIconItem extends StatelessWidget {
     this.selectedBorderWidth = 2,
     this.size = 60,
     this.useUnderline = false,
+    this.isCircular = true,
   });
 
   @override
@@ -33,15 +35,17 @@ class CircularIconItem extends StatelessWidget {
           Container(
             width: size,
             height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected
-                    ? (selectedBorderColor ?? const Color(0xFFEEEEEE))
-                    : Colors.transparent,
-                width: selectedBorderWidth,
-              ),
-            ),
+            decoration: isCircular
+                ? BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? (selectedBorderColor ?? const Color(0xFFEEEEEE))
+                          : Colors.transparent,
+                      width: selectedBorderWidth,
+                    ),
+                  )
+                : null,
             child: Padding(padding: const EdgeInsets.all(2), child: child),
           ),
           const SizedBox(height: TSizes.spaceBtwItems / 2),

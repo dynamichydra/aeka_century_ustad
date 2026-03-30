@@ -92,6 +92,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/logos/
+    - assets/transparent/
     - assets/db/app.db
     - assets/images/content/
     - assets/images/animations/
@@ -107,6 +108,8 @@ flutter:
     - assets/DECO/SENZURA/
     - assets/icons/app_icons/ai_search.png
     - assets/data/
+    - assets/data/_data2.json
+    
 
   #--------------- LOCAL FONTS ------------------#
   fonts:
