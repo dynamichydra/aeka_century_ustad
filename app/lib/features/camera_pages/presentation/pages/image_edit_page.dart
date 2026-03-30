@@ -28,9 +28,9 @@ class ImageEditPage extends StatefulWidget {
     this.pickedColor,
     this.scrollableEditSection = false,
     this.showTextureDetailOnTap = true,
-    this.textureListHeight = 72,
-    this.textureThumbWidth = 60,
-    this.textureThumbHeight = 40,
+    this.textureListHeight = 135,
+    this.textureThumbWidth = 90,
+    this.textureThumbHeight = 90,
   });
 
   @override
@@ -41,8 +41,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
   final TextEditingController _searchController = TextEditingController();
 
   Map<String, dynamic>? _selectedColor;
-  String? _selectedCategory = "Abstract Patterns";
-  String? _selectedSubCategory = "All";
+  String? _selectedCategory;
+  String? _selectedSubCategory;
   List<Map<String, dynamic>> _lamCategories = [];
   Map<String, dynamic>? _selectedTexture;
   String? _currentAssetPreview; // Track the design selected from comparison
@@ -63,6 +63,23 @@ class _ImageEditPageState extends State<ImageEditPage> {
   Map<String, dynamic> _lastTapCoordinate = {"x": 423, "y": 12};
   bool _isShortTap = true;
   bool _isLongTap = false;
+
+  final TransformationController _transformationController =
+      TransformationController();
+
+  void _zoomIn() {
+    final double currentScale = _transformationController.value
+        .getMaxScaleOnAxis();
+    final double newScale = (currentScale + 0.5).clamp(1.0, 4.0);
+    _transformationController.value = Matrix4.identity()..scale(newScale);
+  }
+
+  void _zoomOut() {
+    final double currentScale = _transformationController.value
+        .getMaxScaleOnAxis();
+    final double newScale = (currentScale - 0.5).clamp(1.0, 4.0);
+    _transformationController.value = Matrix4.identity()..scale(newScale);
+  }
 
   void _toggleSelection(int index) {
     setState(() {
@@ -88,6 +105,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
     {"name": "Blue", "hex": "#667EEA", "id": 104},
     {"name": "Brown", "hex": "#6B271E", "id": 105},
   ];
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -414,21 +438,21 @@ class _ImageEditPageState extends State<ImageEditPage> {
         children: [
           const SizedBox(height: 4),
           _buildSearchBar(),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           const Text(
             "Select Color",
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           _buildColorSelection(),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           const Text(
             "Select Categories",
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 4),
           _buildCategorySelection(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
             "Select Textures & Patterns",
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
@@ -694,83 +718,134 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Widget _buildImageOverlaySection() {
-    return GestureDetector(
-      onTapDown: (details) {
-        setState(() {
-          _lastTapCoordinate = {
-            "x": details.localPosition.dx,
-            "y": details.localPosition.dy,
-          };
-          _isShortTap = true;
-          _isLongTap = false;
-        });
-      },
-      onLongPressStart: (details) {
-        setState(() {
-          _lastTapCoordinate = {
-            "x": details.localPosition.dx,
-            "y": details.localPosition.dy,
-          };
-          _isShortTap = false;
-          _isLongTap = true;
-        });
-      },
-      child: Stack(
-        children: [
-          if (_currentAssetPreview != null)
-            Image.asset(
-              _currentAssetPreview!,
-              width: double.infinity,
-              height: MediaQuery.of(context).size.height * 0.40,
-              fit: BoxFit.cover,
-            )
-          else
-            Image.file(
-              widget.imageFile,
-              width: double.infinity,
-              height: MediaQuery.of(context).size.height * 0.40,
-              fit: BoxFit.cover,
-            ),
-
-          // Dashed Bounding Boxes (Simulated Positions)
-          _buildDashedBox(top: 40, left: 100, width: 80, height: 100),
-          _buildDashedBox(top: 150, left: 150, width: 120, height: 80),
-          _buildDashedBox(top: 250, left: 50, width: 100, height: 120),
-
-          // Hand Icon Instruction Overlay
-          Center(
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).size.height * 0.3,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+    return Stack(
+      children: [
+        ClipRect(
+          child: InteractiveViewer(
+            transformationController: _transformationController,
+            minScale: 1.0,
+            maxScale: 4.0,
+            boundaryMargin: const EdgeInsets.all(20),
+            child: GestureDetector(
+              onTapDown: (details) {
+                setState(() {
+                  _lastTapCoordinate = {
+                    "x": details.localPosition.dx,
+                    "y": details.localPosition.dy,
+                  };
+                  _isShortTap = true;
+                  _isLongTap = false;
+                });
+              },
+              onLongPressStart: (details) {
+                setState(() {
+                  _lastTapCoordinate = {
+                    "x": details.localPosition.dx,
+                    "y": details.localPosition.dy,
+                  };
+                  _isShortTap = false;
+                  _isLongTap = true;
+                });
+              },
+              child: Stack(
                 children: [
-                  const Icon(
-                    Icons.touch_app_outlined,
-                    color: Colors.white,
-                    size: 36,
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+                  if (_currentAssetPreview != null)
+                    Image.asset(
+                      _currentAssetPreview!,
+                      width: double.infinity,
+                      height: MediaQuery.of(context).size.height * 0.40,
+                      fit: BoxFit.cover,
+                    )
+                  else
+                    Image.file(
+                      widget.imageFile,
+                      width: double.infinity,
+                      height: MediaQuery.of(context).size.height * 0.40,
+                      fit: BoxFit.cover,
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      "Tap on the object to apply laminates",
-                      style: TextStyle(color: Colors.white, fontSize: 13),
+
+                  // Dashed Bounding Boxes (Simulated Positions)
+                  _buildDashedBox(top: 40, left: 100, width: 80, height: 100),
+                  _buildDashedBox(top: 150, left: 150, width: 120, height: 80),
+                  _buildDashedBox(top: 250, left: 50, width: 100, height: 120),
+
+                  // Hand Icon Instruction Overlay
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.of(context).size.height * 0.3,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.touch_app_outlined,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              "Tap on the object to apply laminates",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        ],
+        ),
+        // Zoom Controls
+        Positioned(
+          bottom: 24,
+          right: 16,
+          child: Row(
+            children: [
+              _buildZoomButton(icon: Icons.zoom_out, onTap: _zoomOut),
+              const SizedBox(width: 8),
+              _buildZoomButton(icon: Icons.zoom_in, onTap: _zoomIn),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildZoomButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 4,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.black, size: 24),
       ),
     );
   }
@@ -883,16 +958,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 30,
-                      height: 24,
+                      width: 36,
+                      height: 30,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Image.asset(
                         "assets/icons/app_icons/color-picker.png",
-                        width: 30,
-                        height: 30,
+                        width: 48,
+                        height: 48,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -960,227 +1035,125 @@ class _ImageEditPageState extends State<ImageEditPage> {
       children: [
         _buildChipRow(categoriesRow1, _selectedCategory, (val) {
           setState(() {
-            _selectedCategory = val;
-            _selectedSubCategory =
-                "All"; // Revert to "All" when category changes
+            if (_selectedCategory == val) {
+              _selectedCategory = null;
+              _selectedSubCategory = null;
+            } else {
+              _selectedCategory = val;
+              _selectedSubCategory = "All";
+              _fetchSubCategoriesFor(val);
+              _fetchTextures();
+            }
           });
-          _fetchSubCategoriesFor(val);
-          _fetchTextures(); // Fetch API when category changes
-        }, isExpandedRow: true),
-        const SizedBox(height: 0),
-        if (categoriesRow2.isNotEmpty)
-          _buildChipRow(categoriesRow2, _selectedSubCategory, (val) {
-            setState(() => _selectedSubCategory = val);
-            _fetchTextures(); // Fetch API when subcategory changes
-          }, isExpandedRow: false),
+        }),
+        if (_selectedCategory != null && categoriesRow2.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          _buildSubCategoryMenu(categoriesRow2, _selectedSubCategory, (val) {
+            setState(() {
+              if (_selectedSubCategory == val) {
+                _selectedSubCategory = null;
+              } else {
+                _selectedSubCategory = val;
+              }
+              _fetchTextures();
+            });
+          }),
+        ],
       ],
+    );
+  }
+
+  Widget _buildSubCategoryMenu(
+    List<String> labels,
+    String? selectedItem,
+    Function(String) onSelect,
+  ) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: labels.map((label) {
+          final isSelected = selectedItem == label;
+          return GestureDetector(
+            onTap: () => onSelect(label),
+            child: Container(
+              margin: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: isSelected
+                        ? const Color(0xFFEA202C)
+                        : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.black : Color(0xFF5D5D5D),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
   Widget _buildChipRow(
     List<String> labels,
     String? selectedItem,
-    Function(String) onSelect, {
-    bool isExpandedRow = false,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: isExpandedRow
-          ? Row(
-              children: labels.map((label) {
-                final isSelected = selectedItem == label;
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      right: label != labels.last ? 6.0 : 0.0,
-                    ),
-                    child: _buildChip(label, isSelected, onSelect, true),
-                  ),
-                );
-              }).toList(),
-            )
-          : Wrap(
-              spacing: 6,
-              runSpacing: 0,
-              children: labels.map((label) {
-                final isSelected = selectedItem == label;
-                return _buildChip(label, isSelected, onSelect, false);
-              }).toList(),
+    Function(String) onSelect,
+  ) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: labels.asMap().entries.map((entry) {
+          final label = entry.value;
+          final isSelected = selectedItem == label;
+          return Padding(
+            padding: EdgeInsets.only(
+              right: entry.key != labels.length - 1 ? 8.0 : 0.0,
             ),
+            child: _buildCategoryChip(label, isSelected, onSelect),
+          );
+        }).toList(),
+      ),
     );
   }
 
-  Widget _buildChip(
+  Widget _buildCategoryChip(
     String label,
     bool isSelected,
     Function(String) onSelect,
-    bool isExpanded,
   ) {
-    return ChoiceChip(
-      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-      padding: EdgeInsets.zero,
-      labelPadding: isExpanded
-          ? const EdgeInsets.symmetric(horizontal: 4, vertical: -2)
-          : const EdgeInsets.symmetric(horizontal: 8, vertical: -2),
-      label: isExpanded
-          ? SizedBox(
-              width: double.infinity,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: isSelected ? Colors.black : Colors.grey[600],
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-            )
-          : Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.black : Colors.grey[600],
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-      selected: isSelected,
-      onSelected: (val) => onSelect(label),
-      backgroundColor: Colors.white,
-      selectedColor: Colors.white,
-      showCheckmark: false,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(5),
-        side: BorderSide(
-          color: isSelected ? Colors.black87 : Colors.grey[200]!,
+    return GestureDetector(
+      onTap: () => onSelect(label),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFEA202C) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFEA202C) : Colors.grey[200]!,
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+            color: isSelected ? Colors.white : Color(0xFF5D5D5D),
+          ),
         ),
       ),
     );
   }
 
-  Future<void> _showTextureDetailModal(
-    BuildContext context,
-    Map<String, dynamic> texture,
-  ) async {
-    final imageUrl = (texture["coverImage"] ?? "").toString();
-    final title = (texture["sku"] ?? texture["name"] ?? "Texture").toString();
-
-    if (!mounted) return;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.72,
-          minChildSize: 0.55,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.black12,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 8, 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: "Close",
-                          onPressed: () => Navigator.of(sheetContext).pop(),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              height: 360,
-                              color: Colors.grey[100],
-                              child: imageUrl.isNotEmpty
-                                  ? InteractiveViewer(
-                                      minScale: 1,
-                                      maxScale: 4,
-                                      child: Image.network(
-                                        imageUrl,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (ctx, err, stack) =>
-                                            Container(
-                                              color: Colors.grey[300],
-                                              alignment: Alignment.center,
-                                              child: const Icon(
-                                                Icons.broken_image_outlined,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                      ),
-                                    )
-                                  : Container(
-                                      color: Colors.grey[300],
-                                      alignment: Alignment.center,
-                                      child: const Icon(
-                                        Icons.image_not_supported_outlined,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            (texture["name"] ?? "").toString(),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   Widget _buildTextureSelection() {
     if (_isLoadingTextures) {
@@ -1221,36 +1194,78 @@ class _ImageEditPageState extends State<ImageEditPage> {
           final label = texture["sku"] ?? texture["name"] ?? "";
 
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
               onTap: () {
                 setState(() => _selectedTexture = texture);
-                if (widget.showTextureDetailOnTap) {
-                  _showTextureDetailModal(context, texture);
-                }
               },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: imageUrl.isNotEmpty
-                        ? Image.network(
-                            imageUrl,
-                            width: widget.textureThumbWidth,
-                            height: widget.textureThumbHeight,
-                            fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, stack) => Container(
-                              width: widget.textureThumbWidth,
-                              height: widget.textureThumbHeight,
-                              color: Colors.grey[300],
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected ? const Color(0xFFEA202C) : Colors.transparent,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: imageUrl.isNotEmpty
+                              ? Image.network(
+                                  imageUrl,
+                                  width: widget.textureThumbWidth,
+                                  height: widget.textureThumbHeight,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (ctx, err, stack) => Container(
+                                    width: widget.textureThumbWidth,
+                                    height: widget.textureThumbHeight,
+                                    color: Colors.grey[300],
+                                  ),
+                                )
+                              : Container(
+                                  width: widget.textureThumbWidth,
+                                  height: widget.textureThumbHeight,
+                                  color: Colors.grey[300],
+                                ),
+                        ),
+                        if (isSelected)
+                          Positioned.fill(
+                            child: GestureDetector(
+                              onTap: () => _showTextureDetailPopup(context, texture),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.35),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.visibility_outlined,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      "View Texture",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          )
-                        : Container(
-                            width: widget.textureThumbWidth,
-                            height: widget.textureThumbHeight,
-                            color: Colors.grey[300],
                           ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 6),
                   SizedBox(
@@ -1259,10 +1274,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
                       label,
                       style: TextStyle(
                         fontSize: 10,
-                        color: isSelected ? Colors.black : Colors.grey,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w400,
+                        color: isSelected ? Colors.black : const Color(0xFF5D5D5D),
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
@@ -1275,6 +1288,90 @@ class _ImageEditPageState extends State<ImageEditPage> {
           );
         },
       ),
+    );
+  }
+
+  void _showTextureDetailPopup(BuildContext context, Map<String, dynamic> texture) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final imageUrl = texture["coverImage"] ?? "";
+        final label = texture["sku"] ?? texture["name"] ?? "";
+        
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  children: [
+                    if (imageUrl.isNotEmpty)
+                      Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          height: 300,
+                          color: Colors.white,
+                          child: const Icon(Icons.error_outline),
+                        ),
+                      )
+                    else
+                      Container(
+                        height: 300,
+                        color: Colors.white,
+                        child: const Icon(Icons.image_not_supported_outlined),
+                      ),
+                    
+                    // Close Button
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black26,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ),
+                    
+                    // Label at the Bottom
+                    Positioned(
+                      bottom: 16,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 4,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

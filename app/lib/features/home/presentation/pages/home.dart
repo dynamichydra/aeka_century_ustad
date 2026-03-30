@@ -47,7 +47,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   String? _selectedCategory;
   String _selectedSubCategory = "All";
   // TabIndex -> Category -> SubCategory -> NestedSubCategory -> Items
-  Map<int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>> _productsByTabCategorySub = {};
+  Map<int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>>
+  _productsByTabCategorySub = {};
   String _selectedNestedSubCategory = "";
 
   double _bottomCtaReservedSpace(BuildContext context) {
@@ -92,10 +93,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
       if (decoded is! Map<String, dynamic>) return;
 
-      final parsed = <int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>> {
-        0: {}, // Interiors
-        1: {}, // Furnitures
-      };
+      final parsed =
+          <int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>>{
+            0: {}, // Interiors
+            1: {}, // Furnitures
+          };
 
       void parseGroup(String groupKey, int tabIndex) {
         final groupData = decoded[groupKey];
@@ -112,9 +114,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
               final rawPath = (map['image_path'] ?? '').toString().trim();
               if (rawPath.isEmpty) continue;
 
-              final prefixedPath =
-                  rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
-              
+              final prefixedPath = rawPath.startsWith('assets/')
+                  ? rawPath
+                  : 'assets/$rawPath';
+
               // 1. Try Exact match
               // 2. Try Soft match (case-insensitive, no special chars)
               // 3. Try Filename match (last resort if folders moved)
@@ -127,7 +130,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
               items.add(
                 ProductImageModel(
-                  id: (map['id'] ?? '${category}_${subCategory}_${items.length + 1}').toString(),
+                  id:
+                      (map['id'] ??
+                              '${category}_${subCategory}_${items.length + 1}')
+                          .toString(),
                   name: category,
                   image: resolvedPath,
                   isTrending: false,
@@ -141,7 +147,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
           if (value is List) {
             addItemsFromList(value, "General");
-            parsed[tabIndex]![category] = {"All": {"General": subGroupsMap["General"] ?? []}};
+            parsed[tabIndex]![category] = {
+              "All": {"General": subGroupsMap["General"] ?? []},
+            };
           } else if (value is Map) {
             final subCatsMap = <String, Map<String, List<ProductImageModel>>>{};
             value.forEach((subCat, nestedData) {
@@ -153,22 +161,32 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     for (final item in subList) {
                       if (item is! Map) continue;
                       final map = item.cast<String, dynamic>();
-                      final rawPath = (map['image_path'] ?? '').toString().trim();
+                      final rawPath = (map['image_path'] ?? '')
+                          .toString()
+                          .trim();
                       if (rawPath.isEmpty) continue;
 
-                      final prefixedPath = rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
-                      final resolvedPath = exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
+                      final prefixedPath = rawPath.startsWith('assets/')
+                          ? rawPath
+                          : 'assets/$rawPath';
+                      final resolvedPath =
+                          exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
                           softAssetMap[_normalizeAssetPathSoft(prefixedPath)] ??
                           fileNameAssetMap[_fileNameFromPath(rawPath)];
 
                       if (resolvedPath == null) continue;
 
-                      items.add(ProductImageModel(
-                        id: (map['id'] ?? '${category}_${subCat}_${nestedSubCat}_${items.length + 1}').toString(),
-                        name: category,
-                        image: resolvedPath,
-                        isTrending: false,
-                      ));
+                      items.add(
+                        ProductImageModel(
+                          id:
+                              (map['id'] ??
+                                      '${category}_${subCat}_${nestedSubCat}_${items.length + 1}')
+                                  .toString(),
+                          name: category,
+                          image: resolvedPath,
+                          isTrending: false,
+                        ),
+                      );
                     }
                     if (items.isNotEmpty) {
                       nestedGroups[nestedSubCat] = items;
@@ -233,7 +251,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final quickItems = <ProductImageModel>[];
     for (final entry in currentTabData.entries) {
       if (entry.value.isEmpty) continue;
-      
+
       // Collect all nested products to pick a random one
       final allProducts = <ProductImageModel>[];
       for (final nestedMap in entry.value.values) {
@@ -243,7 +261,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       }
 
       if (allProducts.isEmpty) continue;
-      
+
       // Use deterministic selection based on name hash for stability
       final stableIndex = entry.key.hashCode.abs() % allProducts.length;
       final randomProduct = allProducts[stableIndex];
@@ -261,15 +279,18 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     return quickItems.isEmpty ? fallbackProducts.take(4).toList() : quickItems;
   }
 
-  String _getSubCategoryIcon(String subCatName, Map<String, Map<String, List<ProductImageModel>>> categoryData) {
+  String _getSubCategoryIcon(
+    String subCatName,
+    Map<String, Map<String, List<ProductImageModel>>> categoryData,
+  ) {
     final subCatData = categoryData[subCatName];
     if (subCatData == null || subCatData.isEmpty) return "";
-    
+
     final allProducts = <ProductImageModel>[];
     for (final productList in subCatData.values) {
       allProducts.addAll(productList);
     }
-    
+
     if (allProducts.isEmpty) return "";
     // Deterministic selection based on subcategory name for stability
     final stableIndex = subCatName.hashCode.abs() % allProducts.length;
@@ -307,7 +328,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       final subCatData = categoryGroups[_selectedSubCategory];
       if (subCatData == null) return [];
 
-      if (_selectedNestedSubCategory == "All" || _selectedNestedSubCategory.isEmpty) {
+      if (_selectedNestedSubCategory == "All" ||
+          _selectedNestedSubCategory.isEmpty) {
         final allNestedItems = <ProductImageModel>[];
         for (final items in subCatData.values) {
           allNestedItems.addAll(items);
@@ -330,11 +352,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null && mounted) {
-      context.push(AppRoutes.imagePreview, extra: {
-        "imageFile": File(image.path),
-        "image_category": "asdasdasd",
-        "sub_category": "asdasdasdasd",
-      });
+      context.push(
+        AppRoutes.imagePreview,
+        extra: {
+          "imageFile": File(image.path),
+          "image_category": "asdasdasd",
+          "sub_category": "asdasdasdasd",
+        },
+      );
     }
   }
 
@@ -351,11 +376,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         ),
       );
       if (mounted) {
-        context.push(AppRoutes.imagePreview, extra: {
-        "imageFile": file,
-        "image_category": "",
-        "sub_category": "asdasdasdsa",
-      });
+        context.push(
+          AppRoutes.imagePreview,
+          extra: {
+            "imageFile": file,
+            "image_category": "",
+            "sub_category": "asdasdasdsa",
+          },
+        );
       }
     } catch (e) {
       debugPrint("Error loading asset: $e");
@@ -366,14 +394,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   Widget build(BuildContext context) {
     final homeCubit = context.watch<HomeCubit>();
     final homeState = homeCubit.state;
-    
+
     final ProductsState productsState = context.watch<ProductsCubit>().state;
     final products = productsState.products.isEmpty
         ? ProductImages.productImages
         : productsState.products;
-    final quickProducts = _resolveQuickProducts(products, homeState.selectedIndex);
-    final visibleProducts = _resolveVisibleProducts(products, homeState.selectedIndex);
-    
+    final quickProducts = _resolveQuickProducts(
+      products,
+      homeState.selectedIndex,
+    );
+    final visibleProducts = _resolveVisibleProducts(
+      products,
+      homeState.selectedIndex,
+    );
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
@@ -402,14 +436,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: TSizes.spaceBtwItems),
+                      const SizedBox(height: 8),
                       Center(
                         child: ExteriorInteriorSwitchSlider(
                           value: homeState.isExterior,
                           onChanged: (val) => homeCubit.setExterior(val),
                         ),
                       ),
-                      const SizedBox(height: TSizes.spaceBtwItems),
+                      const SizedBox(height: 12),
                       // SearchInput(),
                       Container(
                         decoration: BoxDecoration(
@@ -494,7 +528,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           onSubmitted: (_) => homeCubit.fetchResults(),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       DefaultTabController(
                         length: 2,
                         initialIndex: homeState.selectedIndex,
@@ -538,7 +572,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                   if (newTabCategories != null &&
                                       newTabCategories.isNotEmpty) {
                                     setState(() {
-                                      _selectedCategory = newTabCategories.first;
+                                      _selectedCategory =
+                                          newTabCategories.first;
                                       _selectedSubCategory = "All";
                                       _selectedNestedSubCategory = "";
                                     });
@@ -569,7 +604,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     ],
                                   ),
                                   child: Material(
-                                    color: homeState.isTrendingShowing ? TColors.primary : Colors.transparent,
+                                    color: homeState.isTrendingShowing
+                                        ? TColors.primary
+                                        : Colors.transparent,
                                     shape: const CircleBorder(),
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
@@ -579,8 +616,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       child: Padding(
                                         padding: const EdgeInsets.all(10),
                                         child: Image.asset(
-                                          homeState.isTrendingShowing ? "assets/icons/app_icons/trendng2_white.png" :
-                                          "assets/icons/app_icons/trendng2.png",
+                                          homeState.isTrendingShowing
+                                              ? "assets/icons/app_icons/trendng2_white.png"
+                                              : "assets/icons/app_icons/trendng2.png",
                                           width: 12,
                                           height: 12,
                                         ),
@@ -603,7 +641,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     ],
                                   ),
                                   child: Material(
-                                    color: homeState.isLikedShowing ? TColors.primary : Colors.transparent,
+                                    color: homeState.isLikedShowing
+                                        ? TColors.primary
+                                        : Colors.transparent,
                                     shape: const CircleBorder(),
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
@@ -615,7 +655,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         child: Icon(
                                           Icons.favorite,
                                           size: 12,
-                                          color: homeState.isLikedShowing ? Colors.white : const Color(0xFF898888),
+                                          color: homeState.isLikedShowing
+                                              ? Colors.white
+                                              : const Color(0xFF898888),
                                         ),
                                       ),
                                     ),
@@ -665,9 +707,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: TSizes.spaceBtwItems),
+                      const SizedBox(height: 6),
                       SizedBox(
-                        height: 100,
+                        height: 90,
                         child: HorizontalIconGrid(
                           itemCount: quickProducts.length,
                           itemBuilder: (context, index) {
@@ -698,9 +740,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 2),
                       _buildSubCategoryMenu(),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 10),
 
                       // Popular Image List (Vertical for now)
                       _isGridView
@@ -714,7 +756,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     mainAxisSpacing: 12,
                                     childAspectRatio: 1, // square images
                                   ),
-                              itemCount: homeState.isLoading ? 6 : visibleProducts.length,
+                              itemCount: homeState.isLoading
+                                  ? 6
+                                  : visibleProducts.length,
                               itemBuilder: (context, index) {
                                 if (homeState.isLoading) {
                                   return Shimmer.fromColors(
@@ -725,7 +769,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -750,7 +796,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           : ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: homeState.isLoading ? 5 : visibleProducts.length,
+                              itemCount: homeState.isLoading
+                                  ? 5
+                                  : visibleProducts.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
@@ -763,7 +811,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -827,12 +877,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     final homeCubit = context.read<HomeCubit>();
     final selectedIndex = homeCubit.state.selectedIndex;
-    final categoryData = _productsByTabCategorySub[selectedIndex]?[selectedCategory];
+    final categoryData =
+        _productsByTabCategorySub[selectedIndex]?[selectedCategory];
 
-    if (categoryData == null || categoryData.isEmpty) return const SizedBox.shrink();
+    if (categoryData == null || categoryData.isEmpty)
+      return const SizedBox.shrink();
 
     final subCategories = ["All", ...categoryData.keys];
-    
+
     // Determine nested subcategories if a subcategory is selected
     List<String> nestedSubCategories = [];
     if (_selectedSubCategory != "All") {
@@ -848,13 +900,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       children: [
         // Primary SubCategories as Icons
         SizedBox(
-          height: 100,
+          height: 90,
           child: HorizontalIconGrid(
             itemCount: subCategories.length,
             itemBuilder: (context, index) {
               final subCat = subCategories[index];
               final isSelected = _selectedSubCategory == subCat;
-              
+
               // Pick a random transparent icon based on subcategory name for stability
               final iconIndex = subCat.hashCode.abs() % 9;
               final iconImage = "assets/transparent/${iconIndex + 1}.png";
@@ -864,7 +916,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 isSelected: isSelected,
                 size: 52, // Slightly smaller than main categories
                 useUnderline: true, // Enable underline style
-                isCircular: false, // Disable circular background for subcategories
+                isCircular:
+                    false, // Disable circular background for subcategories
                 onTap: () {
                   setState(() {
                     if (_selectedSubCategory == subCat) {
@@ -875,18 +928,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     _selectedNestedSubCategory = ""; // Reset nested
                   });
                 },
-                child: Image.asset(
-                  iconImage,
-                  fit: BoxFit.contain,
-                ),
+                child: Image.asset(iconImage, fit: BoxFit.contain),
               );
             },
           ),
         ),
-        
+
         // Nested SubCategories (Pills)
-        if (_selectedSubCategory != "All" && nestedSubCategories.length > 1) ...[
-          const SizedBox(height: 12),
+        if (_selectedSubCategory != "All" &&
+            nestedSubCategories.length > 1) ...[
+          const SizedBox(height: 8),
           SizedBox(
             height: 28,
             child: ListView.separated(
@@ -911,28 +962,37 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   // UI Design Tip: Customize the design of these Choice Chips/Pills here.
                   // You can change the decoration, padding, and text style to match your preference.
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.white : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFFB5B5B5) : const Color(0xFFD9D9D9),
+                        color: isSelected
+                            ? const Color(0xFFB5B5B5)
+                            : const Color(0xFFD9D9D9),
                         width: 0.5,
                       ),
-                      boxShadow: isSelected ? [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.075),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ] : null,
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.075),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Center(
                       child: Text(
                         nSubCat,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                           color: const Color(0xFF5D5D5D),
                         ),
                       ),
@@ -979,7 +1039,7 @@ class _PremiumActionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/icons/app_icons/${iconImage}", height: 16,),
+            Image.asset("assets/icons/app_icons/${iconImage}", height: 16),
             const SizedBox(width: 10),
             Text(
               label,
