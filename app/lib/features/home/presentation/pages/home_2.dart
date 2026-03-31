@@ -678,9 +678,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             },
                           ),
                         ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 10),
                       _buildSubCategoryMenu(),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
 
                       // Popular Image List (Vertical for now)
                       _isGridView

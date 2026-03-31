@@ -53,6 +53,7 @@ class CircularIconItem extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              height: 1.5,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

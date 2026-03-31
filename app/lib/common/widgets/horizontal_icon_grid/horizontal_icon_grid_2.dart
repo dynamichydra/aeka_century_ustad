@@ -81,6 +81,7 @@ class _HorizontalIconGridState extends State<HorizontalIconGrid> {
 
         return Stack(
           children: [
+            
             ListView.builder(
               controller: _scrollController,
               padding: EdgeInsets.zero,

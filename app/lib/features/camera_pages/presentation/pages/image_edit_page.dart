@@ -28,9 +28,9 @@ class ImageEditPage extends StatefulWidget {
     this.pickedColor,
     this.scrollableEditSection = false,
     this.showTextureDetailOnTap = true,
-    this.textureListHeight = 105,
-    this.textureThumbWidth = 60,
-    this.textureThumbHeight = 60,
+    this.textureListHeight = 120,
+    this.textureThumbWidth = 90,
+    this.textureThumbHeight = 75,
   });
 
   @override
@@ -445,18 +445,19 @@ class _ImageEditPageState extends State<ImageEditPage> {
           ),
           const SizedBox(height: 4),
           _buildColorSelection(),
-          const SizedBox(height: 4),
-          const Text(
-            "Select Categories",
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 4),
-          _buildCategorySelection(),
+          // const SizedBox(height: 4),
+          // const Text(
+          //   "Select Categories",
+          //   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+          // ),
+          // const SizedBox(height: 4),
           const SizedBox(height: 6),
           const Text(
             "Select Textures & Patterns",
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
           ),
+          const SizedBox(height: 6),
+          _buildCategorySelection(),
           const SizedBox(height: 6),
           _buildTextureSelection(),
           const SizedBox(height: 10),
@@ -928,7 +929,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
         itemBuilder: (context, index) {
           if (index == 0) {
             return Padding(
-              padding: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.only(right: 5),
               child: GestureDetector(
                 onTap: () async {
                   final Color? picked = await context.push<Color>(
@@ -1136,27 +1137,36 @@ class _ImageEditPageState extends State<ImageEditPage> {
     return GestureDetector(
       onTap: () => onSelect(label),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEA202C) : Colors.white,
+          color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFFEA202C) : Colors.grey[200]!,
-            width: 1,
+            color:
+                isSelected ? const Color(0xFFB5B5B5) : const Color(0xFFD9D9D9),
+            width: 0.3,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.075),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-            color: isSelected ? Colors.white : Color(0xFF5D5D5D),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color: const Color(0xFF5D5D5D),
           ),
         ),
       ),
     );
   }
-
 
   Widget _buildTextureSelection() {
     if (_isLoadingTextures) {
@@ -1197,7 +1207,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           final label = texture["sku"] ?? texture["name"] ?? "";
 
           return Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 6),
             child: GestureDetector(
               onTap: () {
                 setState(() => _selectedTexture = texture);
@@ -1206,12 +1216,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: EdgeInsets.zero,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFFEA202C) : Colors.transparent,
-                        width: 1.5,
+                        color: isSelected
+                            ? const Color(0xFFD9D9D9)
+                            : Colors.transparent,
+                        width: 5,
                       ),
                     ),
                     child: Stack(
@@ -1239,7 +1251,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         if (isSelected)
                           Positioned.fill(
                             child: GestureDetector(
-                              onTap: () => _showTextureDetailPopup(context, texture),
+                              onTap: () =>
+                                  _showTextureDetailPopup(context, texture),
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.35),
@@ -1258,7 +1271,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                                       "View Texture",
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 8,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -1277,8 +1290,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
                       label,
                       style: TextStyle(
                         fontSize: 10,
-                        color: isSelected ? Colors.black : const Color(0xFF5D5D5D),
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                        color: isSelected
+                            ? Colors.black
+                            : const Color(0xFF5D5D5D),
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w400,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
@@ -1294,13 +1311,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
     );
   }
 
-  void _showTextureDetailPopup(BuildContext context, Map<String, dynamic> texture) {
+  void _showTextureDetailPopup(
+    BuildContext context,
+    Map<String, dynamic> texture,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
         final imageUrl = texture["coverImage"] ?? "";
         final label = texture["sku"] ?? texture["name"] ?? "";
-        
+
         return Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 40),
@@ -1327,7 +1347,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         color: Colors.white,
                         child: const Icon(Icons.image_not_supported_outlined),
                       ),
-                    
+
                     // Close Button
                     Positioned(
                       top: 12,
@@ -1340,11 +1360,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
                             color: Colors.black26,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
-                    
+
                     // Label at the Bottom
                     Positioned(
                       bottom: 16,
