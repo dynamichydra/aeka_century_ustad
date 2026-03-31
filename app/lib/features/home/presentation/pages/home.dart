@@ -538,7 +538,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           children: [
                             SizedBox(
                               width: 150,
-                              height: 30,
+                              height: 20,
                               child: TabBar(
                                 isScrollable: true,
                                 padding: EdgeInsets.zero,
@@ -900,7 +900,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       children: [
         // Primary SubCategories as Icons
         SizedBox(
-          height: 90,
+          height: 80,
           child: HorizontalIconGrid(
             itemCount: subCategories.length,
             itemBuilder: (context, index) {

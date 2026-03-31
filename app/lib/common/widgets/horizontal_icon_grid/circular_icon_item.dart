@@ -40,15 +40,15 @@ class CircularIconItem extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected
-                          ? (selectedBorderColor ?? const Color(0xFFEEEEEE))
+                          ? (selectedBorderColor ?? const Color(0xFFD9D9D9))
                           : Colors.transparent,
-                      width: selectedBorderWidth,
+                      width: 6,
                     ),
                   )
                 : null,
-            child: Padding(padding: const EdgeInsets.all(2), child: child),
+            child: Padding(padding: const EdgeInsets.all(0), child: child),
           ),
-          const SizedBox(height: TSizes.spaceBtwItems / 2),
+          // const SizedBox(height: TSizes.spaceBtwItems / 2),
           Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(

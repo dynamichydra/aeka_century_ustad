@@ -28,9 +28,9 @@ class ImageEditPage extends StatefulWidget {
     this.pickedColor,
     this.scrollableEditSection = false,
     this.showTextureDetailOnTap = true,
-    this.textureListHeight = 135,
-    this.textureThumbWidth = 90,
-    this.textureThumbHeight = 90,
+    this.textureListHeight = 105,
+    this.textureThumbWidth = 60,
+    this.textureThumbHeight = 60,
   });
 
   @override
@@ -921,7 +921,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildColorSelection() {
     return SizedBox(
-      height: 48,
+      height: 60,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: _featuredColors.length + 1,
@@ -958,22 +958,25 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 36,
+                      width: 60,
                       height: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Image.asset(
-                        "assets/icons/app_icons/color-picker.png",
-                        width: 48,
-                        height: 48,
+                      // decoration: BoxDecoration(
+                      //   color: Colors.white,
+                      //   borderRadius: BorderRadius.circular(4),
+                      //   border: Border.all(color: Colors.grey[300]!, width: 0.5),
+                      // ),
+                      child: Center(
+                        child: Image.asset(
+                          "assets/icons/app_icons/color-picker.png",
+                          width: 60,
+                          height: 30,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       "Colour Picker",
-                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -1255,7 +1258,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                                       "View Texture",
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 10,
+                                        fontSize: 8,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
