@@ -1024,7 +1024,7 @@ class _PremiumActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(30),
@@ -1040,7 +1040,7 @@ class _PremiumActionButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset("assets/icons/app_icons/${iconImage}", height: 12),
-            // const SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
               label,
               style: const TextStyle(

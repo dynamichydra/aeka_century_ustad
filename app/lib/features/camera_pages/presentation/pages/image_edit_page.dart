@@ -399,7 +399,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 40,
+        height: 30,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         color: Colors.white,
         child: Row(
@@ -436,7 +436,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 4),
+          // const SizedBox(height: 4),
           _buildSearchBar(),
           const SizedBox(height: 8),
           const Text(
@@ -451,14 +451,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
           //   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
           // ),
           // const SizedBox(height: 4),
-          const SizedBox(height: 6),
+          // const SizedBox(height: 6),
           const Text(
             "Select Textures & Patterns",
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 6),
           _buildCategorySelection(),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
           _buildTextureSelection(),
           const SizedBox(height: 10),
         ],
@@ -869,7 +869,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildSearchBar() {
     return Container(
-      height: 35,
+      height: 30,
       decoration: BoxDecoration(
         color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(20),
@@ -929,7 +929,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
         itemBuilder: (context, index) {
           if (index == 0) {
             return Padding(
-              padding: const EdgeInsets.only(right: 5),
+              padding: const EdgeInsets.only(right: 0),
               child: GestureDetector(
                 onTap: () async {
                   final Color? picked = await context.push<Color>(
@@ -977,7 +977,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     const SizedBox(height: 4),
                     const Text(
                       "Colour Picker",
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                      style: TextStyle(fontSize: 8, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -1037,6 +1037,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+            const SizedBox(height: 4),
         _buildChipRow(categoriesRow1, _selectedCategory, (val) {
           setState(() {
             if (_selectedCategory == val) {
@@ -1051,7 +1052,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           });
         }),
         if (_selectedCategory != null && categoriesRow2.isNotEmpty) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
           _buildSubCategoryMenu(categoriesRow2, _selectedSubCategory, (val) {
             setState(() {
               if (_selectedSubCategory == val) {
