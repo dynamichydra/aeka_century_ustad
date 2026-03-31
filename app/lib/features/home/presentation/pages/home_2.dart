@@ -334,14 +334,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: TSizes.spaceBtwItems),
+                      const SizedBox(height: 10),
                       Center(
                         child: ExteriorInteriorSwitchSlider(
                           value: homeState.isExterior,
                           onChanged: (val) => homeCubit.setExterior(val),
                         ),
                       ),
-                      const SizedBox(height: TSizes.spaceBtwItems),
+                      const SizedBox(height: 10),
                       // SearchInput(),
                       Container(
                         decoration: BoxDecoration(
@@ -426,7 +426,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           onSubmitted: (_) => homeCubit.fetchResults(),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       DefaultTabController(
                         length: 2,
                         initialIndex: homeState.selectedIndex,
@@ -595,10 +595,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: TSizes.spaceBtwItems),
+                      const SizedBox(height: 10),
                       if (!_quickExpanded)
                         SizedBox(
-                          height: 100,
+                          height: 80,
                           child: HorizontalIconGrid(
                             itemCount: quickProducts.length,
                             itemBuilder: (context, index) {
@@ -646,14 +646,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         )
                       else
                         SizedBox(
-                          height: (92 * 2) + 12,
+                          height: (78 * 2) + 6,
                           child: GridView.builder(
                             physics: const NeverScrollableScrollPhysics(),
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 4,
                               crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              mainAxisExtent: 92,
+                              mainAxisSpacing: 6,
+                              mainAxisExtent: 78,
                             ),
                             itemCount: quickProducts.length > 8 ? 8 : quickProducts.length,
                             itemBuilder: (context, index) {
@@ -678,9 +678,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             },
                           ),
                         ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 2),
                       _buildSubCategoryMenu(),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 8),
 
                       // Popular Image List (Vertical for now)
                       _isGridView
@@ -818,7 +818,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: subCategories.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 20),
+        separatorBuilder: (context, index) => const SizedBox(width: 15),
         itemBuilder: (context, index) {
           final subCat = subCategories[index];
           final isSelected = _selectedSubCategory == subCat;

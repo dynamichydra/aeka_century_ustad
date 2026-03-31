@@ -60,7 +60,7 @@ class CircularIconItem extends StatelessWidget {
           ),
           if (isSelected && useUnderline)
             Container(
-              margin: const EdgeInsets.only(top: 2),
+              // margin: const EdgeInsets.only(top: 2),
               width: 40,
               height: 2,
               decoration: BoxDecoration(

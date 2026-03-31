@@ -740,7 +740,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      // const SizedBox(height: 2),
                       _buildSubCategoryMenu(),
                       const SizedBox(height: 10),
 
@@ -914,7 +914,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
               return CircularIconItem(
                 label: subCat,
                 isSelected: isSelected,
-                size: 52, // Slightly smaller than main categories
+                size: 50, // Slightly smaller than main categories
                 useUnderline: true, // Enable underline style
                 isCircular:
                     false, // Disable circular background for subcategories
@@ -937,7 +937,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         // Nested SubCategories (Pills)
         if (_selectedSubCategory != "All" &&
             nestedSubCategories.length > 1) ...[
-          const SizedBox(height: 8),
+          // const SizedBox(height: 8),
           SizedBox(
             height: 28,
             child: ListView.separated(
@@ -1024,7 +1024,7 @@ class _PremiumActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(30),
@@ -1039,8 +1039,8 @@ class _PremiumActionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/icons/app_icons/${iconImage}", height: 16),
-            const SizedBox(width: 10),
+            Image.asset("assets/icons/app_icons/${iconImage}", height: 12),
+            // const SizedBox(width: 10),
             Text(
               label,
               style: const TextStyle(

@@ -76,8 +76,8 @@ class _HorizontalIconGridState extends State<HorizontalIconGrid> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Show exactly 4 elements + View More space (5 items total)
-        final itemWidth = constraints.maxWidth / 5;
+        // Show exactly 4.5 - 5 elements + View More space
+        final itemWidth = constraints.maxWidth / 4;
 
         return Stack(
           children: [
