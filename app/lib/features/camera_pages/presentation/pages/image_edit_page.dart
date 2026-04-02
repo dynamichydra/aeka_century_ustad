@@ -226,6 +226,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
         setState(() {
           _lamCategories = result;
           categoriesRow1 = result.map((e) => e["name"].toString()).toList();
+          if (_selectedCategory == null && categoriesRow1.isNotEmpty) {
+            _selectedCategory = categoriesRow1.first;
+            _selectedSubCategory = "All";
+          }
         });
 
         if (_selectedCategory != null) {
@@ -326,19 +330,30 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 Expanded(
                   child: Container(
                     color: Colors.white,
-                    child: SingleChildScrollView(
-                      physics: widget.scrollableEditSection
-                          ? const AlwaysScrollableScrollPhysics()
-                          : (_editExpanded
-                                ? const NeverScrollableScrollPhysics()
-                                : const AlwaysScrollableScrollPhysics()),
-                      child: _buildCollapsibleHeaders(),
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.only(bottom: 80),
+                            physics: widget.scrollableEditSection
+                                ? const AlwaysScrollableScrollPhysics()
+                                : (_editExpanded
+                                      ? const NeverScrollableScrollPhysics()
+                                      : const AlwaysScrollableScrollPhysics()),
+                            child: _buildCollapsibleHeaders(),
+                          ),
+                        ),
+                        // Fixed Bottom Bar/Apply Button Area
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: _buildBottomBarFixed(),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-
-                // Fixed Bottom Bar/Apply Button Area
-                _buildBottomBarFixed(),
               ],
             ),
           ),
@@ -1040,10 +1055,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             const SizedBox(height: 4),
         _buildChipRow(categoriesRow1, _selectedCategory, (val) {
           setState(() {
-            if (_selectedCategory == val) {
-              _selectedCategory = null;
-              _selectedSubCategory = null;
-            } else {
+            if (_selectedCategory != val) {
               _selectedCategory = val;
               _selectedSubCategory = "All";
               _fetchSubCategoriesFor(val);
@@ -1055,12 +1067,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
           const SizedBox(height: 12),
           _buildSubCategoryMenu(categoriesRow2, _selectedSubCategory, (val) {
             setState(() {
-              if (_selectedSubCategory == val) {
-                _selectedSubCategory = null;
-              } else {
+              if (_selectedSubCategory != val) {
                 _selectedSubCategory = val;
+                _fetchTextures();
               }
-              _fetchTextures();
             });
           }),
         ],
@@ -1446,7 +1456,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
       builder: (context) {
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: const BoxDecoration(color: Colors.white),
+          decoration: const BoxDecoration(color: Colors.transparent),
           child: Stack(
             alignment: Alignment.center,
             children: [

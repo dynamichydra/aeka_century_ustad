@@ -215,6 +215,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       if (!mounted) return;
       setState(() {
         _productsByTabCategorySub = parsed;
+        if (_selectedCategory == null) {
+          final currentTabData = parsed[0]; // Tab 0 initially
+          if (currentTabData != null && currentTabData.isNotEmpty) {
+            _selectedCategory = currentTabData.keys.first;
+            _selectedSubCategory = "All";
+            _selectedNestedSubCategory = "";
+          }
+        }
       });
     } catch (e) {
       debugPrint('Error parsing assets/data/_data.json: $e');
@@ -721,13 +729,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               selectedBorderColor: const Color(0xFFEEEEEE),
                               onTap: () {
                                 setState(() {
-                                  if (_selectedCategory == product.name) {
-                                    _selectedCategory = null;
-                                  } else {
+                                  if (_selectedCategory != product.name) {
                                     _selectedCategory = product.name;
+                                    _selectedSubCategory = "All";
+                                    _selectedNestedSubCategory = "";
                                   }
-                                  _selectedSubCategory = "All";
-                                  _selectedNestedSubCategory = "";
                                 });
                               },
                               child: ClipOval(
@@ -920,12 +926,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     false, // Disable circular background for subcategories
                 onTap: () {
                   setState(() {
-                    if (_selectedSubCategory == subCat) {
-                      _selectedSubCategory = "All";
-                    } else {
+                    if (_selectedSubCategory != subCat) {
                       _selectedSubCategory = subCat;
+                      _selectedNestedSubCategory = ""; // Reset nested
                     }
-                    _selectedNestedSubCategory = ""; // Reset nested
                   });
                 },
                 child: Image.asset(iconImage, fit: BoxFit.contain),
@@ -952,9 +956,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 return GestureDetector(
                   onTap: () {
                     setState(() {
-                      if (_selectedNestedSubCategory == nSubCat) {
-                        _selectedNestedSubCategory = "";
-                      } else {
+                      if (_selectedNestedSubCategory != nSubCat) {
                         _selectedNestedSubCategory = nSubCat;
                       }
                     });
