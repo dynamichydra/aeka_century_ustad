@@ -1083,6 +1083,40 @@ class _ImageEditPageState extends State<ImageEditPage> {
     String? selectedItem,
     Function(String) onSelect,
   ) {
+    if (widget.scrollableEditSection) {
+      return Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        children: labels.map((label) {
+          final isSelected = selectedItem == label;
+          return GestureDetector(
+            onTap: () => onSelect(label),
+            child: Container(
+              padding: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: isSelected
+                        ? const Color(0xFFEA202C)
+                        : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.black : const Color(0xFF5D5D5D),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -1108,7 +1142,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.black : Color(0xFF5D5D5D),
+                  color: isSelected ? Colors.black : const Color(0xFF5D5D5D),
                 ),
               ),
             ),
@@ -1123,6 +1157,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
     String? selectedItem,
     Function(String) onSelect,
   ) {
+    if (widget.scrollableEditSection) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: labels.map((label) {
+          final isSelected = selectedItem == label;
+          return _buildCategoryChip(label, isSelected, onSelect);
+        }).toList(),
+      );
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -1183,7 +1228,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     if (_isLoadingTextures) {
       return SizedBox(
         height: widget.textureListHeight,
-        child: Center(
+        child: const Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
             color: Color(0xFFEA202C),
@@ -1206,118 +1251,138 @@ class _ImageEditPageState extends State<ImageEditPage> {
       );
     }
 
+    if (widget.scrollableEditSection) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _apiTextures.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 0.85,
+        ),
+        itemBuilder: (context, index) {
+          return _buildTextureThumbnail(_apiTextures[index], isGrid: true);
+        },
+      );
+    }
+
     return SizedBox(
       height: widget.textureListHeight,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: _apiTextures.length,
         itemBuilder: (context, index) {
-          final texture = _apiTextures[index];
-          final isSelected = _selectedTexture?["id"] == texture["id"];
-          final imageUrl = texture["coverImage"] ?? "";
-          final label = texture["sku"] ?? texture["name"] ?? "";
-
           return Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: GestureDetector(
-              onTap: () {
-                setState(() => _selectedTexture = texture);
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: EdgeInsets.zero,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFFD9D9D9)
-                            : Colors.transparent,
-                        width: 5,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: imageUrl.isNotEmpty
-                              ? Image.network(
-                                  imageUrl,
-                                  width: widget.textureThumbWidth,
-                                  height: widget.textureThumbHeight,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (ctx, err, stack) => Container(
-                                    width: widget.textureThumbWidth,
-                                    height: widget.textureThumbHeight,
-                                    color: Colors.grey[300],
-                                  ),
-                                )
-                              : Container(
-                                  width: widget.textureThumbWidth,
-                                  height: widget.textureThumbHeight,
-                                  color: Colors.grey[300],
-                                ),
-                        ),
-                        if (isSelected)
-                          Positioned.fill(
-                            child: GestureDetector(
-                              onTap: () =>
-                                  _showTextureDetailPopup(context, texture),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.35),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.visibility_outlined,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      "View Texture",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    width: widget.textureThumbWidth,
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isSelected
-                            ? Colors.black
-                            : const Color(0xFF5D5D5D),
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w400,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            child: _buildTextureThumbnail(_apiTextures[index], isGrid: false),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildTextureThumbnail(dynamic texture, {required bool isGrid}) {
+    final isSelected = _selectedTexture?["id"] == texture["id"];
+    final imageUrl = texture["coverImage"] ?? "";
+    final label = texture["sku"] ?? texture["name"] ?? "";
+
+    final imageWidget = Container(
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isSelected ? const Color(0xFFD9D9D9) : Colors.transparent,
+          width: 5,
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (ctx, err, stack) => Container(
+                      color: Colors.grey[300],
+                    ),
+                  )
+                : Container(
+                    color: Colors.grey[300],
+                  ),
+          ),
+          if (isSelected && widget.showTextureDetailOnTap)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => _showTextureDetailPopup(context, texture),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.visibility_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "View Texture",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedTexture = texture);
+      },
+      child: SizedBox(
+        width: isGrid ? null : widget.textureThumbWidth,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isGrid)
+              Expanded(child: imageWidget)
+            else
+              SizedBox(
+                height: widget.textureThumbHeight,
+                width: widget.textureThumbWidth,
+                child: imageWidget,
+              ),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: double.infinity,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected ? Colors.black : const Color(0xFF5D5D5D),
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
