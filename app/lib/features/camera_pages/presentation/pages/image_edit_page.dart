@@ -942,108 +942,106 @@ class _ImageEditPageState extends State<ImageEditPage> {
         scrollDirection: Axis.horizontal,
         itemCount: _featuredColors.length + 1,
         itemBuilder: (context, index) {
-          if (index == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 0),
-              child: GestureDetector(
-                onTap: () async {
-                  final Color? picked = await context.push<Color>(
-                    AppRoutes.imageColorPicker,
-                    extra: {
-                      'imageFile': widget.imageFile,
-                      'originalImage': widget.imageFile,
-                    },
-                  );
-                  if (picked != null) {
-                    final hex =
-                        '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-                    setState(() {
-                      _selectedCategory = null;
-                      _selectedSubCategory = null;
-                      _selectedColor = {
-                        "name": "Picked Color",
-                        "hex": hex,
-                        "id": DateTime.now().millisecondsSinceEpoch,
-                      };
-                      _featuredColors.insert(0, _selectedColor!);
-                    });
-                    _fetchTexturesByColor();
-                  }
-                },
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 30,
-                      // decoration: BoxDecoration(
-                      //   color: Colors.white,
-                      //   borderRadius: BorderRadius.circular(4),
-                      //   border: Border.all(color: Colors.grey[300]!, width: 0.5),
-                      // ),
-                      child: Center(
-                        child: Image.asset(
-                          "assets/icons/app_icons/color-picker.png",
-                          width: 60,
-                          height: 30,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Colour Picker",
-                      style: TextStyle(fontSize: 8, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          final colorData = _featuredColors[index - 1];
-          final isSelected = _selectedColor?["id"] == colorData["id"];
           return Padding(
-            padding: const EdgeInsets.only(right: 5),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedCategory = null;
-                  _selectedSubCategory = null;
-                  _selectedColor = colorData;
-                });
-                _fetchTexturesByColor();
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 60,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: Color(
-                        int.parse(colorData["hex"].replaceFirst('#', '0xFF')),
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                      border: isSelected
-                          ? Border.all(color: Colors.black, width: 0.5)
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    colorData["name"],
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                      color: isSelected ? Colors.black : Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            padding: const EdgeInsets.only(right: 15),
+            child: _buildColorItem(index),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildColorItem(int index) {
+    if (index == 0) {
+      return GestureDetector(
+        onTap: () async {
+          final Color? picked = await context.push<Color>(
+            AppRoutes.imageColorPicker,
+            extra: {
+              'imageFile': widget.imageFile,
+              'originalImage': widget.imageFile,
+            },
+          );
+          if (picked != null) {
+            final hex =
+                '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+            setState(() {
+              _selectedCategory = null;
+              _selectedSubCategory = null;
+              _selectedColor = {
+                "name": "Picked Color",
+                "hex": hex,
+                "id": DateTime.now().millisecondsSinceEpoch,
+              };
+              _featuredColors.insert(0, _selectedColor!);
+            });
+            _fetchTexturesByColor();
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60,
+              height: 30,
+              child: Center(
+                child: Image.asset(
+                  "assets/icons/app_icons/color-picker.png",
+                  width: 60,
+                  height: 30,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              "Colour Picker",
+              style: TextStyle(fontSize: 8, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final colorData = _featuredColors[index - 1];
+    final isSelected = _selectedColor?["id"] == colorData["id"];
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = null;
+          _selectedSubCategory = null;
+          _selectedColor = colorData;
+        });
+        _fetchTexturesByColor();
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 60,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Color(
+                int.parse(colorData["hex"].replaceFirst('#', '0xFF')),
+              ),
+              borderRadius: BorderRadius.circular(4),
+              border: isSelected
+                  ? Border.all(color: Colors.black, width: 0.5)
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            colorData["name"],
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+              color: isSelected ? Colors.black : Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1083,40 +1081,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
     String? selectedItem,
     Function(String) onSelect,
   ) {
-    if (widget.scrollableEditSection) {
-      return Wrap(
-        spacing: 12,
-        runSpacing: 8,
-        children: labels.map((label) {
-          final isSelected = selectedItem == label;
-          return GestureDetector(
-            onTap: () => onSelect(label),
-            child: Container(
-              padding: const EdgeInsets.only(bottom: 4),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: isSelected
-                        ? const Color(0xFFEA202C)
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.black : const Color(0xFF5D5D5D),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      );
-    }
-
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -1157,17 +1121,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
     String? selectedItem,
     Function(String) onSelect,
   ) {
-    if (widget.scrollableEditSection) {
-      return Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: labels.map((label) {
-          final isSelected = selectedItem == label;
-          return _buildCategoryChip(label, isSelected, onSelect);
-        }).toList(),
-      );
-    }
-
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
