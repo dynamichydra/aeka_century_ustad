@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/sizes.dart';
 
 class CircularIconItem extends StatelessWidget {
   final Widget child;
@@ -49,24 +48,30 @@ class CircularIconItem extends StatelessWidget {
             child: Padding(padding: const EdgeInsets.all(0), child: child),
           ),
           // const SizedBox(height: TSizes.spaceBtwItems / 2),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              height: 1.5,
+          SizedBox(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.normal,
+                height: 1.5,
+              ),
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              textAlign: TextAlign.center,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
           ),
-          if (isSelected && useUnderline)
-            Container(
-              // margin: const EdgeInsets.only(top: 2),
+          if (useUnderline)
+            SizedBox(
               width: 40,
               height: 2,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE30613), // Brand Red
-                borderRadius: BorderRadius.circular(1.5),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFFE30613)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(1.5),
+                ),
               ),
             ),
         ],

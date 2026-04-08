@@ -7,6 +7,7 @@ class ImageEditService {
   Future<dynamic> postCompareImageDetails({
     required String imageCategory,
     required String subCategory,
+    required String nestedSubCategory,
     required String interiorFurniture,
     required bool isTrending,
     required bool isLiked,
@@ -16,6 +17,7 @@ class ImageEditService {
     final params = {
       "image_category": imageCategory,
       "sub_category": subCategory,
+      "nested_sub_category": nestedSubCategory,
       "interior_furniture": interiorFurniture,
       "is_trending": isTrending,
       "is_liked": isLiked,

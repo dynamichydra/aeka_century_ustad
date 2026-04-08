@@ -18,10 +18,11 @@ class ImageEditCubit extends Cubit<ImageEditState> {
 
     try {
       final response = await _imageEditService.postCompareImageDetails(
-        imageCategory: image.imageCategory ?? "Interiors",
-        subCategory: image.subCategory ?? "",
+        imageCategory: image.category ?? "Interiors",
+        subCategory: image.subcategory ?? "",
+        nestedSubCategory: image.nestedSubcategory ?? "",
         interiorFurniture: image.name,
-        isTrending: image.isTrending ?? false,
+        isTrending: image.isTrending,
         isLiked: false,
       );
       

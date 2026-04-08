@@ -3,12 +3,10 @@ import 'dart:io';
 
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/home/home_cubit.dart';
-import 'package:century_ai/cubit/home/home_state.dart';
 import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
-import 'package:century_ai/common/widgets/horizontal_icon_grid/horizontal_icon_grid_2.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/cubit/products/products_state.dart';
 import 'package:century_ai/db/db_helper.dart';
@@ -19,7 +17,6 @@ import 'package:century_ai/features/home/widgets/product_containers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:century_ai/router/app_routes.dart';
@@ -48,9 +45,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   bool _isGridView = false;
   bool _quickExpanded = false;
   String? _selectedCategory;
+  // TabIndex -> Category -> SubCategory -> NestedSubCategory -> Items
+  Map<int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>>
+  _productsByTabCategorySub = {};
   String _selectedSubCategory = "All";
-  // TabIndex -> Category -> SubCategory -> Items
-  Map<int, Map<String, Map<String, List<ProductImageModel>>>> _productsByTabCategorySub = {};
+  String _selectedNestedSubCategory = "";
 
   double _bottomCtaReservedSpace(BuildContext context) {
     // Keep the scrolling content from being hidden behind the bottom CTA row.
@@ -72,7 +71,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
   Future<void> _loadProductsByCategoryFromAsset() async {
     try {
-      final rawJson = await rootBundle.loadString('assets/data/_data2.json');
+      final rawJson = await rootBundle.loadString('assets/data/data.json');
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
       final allAssets = manifest.listAssets();
       final exactAssetMap = <String, String>{};
@@ -90,89 +89,164 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           fileNameAssetMap.putIfAbsent(fileNameKey, () => assetPath);
         }
       }
-      final decoded = jsonDecode(rawJson);
+      final parsed = <int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>> {};
+      final List<dynamic> rootData = json.decode(rawJson);
 
-      if (decoded is! Map<String, dynamic>) return;
+      for (int tabIndex = 0; tabIndex < rootData.length; tabIndex++) {
+        final rootNode = rootData[tabIndex];
+        final List<dynamic> categories = rootNode['children'] ?? [];
+        final Map<String, Map<String, Map<String, List<ProductImageModel>>>> tabMap = {};
 
-      final parsed = <int, Map<String, Map<String, List<ProductImageModel>>>>{
-        0: {}, // Interiors
-        1: {}, // Furnitures
-      };
+        for (final catNode in categories) {
+          final category = catNode['name'] ?? 'Unknown';
+          final subCatsMap = <String, Map<String, List<ProductImageModel>>>{};
+          final List<dynamic> catChildren = catNode['children'] ?? [];
 
-      void parseGroup(String groupKey, int tabIndex) {
-        final groupData = decoded[groupKey];
-        if (groupData is! Map<String, dynamic>) return;
+          for (final subCatNode in catChildren) {
+            if (subCatNode is! Map) continue;
+            final subCatMapRaw = subCatNode.cast<String, dynamic>();
 
-        groupData.forEach((category, value) {
-          final subGroupsMap = <String, List<ProductImageModel>>{};
-
-          void addItemsFromList(List listData, String subCategory) {
-            final items = <ProductImageModel>[];
-            for (final item in listData) {
-              if (item is! Map) continue;
-              final map = item.cast<String, dynamic>();
-              final rawPath = (map['image_path'] ?? '').toString().trim();
-              if (rawPath.isEmpty) continue;
-
-              final prefixedPath =
-                  rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
-              
-              // 1. Try Exact match
-              // 2. Try Soft match (case-insensitive, no special chars)
-              // 3. Try Filename match (last resort if folders moved)
-              final resolvedPath =
-                  exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
-                  softAssetMap[_normalizeAssetPathSoft(prefixedPath)] ??
-                  fileNameAssetMap[_fileNameFromPath(rawPath)];
-
-              if (resolvedPath == null) continue;
-
-              items.add(
-                ProductImageModel(
-                  id: (map['id'] ?? '${category}_${subCategory}_${items.length + 1}').toString(),
-                  name: category,
-                  image: resolvedPath,
-                  isTrending: false,
-                ),
+            // If this node is a product directly under Category
+            if (subCatMapRaw['image_path'] != null) {
+              final product = _parseOneProduct(
+                subCatMapRaw,
+                category,
+                'General',
+                'General',
+                exactAssetMap,
+                softAssetMap,
+                fileNameAssetMap,
               );
-            }
-            if (items.isNotEmpty) {
-              subGroupsMap.putIfAbsent(subCategory, () => []).addAll(items);
-            }
-          }
-
-          if (value is List) {
-            addItemsFromList(value, category);
-          } else if (value is Map) {
-            value.forEach((subCat, subList) {
-              if (subList is List) {
-                addItemsFromList(subList, subCat);
+              if (product != null) {
+                subCatsMap.putIfAbsent('General', () => {})
+                    .putIfAbsent('General', () => [])
+                    .add(product);
               }
-            });
+              continue;
+            }
+
+            // Otherwise treated as a SubCategory
+            final subCat = subCatMapRaw['name'] ?? 'General';
+            final nestedGroups = <String, List<ProductImageModel>>{};
+            final List<dynamic> subCatChildren = subCatMapRaw['children'] ?? [];
+
+            for (final nestedNode in subCatChildren) {
+              if (nestedNode is! Map) continue;
+              final nestedNodeMap = nestedNode.cast<String, dynamic>();
+
+              // If this node is a product directly under SubCategory
+              if (nestedNodeMap['image_path'] != null) {
+                final product = _parseOneProduct(
+                  nestedNodeMap,
+                  category,
+                  subCat,
+                  'General',
+                  exactAssetMap,
+                  softAssetMap,
+                  fileNameAssetMap,
+                );
+                if (product != null) {
+                  nestedGroups.putIfAbsent('General', () => []).add(product);
+                }
+                if (nestedNodeMap['children'] == null ||
+                    (nestedNodeMap['children'] as List).isEmpty) {
+                  continue;
+                }
+              }
+
+              // Otherwise treated as a NestedSubCategory
+              final nestedSubCat = nestedNodeMap['name'] ?? 'General';
+              final List<dynamic> items = nestedNodeMap['children'] ?? [];
+              final images = <ProductImageModel>[];
+
+              for (final item in items) {
+                if (item is! Map) continue;
+                final product = _parseOneProduct(
+                  item.cast<String, dynamic>(),
+                  category,
+                  subCat,
+                  nestedSubCat,
+                  exactAssetMap,
+                  softAssetMap,
+                  fileNameAssetMap,
+                );
+                if (product != null) {
+                  images.add(product);
+                }
+              }
+
+              if (images.isNotEmpty) {
+                nestedGroups.putIfAbsent(nestedSubCat, () => []).addAll(images);
+              }
+            }
+
+            if (nestedGroups.isNotEmpty) {
+              subCatsMap[subCat] = nestedGroups;
+            }
           }
 
-          if (subGroupsMap.isNotEmpty) {
-            parsed[tabIndex]![category] = subGroupsMap;
+          if (subCatsMap.isNotEmpty) {
+            tabMap[category] = subCatsMap;
           }
-        });
+        }
+        parsed[tabIndex] = tabMap;
       }
-
-      parseGroup('interiors', 0);
-      parseGroup('furnitures', 1);
 
       if (!mounted) return;
       setState(() {
         _productsByTabCategorySub = parsed;
         // Set default category and sub-category for initial tab
-        final initialTabCategories = _productsByTabCategorySub[context.read<HomeCubit>().state.selectedIndex]?.keys;
+        final currentTab = context.read<HomeCubit>().state.selectedIndex;
+        final initialTabCategories = _productsByTabCategorySub[currentTab]?.keys;
         if (initialTabCategories != null && initialTabCategories.isNotEmpty) {
           _selectedCategory = initialTabCategories.first;
-          _selectedSubCategory = "All";
+          
+          // Robust default sub-category
+          final catData = _productsByTabCategorySub[currentTab]?[_selectedCategory];
+          if (catData != null && catData.length == 1) {
+            _selectedSubCategory = catData.keys.first;
+          } else {
+            _selectedSubCategory = "All";
+          }
+          _selectedNestedSubCategory = "";
         }
       });
     } catch (e) {
-      debugPrint('Error parsing assets/data/_data.json: $e');
+      debugPrint('Error parsing assets/data/data.json: $e');
     }
+  }
+
+  ProductImageModel? _parseOneProduct(
+    Map<String, dynamic> map,
+    String category,
+    String subcategory,
+    String nestedSubcategory,
+    Map<String, String> exactAssetMap,
+    Map<String, String> softAssetMap,
+    Map<String, String> fileNameAssetMap,
+  ) {
+    final rawPath = (map['image_path'] ?? '').toString().trim();
+    if (rawPath.isEmpty) return null;
+
+    final prefixedPath =
+        rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
+    final resolvedPath = exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
+        softAssetMap[_normalizeAssetPathSoft(prefixedPath)] ??
+        fileNameAssetMap[_fileNameFromPath(rawPath)];
+
+    if (resolvedPath == null) return null;
+
+    return ProductImageModel(
+      id: (map['id'] ??
+              '${category}_${subcategory}_${nestedSubcategory}_${DateTime.now().microsecondsSinceEpoch}')
+          .toString(),
+      name: category,
+      image: resolvedPath,
+      category: category,
+      subcategory: subcategory,
+      nestedSubcategory: nestedSubcategory,
+      isTrending: false,
+    );
   }
 
   String _normalizeAssetPath(String value) {
@@ -202,25 +276,197 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       return fallbackProducts.take(4).toList();
     }
 
-    final quickItems = <ProductImageModel>[];
+    final quickItems = <ProductImageModel>[];    
     for (final entry in currentTabData.entries) {
       if (entry.value.isEmpty) continue;
-      // Get the first item from any subcategory
-      final firstSubKey = entry.value.keys.first;
-      final firstItem = entry.value[firstSubKey]?.first;
-      if (firstItem != null) {
-        quickItems.add(
-          ProductImageModel(
-            id: 'cat_${entry.key}',
-            name: entry.key,
-            image: firstItem.image,
-            isTrending: false,
+
+      final allProducts = <ProductImageModel>[];
+      for (final nestedMap in entry.value.values) {
+        for (final productList in nestedMap.values) {
+          allProducts.addAll(productList);
+        }
+      }
+
+      if (allProducts.isEmpty) continue;
+      final stableIndex = entry.key.hashCode.abs() % allProducts.length;
+      final randomProduct = allProducts[stableIndex];
+
+      quickItems.add(
+        ProductImageModel(
+          id: 'cat_${entry.key}',
+          name: entry.key,
+          image: randomProduct.image,
+          isTrending: false,
+        ),
+      );
+    }
+
+    return quickItems.isEmpty ? fallbackProducts.take(4).toList() : quickItems;
+  }
+
+  String _getSubCategoryIcon(
+    String subCatName,
+    Map<String, Map<String, List<ProductImageModel>>> categoryData,
+  ) {
+    final subCatData = categoryData[subCatName];
+    if (subCatData == null || subCatData.isEmpty) return "";
+
+    final allProducts = <ProductImageModel>[];
+    for (final productList in subCatData.values) {
+      allProducts.addAll(productList);
+    }
+
+    if (allProducts.isEmpty) return "";
+    final stableIndex = subCatName.hashCode.abs() % allProducts.length;
+    return allProducts[stableIndex].image;
+  }
+
+  String _getParentCategoryIcon(
+    String categoryName,
+    Map<String, Map<String, List<ProductImageModel>>> categoryData,
+  ) {
+    final allProducts = <ProductImageModel>[];
+    for (final nestedMap in categoryData.values) {
+      for (final productList in nestedMap.values) {
+        allProducts.addAll(productList);
+      }
+    }
+
+    if (allProducts.isEmpty) return "";
+    final stableIndex = categoryName.hashCode.abs() % allProducts.length;
+    return allProducts[stableIndex].image;
+  }
+
+  void _selectCategory(String categoryName, int selectedIndex) {
+    if (_selectedCategory == categoryName) return;
+    setState(() {
+      _selectedCategory = categoryName;
+      final currentTabData = _productsByTabCategorySub[selectedIndex];
+      final categoryData = currentTabData?[categoryName];
+      if (categoryData != null && categoryData.length == 1) {
+        _selectedSubCategory = categoryData.keys.first;
+      } else {
+        _selectedSubCategory = "All";
+      }
+      _selectedNestedSubCategory = "";
+    });
+  }
+
+  Widget _buildQuickCategoryItem(
+    ProductImageModel product,
+    int selectedIndex,
+  ) {
+    return CircularIconItem(
+      label: product.name,
+      isSelected: _selectedCategory == product.name,
+      useUnderline: true,
+      selectedBorderColor: const Color(0xFFEEEEEE),
+      onTap: () => _selectCategory(product.name, selectedIndex),
+      child: ClipOval(
+        child: Image.asset(
+          product.image,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSplitCategoryMenu(
+    List<ProductImageModel> quickProducts,
+    int selectedIndex,
+  ) {
+    const int columns = 4;
+    const double rowGap = 8;
+    const double itemWidth = 72;
+
+    final cells = <Widget>[];
+    if (!_quickExpanded && quickProducts.length > columns) {
+      cells.addAll(
+        quickProducts
+            .take(columns - 1)
+            .map((p) => _buildQuickCategoryItem(p, selectedIndex)),
+      );
+      cells.add(
+        CircularIconItem(
+          label: 'View More',
+          useUnderline: true,
+          onTap: () => setState(() => _quickExpanded = true),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFEEEEEE),
+              border: Border.all(color: Colors.transparent),
+            ),
+            child: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: Color(0xFF5D5D5D),
+            ),
+          ),
+        ),
+      );
+    } else {
+      cells.addAll(
+        quickProducts.map((p) => _buildQuickCategoryItem(p, selectedIndex)),
+      );
+      if (quickProducts.length > columns) {
+        final spacerCount =
+            (columns - 1 - (quickProducts.length % columns) + columns) %
+                columns;
+        for (int i = 0; i < spacerCount; i++) {
+          cells.add(const SizedBox.shrink());
+        }
+        cells.add(
+          CircularIconItem(
+            label: 'View Less',
+            useUnderline: true,
+            onTap: () => setState(() => _quickExpanded = false),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFEEEEEE),
+                border: Border.all(color: Colors.transparent),
+              ),
+              child: const Icon(
+                Icons.keyboard_arrow_up_rounded,
+                size: 20,
+                color: Color(0xFF5D5D5D),
+              ),
+            ),
           ),
         );
       }
     }
 
-    return quickItems.isEmpty ? fallbackProducts.take(4).toList() : quickItems;
+    if (cells.isEmpty) return const SizedBox.shrink();
+
+    final rows = <List<Widget>>[];
+    for (int i = 0; i < cells.length; i += columns) {
+      final end = (i + columns < cells.length) ? i + columns : cells.length;
+      rows.add(cells.sublist(i, end));
+    }
+
+    return Column(
+      children: rows.asMap().entries.map((entry) {
+        final rowIndex = entry.key;
+        final rowItems = entry.value;
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: rowIndex == rows.length - 1 ? 0 : rowGap),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: rowItems
+                .map(
+                  (cell) => SizedBox(
+                    width: itemWidth,
+                    child: Center(child: cell),
+                  ),
+                )
+                .toList(),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   List<ProductImageModel> _resolveVisibleProducts(
@@ -237,17 +483,32 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       return fallbackProducts;
     }
 
-    final categoryGroups = currentTabData[selectedCategory];
-    if (categoryGroups == null || categoryGroups.isEmpty) {
+    final categoryData = currentTabData[selectedCategory];
+    if (categoryData == null || categoryData.isEmpty) {
       return fallbackProducts;
     }
 
     if (_selectedSubCategory == "All") {
       final allItems = <ProductImageModel>[];
-      categoryGroups.values.forEach(allItems.addAll);
+      for (final subGroup in categoryData.values) {
+        for (final nestedGroup in subGroup.values) {
+          allItems.addAll(nestedGroup);
+        }
+      }
       return allItems;
     } else {
-      return categoryGroups[_selectedSubCategory] ?? [];
+      final subCatData = categoryData[_selectedSubCategory];
+      if (subCatData == null) return [];
+
+      if (_selectedNestedSubCategory.isEmpty || _selectedNestedSubCategory == "All") {
+        final allNestedItems = <ProductImageModel>[];
+        for (final items in subCatData.values) {
+          allNestedItems.addAll(items);
+        }
+        return allNestedItems;
+      } else {
+        return subCatData[_selectedNestedSubCategory] ?? [];
+      }
     }
   }
 
@@ -596,88 +857,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      if (!_quickExpanded)
-                        SizedBox(
-                          height: 80,
-                          child: HorizontalIconGrid(
-                            itemCount: quickProducts.length,
-                            itemBuilder: (context, index) {
-                              final product = quickProducts[index];
-                              return CircularIconItem(
-                                label: product.name,
-                                isSelected: _selectedCategory == product.name,
-                                selectedBorderColor: const Color(0xFFEEEEEE),
-                                onTap: () {
-                                  setState(() {
-                                    _selectedCategory = product.name;
-                                    _selectedSubCategory = "All";
-                                  });
-                                },
-                                child: ClipOval(
-                                  child: Image.asset(
-                                    product.image,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
-                            },
-                            viewMoreWidget: CircularIconItem(
-                              label: 'View More',
-                              onTap: () {},
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color(0xFFEEEEEE),
-                                  border: Border.all(color: Colors.transparent),
-                                ),
-                                child: const Icon(
-                                  Iconsax.arrow_right_3,
-                                  size: 20,
-                                  color: Color(0xFF5D5D5D),
-                                ),
-                              ),
-                            ),
-                            onViewMoreTap: () {
-                              setState(() {
-                                _quickExpanded = true;
-                              });
-                            },
-                          ),
-                        )
-                      else
-                        SizedBox(
-                          height: (78 * 2) + 6,
-                          child: GridView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 6,
-                              mainAxisExtent: 78,
-                            ),
-                            itemCount: quickProducts.length > 8 ? 8 : quickProducts.length,
-                            itemBuilder: (context, index) {
-                              final product = quickProducts[index];
-                              return CircularIconItem(
-                                label: product.name,
-                                isSelected: _selectedCategory == product.name,
-                                selectedBorderColor: const Color(0xFFEEEEEE),
-                                onTap: () {
-                                  setState(() {
-                                    _selectedCategory = product.name;
-                                    _selectedSubCategory = "All";
-                                  });
-                                },
-                                child: ClipOval(
-                                  child: Image.asset(
-                                    product.image,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                      _buildSplitCategoryMenu(
+                        quickProducts,
+                        homeState.selectedIndex,
+                      ),
                       const SizedBox(height: 10),
                       _buildSubCategoryMenu(),
                       const SizedBox(height: 12),
@@ -811,48 +994,131 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     if (categoryData == null || categoryData.isEmpty) return const SizedBox.shrink();
 
-    final subCategories = ["All", ...categoryData.keys];
+    final subCategories = (categoryData.length > 1)
+        ? ["All", ...categoryData.keys]
+        : categoryData.keys.toList();
 
-    return SizedBox(
-      height: 22,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: subCategories.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 15),
-        itemBuilder: (context, index) {
-          final subCat = subCategories[index];
-          final isSelected = _selectedSubCategory == subCat;
+    List<String> nestedSubCategories = [];
+    if (_selectedSubCategory != "All") {
+      final nestedData = categoryData[_selectedSubCategory];
+      if (nestedData != null) {
+        nestedSubCategories.addAll(nestedData.keys);
+      }
+    }
 
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedSubCategory = subCat;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.only(bottom: 1),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: isSelected ? const Color(0xFF5D5D5D) : Colors.transparent,
-                    width: 1.0,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 80,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: subCategories.map((subCat) {
+                final isSelected = _selectedSubCategory == subCat;
+
+                String iconImage = "";
+                if (subCat == "All") {
+                  iconImage = _getParentCategoryIcon(selectedCategory, categoryData);
+                } else {
+                  iconImage = _getSubCategoryIcon(subCat, categoryData);
+                }
+
+                if (iconImage.isEmpty) {
+                  final iconIndex = subCat.hashCode.abs() % 9;
+                  iconImage = "assets/transparent/${iconIndex + 1}.png";
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: CircularIconItem(
+                    label: subCat,
+                    isSelected: isSelected,
+                    size: 50,
+                    useUnderline: true,
+                    isCircular: false,
+                    onTap: () {
+                      setState(() {
+                        if (_selectedSubCategory != subCat) {
+                          _selectedSubCategory = subCat;
+                          _selectedNestedSubCategory = "";
+                        }
+                      });
+                    },
+                    child: Image.asset(iconImage, fit: BoxFit.contain),
                   ),
-                ),
-              ),
-              child: Text(
-                subCat,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: isSelected ? const Color(0xFF5D5D5D) : const Color(0xFF5D5D5D).withOpacity(0.5),
-                ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        if (_selectedSubCategory != "All" && nestedSubCategories.length > 1) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 32,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: nestedSubCategories.map((nSubCat) {
+                  final isSelected = _selectedNestedSubCategory == nSubCat;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (_selectedNestedSubCategory != nSubCat) {
+                            _selectedNestedSubCategory = nSubCat;
+                          }
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFFB5B5B5)
+                                : const Color(0xFFD9D9D9),
+                            width: 0.5,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.075),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            nSubCat,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF5D5D5D),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        ],
+      ],
     );
   }
+
 }
 
 class _PremiumActionButton extends StatelessWidget {

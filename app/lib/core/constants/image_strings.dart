@@ -147,55 +147,57 @@ class ProductImageModel {
   final String name;
   final String image;
   final bool isTrending;
-  final String? imageCategory;
-  final String? subCategory;
+  final String? category;
+  final String? subcategory;
+  final String? nestedSubcategory;
 
   ProductImageModel({
     required this.id,
     required this.name,
     required this.image,
     required this.isTrending,
-    this.imageCategory,
-    this.subCategory,
+    this.category,
+    this.subcategory,
+    this.nestedSubcategory,
   });
 }
 
 class TProductImages {
   static List<ProductImageModel> productImages = [
-    ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/DECO/0.8mm LAM/Bathroom-2.jpg', isTrending: true, imageCategory: 'Interiors', subCategory: 'Kitchen'),
-    ProductImageModel(id: '2', name: 'Dining', image: 'assets/DECO/0.8mm LAM/Cafeteria.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Dining'),
-    ProductImageModel(id: '3', name: 'Dining', image: 'assets/DECO/0.8mm LAM/Coffee Table.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Dining'),
-    ProductImageModel(id: '4', name: 'Study', image: 'assets/DECO/0.8mm LAM/Gloss Section Breaker_2.jpg', isTrending: true, imageCategory: 'Interiors', subCategory: 'Study'),
-    ProductImageModel(id: '5', name: 'Table', image: 'assets/DECO/0.8mm LAM/Gloss.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Table'),
-    ProductImageModel(id: '6', name: 'Furniture', image: 'assets/DECO/0.8mm LAM/Kitchen.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Furniture'),
-    ProductImageModel(id: '7', name: 'Furniture 7', image: 'assets/DECO/0.8mm LAM/Living Room-2.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Furniture 7'),
-    ProductImageModel(id: '8', name: 'Furniture 8', image: 'assets/DECO/0.8mm LAM/Woodgrains-4.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Furniture 8'),
-    ProductImageModel(id: '9', name: 'Furniture 9', image: 'assets/DECO/NATZURA/iStock-1074960128.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Furniture 9'),
-    ProductImageModel(id: '10', name: 'Furniture 10', image: 'assets/DECO/SENZURA/Dark Series Application images (2).jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Furniture 10'),
+    ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/DECO/0.8mm LAM/Bathroom-2.jpg', isTrending: true, category: 'Interiors', subcategory: 'Kitchen'),
+    ProductImageModel(id: '2', name: 'Dining', image: 'assets/DECO/0.8mm LAM/Cafeteria.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Dining'),
+    ProductImageModel(id: '3', name: 'Dining', image: 'assets/DECO/0.8mm LAM/Coffee Table.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Dining'),
+    ProductImageModel(id: '4', name: 'Study', image: 'assets/DECO/0.8mm LAM/Gloss Section Breaker_2.jpg', isTrending: true, category: 'Interiors', subcategory: 'Study'),
+    ProductImageModel(id: '5', name: 'Table', image: 'assets/DECO/0.8mm LAM/Gloss.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Table'),
+    ProductImageModel(id: '6', name: 'Furniture', image: 'assets/DECO/0.8mm LAM/Kitchen.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Furniture'),
+    ProductImageModel(id: '7', name: 'Furniture 7', image: 'assets/DECO/0.8mm LAM/Living Room-2.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Furniture 7'),
+    ProductImageModel(id: '8', name: 'Furniture 8', image: 'assets/DECO/0.8mm LAM/Woodgrains-4.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Furniture 8'),
+    ProductImageModel(id: '9', name: 'Furniture 9', image: 'assets/DECO/NATZURA/iStock-1074960128.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Furniture 9'),
+    ProductImageModel(id: '10', name: 'Furniture 10', image: 'assets/DECO/SENZURA/Dark Series Application images (2).jpg', isTrending: false, category: 'Furnitures', subcategory: 'Furniture 10'),
   ];
 }
 
 
 class ProductImages {
   static List<ProductImageModel> productImages = [
-    ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/DECO/1mm LAM/page 13- R.jpg', isTrending: true, imageCategory: 'Interiors', subCategory: 'Kitchen'),
-    ProductImageModel(id: '2', name: 'Dining', image: 'assets/DECO/1mm LAM/page 23 - R.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Dining'),
-    ProductImageModel(id: '3', name: 'Bedroom', image: 'assets/DECO/1mm LAM/page 24 - L.jpg', isTrending: false, imageCategory: 'Interiors', subCategory: 'Bedroom'),
-    ProductImageModel(id: '4', name: 'Study', image: 'assets/DECO/1mm LAM/Page 43 - R.jpg', isTrending: true, imageCategory: 'Interiors', subCategory: 'Study'),
-    ProductImageModel(id: '5', name: 'Living Space', image: 'assets/DECO/1mm LAM/Page 51 - R.jpg', isTrending: false, imageCategory: 'Interiors', subCategory: 'Living Space'),
-    ProductImageModel(id: '6', name: 'Table', image: 'assets/DECO/1mm LAM/Page 76 - L.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Table'),
-    ProductImageModel(id: '7', name: 'Furniture', image: 'assets/DECO/1mm LAM/Page 88 - L.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Furniture'),
-    ProductImageModel(id: '8', name: 'Page 90 Left', image: 'assets/DECO/1mm LAM/Page 90 - L.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Beds'),
-    ProductImageModel(id: '9', name: 'Page 125 Right', image: 'assets/DECO/1mm LAM/Page 125 - R.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Living Room'),
-    ProductImageModel(id: '10', name: 'Page 135 Right', image: 'assets/DECO/1mm LAM/Page 135 - R.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Cabinets'),
-    ProductImageModel(id: '11', name: 'Page 139 Right', image: 'assets/DECO/1mm LAM/Page 139 - R.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Wardrobe'),
-    ProductImageModel(id: '12', name: 'Page 146 Left', image: 'assets/DECO/1mm LAM/Page 146 - L.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Sofa'),
-    ProductImageModel(id: '13', name: 'Page 150 Left', image: 'assets/DECO/1mm LAM/Page 150 - L.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Chair'),
-    ProductImageModel(id: '14', name: 'Page 155 Right', image: 'assets/DECO/1mm LAM/Page 155 - R.jpg', isTrending: false, imageCategory: 'Furnitures', subCategory: 'Table'),
-    ProductImageModel(id: '15', name: 'Page 168 Left', image: 'assets/DECO/1mm LAM/Page 168 - L.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Kitchen'),
-    ProductImageModel(id: '16', name: 'Page 171 Right', image: 'assets/DECO/1mm LAM/Page 171 - R.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Dining'),
-    ProductImageModel(id: '17', name: 'Page 175 Left', image: 'assets/DECO/1mm LAM/Page 175 - L.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Bedroom'),
-    ProductImageModel(id: '18', name: 'Page 186 Left', image: 'assets/DECO/1mm LAM/Page 186 - L.jpg', isTrending: true, imageCategory: 'Furnitures', subCategory: 'Living Space'),
+    ProductImageModel(id: '1', name: 'Kitchen', image: 'assets/DECO/1mm LAM/page 13- R.jpg', isTrending: true, category: 'Interiors', subcategory: 'Kitchen'),
+    ProductImageModel(id: '2', name: 'Dining', image: 'assets/DECO/1mm LAM/page 23 - R.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Dining'),
+    ProductImageModel(id: '3', name: 'Bedroom', image: 'assets/DECO/1mm LAM/page 24 - L.jpg', isTrending: false, category: 'Interiors', subcategory: 'Bedroom'),
+    ProductImageModel(id: '4', name: 'Study', image: 'assets/DECO/1mm LAM/Page 43 - R.jpg', isTrending: true, category: 'Interiors', subcategory: 'Study'),
+    ProductImageModel(id: '5', name: 'Living Space', image: 'assets/DECO/1mm LAM/Page 51 - R.jpg', isTrending: false, category: 'Interiors', subcategory: 'Living Space'),
+    ProductImageModel(id: '6', name: 'Table', image: 'assets/DECO/1mm LAM/Page 76 - L.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Table'),
+    ProductImageModel(id: '7', name: 'Furniture', image: 'assets/DECO/1mm LAM/Page 88 - L.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Furniture'),
+    ProductImageModel(id: '8', name: 'Page 90 Left', image: 'assets/DECO/1mm LAM/Page 90 - L.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Beds'),
+    ProductImageModel(id: '9', name: 'Page 125 Right', image: 'assets/DECO/1mm LAM/Page 125 - R.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Living Room'),
+    ProductImageModel(id: '10', name: 'Page 135 Right', image: 'assets/DECO/1mm LAM/Page 135 - R.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Cabinets'),
+    ProductImageModel(id: '11', name: 'Page 139 Right', image: 'assets/DECO/1mm LAM/Page 139 - R.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Wardrobe'),
+    ProductImageModel(id: '12', name: 'Page 146 Left', image: 'assets/DECO/1mm LAM/Page 146 - L.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Sofa'),
+    ProductImageModel(id: '13', name: 'Page 150 Left', image: 'assets/DECO/1mm LAM/Page 150 - L.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Chair'),
+    ProductImageModel(id: '14', name: 'Page 155 Right', image: 'assets/DECO/1mm LAM/Page 155 - R.jpg', isTrending: false, category: 'Furnitures', subcategory: 'Table'),
+    ProductImageModel(id: '15', name: 'Page 168 Left', image: 'assets/DECO/1mm LAM/Page 168 - L.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Kitchen'),
+    ProductImageModel(id: '16', name: 'Page 171 Right', image: 'assets/DECO/1mm LAM/Page 171 - R.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Dining'),
+    ProductImageModel(id: '17', name: 'Page 175 Left', image: 'assets/DECO/1mm LAM/Page 175 - L.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Bedroom'),
+    ProductImageModel(id: '18', name: 'Page 186 Left', image: 'assets/DECO/1mm LAM/Page 186 - L.jpg', isTrending: true, category: 'Furnitures', subcategory: 'Living Space'),
   ];
 }
 
