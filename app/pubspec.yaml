@@ -93,7 +93,24 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/logos/
-    - assets/transparent/
+
+    - assets/transaparent/Bed_room/
+    - assets/transaparent/Bed_room/Sub_categories/
+    - assets/transaparent/Study/
+    - assets/transaparent/Study/subcategories/
+    - assets/transaparent/Office/
+    - assets/transaparent/Office/Sub_categories/
+    - assets/transaparent/Bathroom/
+    - assets/transaparent/Bathroom/Sub_categories/
+    - assets/transaparent/Product_wise_product_category/
+    - assets/transaparent/Kids_Bed_room/
+    - assets/transaparent/Kids_Bed_room/Sub_category/
+    - assets/transaparent/Dining/
+    - assets/transaparent/Dining/Subcategories/
+    - assets/transaparent/Kitchen/
+    - assets/transaparent/Kitchen/Subcategories/
+    - assets/transaparent/Living_room/
+    - assets/transaparent/Living_room/Living_room_sub_categories/
     - assets/db/app.db
     - assets/images/content/
     - assets/images/animations/

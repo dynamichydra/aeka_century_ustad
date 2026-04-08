@@ -50,6 +50,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   _productsByTabCategorySub = {};
   String _selectedNestedSubCategory = "";
 
+  final Map<String, String> _categoryIcons = {};
+  final Map<String, String> _subCategoryIcons = {};
+
   double _bottomCtaReservedSpace(BuildContext context) {
     // Keep the scrolling content from being hidden behind the bottom CTA row.
     // Also accounts for device bottom inset (gesture nav / home indicator).
@@ -89,7 +92,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         }
       }
       final parsed =
-          <int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>>{};
+          <
+            int,
+            Map<String, Map<String, Map<String, List<ProductImageModel>>>>
+          >{};
       final List<dynamic> rootData = json.decode(rawJson);
 
       for (int tabIndex = 0; tabIndex < rootData.length; tabIndex++) {
@@ -99,6 +105,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
         for (final catNode in categories) {
           final category = catNode['name'] ?? 'Unknown';
+          if (catNode['optional_all_img'] != null) {
+            final rawIcon = catNode['optional_all_img'].toString();
+            _categoryIcons[category] = rawIcon.startsWith('assets/') ? rawIcon : 'assets/$rawIcon';
+          }
           final subCatsMap = <String, Map<String, List<ProductImageModel>>>{};
           final List<dynamic> catChildren = catNode['children'] ?? [];
 
@@ -118,7 +128,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 fileNameAssetMap,
               );
               if (product != null) {
-                subCatsMap.putIfAbsent('General', () => {})
+                subCatsMap
+                    .putIfAbsent('General', () => {})
                     .putIfAbsent('General', () => [])
                     .add(product);
               }
@@ -127,6 +138,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
             // Otherwise treated as a SubCategory
             final subCat = subCatMapRaw['name'] ?? 'General';
+            if (subCatMapRaw['image'] != null) {
+              final rawIcon = subCatMapRaw['image'].toString();
+              _subCategoryIcons[subCat] = rawIcon.startsWith('assets/') ? rawIcon : 'assets/$rawIcon';
+            }
             final nestedGroups = <String, List<ProductImageModel>>{};
             final List<dynamic> subCatChildren = subCatMapRaw['children'] ?? [];
 
@@ -223,18 +238,21 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final rawPath = (map['image_path'] ?? '').toString().trim();
     if (rawPath.isEmpty) return null;
 
-    final prefixedPath =
-        rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
-    final resolvedPath = exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
+    final prefixedPath = rawPath.startsWith('assets/')
+        ? rawPath
+        : 'assets/$rawPath';
+    final resolvedPath =
+        exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
         softAssetMap[_normalizeAssetPathSoft(prefixedPath)] ??
         fileNameAssetMap[_fileNameFromPath(rawPath)];
 
     if (resolvedPath == null) return null;
 
     return ProductImageModel(
-      id: (map['id'] ??
-              '${category}_${subCat}_${nestedSubCat}_${DateTime.now().microsecondsSinceEpoch}')
-          .toString(),
+      id:
+          (map['id'] ??
+                  '${category}_${subCat}_${nestedSubCat}_${DateTime.now().microsecondsSinceEpoch}')
+              .toString(),
       name: category,
       image: resolvedPath,
       category: category,
@@ -306,6 +324,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     String subCatName,
     Map<String, Map<String, List<ProductImageModel>>> categoryData,
   ) {
+    if (_subCategoryIcons.containsKey(subCatName)) {
+      return _subCategoryIcons[subCatName]!;
+    }
+
     final subCatData = categoryData[subCatName];
     if (subCatData == null || subCatData.isEmpty) return "";
 
@@ -324,6 +346,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     String categoryName,
     Map<String, Map<String, List<ProductImageModel>>> categoryData,
   ) {
+    if (_categoryIcons.containsKey(categoryName)) {
+      return _categoryIcons[categoryName]!;
+    }
+
     final allProducts = <ProductImageModel>[];
     for (final nestedMap in categoryData.values) {
       for (final productList in nestedMap.values) {
@@ -766,8 +792,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         _selectedCategory = product.name;
 
                                         final currentTabData =
-                                            _productsByTabCategorySub[
-                                                homeState.selectedIndex];
+                                            _productsByTabCategorySub[homeState
+                                                .selectedIndex];
                                         final categoryData =
                                             currentTabData?[product.name];
                                         if (categoryData != null &&
@@ -992,7 +1018,26 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         }
                       });
                     },
-                    child: Image.asset(iconImage, fit: BoxFit.contain),
+                    child: Image.asset(
+                      iconImage,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('SubCategory Image.asset failed for path: "$iconImage" - Error: $error');
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              iconImage.isEmpty ? "EMPTY" : iconImage.split('/').last,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.red, fontSize: 8),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 );
               }).toList(),
