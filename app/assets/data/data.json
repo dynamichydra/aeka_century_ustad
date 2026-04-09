@@ -1497,7 +1497,7 @@
             ]
           }
         ],
-        "optional_all_img": "transaparent/Dining/Dining.png"
+        "optional_all_img": "transaparent/Dining/Dining_all.png"
       },
       {
         "id": 13,
@@ -3655,7 +3655,7 @@
             ]
           }
         ],
-        "optional_all_img": "transaparent/Bed_room/Bed_room.png"
+        "optional_all_img": "transaparent/Bed_room/Bedroom_all.png"
       },
       {
         "id": 14,
@@ -3742,7 +3742,7 @@
         "children": [
           {
             "id": 151,
-            "name": "Chest of Drawers",
+            "name": "Chest Drawers",
             "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
             "children": [
               {
@@ -7616,7 +7616,7 @@
             ]
           }
         ],
-        "optional_all_img": "transaparent/Living_room/Living_room.jpg"
+        "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(All)_1.png"
       },
       {
         "id": 16,
@@ -8378,7 +8378,7 @@
         "children": [
           {
             "id": 181,
-            "name": "Reception Area Furniture",
+            "name": "Reception Area",
             "image": "transaparent/Office/Sub_categories/Reception_Area.jpg",
             "children": [
               {
@@ -9051,7 +9051,7 @@
           },
           {
             "id": 182,
-            "name": "Conference Room Furniture",
+            "name": "Conference Room",
             "image": "transaparent/Office/Sub_categories/Conference_room.png",
             "children": [
               {
@@ -10025,7 +10025,7 @@
           },
           {
             "id": 183,
-            "name": "Cafeteria Furniture",
+            "name": "Cafeteria",
             "image": "transaparent/Office/Sub_categories/Cafeteria.png",
             "children": [
               {
@@ -10243,7 +10243,7 @@
           },
           {
             "id": 184,
-            "name": "Office Table",
+            "name": "Table",
             "image": "transaparent/Office/Sub_categories/office_table.png",
             "children": [
               {
@@ -11015,7 +11015,7 @@
           },
           {
             "id": 185,
-            "name": "Office Cabinet",
+            "name": "Cabinet",
             "image": "transaparent/Office/Sub_categories/office_cabinet.png",
             "children": [
               {
@@ -11050,7 +11050,7 @@
           },
           {
             "id": 186,
-            "name": "Office Cubicles",
+            "name": "Cubicles",
             "image": "transaparent/Office/Sub_categories/Office_cubicles.png",
             "children": [
               {
@@ -11241,7 +11241,7 @@
             ]
           }
         ],
-        "optional_all_img": "transaparent/Office/Office.jpg"
+        "optional_all_img": "transaparent/Office/Office_all.png"
       }
     ]
   },
