@@ -659,21 +659,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         ),
                         child: TextField(
                           controller: _searchController,
-                          cursorHeight: 18,
-                          cursorColor: TColors.primary,
+                          cursorHeight: 15,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                            color: Color(0xFF1F1919),
+                            fontWeight: FontWeight.w100,
+                            fontSize: 13,
                           ),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 24,
+                              vertical: 10,
+                              horizontal: 20,
                             ),
+
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
                               borderSide: BorderSide.none,
@@ -684,53 +683,44 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(
-                                color: TColors.primary.withOpacity(0.2),
-                                width: 1,
-                              ),
+                              borderSide: BorderSide.none,
                             ),
+
                             suffixIconConstraints: const BoxConstraints(
-                              maxHeight: 40,
-                              maxWidth: 52,
+                              maxHeight: 32,
+                              maxWidth: 44,
                             ),
                             suffixIcon: GestureDetector(
                               onTap: () => homeCubit.fetchResults(),
                               child: Container(
-                                margin: const EdgeInsets.only(right: 6),
+                                margin: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF2D2D2D),
-                                      Color(0xFF1A1A1A),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
+                                  color: Colors.white,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
+                                      color: Colors.black.withOpacity(0.12),
                                       blurRadius: 4,
-                                      offset: const Offset(0, 2),
+                                      spreadRadius: 0,
+                                      offset: const Offset(0, 0),
                                     ),
                                   ],
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(10.0),
+                                  padding: const EdgeInsets.all(8.0),
                                   child: Image.asset(
                                     "assets/icons/app_icons/ai_search.png",
-                                    width: 14,
-                                    height: 14,
-                                    color: Colors.white,
+                                    width: 12,
+                                    height: 12,
                                   ),
                                 ),
                               ),
                             ),
-                            hintText: "AI-powered furniture inspiration",
-                            hintStyle: TextStyle(
+
+                            hintText: "Ai based furniture idea search",
+                            hintStyle: const TextStyle(
                               fontSize: 13,
-                              fontWeight: FontWeight.w300,
-                              color: const Color(0xFF1F1919).withOpacity(0.5),
+                              fontWeight: FontWeight.w100,
                             ),
                           ),
                           onChanged: (val) => homeCubit.setSearchQuery(val),
@@ -747,7 +737,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           children: [
                             SizedBox(
                               width: 150,
-                              height: 30,
+                              height: 20,
                               child: TabBar(
                                 isScrollable: true,
                                 padding: EdgeInsets.zero,
@@ -755,12 +745,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 tabAlignment: TabAlignment.start,
                                 indicator: const UnderlineTabIndicator(
                                   borderSide: BorderSide(
-                                    width: 2.0,
-                                    color: Color(0xFF1F1919),
-                                  ),
-                                  insets: EdgeInsets.only(
-                                    right: 16,
-                                    bottom: -4,
+                                    width: 1.0,
+                                    color: Color(0xFF5D5D5D),
                                   ),
                                 ),
                                 indicatorSize: TabBarIndicatorSize.label,
