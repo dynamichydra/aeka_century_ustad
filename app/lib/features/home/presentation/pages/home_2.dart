@@ -610,29 +610,30 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 4,
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 10,
                               spreadRadius: 0,
-                              offset: const Offset(0, 0),
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: TextField(
                           controller: _searchController,
-                          cursorHeight: 15,
+                          cursorHeight: 18,
+                          cursorColor: TColors.primary,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w100,
-                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            color: Color(0xFF1F1919),
                           ),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
+                              vertical: 14,
+                              horizontal: 24,
                             ),
-
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
                               borderSide: BorderSide.none,
@@ -643,44 +644,50 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide.none,
+                              borderSide: BorderSide(
+                                color: TColors.primary.withOpacity(0.2),
+                                width: 1,
+                              ),
                             ),
-
                             suffixIconConstraints: const BoxConstraints(
-                              maxHeight: 32,
-                              maxWidth: 44,
+                              maxHeight: 40,
+                              maxWidth: 52,
                             ),
                             suffixIcon: GestureDetector(
                               onTap: () => homeCubit.fetchResults(),
                               child: Container(
-                                margin: const EdgeInsets.all(4),
+                                margin: const EdgeInsets.only(right: 6),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF2D2D2D), Color(0xFF1A1A1A)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.12),
+                                      color: Colors.black.withOpacity(0.2),
                                       blurRadius: 4,
-                                      spreadRadius: 0,
-                                      offset: const Offset(0, 0),
+                                      offset: const Offset(0, 2),
                                     ),
                                   ],
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
+                                  padding: const EdgeInsets.all(10.0),
                                   child: Image.asset(
                                     "assets/icons/app_icons/ai_search.png",
-                                    width: 12,
-                                    height: 12,
+                                    width: 14,
+                                    height: 14,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
                             ),
-
-                            hintText: "Ai based furniture idea search",
-                            hintStyle: const TextStyle(
+                            hintText: "AI-powered furniture inspiration",
+                            hintStyle: TextStyle(
                               fontSize: 13,
-                              fontWeight: FontWeight.w100,
+                              fontWeight: FontWeight.w300,
+                              color: const Color(0xFF1F1919).withOpacity(0.5),
                             ),
                           ),
                           onChanged: (val) => homeCubit.setSearchQuery(val),
@@ -705,9 +712,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 tabAlignment: TabAlignment.start,
                                 indicator: const UnderlineTabIndicator(
                                   borderSide: BorderSide(
-                                    width: 1.0,
-                                    color: Color(0xFF5D5D5D),
+                                    width: 2.0,
+                                    color: Color(0xFF1F1919),
                                   ),
+                                  insets: EdgeInsets.only(right: 16, bottom: -4),
                                 ),
                                 indicatorSize: TabBarIndicatorSize.label,
                                 dividerColor: Colors.transparent,
@@ -1079,20 +1087,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                          color: isSelected ? const Color(0xFF1F1919) : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFFB5B5B5)
-                                : const Color(0xFFD9D9D9),
-                            width: 0.5,
+                                ? const Color(0xFF1F1919)
+                                : const Color(0xFFF0F0F0),
+                            width: 1,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.075),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
                                 ]
                               : null,
@@ -1101,9 +1109,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           child: Text(
                             nSubCat,
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF5D5D5D),
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected ? Colors.white : const Color(0xFF898888),
+                              letterSpacing: 0.2,
                             ),
                           ),
                         ),
