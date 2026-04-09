@@ -48,8 +48,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   // TabIndex -> Category -> SubCategory -> NestedSubCategory -> Items
   Map<int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>>
   _productsByTabCategorySub = {};
+
   String _selectedSubCategory = "All";
   String _selectedNestedSubCategory = "";
+
+  final Map<String, String> _categoryIcons = {};
+  final Map<String, String> _subCategoryIcons = {};
 
   double _bottomCtaReservedSpace(BuildContext context) {
     // Keep the scrolling content from being hidden behind the bottom CTA row.
@@ -89,16 +93,29 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           fileNameAssetMap.putIfAbsent(fileNameKey, () => assetPath);
         }
       }
-      final parsed = <int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>> {};
+      final parsed =
+          <
+            int,
+            Map<String, Map<String, Map<String, List<ProductImageModel>>>>
+          >{};
       final List<dynamic> rootData = json.decode(rawJson);
 
       for (int tabIndex = 0; tabIndex < rootData.length; tabIndex++) {
         final rootNode = rootData[tabIndex];
         final List<dynamic> categories = rootNode['children'] ?? [];
-        final Map<String, Map<String, Map<String, List<ProductImageModel>>>> tabMap = {};
+        final Map<String, Map<String, Map<String, List<ProductImageModel>>>>
+        tabMap = {};
 
         for (final catNode in categories) {
           final category = catNode['name'] ?? 'Unknown';
+
+          if (catNode['optional_all_img'] != null) {
+            final rawIcon = catNode['optional_all_img'].toString();
+            _categoryIcons[category] = rawIcon.startsWith('assets/')
+                ? rawIcon
+                : 'assets/$rawIcon';
+          }
+
           final subCatsMap = <String, Map<String, List<ProductImageModel>>>{};
           final List<dynamic> catChildren = catNode['children'] ?? [];
 
@@ -118,7 +135,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 fileNameAssetMap,
               );
               if (product != null) {
-                subCatsMap.putIfAbsent('General', () => {})
+                subCatsMap
+                    .putIfAbsent('General', () => {})
                     .putIfAbsent('General', () => [])
                     .add(product);
               }
@@ -127,6 +145,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
             // Otherwise treated as a SubCategory
             final subCat = subCatMapRaw['name'] ?? 'General';
+
+            if (subCatMapRaw['image'] != null) {
+              final rawIcon = subCatMapRaw['image'].toString();
+              _subCategoryIcons[subCat] = rawIcon.startsWith('assets/')
+                  ? rawIcon
+                  : 'assets/$rawIcon';
+            }
+
             final nestedGroups = <String, List<ProductImageModel>>{};
             final List<dynamic> subCatChildren = subCatMapRaw['children'] ?? [];
 
@@ -197,12 +223,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         _productsByTabCategorySub = parsed;
         // Set default category and sub-category for initial tab
         final currentTab = context.read<HomeCubit>().state.selectedIndex;
-        final initialTabCategories = _productsByTabCategorySub[currentTab]?.keys;
+        final initialTabCategories =
+            _productsByTabCategorySub[currentTab]?.keys;
         if (initialTabCategories != null && initialTabCategories.isNotEmpty) {
           _selectedCategory = initialTabCategories.first;
-          
+
           // Robust default sub-category
-          final catData = _productsByTabCategorySub[currentTab]?[_selectedCategory];
+          final catData =
+              _productsByTabCategorySub[currentTab]?[_selectedCategory];
           if (catData != null && catData.length == 1) {
             _selectedSubCategory = catData.keys.first;
           } else {
@@ -228,18 +256,21 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final rawPath = (map['image_path'] ?? '').toString().trim();
     if (rawPath.isEmpty) return null;
 
-    final prefixedPath =
-        rawPath.startsWith('assets/') ? rawPath : 'assets/$rawPath';
-    final resolvedPath = exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
+    final prefixedPath = rawPath.startsWith('assets/')
+        ? rawPath
+        : 'assets/$rawPath';
+    final resolvedPath =
+        exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
         softAssetMap[_normalizeAssetPathSoft(prefixedPath)] ??
         fileNameAssetMap[_fileNameFromPath(rawPath)];
 
     if (resolvedPath == null) return null;
 
     return ProductImageModel(
-      id: (map['id'] ??
-              '${category}_${subcategory}_${nestedSubcategory}_${DateTime.now().microsecondsSinceEpoch}')
-          .toString(),
+      id:
+          (map['id'] ??
+                  '${category}_${subcategory}_${nestedSubcategory}_${DateTime.now().microsecondsSinceEpoch}')
+              .toString(),
       name: category,
       image: resolvedPath,
       category: category,
@@ -276,7 +307,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       return fallbackProducts.take(4).toList();
     }
 
-    final quickItems = <ProductImageModel>[];    
+    final quickItems = <ProductImageModel>[];
     for (final entry in currentTabData.entries) {
       if (entry.value.isEmpty) continue;
 
@@ -308,6 +339,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     String subCatName,
     Map<String, Map<String, List<ProductImageModel>>> categoryData,
   ) {
+    if (_subCategoryIcons.containsKey(subCatName)) {
+      return _subCategoryIcons[subCatName]!;
+    }
+
     final subCatData = categoryData[subCatName];
     if (subCatData == null || subCatData.isEmpty) return "";
 
@@ -325,6 +360,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     String categoryName,
     Map<String, Map<String, List<ProductImageModel>>> categoryData,
   ) {
+    if (_categoryIcons.containsKey(categoryName)) {
+      return _categoryIcons[categoryName]!;
+    }
+
     final allProducts = <ProductImageModel>[];
     for (final nestedMap in categoryData.values) {
       for (final productList in nestedMap.values) {
@@ -352,22 +391,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     });
   }
 
-  Widget _buildQuickCategoryItem(
-    ProductImageModel product,
-    int selectedIndex,
-  ) {
+  Widget _buildQuickCategoryItem(ProductImageModel product, int selectedIndex) {
     return CircularIconItem(
       label: product.name,
       isSelected: _selectedCategory == product.name,
       useUnderline: true,
       selectedBorderColor: const Color(0xFFEEEEEE),
       onTap: () => _selectCategory(product.name, selectedIndex),
-      child: ClipOval(
-        child: Image.asset(
-          product.image,
-          fit: BoxFit.cover,
-        ),
-      ),
+      child: ClipOval(child: Image.asset(product.image, fit: BoxFit.cover)),
     );
   }
 
@@ -410,12 +441,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         quickProducts.map((p) => _buildQuickCategoryItem(p, selectedIndex)),
       );
       if (quickProducts.length > columns) {
-        final spacerCount =
-            (columns - 1 - (quickProducts.length % columns) + columns) %
-                columns;
-        for (int i = 0; i < spacerCount; i++) {
-          cells.add(const SizedBox.shrink());
-        }
         cells.add(
           CircularIconItem(
             label: 'View Less',
@@ -452,7 +477,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         final rowItems = entry.value;
 
         return Padding(
-          padding: EdgeInsets.only(bottom: rowIndex == rows.length - 1 ? 0 : rowGap),
+          padding: EdgeInsets.only(
+            bottom: rowIndex == rows.length - 1 ? 0 : rowGap,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: rowItems
@@ -500,7 +527,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       final subCatData = categoryData[_selectedSubCategory];
       if (subCatData == null) return [];
 
-      if (_selectedNestedSubCategory.isEmpty || _selectedNestedSubCategory == "All") {
+      if (_selectedNestedSubCategory.isEmpty ||
+          _selectedNestedSubCategory == "All") {
         final allNestedItems = <ProductImageModel>[];
         for (final items in subCatData.values) {
           allNestedItems.addAll(items);
@@ -523,11 +551,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null && mounted) {
-      context.push(AppRoutes.imagePreview, extra: {
-        "imageFile": File(image.path),
-        "image_category": "asdasdasd",
-        "sub_category": "asdasdasdasd",
-      });
+      context.push(
+        AppRoutes.imagePreview,
+        extra: {
+          "imageFile": File(image.path),
+          "image_category": "asdasdasd",
+          "sub_category": "asdasdasdasd",
+        },
+      );
     }
   }
 
@@ -544,11 +575,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         ),
       );
       if (mounted) {
-        context.push(AppRoutes.imagePreview, extra: {
-        "imageFile": file,
-        "image_category": "",
-        "sub_category": "asdasdasdsa",
-      });
+        context.push(
+          AppRoutes.imagePreview,
+          extra: {
+            "imageFile": file,
+            "image_category": "",
+            "sub_category": "asdasdasdsa",
+          },
+        );
       }
     } catch (e) {
       debugPrint("Error loading asset: $e");
@@ -559,14 +593,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   Widget build(BuildContext context) {
     final homeCubit = context.watch<HomeCubit>();
     final homeState = homeCubit.state;
-    
+
     final ProductsState productsState = context.watch<ProductsCubit>().state;
     final products = productsState.products.isEmpty
         ? ProductImages.productImages
         : productsState.products;
-    final quickProducts = _resolveQuickProducts(products, homeState.selectedIndex);
-    final visibleProducts = _resolveVisibleProducts(products, homeState.selectedIndex);
-    
+    final quickProducts = _resolveQuickProducts(
+      products,
+      homeState.selectedIndex,
+    );
+    final visibleProducts = _resolveVisibleProducts(
+      products,
+      homeState.selectedIndex,
+    );
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
@@ -659,7 +699,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 margin: const EdgeInsets.only(right: 6),
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF2D2D2D), Color(0xFF1A1A1A)],
+                                    colors: [
+                                      Color(0xFF2D2D2D),
+                                      Color(0xFF1A1A1A),
+                                    ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
@@ -715,7 +758,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     width: 2.0,
                                     color: Color(0xFF1F1919),
                                   ),
-                                  insets: EdgeInsets.only(right: 16, bottom: -4),
+                                  insets: EdgeInsets.only(
+                                    right: 16,
+                                    bottom: -4,
+                                  ),
                                 ),
                                 indicatorSize: TabBarIndicatorSize.label,
                                 dividerColor: Colors.transparent,
@@ -739,13 +785,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                   if (newTabCategories != null &&
                                       newTabCategories.isNotEmpty) {
                                     setState(() {
-                                      _selectedCategory = newTabCategories.first;
+                                      _selectedCategory =
+                                          newTabCategories.first;
                                       _selectedSubCategory = "All";
+                                      _selectedNestedSubCategory = "";
                                     });
                                   } else {
                                     setState(() {
                                       _selectedCategory = null;
                                       _selectedSubCategory = "All";
+                                      _selectedNestedSubCategory = "";
                                     });
                                   }
                                 },
@@ -768,7 +817,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     ],
                                   ),
                                   child: Material(
-                                    color: homeState.isTrendingShowing ? TColors.primary : Colors.transparent,
+                                    color: homeState.isTrendingShowing
+                                        ? TColors.primary
+                                        : Colors.transparent,
                                     shape: const CircleBorder(),
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
@@ -778,8 +829,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       child: Padding(
                                         padding: const EdgeInsets.all(10),
                                         child: Image.asset(
-                                          homeState.isTrendingShowing ? "assets/icons/app_icons/trendng2_white.png" :
-                                          "assets/icons/app_icons/trendng2.png",
+                                          homeState.isTrendingShowing
+                                              ? "assets/icons/app_icons/trendng2_white.png"
+                                              : "assets/icons/app_icons/trendng2.png",
                                           width: 12,
                                           height: 12,
                                         ),
@@ -802,7 +854,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     ],
                                   ),
                                   child: Material(
-                                    color: homeState.isLikedShowing ? TColors.primary : Colors.transparent,
+                                    color: homeState.isLikedShowing
+                                        ? TColors.primary
+                                        : Colors.transparent,
                                     shape: const CircleBorder(),
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
@@ -814,7 +868,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         child: Icon(
                                           Icons.favorite,
                                           size: 12,
-                                          color: homeState.isLikedShowing ? Colors.white : const Color(0xFF898888),
+                                          color: homeState.isLikedShowing
+                                              ? Colors.white
+                                              : const Color(0xFF898888),
                                         ),
                                       ),
                                     ),
@@ -885,7 +941,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     mainAxisSpacing: 12,
                                     childAspectRatio: 1, // square images
                                   ),
-                              itemCount: homeState.isLoading ? 6 : visibleProducts.length,
+                              itemCount: homeState.isLoading
+                                  ? 6
+                                  : visibleProducts.length,
                               itemBuilder: (context, index) {
                                 if (homeState.isLoading) {
                                   return Shimmer.fromColors(
@@ -896,7 +954,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -921,7 +981,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           : ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: homeState.isLoading ? 5 : visibleProducts.length,
+                              itemCount: homeState.isLoading
+                                  ? 5
+                                  : visibleProducts.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
@@ -934,7 +996,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -998,9 +1062,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     final homeCubit = context.read<HomeCubit>();
     final selectedIndex = homeCubit.state.selectedIndex;
-    final categoryData = _productsByTabCategorySub[selectedIndex]?[selectedCategory];
+    final categoryData =
+        _productsByTabCategorySub[selectedIndex]?[selectedCategory];
 
-    if (categoryData == null || categoryData.isEmpty) return const SizedBox.shrink();
+    if (categoryData == null || categoryData.isEmpty)
+      return const SizedBox.shrink();
 
     final subCategories = (categoryData.length > 1)
         ? ["All", ...categoryData.keys]
@@ -1028,7 +1094,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
                 String iconImage = "";
                 if (subCat == "All") {
-                  iconImage = _getParentCategoryIcon(selectedCategory, categoryData);
+                  iconImage = _getParentCategoryIcon(
+                    selectedCategory,
+                    categoryData,
+                  );
                 } else {
                   iconImage = _getSubCategoryIcon(subCat, categoryData);
                 }
@@ -1061,7 +1130,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             ),
           ),
         ),
-        if (_selectedSubCategory != "All" && nestedSubCategories.length > 1) ...[
+        if (_selectedSubCategory != "All" &&
+            nestedSubCategories.length > 1) ...[
           const SizedBox(height: 10),
           SizedBox(
             height: 32,
@@ -1087,7 +1157,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF1F1919) : Colors.white,
+                          color: isSelected
+                              ? const Color(0xFF1F1919)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
@@ -1110,8 +1182,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             nSubCat,
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                              color: isSelected ? Colors.white : const Color(0xFF898888),
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: isSelected
+                                  ? Colors.white
+                                  : const Color(0xFF898888),
                               letterSpacing: 0.2,
                             ),
                           ),
@@ -1127,7 +1203,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       ],
     );
   }
-
 }
 
 class _PremiumActionButton extends StatelessWidget {
@@ -1161,7 +1236,7 @@ class _PremiumActionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/icons/app_icons/${iconImage}", height: 16,),
+            Image.asset("assets/icons/app_icons/${iconImage}", height: 16),
             const SizedBox(width: 10),
             Text(
               label,
