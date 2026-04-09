@@ -2017,7 +2017,6 @@
                 ]
               },
 
-
               {
                 "id": 1315,
                 "name": "Standard",
@@ -2186,7 +2185,7 @@
             "children": [
               {
                 "id": 1321,
-                "name": "Master",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Medium Application images (3).jpg",
                 "children": [
                   {
@@ -2225,7 +2224,7 @@
               },
               {
                 "id": 1322,
-                "name": "Guest",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (6).jpg",
                 "children": [
                   {
@@ -2289,7 +2288,7 @@
               },
               {
                 "id": 1323,
-                "name": "Kids",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Light Series/Light Application images (4).jpg",
                 "children": [
                   {
@@ -2345,7 +2344,7 @@
               },
               {
                 "id": 1324,
-                "name": "Luxury",
+                "name": "",
                 "image": "DECO/1mm LAM/Page 168 - L.jpg",
                 "children": [
                   {
@@ -2403,7 +2402,7 @@
               },
               {
                 "id": 1325,
-                "name": "Compact",
+                "name": "",
                 "image": "DECO/SENZURA/Light Application images (4).jpg",
                 "children": [
                   {
@@ -2482,7 +2481,7 @@
               },
               {
                 "id": 1326,
-                "name": "Standard",
+                "name": "",
                 "image": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
                 "children": [
                   {
@@ -2547,7 +2546,7 @@
               },
               {
                 "id": 1327,
-                "name": "Bedroom 7",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
                 "children": [
                   {
@@ -2905,7 +2904,7 @@
               },
               {
                 "id": 1333,
-                "name": "Kids",
+                "name": "Single bed",
                 "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
                 "children": [
                   {
@@ -2948,7 +2947,7 @@
               },
               {
                 "id": 1334,
-                "name": "Luxury",
+                "name": "Queen bed",
                 "image": "DECO/1mm LAM/Page 168 - L.jpg",
                 "children": [
                   {
@@ -3006,7 +3005,7 @@
               },
               {
                 "id": 1335,
-                "name": "Compact",
+                "name": "King bed",
                 "image": "DECO/NATZURA/shutterstock_560973166.jpg",
                 "children": [
                   {
@@ -3067,143 +3066,6 @@
                     "exact_furniture": ["Wardrobe", "Chair"],
                     "name": "Compact",
                     "image": "DECO/NATZURA/iStock-115876414.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 1336,
-                "name": "Standard",
-                "image": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                "children": [
-                  {
-                    "id": "138",
-                    "image_path": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet"
-                    ],
-                    "exact_furniture": [
-                      "Bed",
-                      "Chest of Drawers",
-                      "Headboard",
-                      "Floor Lamp",
-                      "Wall Art",
-                      "Wooden Flooring",
-                      "Rug"
-                    ],
-                    "name": "Standard",
-                    "image": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "151",
-                    "image_path": "NV/natzura jpeg 2021/shutterstock_560973166.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Bed",
-                      "Bench"
-                    ],
-                    "name": "Standard",
-                    "image": "NV/natzura jpeg 2021/shutterstock_560973166.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "152",
-                    "image_path": "NV/natzura jpeg 2021/shutterstock_1362607286.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Headboard", "Bedside Table"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Headboard",
-                      "Bedside Table",
-                      "Pouf",
-                      "Bench"
-                    ],
-                    "name": "Standard",
-                    "image": "NV/natzura jpeg 2021/shutterstock_1362607286.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 1337,
-                "name": "Bedroom 7",
-                "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
-                "children": [
-                  {
-                    "id": "164",
-                    "image_path": "NV/natzura jpeg 2021/iStock-115876414.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Wardrobe"
-                    ],
-                    "product_category": "Complete Space Solutions",
-                    "product_subcategories": [
-                      "Wardrobe",
-                      "Headboard",
-                      "Storage Units"
-                    ],
-                    "exact_furniture": ["Wardrobe", "Headboard", "Chair"],
-                    "name": "Bedroom 7",
-                    "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "171",
-                    "image_path": "NV/Grohn Application Picture/IS_3900 copy.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Headboard",
-                      "Bedside Table",
-                      "Chair",
-                      "Ottoman"
-                    ],
-                    "name": "Bedroom 7",
-                    "image": "NV/Grohn Application Picture/IS_3900 copy.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "174",
-                    "image_path": "NV/Grohn Application Picture/IS_2518 copy.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Wardrobe"
-                    ],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Ottoman"
-                    ],
-                    "exact_furniture": [
-                      "Bed",
-                      "Bedside Table",
-                      "Headboard",
-                      "Ottoman",
-                      "Armchair",
-                      "Curtains"
-                    ],
-                    "name": "Bedroom 7",
-                    "image": "NV/Grohn Application Picture/IS_2518 copy.jpg",
                     "children": []
                   }
                 ]
@@ -3393,7 +3255,7 @@
             "children": [
               {
                 "id": 1341,
-                "name": "Luxury",
+                "name": "",
                 "image": "DECO/1mm LAM/Page 155 - R.jpg",
                 "children": [
                   {
@@ -3424,7 +3286,7 @@
               },
               {
                 "id": 1342,
-                "name": "Compact",
+                "name": "",
                 "image": "DECO/NATZURA/iStock-115876414.jpg",
                 "children": [
                   {
@@ -3585,32 +3447,34 @@
                     "exact_furniture": ["Desk", "Wardrobe", "Chair"],
                     "name": "Study 1",
                     "image": "StarLine Picture 2024/Woodgrain Pic/Study room-3.jpg",
-                    "children": [     {
-                      "id": "157",
-                      "image_path": "NV/natzura jpeg 2021/iStock-184138811.jpg",
-                      "interior_category": "Bedroom",
-                      "interior_subcategories": ["Wardrobe", "Dressing Unit"],
-                      "product_category": "Storage Units",
-                      "product_subcategories": [
-                        "Wardrobe",
-                        "Shoe Cabinet",
-                        "Chest Of Drawers"
-                      ],
-                      "exact_furniture": [
-                        "Wardrobe",
-                        "Shoe Cabinet",
-                        "Chest of Drawers",
-                        "Ottoman",
-                        "Mirror",
-                        "Pouf",
-                        "Wall Panelling",
-                        "Table",
-                        "Chair"
-                      ],
-                      "name": "Standard",
-                      "image": "NV/natzura jpeg 2021/iStock-184138811.jpg",
-                      "children": []
-                    }]
+                    "children": [
+                      {
+                        "id": "157",
+                        "image_path": "NV/natzura jpeg 2021/iStock-184138811.jpg",
+                        "interior_category": "Bedroom",
+                        "interior_subcategories": ["Wardrobe", "Dressing Unit"],
+                        "product_category": "Storage Units",
+                        "product_subcategories": [
+                          "Wardrobe",
+                          "Shoe Cabinet",
+                          "Chest Of Drawers"
+                        ],
+                        "exact_furniture": [
+                          "Wardrobe",
+                          "Shoe Cabinet",
+                          "Chest of Drawers",
+                          "Ottoman",
+                          "Mirror",
+                          "Pouf",
+                          "Wall Panelling",
+                          "Table",
+                          "Chair"
+                        ],
+                        "name": "Standard",
+                        "image": "NV/natzura jpeg 2021/iStock-184138811.jpg",
+                        "children": []
+                      }
+                    ]
                   }
                 ]
               }
@@ -3618,9 +3482,206 @@
           },
           {
             "id": 142,
+            "name": "Study Table",
+            "image": "transaparent/Study/subcategories/Study_table.png",
+
+            "children": [
+              {
+                "id": 2201,
+                "name": "Essential",
+                "image": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (4).jpg",
+                "children": [
+                  {
+                    "id": "69",
+                    "image_path": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (4).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Bedside Table"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": ["Wardrobe", "Bedside Table", "Bed"],
+                    "name": "Essential",
+                    "image": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (4).jpg",
+                    "children": []
+                  }
+                ]
+              },
+  
+              {
+                "id": 2207,
+                "name": "Kids Room 3",
+                "image": "StarLine Picture 2024/Gloss Pic/Kids Room-3.jpg",
+                "children": [
+                  {
+                    "id": "236",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Kids Room-3.jpg",
+                    "interior_category": "Kids Room",
+                    "interior_subcategories": [
+                      "Kids Room Wardrobe",
+                      "Kids Room Bed"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Kids Room Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Storage cabinet",
+                      "Kids Bed",
+                      "Toy storage box",
+                      "Chair",
+                      "Crockery Cabinet",
+                      "Pouf",
+                      "Shoe Cabinet",
+                      "Bookshelves",
+                      "Toy storage box",
+                      "Toy storage box",
+                      "Wooden chair",
+                      "Wooden chair",
+                      "Storage cabinet",
+                      "Storage cabinet",
+                      "Toy storage box"
+                    ],
+                    "name": "Kids Room 3",
+                    "image": "StarLine Picture 2024/Gloss Pic/Kids Room-3.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 2208,
+                "name": "Kids Room 2",
+                "image": "StarLine Picture 2024/Texture Pic/Living room-4.jpg",
+                "children": [
+                  {
+                    "id": "229",
+                    "image_path": "StarLine Picture 2024/Texture Pic/Living room-4.jpg",
+                    "interior_category": "Kids Room",
+                    "interior_subcategories": [
+                      "Kids Room Wardrobe",
+                      "Kids Room Wardrobe"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Kids Room Wardrobe",
+                      "Shoe Cabinet",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Kids Wardrobe",
+                      "Shoe Cabinet",
+                      "Bookshelves"
+                    ],
+                    "name": "Kids Room 2",
+                    "image": "StarLine Picture 2024/Texture Pic/Living room-4.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 2210,
+                "name": "Exec Office",
+                "image": "Senzura Catalogue 2023_Images/Horizon Series/Horizontal Application images (2).jpg",
+                "children": [
+                  {
+                    "id": "40",
+                    "image_path": "Senzura Catalogue 2023_Images/Horizon Series/Horizontal Application images (2).jpg",
+                    "interior_category": "Office",
+                    "interior_subcategories": ["Office Cubicles"],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Office Cubicles Setup"],
+                    "exact_furniture": [
+                      "Desk",
+                      "Office Chair",
+                      "Bookshelves",
+                      "Armchair",
+                      "Curtains",
+                      "Area Rug"
+                    ],
+                    "name": "Exec Office",
+                    "image": "Senzura Catalogue 2023_Images/Horizon Series/Horizontal Application images (2).jpg",
+                    "children": []
+                  }
+                ]
+              },
+
+              {
+                "id": 2211,
+                "name": "",
+                "image": "DECO/EXTERIA/IMAGE 4.jpg",
+                "children": [
+                  {
+                    "id": "121",
+                    "image_path": "DECO/EXTERIA/IMAGE 4.jpg",
+                    "interior_category": "Other",
+                    "interior_subcategories": [],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers",
+                      "Bathroom Cabinet",
+                      "Office Cabinet",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest of Drawers",
+                      "Bathroom Cabinet",
+                      "Office Cabinet",
+                      "Bookshelves"
+                    ],
+                    "name": "Compact",
+                    "image": "DECO/EXTERIA/IMAGE 4.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "125",
+                    "image_path": "DECO/EXTERIA/3.jpg",
+                    "interior_category": "Complete Space Solutions",
+                    "interior_subcategories": [],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers",
+                      "Bathroom Cabinet",
+                      "Office Cabinet",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest of Drawers",
+                      "Bathroom Cabinet",
+                      "Office Cabinet",
+                      "Bookshelves",
+                      "Floating bathroom cabinet",
+                      "Wall-mounted TV unit",
+                      "Fitted lounge unit",
+                      "Nightstand"
+                    ],
+                    "name": "Compact",
+                    "image": "DECO/EXTERIA/3.jpg",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+           {
+            "id": 142,
             "name": "Bookshelves",
             "image": "transaparent/Study/subcategories/Bookshelves.png",
-
 
             "children": [
               {
@@ -3920,7 +3981,6 @@
                 ]
               },
 
-
               {
                 "id": 2211,
                 "name": "3 Door",
@@ -4000,7 +4060,7 @@
             "children": [
               {
                 "id": 1511,
-                "name": "Living Room 1",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Abstract Application images (5).jpg",
                 "children": [
                   {
@@ -4089,7 +4149,7 @@
               },
               {
                 "id": 1512,
-                "name": "Living Room 2",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Grey Application images (1).jpg",
                 "children": [
                   {
@@ -4396,7 +4456,7 @@
               },
               {
                 "id": 1515,
-                "name": "Living Room 5",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Abstract Series/Senzura Abstract Section breaker.jpg",
                 "children": [
                   {
@@ -4728,7 +4788,7 @@
               },
               {
                 "id": 1516,
-                "name": "Living Room 6",
+                "name": "",
                 "image": "DECO/NATZURA/iStock-1074960128.jpg",
                 "children": [
                   {
@@ -4837,7 +4897,7 @@
               },
               {
                 "id": 1517,
-                "name": "Living Room 7",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/shutterstock_631879034.jpg",
                 "children": [
                   {
@@ -5033,7 +5093,7 @@
               },
               {
                 "id": 1518,
-                "name": "Living Room 8",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_1654 copy.jpg",
                 "children": [
                   {
@@ -5543,7 +5603,7 @@
             "children": [
               {
                 "id": 1531,
-                "name": "Living Room 1",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Abstract Application images (5).jpg",
                 "children": [
                   {
@@ -5573,7 +5633,7 @@
               },
               {
                 "id": 1532,
-                "name": "Living Room 2",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Grey Application images (1).jpg",
                 "children": [
                   {
@@ -5789,7 +5849,7 @@
               },
               {
                 "id": 1536,
-                "name": "Living Room 6",
+                "name": "",
                 "image": "DECO/EXTERIA/5.jpg",
                 "children": [
                   {
@@ -5876,7 +5936,7 @@
               },
               {
                 "id": 1537,
-                "name": "Living Room 7",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/iStock-821279040.jpg",
                 "children": [
                   {
@@ -6036,7 +6096,7 @@
               },
               {
                 "id": 1538,
-                "name": "Living Room 8",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_1654 copy.jpg",
                 "children": [
                   {
@@ -6269,7 +6329,7 @@
               },
               {
                 "id": 1544,
-                "name": "Living Room 5",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dark Series/Senzura Dark Section Breaker.jpg",
                 "children": [
                   {
@@ -6460,7 +6520,7 @@
               },
               {
                 "id": 1545,
-                "name": "Living Room 6",
+                "name": "",
                 "image": "DECO/NATZURA/shutterstock_186530621.jpg",
                 "children": [
                   {
@@ -6506,7 +6566,7 @@
               },
               {
                 "id": 1546,
-                "name": "Living Room 8",
+                "name": "",
                 "image": "StarLine Picture 2024/Texture Pic/Living room-2.jpg",
                 "children": [
                   {
@@ -6632,7 +6692,7 @@
             "children": [
               {
                 "id": 1561,
-                "name": "Living Room 5",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dark Series/Senzura Dark Section Breaker.jpg",
                 "children": [
                   {
@@ -6757,7 +6817,7 @@
               },
               {
                 "id": 1562,
-                "name": "Living Room 6",
+                "name": "",
                 "image": "DECO/EXTERIA/4.jpg",
                 "children": [
                   {
@@ -6805,7 +6865,7 @@
               },
               {
                 "id": 1563,
-                "name": "Living Room 7",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/iStock-1074960128.jpg",
                 "children": [
                   {
@@ -6828,7 +6888,7 @@
               },
               {
                 "id": 1564,
-                "name": "Living Room 8",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_1654 copy.jpg",
                 "children": [
                   {
@@ -6958,7 +7018,7 @@
             "children": [
               {
                 "id": 1611,
-                "name": "Luxury",
+                "name": "Mirror Cabinets",
                 "image": "Senzura Catalogue 2023_Images/Horizon Series/Senzura Horizontal Section Breaker.jpg",
                 "children": [
                   {
@@ -7023,7 +7083,7 @@
               },
               {
                 "id": 1612,
-                "name": "Standard",
+                "name": "Wall Mounted Cabinets",
                 "image": "DECO/1mm LAM/Page 139 - R.jpg",
                 "children": [
                   {
@@ -7093,7 +7153,117 @@
               },
               {
                 "id": 1613,
-                "name": "Master",
+                "name": "Standing Cabinets",
+                "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                "children": [
+                  {
+                    "id": "135",
+                    "image_path": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Decorative Elements",
+                    "product_subcategories": ["Wall Panelling"],
+                    "exact_furniture": ["Chair"],
+                    "name": "Master",
+                    "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "178",
+                    "image_path": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Wall-mounted bathroom cabinet"],
+                    "name": "Master",
+                    "image": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "238",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Bathroom Cabinet"],
+                    "name": "Master",
+                    "image": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "239",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Storage cabinet", "Bathroom Cabinet"],
+                    "name": "Master",
+                    "image": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1613,
+                "name": "Tall Storage Cabinets",
+                "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                "children": [
+                  {
+                    "id": "135",
+                    "image_path": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Decorative Elements",
+                    "product_subcategories": ["Wall Panelling"],
+                    "exact_furniture": ["Chair"],
+                    "name": "Master",
+                    "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "178",
+                    "image_path": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Wall-mounted bathroom cabinet"],
+                    "name": "Master",
+                    "image": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "238",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Bathroom Cabinet"],
+                    "name": "Master",
+                    "image": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "239",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Storage cabinet", "Bathroom Cabinet"],
+                    "name": "Master",
+                    "image": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1613,
+                "name": "Corner Cabinets",
                 "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
                 "children": [
                   {
@@ -7161,102 +7331,7 @@
             "name": "Kids Bed",
             "image": "transaparent/Kids_Bed_room/Sub_category/Kids_bed_1.png",
             "children": [
-              {
-                "id": 1711,
-                "name": "Kids Room 1",
-                "image": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                "children": [
-                  {
-                    "id": "128",
-                    "image_path": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Kids Bed",
-                      "Headboard",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Picture frame"
-                    ],
-                    "name": "Kids Room 1",
-                    "image": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "148",
-                    "image_path": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Kids Bed"
-                    ],
-                    "name": "Kids Room 1",
-                    "image": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "179",
-                    "image_path": "NV/Grohn Application Picture/T03548_S copy.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed"],
-                    "exact_furniture": [
-                      "Chest of Drawers",
-                      "Bedside Table",
-                      "Kids Bed"
-                    ],
-                    "name": "Kids Room 1",
-                    "image": "NV/Grohn Application Picture/T03548_S copy.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "181",
-                    "image_path": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Kids Bed",
-                      "Headboard",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Wooden floor"
-                    ],
-                    "name": "Kids Room 1",
-                    "image": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "182",
-                    "image_path": "NV/Dyed_Application Images/iStock-136297156 copy.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": ["Kids Bed", "Headboard", "Stool"],
-                    "name": "Kids Room 1",
-                    "image": "NV/Dyed_Application Images/iStock-136297156 copy.jpg",
-                    "children": []
-                  }
-                ]
-              },
+   
               {
                 "id": 1712,
                 "name": "Kids Room 2",
@@ -7403,6 +7478,546 @@
                     ],
                     "name": "Kids Room 3",
                     "image": "StarLine Picture 2024/Gloss Pic/Kids Room-3.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1333,
+                "name": "Single bed",
+                "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
+                "children": [
+                  {
+                    "id": "32",
+                    "image_path": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Headboard"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Wardrobe", "Shoe Cabinet"],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Headboard"
+                    ],
+                    "name": "Kids",
+                    "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "75",
+                    "image_path": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (3).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Bedside Table", "Headboard"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Armchair",
+                      "Floor Lamp",
+                      "Pillow",
+                      "Curtains",
+                      "Rug"
+                    ],
+                    "name": "Kids",
+                    "image": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (3).jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1334,
+                "name": "Bunk bed",
+                "image": "DECO/1mm LAM/Page 168 - L.jpg",
+                "children": [
+                  {
+                    "id": "91",
+                    "image_path": "DECO/1mm LAM/Page 168 - L.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Chest Of Drawers",
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Crockery Cabinet",
+                      "Bathroom Cabinet",
+                      "Office Cabinet",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Wardrobe",
+                      "Chest of Drawers",
+                      "Armchair",
+                      "Potted Plant",
+                      "Table",
+                      "Chair",
+                      "Potted Plant"
+                    ],
+                    "name": "Luxury",
+                    "image": "DECO/1mm LAM/Page 168 - L.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "99",
+                    "image_path": "DECO/SENZURA/Dark Series Application images (3).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Bedside Table", "Headboard"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Chair",
+                      "Armen living chair"
+                    ],
+                    "name": "Luxury",
+                    "image": "DECO/SENZURA/Dark Series Application images (3).jpg",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+           {
+            "id": 171,
+            "name": "Kids Wardrobe",
+            "image": "transaparent/Kids_Bed_room/Sub_category/Kids_wardrobe_1.png",
+           "children": [
+              {
+                "id": 1314,
+                "name": "1 Door",
+                "image": "DECO/NATZURA/iStock-115876414.jpg",
+                "children": [
+                  {
+                    "id": "134",
+                    "image_path": "DECO/NATZURA/iStock-115876414.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe",
+                      "Dressing Unit"
+                    ],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Wardrobe", "Headboard"],
+                    "exact_furniture": ["Wardrobe", "Chair"],
+                    "name": "Compact",
+                    "image": "DECO/NATZURA/iStock-115876414.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1316,
+                "name": "2 Door",
+                "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                "children": [
+                  {
+                    "id": "164",
+                    "image_path": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Headboard",
+                      "Storage Units"
+                    ],
+                    "exact_furniture": ["Wardrobe", "Headboard", "Chair"],
+                    "name": "Bedroom 7",
+                    "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "172",
+                    "image_path": "NV/Grohn Application Picture/Furrow_C41 copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Closet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Wardrobe", "Closet"],
+                    "exact_furniture": ["Wardrobe", "Closet"],
+                    "name": "Bedroom 7",
+                    "image": "NV/Grohn Application Picture/Furrow_C41 copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "174",
+                    "image_path": "NV/Grohn Application Picture/IS_2518 copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Ottoman"
+                    ],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Headboard",
+                      "Ottoman",
+                      "Armchair",
+                      "Curtains"
+                    ],
+                    "name": "Bedroom 7",
+                    "image": "NV/Grohn Application Picture/IS_2518 copy.jpg",
+                    "children": []
+                  }
+                ]
+              },
+
+              {
+                "id": 1314,
+                "name": "3 Door",
+                "image": "DECO/NATZURA/iStock-115876414.jpg",
+                "children": [
+                  {
+                    "id": "134",
+                    "image_path": "DECO/NATZURA/iStock-115876414.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe",
+                      "Dressing Unit"
+                    ],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Wardrobe", "Headboard"],
+                    "exact_furniture": ["Wardrobe", "Chair"],
+                    "name": "Compact",
+                    "image": "DECO/NATZURA/iStock-115876414.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1316,
+                "name": "4 Door",
+                "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                "children": [
+                  {
+                    "id": "164",
+                    "image_path": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Headboard",
+                      "Storage Units"
+                    ],
+                    "exact_furniture": ["Wardrobe", "Headboard", "Chair"],
+                    "name": "Bedroom 7",
+                    "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "172",
+                    "image_path": "NV/Grohn Application Picture/Furrow_C41 copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Closet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Wardrobe", "Closet"],
+                    "exact_furniture": ["Wardrobe", "Closet"],
+                    "name": "Bedroom 7",
+                    "image": "NV/Grohn Application Picture/Furrow_C41 copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "174",
+                    "image_path": "NV/Grohn Application Picture/IS_2518 copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Ottoman"
+                    ],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Headboard",
+                      "Ottoman",
+                      "Armchair",
+                      "Curtains"
+                    ],
+                    "name": "Bedroom 7",
+                    "image": "NV/Grohn Application Picture/IS_2518 copy.jpg",
+                    "children": []
+                  }
+                ]
+              },
+
+              {
+                "id": 1314,
+                "name": "4+ Door",
+                "image": "DECO/NATZURA/iStock-115876414.jpg",
+                "children": [
+                  {
+                    "id": "134",
+                    "image_path": "DECO/NATZURA/iStock-115876414.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe",
+                      "Dressing Unit"
+                    ],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Wardrobe", "Headboard"],
+                    "exact_furniture": ["Wardrobe", "Chair"],
+                    "name": "Compact",
+                    "image": "DECO/NATZURA/iStock-115876414.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1316,
+                "name": "Sliding Door",
+                "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                "children": [
+                  {
+                    "id": "164",
+                    "image_path": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Headboard",
+                      "Storage Units"
+                    ],
+                    "exact_furniture": ["Wardrobe", "Headboard", "Chair"],
+                    "name": "Bedroom 7",
+                    "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "172",
+                    "image_path": "NV/Grohn Application Picture/Furrow_C41 copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Closet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Wardrobe", "Closet"],
+                    "exact_furniture": ["Wardrobe", "Closet"],
+                    "name": "Bedroom 7",
+                    "image": "NV/Grohn Application Picture/Furrow_C41 copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "174",
+                    "image_path": "NV/Grohn Application Picture/IS_2518 copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Ottoman"
+                    ],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Headboard",
+                      "Ottoman",
+                      "Armchair",
+                      "Curtains"
+                    ],
+                    "name": "Bedroom 7",
+                    "image": "NV/Grohn Application Picture/IS_2518 copy.jpg",
+                    "children": []
+                  }
+                ]
+              },
+
+              {
+                "id": 1315,
+                "name": "Standard",
+                "image": "NV/natzura jpeg 2021/iStock-184138811.jpg",
+                "children": [
+                  {
+                    "id": "157",
+                    "image_path": "NV/natzura jpeg 2021/iStock-184138811.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Dressing Unit"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers"
+                    ],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest of Drawers",
+                      "Ottoman",
+                      "Mirror",
+                      "Pouf",
+                      "Wall Panelling",
+                      "Table",
+                      "Chair"
+                    ],
+                    "name": "Standard",
+                    "image": "NV/natzura jpeg 2021/iStock-184138811.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1317,
+                "name": "Bedroom 8",
+                "image": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
+                "children": [
+                  {
+                    "id": "189",
+                    "image_path": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe",
+                      "Dressing Unit"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers",
+                      "Wall-mounted Cupboards",
+                      "Overhead Cabinet"
+                    ],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Desk",
+                      "Chair",
+                      "Bed",
+                      "Headboard",
+                      "Desk Chair",
+                      "Storage cabinet"
+                    ],
+                    "name": "Bedroom 8",
+                    "image": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "194",
+                    "image_path": "StarLine Picture 2024/Woodgrain Pic/Wardrobe.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Closet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Wardrobe", "Closet"],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Closet",
+                      "Chest of Drawers",
+                      "Shoe Cabinet",
+                      "Wall-mounted cupboards",
+                      "Lower cabinet"
+                    ],
+                    "name": "Bedroom 8",
+                    "image": "StarLine Picture 2024/Woodgrain Pic/Wardrobe.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1318,
+                "name": "Bedroom 9",
+                "image": "StarLine Picture 2024/Woodgrain Pic/Bedroom.jpg",
+                "children": [
+                  {
+                    "id": "196",
+                    "image_path": "StarLine Picture 2024/Woodgrain Pic/Bedroom.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Headboard",
+                      "Wall-mounted Cupboards"
+                    ],
+                    "exact_furniture": ["Wardrobe", "Headboard"],
+                    "name": "Bedroom 9",
+                    "image": "StarLine Picture 2024/Woodgrain Pic/Bedroom.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "213",
+                    "image_path": "StarLine Picture 2024/Woodgrain Pic/Bedroom-3.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Bedside Table"],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Wardrobe", "Bedside Table"],
+                    "exact_furniture": ["Wardrobe", "Bedside Table"],
+                    "name": "Bedroom 9",
+                    "image": "StarLine Picture 2024/Woodgrain Pic/Bedroom-3.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "228",
+                    "image_path": "StarLine Picture 2024/Texture Pic/Bedroom-2.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe",
+                      "Dressing Unit"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Chair",
+                      "Side Table",
+                      "Wardrobe",
+                      "Bed",
+                      "Bookshelf",
+                      "Stool",
+                      "Display case"
+                    ],
+                    "name": "Bedroom 9",
+                    "image": "StarLine Picture 2024/Texture Pic/Bedroom-2.jpg",
                     "children": []
                   }
                 ]
@@ -10731,118 +11346,8 @@
             "name": "Kids Bed",
             "image": "transaparent/Kids_Bed_room/Sub_category/Kids_bed_1.png",
             "children": [
-              {
-                "id": 2101,
-                "name": "Beds 1",
-                "image": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                "children": [
-                  {
-                    "id": "128",
-                    "image_path": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Kids Bed",
-                      "Headboard",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Picture frame"
-                    ],
-                    "name": "Beds 1",
-                    "image": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2102,
-                "name": "Beds 2",
-                "image": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
-                "children": [
-                  {
-                    "id": "148",
-                    "image_path": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Kids Bed"
-                    ],
-                    "name": "Beds 2",
-                    "image": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "179",
-                    "image_path": "NV/Grohn Application Picture/T03548_S copy.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed"],
-                    "exact_furniture": [
-                      "Chest of Drawers",
-                      "Bedside Table",
-                      "Kids Bed"
-                    ],
-                    "name": "Beds 2",
-                    "image": "NV/Grohn Application Picture/T03548_S copy.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2103,
-                "name": "Beds 3",
-                "image": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
-                "children": [
-                  {
-                    "id": "181",
-                    "image_path": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Kids Bed",
-                      "Headboard",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Wooden floor"
-                    ],
-                    "name": "Beds 3",
-                    "image": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "182",
-                    "image_path": "NV/Dyed_Application Images/iStock-136297156 copy.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": ["Kids Bed", "Headboard", "Stool"],
-                    "name": "Beds 3",
-                    "image": "NV/Dyed_Application Images/iStock-136297156 copy.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2104,
+           {
+                "id": 1712,
                 "name": "Kids Room 2",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Kids room.jpg",
                 "children": [
@@ -10861,6 +11366,36 @@
                     ],
                     "name": "Kids Room 2",
                     "image": "StarLine Picture 2024/Woodgrain Pic/Kids room.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "203",
+                    "image_path": "StarLine Picture 2024/Woodgrain Pic/Kids room-2.jpg",
+                    "interior_category": "Kids Room",
+                    "interior_subcategories": [
+                      "Kids Room Wardrobe",
+                      "Kids Room Bed"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Kids Room Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers"
+                    ],
+                    "exact_furniture": [
+                      "Chair",
+                      "Storage cabinet",
+                      "Chest of Drawers",
+                      "Wall Panelling",
+                      "Picture frame",
+                      "Wooden giraffe",
+                      "Wooden toy car",
+                      "White bear figure",
+                      "White chair",
+                      "Fabric draped on chair"
+                    ],
+                    "name": "Kids Room 2",
+                    "image": "StarLine Picture 2024/Woodgrain Pic/Kids room-2.jpg",
                     "children": []
                   },
                   {
@@ -10892,7 +11427,7 @@
                 ]
               },
               {
-                "id": 2105,
+                "id": 1713,
                 "name": "Kids Room 3",
                 "image": "StarLine Picture 2024/Gloss Pic/Kids Room.jpg",
                 "children": [
@@ -10960,17 +11495,10 @@
                     "children": []
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "id": 212,
-            "name": "Headboard",
-            "image": "transaparent/Bed_room/Sub_categories/Headboard_1.png",
-            "children": [
+              },
               {
-                "id": 2111,
-                "name": "Premium",
+                "id": 1333,
+                "name": "Single bed",
                 "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
                 "children": [
                   {
@@ -10985,17 +11513,337 @@
                       "Shoe Cabinet",
                       "Headboard"
                     ],
-                    "name": "Premium",
+                    "name": "Kids",
                     "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "75",
+                    "image_path": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (3).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Bedside Table", "Headboard"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Armchair",
+                      "Floor Lamp",
+                      "Pillow",
+                      "Curtains",
+                      "Rug"
+                    ],
+                    "name": "Kids",
+                    "image": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (3).jpg",
                     "children": []
                   }
                 ]
               },
               {
-                "id": 2112,
-                "name": "Compact",
-                "image": "DECO/NATZURA/iStock-115876414.jpg",
+                "id": 1334,
+                "name": "Bunk bed",
+                "image": "DECO/1mm LAM/Page 168 - L.jpg",
                 "children": [
+                  {
+                    "id": "91",
+                    "image_path": "DECO/1mm LAM/Page 168 - L.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Chest Of Drawers",
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Crockery Cabinet",
+                      "Bathroom Cabinet",
+                      "Office Cabinet",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Wardrobe",
+                      "Chest of Drawers",
+                      "Armchair",
+                      "Potted Plant",
+                      "Table",
+                      "Chair",
+                      "Potted Plant"
+                    ],
+                    "name": "Luxury",
+                    "image": "DECO/1mm LAM/Page 168 - L.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "99",
+                    "image_path": "DECO/SENZURA/Dark Series Application images (3).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Bedside Table", "Headboard"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Chair",
+                      "Armen living chair"
+                    ],
+                    "name": "Luxury",
+                    "image": "DECO/SENZURA/Dark Series Application images (3).jpg",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 212,
+            "name": "Headboard",
+            "image": "transaparent/Bed_room/Sub_categories/Headboard_1.png",
+             "children": [
+              {
+                "id": 1331,
+                "name": "Master",
+                "image": "Senzura Catalogue 2023_Images/Medium Application images (3).jpg",
+                "children": [
+                  {
+                    "id": "11",
+                    "image_path": "Senzura Catalogue 2023_Images/Medium Application images (3).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Tables",
+                    "product_subcategories": ["Coffee Table", "Stool"],
+                    "exact_furniture": [
+                      "Chair",
+                      "Ottoman",
+                      "Pouf",
+                      "Table",
+                      "Stool",
+                      "Ottoman",
+                      "Headboard"
+                    ],
+                    "name": "Master",
+                    "image": "Senzura Catalogue 2023_Images/Medium Application images (3).jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1332,
+                "name": "Guest",
+                "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (6).jpg",
+                "children": [
+                  {
+                    "id": "26",
+                    "image_path": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (6).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Bedside Table", "Headboard"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Headboard",
+                      "Rug",
+                      "Floor Lamp"
+                    ],
+                    "name": "Guest",
+                    "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (6).jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "27",
+                    "image_path": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (3).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Tables",
+                    "product_subcategories": ["Coffee Table", "Stool"],
+                    "exact_furniture": [
+                      "Chair",
+                      "Ottoman",
+                      "Pouf",
+                      "Stool",
+                      "Table",
+                      "Headboard"
+                    ],
+                    "name": "Guest",
+                    "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (3).jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "31",
+                    "image_path": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (4).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Headboard", "Kids Room Bed"],
+                    "exact_furniture": [
+                      "Chair",
+                      "Ottoman",
+                      "Footstool",
+                      "Stool",
+                      "Table",
+                      "Desk",
+                      "Wardrobe"
+                    ],
+                    "name": "Guest",
+                    "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (4).jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1333,
+                "name": "Single bed",
+                "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
+                "children": [
+                  {
+                    "id": "32",
+                    "image_path": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Headboard"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Wardrobe", "Shoe Cabinet"],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Headboard"
+                    ],
+                    "name": "Kids",
+                    "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (7).jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "75",
+                    "image_path": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (3).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Bedside Table", "Headboard"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Armchair",
+                      "Floor Lamp",
+                      "Pillow",
+                      "Curtains",
+                      "Rug"
+                    ],
+                    "name": "Kids",
+                    "image": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (3).jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1334,
+                "name": "Queen bed",
+                "image": "DECO/1mm LAM/Page 168 - L.jpg",
+                "children": [
+                  {
+                    "id": "91",
+                    "image_path": "DECO/1mm LAM/Page 168 - L.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Chest Of Drawers",
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Crockery Cabinet",
+                      "Bathroom Cabinet",
+                      "Office Cabinet",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Wardrobe",
+                      "Chest of Drawers",
+                      "Armchair",
+                      "Potted Plant",
+                      "Table",
+                      "Chair",
+                      "Potted Plant"
+                    ],
+                    "name": "Luxury",
+                    "image": "DECO/1mm LAM/Page 168 - L.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "99",
+                    "image_path": "DECO/SENZURA/Dark Series Application images (3).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Bedside Table", "Headboard"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Chair",
+                      "Armen living chair"
+                    ],
+                    "name": "Luxury",
+                    "image": "DECO/SENZURA/Dark Series Application images (3).jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1335,
+                "name": "King bed",
+                "image": "DECO/NATZURA/shutterstock_560973166.jpg",
+                "children": [
+                  {
+                    "id": "130",
+                    "image_path": "DECO/NATZURA/shutterstock_560973166.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Headboard", "Kids Room Bed"],
+                    "exact_furniture": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Bed",
+                      "Bench",
+                      "Pillow",
+                      "Rug",
+                      "Lamps",
+                      "Curtains",
+                      "Wall Panelling",
+                      "Decorative Elements",
+                      "Storage cabinet"
+                    ],
+                    "name": "Compact",
+                    "image": "DECO/NATZURA/shutterstock_560973166.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "131",
+                    "image_path": "DECO/NATZURA/shutterstock_1362607286.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Headboard", "Bedside Table"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Headboard", "Kids Room Bed"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Headboard",
+                      "Bench",
+                      "Pouf",
+                      "Table",
+                      "Chair"
+                    ],
+                    "name": "Compact",
+                    "image": "DECO/NATZURA/shutterstock_1362607286.jpg",
+                    "children": []
+                  },
                   {
                     "id": "134",
                     "image_path": "DECO/NATZURA/iStock-115876414.jpg",
@@ -11016,143 +11864,57 @@
                 ]
               },
               {
-                "id": 2113,
-                "name": "Bedroom 7",
-                "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
-                "children": [
-                  {
-                    "id": "164",
-                    "image_path": "NV/natzura jpeg 2021/iStock-115876414.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Wardrobe"
-                    ],
-                    "product_category": "Complete Space Solutions",
-                    "product_subcategories": [
-                      "Wardrobe",
-                      "Headboard",
-                      "Storage Units"
-                    ],
-                    "exact_furniture": ["Wardrobe", "Headboard", "Chair"],
-                    "name": "Bedroom 7",
-                    "image": "NV/natzura jpeg 2021/iStock-115876414.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2114,
-                "name": "Beds 2",
-                "image": "NV/Grohn Application Picture/IS_2518 copy.jpg",
-                "children": [
-                  {
-                    "id": "174",
-                    "image_path": "NV/Grohn Application Picture/IS_2518 copy.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Wardrobe"
-                    ],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Ottoman"
-                    ],
-                    "exact_furniture": [
-                      "Bed",
-                      "Bedside Table",
-                      "Headboard",
-                      "Ottoman",
-                      "Armchair",
-                      "Curtains"
-                    ],
-                    "name": "Beds 2",
-                    "image": "NV/Grohn Application Picture/IS_2518 copy.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "131",
-                    "image_path": "DECO/NATZURA/shutterstock_1362607286.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Headboard", "Bedside Table"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Headboard",
-                      "Bench",
-                      "Pouf",
-                      "Table",
-                      "Chair"
-                    ],
-                    "name": "Beds 2",
-                    "image": "DECO/NATZURA/shutterstock_1362607286.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "151",
-                    "image_path": "NV/natzura jpeg 2021/shutterstock_560973166.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Bed",
-                      "Bench"
-                    ],
-                    "name": "Beds 2",
-                    "image": "NV/natzura jpeg 2021/shutterstock_560973166.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "152",
-                    "image_path": "NV/natzura jpeg 2021/shutterstock_1362607286.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Headboard", "Bedside Table"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Headboard",
-                      "Bedside Table",
-                      "Pouf",
-                      "Bench"
-                    ],
-                    "name": "Beds 2",
-                    "image": "NV/natzura jpeg 2021/shutterstock_1362607286.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "171",
-                    "image_path": "NV/Grohn Application Picture/IS_3900 copy.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Headboard",
-                      "Bedside Table",
-                      "Chair",
-                      "Ottoman"
-                    ],
-                    "name": "Beds 2",
-                    "image": "NV/Grohn Application Picture/IS_3900 copy.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2115,
+                "id": 1338,
                 "name": "Bedroom 8",
-                "image": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
+                "image": "NV/Dyed_Application Images/iStock-1498793412-Dayed Cat copy.jpg",
                 "children": [
+                  {
+                    "id": "183",
+                    "image_path": "NV/Dyed_Application Images/iStock-1498793412-Dayed Cat copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Headboard", "Kids Room Bed"],
+                    "exact_furniture": ["Headboard", "Bed"],
+                    "name": "Bedroom 8",
+                    "image": "NV/Dyed_Application Images/iStock-1498793412-Dayed Cat copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "184",
+                    "image_path": "NV/Dyed_Application Images/iStock-1454697447 copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Headboard", "Bedside Table"],
+                    "exact_furniture": ["Bedside Table", "Headboard"],
+                    "name": "Bedroom 8",
+                    "image": "NV/Dyed_Application Images/iStock-1454697447 copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "188",
+                    "image_path": "NV/Dyed_Application Images/iStock-1060148004 copy.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table", "Headboard"],
+                    "product_category": "Beds & Related",
+                    "product_subcategories": ["Bedside Table", "Headboard"],
+                    "exact_furniture": [
+                      "Bed",
+                      "Bedside Table",
+                      "Headboard",
+                      "Pillow",
+                      "Rug",
+                      "Vase",
+                      "Books",
+                      "Lamp",
+                      "Plants",
+                      "Stack of Books"
+                    ],
+                    "name": "Bedroom 8",
+                    "image": "NV/Dyed_Application Images/iStock-1060148004 copy.jpg",
+                    "children": []
+                  },
                   {
                     "id": "189",
                     "image_path": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
@@ -11187,7 +11949,7 @@
                 ]
               },
               {
-                "id": 2116,
+                "id": 1339,
                 "name": "Bedroom 9",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Bedroom.jpg",
                 "children": [
@@ -11210,242 +11972,6 @@
                     "name": "Bedroom 9",
                     "image": "StarLine Picture 2024/Woodgrain Pic/Bedroom.jpg",
                     "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2117,
-                "name": "Tables 1",
-                "image": "Senzura Catalogue 2023_Images/Medium Application images (3).jpg",
-                "children": [
-                  {
-                    "id": "11",
-                    "image_path": "Senzura Catalogue 2023_Images/Medium Application images (3).jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Tables",
-                    "product_subcategories": ["Coffee Table", "Stool"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Table",
-                      "Stool",
-                      "Ottoman",
-                      "Headboard"
-                    ],
-                    "name": "Tables 1",
-                    "image": "Senzura Catalogue 2023_Images/Medium Application images (3).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "27",
-                    "image_path": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (3).jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Tables",
-                    "product_subcategories": ["Coffee Table", "Stool"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Stool",
-                      "Table",
-                      "Headboard"
-                    ],
-                    "name": "Tables 1",
-                    "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (3).jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2118,
-                "name": "Beds 1",
-                "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (6).jpg",
-                "children": [
-                  {
-                    "id": "26",
-                    "image_path": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (6).jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Bedside Table", "Headboard"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Bedside Table",
-                      "Headboard",
-                      "Rug",
-                      "Floor Lamp"
-                    ],
-                    "name": "Beds 1",
-                    "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (6).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "31",
-                    "image_path": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (4).jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Footstool",
-                      "Stool",
-                      "Table",
-                      "Desk",
-                      "Wardrobe"
-                    ],
-                    "name": "Beds 1",
-                    "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (4).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "75",
-                    "image_path": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (3).jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Bedside Table", "Headboard"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Bedside Table",
-                      "Armchair",
-                      "Floor Lamp",
-                      "Pillow",
-                      "Curtains",
-                      "Rug"
-                    ],
-                    "name": "Beds 1",
-                    "image": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (3).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "99",
-                    "image_path": "DECO/SENZURA/Dark Series Application images (3).jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Bedside Table", "Headboard"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Bedside Table",
-                      "Chair",
-                      "Armen living chair"
-                    ],
-                    "name": "Beds 1",
-                    "image": "DECO/SENZURA/Dark Series Application images (3).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "130",
-                    "image_path": "DECO/NATZURA/shutterstock_560973166.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Bed",
-                      "Bench",
-                      "Pillow",
-                      "Rug",
-                      "Lamps",
-                      "Curtains",
-                      "Wall Panelling",
-                      "Decorative Elements",
-                      "Storage cabinet"
-                    ],
-                    "name": "Beds 1",
-                    "image": "DECO/NATZURA/shutterstock_560973166.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2119,
-                "name": "Drawers 4",
-                "image": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                "children": [
-                  {
-                    "id": "138",
-                    "image_path": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet"
-                    ],
-                    "exact_furniture": [
-                      "Bed",
-                      "Chest of Drawers",
-                      "Headboard",
-                      "Floor Lamp",
-                      "Wall Art",
-                      "Wooden Flooring",
-                      "Rug"
-                    ],
-                    "name": "Drawers 4",
-                    "image": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2120,
-                "name": "Beds 3",
-                "image": "NV/Dyed_Application Images/iStock-1498793412-Dayed Cat copy.jpg",
-                "children": [
-                  {
-                    "id": "183",
-                    "image_path": "NV/Dyed_Application Images/iStock-1498793412-Dayed Cat copy.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Kids Room Bed"],
-                    "exact_furniture": ["Headboard", "Bed"],
-                    "name": "Beds 3",
-                    "image": "NV/Dyed_Application Images/iStock-1498793412-Dayed Cat copy.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "184",
-                    "image_path": "NV/Dyed_Application Images/iStock-1454697447 copy.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Headboard", "Bedside Table"],
-                    "exact_furniture": ["Bedside Table", "Headboard"],
-                    "name": "Beds 3",
-                    "image": "NV/Dyed_Application Images/iStock-1454697447 copy.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "188",
-                    "image_path": "NV/Dyed_Application Images/iStock-1060148004 copy.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Bedside Table", "Headboard"],
-                    "exact_furniture": [
-                      "Bed",
-                      "Bedside Table",
-                      "Headboard",
-                      "Pillow",
-                      "Rug",
-                      "Vase",
-                      "Books",
-                      "Lamp",
-                      "Plants",
-                      "Stack of Books"
-                    ],
-                    "name": "Beds 3",
-                    "image": "NV/Dyed_Application Images/iStock-1060148004 copy.jpg",
-                    "children": []
                   },
                   {
                     "id": "215",
@@ -11460,7 +11986,7 @@
                       "Headboard",
                       "Curtain"
                     ],
-                    "name": "Beds 3",
+                    "name": "Bedroom 9",
                     "image": "StarLine Picture 2024/Woodgrain Pic/Bedroom-2.jpg",
                     "children": []
                   },
@@ -11477,8 +12003,38 @@
                       "Headboard",
                       "Chair"
                     ],
-                    "name": "Beds 3",
+                    "name": "Bedroom 9",
                     "image": "StarLine Picture 2024/Texture Pic/Bedroom.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "228",
+                    "image_path": "StarLine Picture 2024/Texture Pic/Bedroom-2.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": [
+                      "Bedside Table",
+                      "Headboard",
+                      "Wardrobe",
+                      "Dressing Unit"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers",
+                      "Bookshelves"
+                    ],
+                    "exact_furniture": [
+                      "Chair",
+                      "Side Table",
+                      "Wardrobe",
+                      "Bed",
+                      "Bookshelf",
+                      "Stool",
+                      "Display case"
+                    ],
+                    "name": "Bedroom 9",
+                    "image": "StarLine Picture 2024/Texture Pic/Bedroom-2.jpg",
                     "children": []
                   }
                 ]
@@ -11795,7 +12351,6 @@
                 ]
               },
 
-
               {
                 "id": 2211,
                 "name": "3 Door",
@@ -11874,7 +12429,6 @@
             "name": "Shoe Cabinet",
             "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Shoe_Cabinet)_1.png",
             "children": [
-
               {
                 "id": 2303,
                 "name": "1 Door",
@@ -12743,10 +13297,10 @@
             "id": 233,
             "name": "Bathroom Cabinet",
             "image": "DECO/SENZURA/Bathroom cabinet.png",
-            "children": [
+          "children": [
               {
-                "id": 2321,
-                "name": "Cabinet 2",
+                "id": 1611,
+                "name": "Mirror Cabinets",
                 "image": "Senzura Catalogue 2023_Images/Horizon Series/Senzura Horizontal Section Breaker.jpg",
                 "children": [
                   {
@@ -12762,17 +13316,10 @@
                       "Wall-mounted TV unit",
                       "Wardrobe"
                     ],
-                    "name": "Cabinet 2",
+                    "name": "Luxury",
                     "image": "Senzura Catalogue 2023_Images/Horizon Series/Senzura Horizontal Section Breaker.jpg",
                     "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2322,
-                "name": "Luxury",
-                "image": "Senzura Catalogue 2023_Images/Grey Series/Grey Application images (2).jpg",
-                "children": [
+                  },
                   {
                     "id": "50",
                     "image_path": "Senzura Catalogue 2023_Images/Grey Series/Grey Application images (2).jpg",
@@ -12817,8 +13364,8 @@
                 ]
               },
               {
-                "id": 2323,
-                "name": "Cabinet 3",
+                "id": 1612,
+                "name": "Wall Mounted Cabinets",
                 "image": "DECO/1mm LAM/Page 139 - R.jpg",
                 "children": [
                   {
@@ -12836,7 +13383,7 @@
                       "Console cabinet",
                       "Lower cabinet"
                     ],
-                    "name": "Cabinet 3",
+                    "name": "Standard",
                     "image": "DECO/1mm LAM/Page 139 - R.jpg",
                     "children": []
                   },
@@ -12853,17 +13400,10 @@
                       "Storage cabinet",
                       "Lower cabinet"
                     ],
-                    "name": "Cabinet 3",
+                    "name": "Standard",
                     "image": "DECO/1mm LAM/Page 51 - R.jpg",
                     "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2324,
-                "name": "Standard",
-                "image": "DECO/1mm LAM/Page 175 - L.jpg",
-                "children": [
+                  },
                   {
                     "id": "86",
                     "image_path": "DECO/1mm LAM/Page 175 - L.jpg",
@@ -12875,14 +13415,7 @@
                     "name": "Standard",
                     "image": "DECO/1mm LAM/Page 175 - L.jpg",
                     "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2325,
-                "name": "Cabinet 4",
-                "image": "DECO/0.8mm LAM/Bathroom-2.jpg",
-                "children": [
+                  },
                   {
                     "id": "107",
                     "image_path": "DECO/0.8mm LAM/Bathroom-2.jpg",
@@ -12894,17 +13427,29 @@
                       "Wall-mounted TV unit",
                       "Lower cabinet"
                     ],
-                    "name": "Cabinet 4",
+                    "name": "Standard",
                     "image": "DECO/0.8mm LAM/Bathroom-2.jpg",
                     "children": []
                   }
                 ]
               },
               {
-                "id": 2326,
-                "name": "Cabinet 5",
-                "image": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                "id": 1613,
+                "name": "Standing Cabinets",
+                "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
                 "children": [
+                  {
+                    "id": "135",
+                    "image_path": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Decorative Elements",
+                    "product_subcategories": ["Wall Panelling"],
+                    "exact_furniture": ["Chair"],
+                    "name": "Master",
+                    "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "children": []
+                  },
                   {
                     "id": "178",
                     "image_path": "NV/Grohn Application Picture/IS_1828 copy.jpg",
@@ -12913,17 +13458,120 @@
                     "product_category": "Storage Units",
                     "product_subcategories": ["Bathroom Cabinet"],
                     "exact_furniture": ["Wall-mounted bathroom cabinet"],
-                    "name": "Cabinet 5",
+                    "name": "Master",
                     "image": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "238",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Bathroom Cabinet"],
+                    "name": "Master",
+                    "image": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "239",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Storage cabinet", "Bathroom Cabinet"],
+                    "name": "Master",
+                    "image": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
                     "children": []
                   }
                 ]
               },
               {
-                "id": 2327,
-                "name": "Master",
-                "image": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                "id": 1613,
+                "name": "Tall Storage Cabinets",
+                "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
                 "children": [
+                  {
+                    "id": "135",
+                    "image_path": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Decorative Elements",
+                    "product_subcategories": ["Wall Panelling"],
+                    "exact_furniture": ["Chair"],
+                    "name": "Master",
+                    "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "178",
+                    "image_path": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Wall-mounted bathroom cabinet"],
+                    "name": "Master",
+                    "image": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "238",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Complete Space Solutions",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Bathroom Cabinet"],
+                    "name": "Master",
+                    "image": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "239",
+                    "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Storage cabinet", "Bathroom Cabinet"],
+                    "name": "Master",
+                    "image": "StarLine Picture 2024/Gloss Pic/Bathroom.jpg",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 1613,
+                "name": "Corner Cabinets",
+                "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                "children": [
+                  {
+                    "id": "135",
+                    "image_path": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Decorative Elements",
+                    "product_subcategories": ["Wall Panelling"],
+                    "exact_furniture": ["Chair"],
+                    "name": "Master",
+                    "image": "Lookbook 2021-22 jpeg/iStock-178135378.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "178",
+                    "image_path": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "interior_category": "Bathroom",
+                    "interior_subcategories": ["Bathroom Cabinet"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Bathroom Cabinet"],
+                    "exact_furniture": ["Wall-mounted bathroom cabinet"],
+                    "name": "Master",
+                    "image": "NV/Grohn Application Picture/IS_1828 copy.jpg",
+                    "children": []
+                  },
                   {
                     "id": "238",
                     "image_path": "StarLine Picture 2024/Gloss Pic/Bathroom-2.jpg",
@@ -14042,9 +14690,100 @@
             "name": "Chest of Drawers",
             "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
             "children": [
+                  {
+                "id": 2403,
+                "name": "1 Drawer",
+                "image": "DECO/1mm LAM/Page 155 - R.jpg",
+                "children": [
+                  {
+                    "id": "85",
+                    "image_path": "DECO/1mm LAM/Page 155 - R.jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Dressing Unit"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers"
+                    ],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Dressing Unit",
+                      "Chair",
+                      "Ottoman",
+                      "Wall Panelling",
+                      "Mirror",
+                      "Decorative Elements"
+                    ],
+                    "name": "Drawers 3",
+                    "image": "DECO/1mm LAM/Page 155 - R.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "100",
+                    "image_path": "DECO/SENZURA/Light Application images (4).jpg",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Bedside Table"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Chest Of Drawers"],
+                    "exact_furniture": ["Bedside Table", "Chest of Drawers"],
+                    "name": "Drawers 3",
+                    "image": "DECO/SENZURA/Light Application images (4).jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "77",
+                    "image_path": "DECO/1mm LAM/Page 90 - L.jpg",
+                    "interior_category": "Living Room",
+                    "interior_subcategories": [
+                      "Chest Of Drawers",
+                      "Wall Panelling"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Chest Of Drawers",
+                      "Shoe Cabinet",
+                      "Wall Panelling"
+                    ],
+                    "exact_furniture": [
+                      "Chair",
+                      "Stool",
+                      "Table",
+                      "Wall Panelling"
+                    ],
+                    "name": "Drawers 3",
+                    "image": "DECO/1mm LAM/Page 90 - L.jpg",
+                    "children": []
+                  },
+                  {
+                    "id": "88",
+                    "image_path": "DECO/1mm LAM/Page 88 - L.jpg",
+                    "interior_category": "Living Room",
+                    "interior_subcategories": [
+                      "Wall Panelling",
+                      "Tv Unit",
+                      "Chest Of Drawers"
+                    ],
+                    "product_category": "Storage Units",
+                    "product_subcategories": ["Chest Of Drawers"],
+                    "exact_furniture": [
+                      "Chair",
+                      "TV Unit",
+                      "Chest of Drawers",
+                      "Armen living chair",
+                      "Ottoman",
+                      "Floor Lamp",
+                      "Pouf"
+                    ],
+                    "name": "Drawers 3",
+                    "image": "DECO/1mm LAM/Page 88 - L.jpg",
+                    "children": []
+                  }
+                ]
+              },
               {
                 "id": 2401,
-                "name": "Drawers 2",
+                "name": "1 Drawer",
                 "image": "Senzura Catalogue 2023_Images/Abstract Series/Abstract Application images (1).jpg",
                 "children": [
                   {
@@ -14167,7 +14906,7 @@
               },
               {
                 "id": 2403,
-                "name": "Drawers 3",
+                "name": "2 Drawer",
                 "image": "DECO/1mm LAM/Page 155 - R.jpg",
                 "children": [
                   {
@@ -14258,7 +14997,7 @@
               },
               {
                 "id": 2404,
-                "name": "Cabinet 3",
+                "name": "3 Drawer",
                 "image": "DECO/1mm LAM/Page 168 - L.jpg",
                 "children": [
                   {
@@ -14296,794 +15035,6 @@
                     "children": []
                   }
                 ]
-              },
-              {
-                "id": 2405,
-                "name": "Bedroom 8",
-                "image": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
-                "children": [
-                  {
-                    "id": "189",
-                    "image_path": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Wardrobe",
-                      "Dressing Unit"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Wardrobe",
-                      "Shoe Cabinet",
-                      "Chest Of Drawers",
-                      "Wall-mounted Cupboards",
-                      "Overhead Cabinet"
-                    ],
-                    "exact_furniture": [
-                      "Wardrobe",
-                      "Desk",
-                      "Chair",
-                      "Bed",
-                      "Headboard",
-                      "Desk Chair",
-                      "Storage cabinet"
-                    ],
-                    "name": "Bedroom 8",
-                    "image": "StarLine Picture 2024/Woodgrain Pic/Study room-2.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "194",
-                    "image_path": "StarLine Picture 2024/Woodgrain Pic/Wardrobe.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Wardrobe", "Closet"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": ["Wardrobe", "Closet"],
-                    "exact_furniture": [
-                      "Wardrobe",
-                      "Closet",
-                      "Chest of Drawers",
-                      "Shoe Cabinet",
-                      "Wall-mounted cupboards",
-                      "Lower cabinet"
-                    ],
-                    "name": "Bedroom 8",
-                    "image": "StarLine Picture 2024/Woodgrain Pic/Wardrobe.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2406,
-                "name": "Bedroom 9",
-                "image": "StarLine Picture 2024/Texture Pic/Bedroom-2.jpg",
-                "children": [
-                  {
-                    "id": "228",
-                    "image_path": "StarLine Picture 2024/Texture Pic/Bedroom-2.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": [
-                      "Bedside Table",
-                      "Headboard",
-                      "Wardrobe",
-                      "Dressing Unit"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Wardrobe",
-                      "Shoe Cabinet",
-                      "Chest Of Drawers",
-                      "Bookshelves"
-                    ],
-                    "exact_furniture": [
-                      "Chair",
-                      "Side Table",
-                      "Wardrobe",
-                      "Bed",
-                      "Bookshelf",
-                      "Stool",
-                      "Display case"
-                    ],
-                    "name": "Bedroom 9",
-                    "image": "StarLine Picture 2024/Texture Pic/Bedroom-2.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2407,
-                "name": "Drawers 1",
-                "image": "Senzura Catalogue 2023_Images/Light Application images (4).jpg",
-                "children": [
-                  {
-                    "id": "19",
-                    "image_path": "Senzura Catalogue 2023_Images/Light Application images (4).jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": ["Chest Of Drawers"],
-                    "exact_furniture": ["Bedside Table"],
-                    "name": "Drawers 1",
-                    "image": "Senzura Catalogue 2023_Images/Light Application images (4).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "59",
-                    "image_path": "Senzura Catalogue 2023_Images/Light Series/Light Application images (4).jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": ["Chest Of Drawers"],
-                    "exact_furniture": ["Bedside Table", "Chest of Drawers"],
-                    "name": "Drawers 1",
-                    "image": "Senzura Catalogue 2023_Images/Light Series/Light Application images (4).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "47",
-                    "image_path": "Senzura Catalogue 2023_Images/Dyed Series/Dyed Application images (4).jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "exact_furniture": [
-                      "Chair",
-                      "Chest of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "name": "Drawers 1",
-                    "image": "Senzura Catalogue 2023_Images/Dyed Series/Dyed Application images (4).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "57",
-                    "image_path": "Senzura Catalogue 2023_Images/Light Series/Light Application images (5).jpg",
-                    "interior_category": "Office",
-                    "interior_subcategories": ["Office Cabinet"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Office Cabinet"
-                    ],
-                    "exact_furniture": [
-                      "Desk",
-                      "Chair",
-                      "Chest of Drawers",
-                      "Lamp",
-                      "Wooden slatted screen"
-                    ],
-                    "name": "Drawers 1",
-                    "image": "Senzura Catalogue 2023_Images/Light Series/Light Application images (5).jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2408,
-                "name": "Drawers 4",
-                "image": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                "children": [
-                  {
-                    "id": "138",
-                    "image_path": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                    "interior_category": "Bedroom",
-                    "interior_subcategories": ["Bedside Table", "Headboard"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet"
-                    ],
-                    "exact_furniture": [
-                      "Bed",
-                      "Chest of Drawers",
-                      "Headboard",
-                      "Floor Lamp",
-                      "Wall Art",
-                      "Wooden Flooring",
-                      "Rug"
-                    ],
-                    "name": "Drawers 4",
-                    "image": "Lookbook 2021-22 jpeg/iStock-509096048.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "110",
-                    "image_path": "DECO/0.8mm LAM/Texture section breaker_2.jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "exact_furniture": [
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Stool"
-                    ],
-                    "name": "Drawers 4",
-                    "image": "DECO/0.8mm LAM/Texture section breaker_2.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "112",
-                    "image_path": "DECO/0.8mm LAM/New Texture breaker_3.jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet",
-                      "Wall Panelling"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet",
-                      "Bookshelves"
-                    ],
-                    "exact_furniture": [
-                      "Chest of Drawers",
-                      "Ottoman",
-                      "Wall Panelling",
-                      "Display case"
-                    ],
-                    "name": "Drawers 4",
-                    "image": "DECO/0.8mm LAM/New Texture breaker_3.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "117",
-                    "image_path": "DECO/0.8mm LAM/Living Room-3.jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet",
-                      "Wall-mounted Cupboards"
-                    ],
-                    "exact_furniture": [
-                      "Chair",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Table",
-                      "Chair",
-                      "Chest of Drawers"
-                    ],
-                    "name": "Drawers 4",
-                    "image": "DECO/0.8mm LAM/Living Room-3.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "126",
-                    "image_path": "DECO/NATZURA/shutterstock_186530621.jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": ["Chest Of Drawers"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": ["Chest Of Drawers"],
-                    "exact_furniture": ["Chair", "Chest of Drawers"],
-                    "name": "Drawers 4",
-                    "image": "DECO/NATZURA/shutterstock_186530621.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2409,
-                "name": "Cabinet 1",
-                "image": "Senzura Catalogue 2023_Images/Dark Series Application images (6).jpg",
-                "children": [
-                  {
-                    "id": "5",
-                    "image_path": "Senzura Catalogue 2023_Images/Dark Series Application images (6).jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "exact_furniture": [
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Armen living chair",
-                      "Shoe Cabinet"
-                    ],
-                    "name": "Cabinet 1",
-                    "image": "Senzura Catalogue 2023_Images/Dark Series Application images (6).jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "14",
-                    "image_path": "Senzura Catalogue 2023_Images/Light Application images (5).jpg",
-                    "interior_category": "Office",
-                    "interior_subcategories": ["Office Cabinet"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Office Cabinet",
-                      "Chest Of Drawers",
-                      "Shoe Cabinet",
-                      "Bookshelves"
-                    ],
-                    "exact_furniture": [
-                      "Desk",
-                      "Chair",
-                      "Chest of Drawers",
-                      "Floor Lamp"
-                    ],
-                    "name": "Cabinet 1",
-                    "image": "Senzura Catalogue 2023_Images/Light Application images (5).jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2410,
-                "name": "Signature",
-                "image": "Senzura Catalogue 2023_Images/Grey Series/Senzura Grey Section Breaker.jpg",
-                "children": [
-                  {
-                    "id": "53",
-                    "image_path": "Senzura Catalogue 2023_Images/Grey Series/Senzura Grey Section Breaker.jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "product_category": "Decorative Elements",
-                    "product_subcategories": ["Wall Panelling"],
-                    "exact_furniture": ["Chest of Drawers", "Wall Panelling"],
-                    "name": "Signature",
-                    "image": "Senzura Catalogue 2023_Images/Grey Series/Senzura Grey Section Breaker.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2411,
-                "name": "Living Room 6",
-                "image": "NV/natzura jpeg 2021/shutterstock_186530621.jpg",
-                "children": [
-                  {
-                    "id": "140",
-                    "image_path": "NV/natzura jpeg 2021/shutterstock_186530621.jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet",
-                      "Crockery Cabinet",
-                      "Bathroom Cabinet",
-                      "Office Cabinet",
-                      "Bookshelves"
-                    ],
-                    "exact_furniture": [
-                      "Chair",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Display case"
-                    ],
-                    "name": "Living Room 6",
-                    "image": "NV/natzura jpeg 2021/shutterstock_186530621.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2412,
-                "name": "Living Room 8",
-                "image": "StarLine Picture 2024/Texture Pic/Living room.jpg",
-                "children": [
-                  {
-                    "id": "224",
-                    "image_path": "StarLine Picture 2024/Texture Pic/Living room.jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall Panelling"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Wall-mounted Cupboards"
-                    ],
-                    "exact_furniture": [
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Vases",
-                      "Decorative Vase",
-                      "Tall Vase",
-                      "Dried Pampas Grass",
-                      "Bird Figurines",
-                      "Picture Frame",
-                      "Glass Decanter",
-                      "Ceramic Pitchers",
-                      "Books",
-                      "Woven Basket"
-                    ],
-                    "name": "Living Room 8",
-                    "image": "StarLine Picture 2024/Texture Pic/Living room.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2413,
-                "name": "Tables 1",
-                "image": "Senzura Catalogue 2023_Images/Medium Series/Senzura Medium Section Breaker.jpg",
-                "children": [
-                  {
-                    "id": "28",
-                    "image_path": "Senzura Catalogue 2023_Images/Medium Series/Senzura Medium Section Breaker.jpg",
-                    "interior_category": "Living Room",
-                    "interior_subcategories": [
-                      "Chest Of Drawers",
-                      "Centre Table"
-                    ],
-                    "product_category": "Tables",
-                    "product_subcategories": ["Coffee Table", "Dining Table"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Armen living chair",
-                      "Centre Table",
-                      "Coffee Table",
-                      "Chest of Drawers"
-                    ],
-                    "name": "Tables 1",
-                    "image": "Senzura Catalogue 2023_Images/Medium Series/Senzura Medium Section Breaker.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2414,
-                "name": "Beds 1",
-                "image": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                "children": [
-                  {
-                    "id": "128",
-                    "image_path": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Kids Bed",
-                      "Headboard",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Picture frame"
-                    ],
-                    "name": "Beds 1",
-                    "image": "DECO/NATZURA/shutterstock_1276883560.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2415,
-                "name": "Beds 2",
-                "image": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
-                "children": [
-                  {
-                    "id": "148",
-                    "image_path": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Kids Bed"
-                    ],
-                    "name": "Beds 2",
-                    "image": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "179",
-                    "image_path": "NV/Grohn Application Picture/T03548_S copy.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed"],
-                    "exact_furniture": [
-                      "Chest of Drawers",
-                      "Bedside Table",
-                      "Kids Bed"
-                    ],
-                    "name": "Beds 2",
-                    "image": "NV/Grohn Application Picture/T03548_S copy.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2416,
-                "name": "Beds 3",
-                "image": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
-                "children": [
-                  {
-                    "id": "181",
-                    "image_path": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": ["Kids Room Bed"],
-                    "product_category": "Beds & Related",
-                    "product_subcategories": ["Kids Room Bed", "Headboard"],
-                    "exact_furniture": [
-                      "Chair",
-                      "Ottoman",
-                      "Pouf",
-                      "Kids Bed",
-                      "Headboard",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Wooden floor"
-                    ],
-                    "name": "Beds 3",
-                    "image": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2417,
-                "name": "Kids Room 2",
-                "image": "StarLine Picture 2024/Woodgrain Pic/Kids room-2.jpg",
-                "children": [
-                  {
-                    "id": "203",
-                    "image_path": "StarLine Picture 2024/Woodgrain Pic/Kids room-2.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": [
-                      "Kids Room Wardrobe",
-                      "Kids Room Bed"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Kids Room Wardrobe",
-                      "Shoe Cabinet",
-                      "Chest Of Drawers"
-                    ],
-                    "exact_furniture": [
-                      "Chair",
-                      "Storage cabinet",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Picture frame",
-                      "Wooden giraffe",
-                      "Wooden toy car",
-                      "White bear figure",
-                      "White chair",
-                      "Fabric draped on chair"
-                    ],
-                    "name": "Kids Room 2",
-                    "image": "StarLine Picture 2024/Woodgrain Pic/Kids room-2.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2418,
-                "name": "Kids Room 3",
-                "image": "StarLine Picture 2024/Gloss Pic/Kids Room-3.jpg",
-                "children": [
-                  {
-                    "id": "236",
-                    "image_path": "StarLine Picture 2024/Gloss Pic/Kids Room-3.jpg",
-                    "interior_category": "Kids Room",
-                    "interior_subcategories": [
-                      "Kids Room Wardrobe",
-                      "Kids Room Bed"
-                    ],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Kids Room Wardrobe",
-                      "Shoe Cabinet",
-                      "Chest Of Drawers",
-                      "Bookshelves"
-                    ],
-                    "exact_furniture": [
-                      "Storage cabinet",
-                      "Kids Bed",
-                      "Toy storage box",
-                      "Chair",
-                      "Crockery Cabinet",
-                      "Pouf",
-                      "Shoe Cabinet",
-                      "Bookshelves",
-                      "Toy storage box",
-                      "Toy storage box",
-                      "Wooden chair",
-                      "Wooden chair",
-                      "Storage cabinet",
-                      "Storage cabinet",
-                      "Toy storage box"
-                    ],
-                    "name": "Kids Room 3",
-                    "image": "StarLine Picture 2024/Gloss Pic/Kids Room-3.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2419,
-                "name": "Cabinet 4",
-                "image": "DECO/SENZURA/Light Application images (5).jpg",
-                "children": [
-                  {
-                    "id": "98",
-                    "image_path": "DECO/SENZURA/Light Application images (5).jpg",
-                    "interior_category": "Office",
-                    "interior_subcategories": ["Office Cabinet"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet",
-                      "Office Cabinet"
-                    ],
-                    "exact_furniture": [
-                      "Chest of Drawers",
-                      "Desk",
-                      "Chair",
-                      "Floor lamp",
-                      "Wooden slatted doors",
-                      "Wooden chair",
-                      "Wooden floor lamp stand"
-                    ],
-                    "name": "Cabinet 4",
-                    "image": "DECO/SENZURA/Light Application images (5).jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2420,
-                "name": "Coworking",
-                "image": "StarLine Picture 2024/Texture Pic/Living room-3.jpg",
-                "children": [
-                  {
-                    "id": "222",
-                    "image_path": "StarLine Picture 2024/Texture Pic/Living room-3.jpg",
-                    "interior_category": "Office",
-                    "interior_subcategories": ["Office Cabinet"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Office Cabinet"
-                    ],
-                    "exact_furniture": [
-                      "Chair",
-                      "Chest of Drawers",
-                      "Wall Panelling",
-                      "Vase",
-                      "Books",
-                      "Decorative Elements"
-                    ],
-                    "name": "Coworking",
-                    "image": "StarLine Picture 2024/Texture Pic/Living room-3.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2421,
-                "name": "Compact",
-                "image": "DECO/EXTERIA/IMAGE 4.jpg",
-                "children": [
-                  {
-                    "id": "121",
-                    "image_path": "DECO/EXTERIA/IMAGE 4.jpg",
-                    "interior_category": "Other",
-                    "interior_subcategories": [],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Wardrobe",
-                      "Shoe Cabinet",
-                      "Chest Of Drawers",
-                      "Bathroom Cabinet",
-                      "Office Cabinet",
-                      "Bookshelves"
-                    ],
-                    "exact_furniture": [
-                      "Wardrobe",
-                      "Shoe Cabinet",
-                      "Chest of Drawers",
-                      "Bathroom Cabinet",
-                      "Office Cabinet",
-                      "Bookshelves"
-                    ],
-                    "name": "Compact",
-                    "image": "DECO/EXTERIA/IMAGE 4.jpg",
-                    "children": []
-                  },
-                  {
-                    "id": "125",
-                    "image_path": "DECO/EXTERIA/3.jpg",
-                    "interior_category": "Complete Space Solutions",
-                    "interior_subcategories": [],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Wardrobe",
-                      "Shoe Cabinet",
-                      "Chest Of Drawers",
-                      "Bathroom Cabinet",
-                      "Office Cabinet",
-                      "Bookshelves"
-                    ],
-                    "exact_furniture": [
-                      "Wardrobe",
-                      "Shoe Cabinet",
-                      "Chest of Drawers",
-                      "Bathroom Cabinet",
-                      "Office Cabinet",
-                      "Bookshelves",
-                      "Floating bathroom cabinet",
-                      "Wall-mounted TV unit",
-                      "Fitted lounge unit",
-                      "Nightstand"
-                    ],
-                    "name": "Compact",
-                    "image": "DECO/EXTERIA/3.jpg",
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "id": 2422,
-                "name": "Bookshelves 2",
-                "image": "StarLine Picture 2024/Gloss Pic/Bedroom.jpg",
-                "children": [
-                  {
-                    "id": "237",
-                    "image_path": "StarLine Picture 2024/Gloss Pic/Bedroom.jpg",
-                    "interior_category": "Study",
-                    "interior_subcategories": ["Study Table", "Bookshelves"],
-                    "product_category": "Storage Units",
-                    "product_subcategories": [
-                      "Chest Of Drawers",
-                      "Shoe Cabinet",
-                      "Bookshelves"
-                    ],
-                    "exact_furniture": [
-                      "Study Table",
-                      "Chest of Drawers",
-                      "Shoe Cabinet",
-                      "Bookshelves",
-                      "Display case",
-                      "Storage cabinet"
-                    ],
-                    "name": "Bookshelves 2",
-                    "image": "StarLine Picture 2024/Gloss Pic/Bedroom.jpg",
-                    "children": []
-                  }
-                ]
               }
             ]
           }
@@ -15102,7 +15053,7 @@
             "children": [
               {
                 "id": 2501,
-                "name": "Tv Unit 1",
+                "name": "",
                 "image": "DECO/1mm LAM/Page 171 - R.jpg",
                 "children": [
                   {
@@ -15146,7 +15097,7 @@
               },
               {
                 "id": 2502,
-                "name": "Drawers 3",
+                "name": "",
                 "image": "DECO/1mm LAM/Page 88 - L.jpg",
                 "children": [
                   {
@@ -15177,7 +15128,7 @@
               },
               {
                 "id": 2503,
-                "name": "Living Room 5",
+                "name": "",
                 "image": "DECO/0.8mm LAM/Living Room-2.jpg",
                 "children": [
                   {
@@ -15229,7 +15180,7 @@
               },
               {
                 "id": 2504,
-                "name": "Living Room 6",
+                "name": "",
                 "image": "DECO/NATZURA/iStock-1074960128.jpg",
                 "children": [
                   {
@@ -15277,7 +15228,7 @@
               },
               {
                 "id": 2505,
-                "name": "Living Room 8",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_1654 copy.jpg",
                 "children": [
                   {
@@ -15361,7 +15312,7 @@
               },
               {
                 "id": 2507,
-                "name": "Tv Unit 2",
+                "name": "",
                 "image": "StarLine Picture 2024/Texture Pic/Living room-2.jpg",
                 "children": [
                   {
@@ -16336,7 +16287,7 @@
               },
               {
                 "id": 2634,
-                "name": "Tables 3",
+                "name": "",
                 "image": "DECO/1mm LAM/page 13- R.jpg",
                 "children": [
                   {
@@ -16474,7 +16425,7 @@
               },
               {
                 "id": 2637,
-                "name": "Tables 5",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/shutterstock_1421688668 copy.jpg",
                 "children": [
                   {
@@ -16638,7 +16589,7 @@
               },
               {
                 "id": 2640,
-                "name": "Living Room 6",
+                "name": "",
                 "image": "DECO/EXTERIA/5.jpg",
                 "children": [
                   {
@@ -16826,7 +16777,7 @@
               },
               {
                 "id": 2645,
-                "name": "Living Room 6",
+                "name": "",
                 "image": "DECO/NATZURA/iStock-1074960128.jpg",
                 "children": [
                   {
@@ -16896,7 +16847,7 @@
               },
               {
                 "id": 2647,
-                "name": "Tv Unit 1",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/iStock-1074960128.jpg",
                 "children": [
                   {
@@ -16919,7 +16870,7 @@
               },
               {
                 "id": 2648,
-                "name": "Living Room 7",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/iStock-1012475862.jpg",
                 "children": [
                   {
@@ -16972,7 +16923,7 @@
               },
               {
                 "id": 2649,
-                "name": "Living Room 8",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_1654 copy.jpg",
                 "children": [
                   {
@@ -17103,7 +17054,7 @@
             "children": [
               {
                 "id": 2701,
-                "name": "Drawers 3",
+                "name": "",
                 "image": "DECO/1mm LAM/Page 155 - R.jpg",
                 "children": [
                   {
@@ -17158,7 +17109,7 @@
               },
               {
                 "id": 2702,
-                "name": "Essential",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/iStock-184138811.jpg",
                 "children": [
                   {
@@ -17191,7 +17142,7 @@
               },
               {
                 "id": 2703,
-                "name": "Beds 1",
+                "name": "",
                 "image": "DECO/NATZURA/shutterstock_560973166.jpg",
                 "children": [
                   {
@@ -17243,7 +17194,7 @@
               },
               {
                 "id": 2704,
-                "name": "Tables 1",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Abstract Application images (5).jpg",
                 "children": [
                   {
@@ -17296,7 +17247,7 @@
               },
               {
                 "id": 2705,
-                "name": "Cabinet 1",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dark Series Application images (6).jpg",
                 "children": [
                   {
@@ -17326,7 +17277,7 @@
               },
               {
                 "id": 2706,
-                "name": "Heritage",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Medium Application images (7).jpg",
                 "children": [
                   {
@@ -17393,7 +17344,7 @@
               },
               {
                 "id": 2707,
-                "name": "Living Room 2",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dyed Application images (3).jpg",
                 "children": [
                   {
@@ -17423,7 +17374,7 @@
               },
               {
                 "id": 2708,
-                "name": "Living Room 3",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Teak Application images (2).jpg",
                 "children": [
                   {
@@ -17472,7 +17423,7 @@
               },
               {
                 "id": 2709,
-                "name": "Signature",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (7).jpg",
                 "children": [
                   {
@@ -17522,7 +17473,7 @@
               },
               {
                 "id": 2710,
-                "name": "Tables 2",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Medium Series/Medium Application images (8).jpg",
                 "children": [
                   {
@@ -17545,7 +17496,7 @@
               },
               {
                 "id": 2711,
-                "name": "Drawers 1",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dyed Series/Dyed Application images (4).jpg",
                 "children": [
                   {
@@ -17574,7 +17525,7 @@
               },
               {
                 "id": 2712,
-                "name": "Living Room 4",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dyed Series/Dyed Application images (3).jpg",
                 "children": [
                   {
@@ -17621,7 +17572,7 @@
               },
               {
                 "id": 2713,
-                "name": "Tables 3",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Abstract Series/Abstract Application images (5).jpg",
                 "children": [
                   {
@@ -17649,7 +17600,7 @@
               },
               {
                 "id": 2714,
-                "name": "Modern",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Abstract Series/Senzura Abstract Section breaker.jpg",
                 "children": [
                   {
@@ -17736,7 +17687,7 @@
               },
               {
                 "id": 2715,
-                "name": "Drawers 2",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (6).jpg",
                 "children": [
                   {
@@ -17768,7 +17719,7 @@
               },
               {
                 "id": 2716,
-                "name": "Tv Unit 1",
+                "name": "",
                 "image": "DECO/1mm LAM/Page 171 - R.jpg",
                 "children": [
                   {
@@ -17796,7 +17747,7 @@
               },
               {
                 "id": 2717,
-                "name": "Drawers 4",
+                "name": "",
                 "image": "DECO/0.8mm LAM/Texture section breaker_2.jpg",
                 "children": [
                   {
@@ -17876,7 +17827,7 @@
               },
               {
                 "id": 2718,
-                "name": "Exotic",
+                "name": "",
                 "image": "Lookbook 2021-22 jpeg/iStock-505293246.jpg",
                 "children": [
                   {
@@ -17926,7 +17877,7 @@
               },
               {
                 "id": 2719,
-                "name": "Living Room 6",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/shutterstock_186530621.jpg",
                 "children": [
                   {
@@ -17960,7 +17911,7 @@
               },
               {
                 "id": 2720,
-                "name": "Living Room 7",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/iStock-1012475862.jpg",
                 "children": [
                   {
@@ -18013,7 +17964,7 @@
               },
               {
                 "id": 2721,
-                "name": "Living Room 8",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_1654 copy.jpg",
                 "children": [
                   {
@@ -18102,7 +18053,7 @@
               },
               {
                 "id": 2722,
-                "name": "Beds 2",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/shutterstock_1276883560.jpg",
                 "children": [
                   {
@@ -18128,7 +18079,7 @@
               },
               {
                 "id": 2723,
-                "name": "Beds 3",
+                "name": "",
                 "image": "NV/Dyed_Application Images/Dyed-opt copy.jpg",
                 "children": [
                   {
@@ -18156,7 +18107,7 @@
               },
               {
                 "id": 2724,
-                "name": "Kids Room 2",
+                "name": "",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Kids room-2.jpg",
                 "children": [
                   {
@@ -18193,7 +18144,7 @@
               },
               {
                 "id": 2725,
-                "name": "Reception",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_7562 copy.jpg",
                 "children": [
                   {
@@ -18229,7 +18180,7 @@
               },
               {
                 "id": 2726,
-                "name": "Coworking",
+                "name": "",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Reception-4.jpg",
                 "children": [
                   {
@@ -18291,7 +18242,7 @@
               },
               {
                 "id": 2727,
-                "name": "Exec Office",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Teak Series/Teak Application images (1).jpg",
                 "children": [
                   {
@@ -18595,7 +18546,6 @@
                   }
                 ]
               },
-
 
               {
                 "id": 1315,
@@ -19035,7 +18985,6 @@
                   }
                 ]
               },
-
 
               {
                 "id": 1315,
