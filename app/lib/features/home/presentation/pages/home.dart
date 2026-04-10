@@ -758,8 +758,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         padding: const EdgeInsets.all(10),
                                         child: Icon(
                                           _isGridView
-                                              ? Icons.view_list
-                                              : Icons.grid_view,
+                                              ? Icons.grid_view
+                                              : Icons.view_list,
                                           size: 12,
                                           color: Colors.black87,
                                         ),
@@ -1096,7 +1096,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             nSubCat,
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                               color: const Color(0xFF5D5D5D),
                             ),
                           ),
