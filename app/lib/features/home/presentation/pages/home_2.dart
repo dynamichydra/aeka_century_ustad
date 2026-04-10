@@ -1109,7 +1109,33 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         }
                       });
                     },
-                    child: Image.asset(iconImage, fit: BoxFit.contain),
+                    child: Image.asset(
+                      iconImage,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint(
+                          'SubCategory Image.asset failed for path: "$iconImage" - Error: $error',
+                        );
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              iconImage.isEmpty
+                                  ? "EMPTY"
+                                  : iconImage.split('/').last,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 8,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 );
               }).toList(),
@@ -1143,22 +1169,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF1F1919)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          color: isSelected ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFF1F1919)
-                                : const Color(0xFFF0F0F0),
-                            width: 1,
+                                ? const Color(0xFFB5B5B5)
+                                : const Color(0xFFD9D9D9),
+                            width: 0.5,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                                    color: Colors.black.withOpacity(0.075),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ]
                               : null,
@@ -1167,14 +1191,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           child: Text(
                             nSubCat,
                             style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                              color: isSelected
-                                  ? Colors.white
-                                  : const Color(0xFF898888),
-                              letterSpacing: 0.2,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF5D5D5D),
                             ),
                           ),
                         ),
