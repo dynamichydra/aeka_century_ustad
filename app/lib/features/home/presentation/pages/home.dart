@@ -487,7 +487,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
-                    vertical: 5,
+                    vertical: 0,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,19 +496,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         child: Text(
                           "Lets design Furniture with Century Decor",
                           style: TextStyle(
-                            fontWeight: FontWeight.w200,
-                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                            color:  Color(0xFF5D5D5D)
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 20),
                       Center(
                         child: ExteriorInteriorSwitchSlider(
                           value: homeState.isExterior,
                           onChanged: (val) => homeCubit.setExterior(val),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 20),
                       // SearchInput(),
                       Container(
                         decoration: BoxDecoration(
@@ -573,11 +574,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                   ],
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
+                                  padding: const EdgeInsets.all(4.0),
                                   child: Image.asset(
                                     "assets/icons/app_icons/ai_search.png",
-                                    width: 12,
-                                    height: 12,
+                                    width: 16,
+                                    height: 16,
                                   ),
                                 ),
                               ),
@@ -587,13 +588,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             hintStyle: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w100,
+                              color: Color(0xFF5D5D5D)
                             ),
                           ),
                           onChanged: (val) => homeCubit.setSearchQuery(val),
                           onSubmitted: (_) => homeCubit.fetchResults(),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       DefaultTabController(
                         length: 2,
                         initialIndex: homeState.selectedIndex,
@@ -611,7 +613,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 tabAlignment: TabAlignment.start,
                                 indicator: const UnderlineTabIndicator(
                                   borderSide: BorderSide(
-                                    width: 1.0,
+                                    width: 1.5,
                                     color: Color(0xFF5D5D5D),
                                   ),
                                 ),
@@ -623,7 +625,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 ).withOpacity(0.5),
                                 labelStyle: const TextStyle(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w400,
+                                  fontWeight: FontWeight.w500,
                                 ),
                                 tabs: const [
                                   Tab(text: "Interiors"),
@@ -679,13 +681,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         homeCubit.toggleTrending();
                                       },
                                       child: Padding(
-                                        padding: const EdgeInsets.all(10),
+                                        padding: const EdgeInsets.all(8),
                                         child: Image.asset(
                                           homeState.isTrendingShowing
                                               ? "assets/icons/app_icons/trendng2_white.png"
                                               : "assets/icons/app_icons/trendng2.png",
-                                          width: 12,
-                                          height: 12,
+                                          width: 16,
+                                          height: 16,
                                         ),
                                       ),
                                     ),
@@ -716,10 +718,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         homeCubit.toggleLiked();
                                       },
                                       child: Padding(
-                                        padding: const EdgeInsets.all(10),
+                                        padding: const EdgeInsets.all(8),
                                         child: Icon(
                                           Icons.favorite,
-                                          size: 12,
+                                          size: 16,
                                           color: homeState.isLikedShowing
                                               ? Colors.white
                                               : const Color(0xFF898888),
@@ -755,12 +757,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         });
                                       },
                                       child: Padding(
-                                        padding: const EdgeInsets.all(10),
+                                        padding: const EdgeInsets.all(8),
                                         child: Icon(
                                           _isGridView
                                               ? Icons.grid_view
                                               : Icons.view_list,
-                                          size: 12,
+                                          size: 16,
                                           color: Colors.black87,
                                         ),
                                       ),
