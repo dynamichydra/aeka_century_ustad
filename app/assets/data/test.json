@@ -1,0 +1,340 @@
+{
+  "interior": [
+    {
+      "id": 1,
+      "name": "Kitchen",
+      "icon": "kitchen.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 2,
+      "name": "Kitchen Cabinet",
+      "icon": "kitchen-cabinet.png",
+      "parent_id": 1,
+      "nested_key": "cabinet"
+    },
+
+    {
+      "id": 3,
+      "name": "Living Room",
+      "icon": "living-room.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 4,
+      "name": "Chest of Drawers",
+      "icon": "drawers.png",
+      "parent_id": 3,
+      "nested_key": "drawers"
+    },
+    {
+      "id": 5,
+      "name": "Shoe Cabinet",
+      "icon": "shoe-cabinet.png",
+      "parent_id": 3,
+      "nested_key": "shoe_cabinet"
+    },
+    {
+      "id": 6,
+      "name": "Wall Panelling",
+      "icon": "wall.png",
+      "parent_id": 3
+    },
+    {
+      "id": 7,
+      "name": "TV Unit",
+      "icon": "tv.png",
+      "parent_id": 3
+    },
+    {
+      "id": 8,
+      "name": "Reception Area Furniture",
+      "icon": "reception.png",
+      "parent_id": 3
+    },
+    {
+      "id": 9,
+      "name": "Coffee Table",
+      "icon": "coffee-table.png",
+      "parent_id": 3,
+      "nested_key": "tables"
+    },
+
+    {
+      "id": 10,
+      "name": "Bedroom",
+      "icon": "bedroom.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 11,
+      "name": "Bedside Table",
+      "icon": "bedside.png",
+      "parent_id": 10
+    },
+    {
+      "id": 12,
+      "name": "Headboard",
+      "icon": "headboard.png",
+      "parent_id": 10,
+      "nested_key": "headboard"
+    },
+    {
+      "id": 13,
+      "name": "Wardrobe",
+      "icon": "wardrobe.png",
+      "parent_id": 10,
+      "nested_key": "wardrobe"
+    },
+    {
+      "id": 14,
+      "name": "Dressing Unit",
+      "icon": "dressing.png",
+      "parent_id": 10
+    },
+
+    {
+      "id": 15,
+      "name": "Kids Room",
+      "icon": "kids.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 16,
+      "name": "Kids Wardrobe",
+      "icon": "wardrobe.png",
+      "parent_id": 15,
+      "nested_key": "wardrobe"
+    },
+    {
+      "id": 17,
+      "name": "Kids Bed",
+      "icon": "bed.png",
+      "parent_id": 15,
+      "nested_key": "kids_bed"
+    },
+
+    {
+      "id": 18,
+      "name": "Dining",
+      "icon": "dining.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 19,
+      "name": "Dining Table",
+      "icon": "dining-table.png",
+      "parent_id": 18,
+      "nested_key": "dining_table"
+    },
+    {
+      "id": 20,
+      "name": "Bar Unit",
+      "icon": "bar.png",
+      "parent_id": 18
+    },
+    {
+      "id": 21,
+      "name": "Crockery Cabinet",
+      "icon": "crockery.png",
+      "parent_id": 18,
+      "nested_key": "cabinet"
+    },
+
+    {
+      "id": 22,
+      "name": "Study",
+      "icon": "study.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 23,
+      "name": "Study Table",
+      "icon": "study-table.png",
+      "parent_id": 22
+    },
+    {
+      "id": 24,
+      "name": "Bookshelves",
+      "icon": "bookshelf.png",
+      "parent_id": 22,
+      "nested_key": "bookshelves"
+    },
+
+    {
+      "id": 25,
+      "name": "Bathroom",
+      "icon": "bathroom.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 26,
+      "name": "Bathroom Cabinet",
+      "icon": "bathroom-cabinet.png",
+      "parent_id": 25,
+      "nested_key": "bathroom_cabinet"
+    },
+
+    {
+      "id": 27,
+      "name": "Office",
+      "icon": "office.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 28,
+      "name": "Reception Area Furniture",
+      "icon": "reception.png",
+      "parent_id": 27
+    },
+    {
+      "id": 29,
+      "name": "Conference Room Furniture",
+      "icon": "conference.png",
+      "parent_id": 27
+    },
+    {
+      "id": 30,
+      "name": "Cafeteria Furniture",
+      "icon": "cafeteria.png",
+      "parent_id": 27
+    },
+    {
+      "id": 31,
+      "name": "Office Table",
+      "icon": "office-table.png",
+      "parent_id": 27
+    },
+    {
+      "id": 32,
+      "name": "Office Cabinet",
+      "icon": "office-cabinet.png",
+      "parent_id": 27,
+      "nested_key": "cabinet"
+    },
+    {
+      "id": 33,
+      "name": "Office Cubicles",
+      "icon": "cubicle.png",
+      "parent_id": 27
+    }
+  ],
+
+  "furniture": [
+    {
+      "id": 100,
+      "name": "Wardrobe",
+      "icon": "wardrobe.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 101,
+      "name": "Kids Wardrobe",
+      "icon": "wardrobe.png",
+      "parent_id": 100,
+      "nested_key": "wardrobe"
+    },
+
+    {
+      "id": 102,
+      "name": "Drawers",
+      "icon": "drawer.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 103,
+      "name": "Chest of Drawers",
+      "icon": "drawer.png",
+      "parent_id": 102,
+      "nested_key": "drawers"
+    },
+
+    {
+      "id": 104,
+      "name": "Cabinet",
+      "icon": "cabinet.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 105,
+      "name": "Shoe Cabinet",
+      "icon": "shoe.png",
+      "parent_id": 104,
+      "nested_key": "shoe_cabinet"
+    },
+    {
+      "id": 106,
+      "name": "Crockery Cabinet",
+      "icon": "crockery.png",
+      "parent_id": 104,
+      "nested_key": "cabinet"
+    },
+
+    {
+      "id": 107,
+      "name": "Tables",
+      "icon": "table.png",
+      "all_icon": "all.png",
+      "parent_id": null
+    },
+    {
+      "id": 108,
+      "name": "Dining Table",
+      "icon": "dining.png",
+      "parent_id": 107,
+      "nested_key": "dining_table"
+    },
+    {
+      "id": 109,
+      "name": "Study Table",
+      "icon": "study.png",
+      "parent_id": 107
+    },
+    {
+      "id": 110,
+      "name": "Coffee Table",
+      "icon": "coffee.png",
+      "parent_id": 107
+    }
+  ],
+
+  "nested_subcategories": {
+    "wardrobe": [
+      "1 Door",
+      "2 Door",
+      "3 Door",
+      "4 Door",
+      "4+ Door",
+      "Sliding Door"
+    ],
+    "drawers": ["1 Drawer", "2 Drawer", "3 Drawer"],
+    "shoe_cabinet": [
+      "1 Door",
+      "2 Door",
+      "Open rack",
+      "Rack with seating",
+      "Tilt out shoe rack"
+    ],
+    "cabinet": ["1 Door", "2 Door", "3 Door", "4 Door", "4+ Door"],
+    "bathroom_cabinet": [
+      "Mirror Cabinets",
+      "Wall Mounted Cabinets",
+      "Standing Cabinets"
+    ],
+    "bookshelves": ["1 Door", "2 Door", "3 Door", "Open rack"],
+    "dining_table": ["4 Seater", "6 Seater", "8 Seater"],
+    "kids_bed": ["Single bed", "Bunk bed"],
+    "headboard": ["Single bed", "Queen bed", "King bed"]
+  }
+}
