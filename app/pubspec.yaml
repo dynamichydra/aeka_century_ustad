@@ -111,6 +111,7 @@ flutter:
     - assets/transaparent/Kitchen/Subcategories/
     - assets/transaparent/Living_room/
     - assets/transaparent/Living_room/Living_room_sub_categories/
+    - assets/transaparent/center_table/
     - assets/db/app.db
     - assets/images/content/
     - assets/images/animations/

@@ -6468,7 +6468,7 @@
                   }
                 ]
               },
-  
+
               {
                 "id": 2207,
                 "name": "Kids Room 3",
@@ -6636,7 +6636,7 @@
               }
             ]
           },
-           {
+          {
             "id": 142,
             "name": "Bookshelves",
             "image": "transaparent/Study/subcategories/Bookshelves.png",
@@ -7331,7 +7331,6 @@
             "name": "Kids Bed",
             "image": "transaparent/Kids_Bed_room/Sub_category/Kids_bed_1.png",
             "children": [
-   
               {
                 "id": 1712,
                 "name": "Kids Room 2",
@@ -7585,11 +7584,11 @@
               }
             ]
           },
-           {
+          {
             "id": 171,
             "name": "Kids Wardrobe",
             "image": "transaparent/Kids_Bed_room/Sub_category/Kids_wardrobe_1.png",
-           "children": [
+            "children": [
               {
                 "id": 1314,
                 "name": "1 Door",
@@ -11346,7 +11345,7 @@
             "name": "Kids Bed",
             "image": "transaparent/Kids_Bed_room/Sub_category/Kids_bed_1.png",
             "children": [
-           {
+              {
                 "id": 1712,
                 "name": "Kids Room 2",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Kids room.jpg",
@@ -11603,7 +11602,7 @@
             "id": 212,
             "name": "Headboard",
             "image": "transaparent/Bed_room/Sub_categories/Headboard_1.png",
-             "children": [
+            "children": [
               {
                 "id": 1331,
                 "name": "Master",
@@ -13297,7 +13296,7 @@
             "id": 233,
             "name": "Bathroom Cabinet",
             "image": "DECO/SENZURA/Bathroom cabinet.png",
-          "children": [
+            "children": [
               {
                 "id": 1611,
                 "name": "Mirror Cabinets",
@@ -14690,7 +14689,7 @@
             "name": "Chest of Drawers",
             "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
             "children": [
-                  {
+              {
                 "id": 2403,
                 "name": "",
                 "image": "DECO/1mm LAM/Page 155 - R.jpg",
@@ -16102,7 +16101,7 @@
           {
             "id": 264,
             "name": "Centre Table",
-            "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Coffee_table)_1.png",
+            "image": "transaparent/center_table/center_table.png",
             "children": [
               {
                 "id": 2631,
@@ -19149,6 +19148,198 @@
           }
         ],
         "optional_all_img": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png"
+      },
+      {
+        "id": 134,
+        "name": "Dressing Unit",
+        "image": "transaparent/Bed_room/Sub_categories/Dressing_unit_1.png",
+        "children": [
+          {
+            "id": 1341,
+            "name": "",
+            "image": "images/furniture/dressing_unit.png",
+            "children": [
+              {
+                "id": "85",
+                "image_path": "images/furniture/dressing_unit.png",
+                "interior_category": "Bedroom",
+                "interior_subcategories": ["Wardrobe", "Dressing Unit"],
+                "product_category": "Storage Units",
+                "product_subcategories": [
+                  "Wardrobe",
+                  "Shoe Cabinet",
+                  "Chest Of Drawers"
+                ],
+                "exact_furniture": [
+                  "Wardrobe",
+                  "Dressing Unit",
+                  "Chair",
+                  "Ottoman",
+                  "Wall Panelling",
+                  "Mirror",
+                  "Decorative Elements"
+                ],
+                "name": "Luxury",
+                "image": "images/furniture/dressing_unit.png",
+                "children": []
+              }
+            ]
+          }
+        ],
+        "optional_all_img": "transaparent/Bed_room/Sub_categories/Dressing_unit_1.png"
+      },
+    {
+        "id": 134,
+        "name": "Sofa",
+        "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(All)_1.png",
+        "children": [
+          {
+            "id": 1341,
+            "name": "",
+            "image": "images/furniture/sofa_2_seater.png",
+            "children": [
+              {
+                "id": 13411,
+                "name": "1 Seater",
+                "children": [
+                  {
+                    "id": "sofa_1_1",
+                    "image_path": "images/furniture/sofa_1_seater.png",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Dressing Unit"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers"
+                    ],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Dressing Unit",
+                      "Chair",
+                      "Ottoman",
+                      "Wall Panelling",
+                      "Mirror",
+                      "Decorative Elements"
+                    ],
+                    "name": "Luxury",
+                    "image": "images/furniture/sofa_1_seater.png",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 13412,
+                "name": "2 Seater",
+                "children": [
+                  {
+                    "id": "sofa_2_1",
+                    "image_path": "images/furniture/sofa_2_seater.png",
+                    "interior_category": "Bedroom",
+                    "interior_subcategories": ["Wardrobe", "Dressing Unit"],
+                    "product_category": "Storage Units",
+                    "product_subcategories": [
+                      "Wardrobe",
+                      "Shoe Cabinet",
+                      "Chest Of Drawers"
+                    ],
+                    "exact_furniture": [
+                      "Wardrobe",
+                      "Dressing Unit",
+                      "Chair",
+                      "Ottoman",
+                      "Wall Panelling",
+                      "Mirror",
+                      "Decorative Elements"
+                    ],
+                    "name": "Luxury",
+                    "image": "images/furniture/sofa_2_seater.png",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(All)_1.png"
+      },
+      {
+        "id": 134,
+        "name": "chair",
+        "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
+        "children": [
+          {
+            "id": 1341,
+            "name": "",
+            "image": "images/furniture/designer_chair.png",
+            "children": [
+              {
+                "id": "85",
+                "image_path": "images/furniture/designer_chair.png",
+                "interior_category": "Bedroom",
+                "interior_subcategories": ["Wardrobe", "Dressing Unit"],
+                "product_category": "Storage Units",
+                "product_subcategories": [
+                  "Wardrobe",
+                  "Shoe Cabinet",
+                  "Chest Of Drawers"
+                ],
+                "exact_furniture": [
+                  "Wardrobe",
+                  "Dressing Unit",
+                  "Chair",
+                  "Ottoman",
+                  "Wall Panelling",
+                  "Mirror",
+                  "Decorative Elements"
+                ],
+                "name": "Luxury",
+                "image": "images/furniture/designer_chair.png",
+                "children": []
+              }
+            ]
+          }
+        ],
+        "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png"
+      },
+      {
+        "id": 134,
+        "name": "Office Cubicle",
+        "image": "transaparent/Office/Sub_categories/Office_cubicles.png",
+        "children": [
+          {
+            "id": 1341,
+            "name": "",
+            "image": "images/furniture/office_cubicle.png",
+            "children": [
+              {
+                "id": "85",
+                "image_path": "images/furniture/office_cubicle.png",
+                "interior_category": "Bedroom",
+                "interior_subcategories": ["Wardrobe", "Dressing Unit"],
+                "product_category": "Storage Units",
+                "product_subcategories": [
+                  "Wardrobe",
+                  "Shoe Cabinet",
+                  "Chest Of Drawers"
+                ],
+                "exact_furniture": [
+                  "Wardrobe",
+                  "Dressing Unit",
+                  "Chair",
+                  "Ottoman",
+                  "Wall Panelling",
+                  "Mirror",
+                  "Decorative Elements"
+                ],
+                "name": "Luxury",
+                "image": "images/furniture/office_cubicle.png",
+                "children": []
+              }
+            ]
+          }
+        ],
+        "optional_all_img": "transaparent/Office/Office_all.png"
       }
     ]
   }

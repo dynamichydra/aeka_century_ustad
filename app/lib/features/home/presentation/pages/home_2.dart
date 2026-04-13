@@ -1053,100 +1053,120 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final categoryData =
         _productsByTabCategorySub[selectedIndex]?[selectedCategory];
 
-    if (categoryData == null || categoryData.isEmpty)
+    if (categoryData == null || categoryData.isEmpty) {
       return const SizedBox.shrink();
+    }
 
-    final subCategories = (categoryData.length > 1)
-        ? ["All", ...categoryData.keys]
-        : categoryData.keys.toList();
+    // Determine if we have multiple subcategories or at least one meaningful subcategory name.
+    final bool hasMultipleSubCats = categoryData.length > 1;
+    final bool hasMeaningfulSingleSubCat = categoryData.length == 1 &&
+        categoryData.keys.first.isNotEmpty &&
+        categoryData.keys.first != "General";
 
+    // Determine nested subcategories if a subcategory is selected
     List<String> nestedSubCategories = [];
     if (_selectedSubCategory != "All") {
       final nestedData = categoryData[_selectedSubCategory];
       if (nestedData != null) {
         nestedSubCategories.addAll(nestedData.keys);
       }
+    } else if (categoryData.length == 1) {
+      nestedSubCategories.addAll(categoryData.values.first.keys);
     }
+
+    final bool hasMultipleNestedSubCats = nestedSubCategories.length > 1;
+
+    if (!hasMultipleSubCats &&
+        !hasMeaningfulSingleSubCat &&
+        !hasMultipleNestedSubCats) {
+      return const SizedBox.shrink();
+    }
+
+    final subCategories = (categoryData.length > 1)
+        ? ["All", ...categoryData.keys]
+        : categoryData.keys.toList();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 80,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: subCategories.map((subCat) {
-                final isSelected = _selectedSubCategory == subCat;
+        // Primary SubCategories as Icons
+        if (hasMultipleSubCats || hasMeaningfulSingleSubCat)
+          SizedBox(
+            height: 80,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: subCategories.map((subCat) {
+                  final isSelected = _selectedSubCategory == subCat;
 
-                String iconImage = "";
-                if (subCat == "All") {
-                  iconImage = _getParentCategoryIcon(
-                    selectedCategory,
-                    categoryData,
-                  );
-                } else {
-                  iconImage = _getSubCategoryIcon(subCat, categoryData);
-                }
+                  String iconImage = "";
+                  if (subCat == "All") {
+                    iconImage = _getParentCategoryIcon(
+                      selectedCategory,
+                      categoryData,
+                    );
+                  } else {
+                    iconImage = _getSubCategoryIcon(subCat, categoryData);
+                  }
 
-                if (iconImage.isEmpty) {
-                  final iconIndex = subCat.hashCode.abs() % 9;
-                  iconImage = "assets/transparent/${iconIndex + 1}.png";
-                }
+                  if (iconImage.isEmpty) {
+                    final iconIndex = subCat.hashCode.abs() % 9;
+                    iconImage = "assets/transparent/${iconIndex + 1}.png";
+                  }
 
-                return Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: CircularIconItem(
-                    label: subCat,
-                    isSelected: isSelected,
-                    size: 50,
-                    useUnderline: true,
-                    isCircular: false,
-                    onTap: () {
-                      setState(() {
-                        if (_selectedSubCategory != subCat) {
-                          _selectedSubCategory = subCat;
-                          _selectedNestedSubCategory = "";
-                        }
-                      });
-                    },
-                    child: Image.asset(
-                      iconImage,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        debugPrint(
-                          'SubCategory Image.asset failed for path: "$iconImage" - Error: $error',
-                        );
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.red[100],
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              iconImage.isEmpty
-                                  ? "EMPTY"
-                                  : iconImage.split('/').last,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 8,
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: CircularIconItem(
+                      label: subCat,
+                      isSelected: isSelected,
+                      size: 50,
+                      useUnderline: true,
+                      isCircular: false,
+                      onTap: () {
+                        setState(() {
+                          if (_selectedSubCategory != subCat) {
+                            _selectedSubCategory = subCat;
+                            _selectedNestedSubCategory = "";
+                          }
+                        });
+                      },
+                      child: Image.asset(
+                        iconImage,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          debugPrint(
+                            'SubCategory Image.asset failed for path: "$iconImage" - Error: $error',
+                          );
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red[100],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                iconImage.isEmpty
+                                    ? "EMPTY"
+                                    : iconImage.split('/').last,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 8,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ),
-        ),
-        if (_selectedSubCategory != "All" &&
-            nestedSubCategories.length > 1) ...[
-          const SizedBox(height: 10),
+        if (nestedSubCategories.length > 1) ...[
+          if (hasMultipleSubCats || hasMeaningfulSingleSubCat)
+            const SizedBox(height: 10),
           SizedBox(
             height: 32,
             child: SingleChildScrollView(
