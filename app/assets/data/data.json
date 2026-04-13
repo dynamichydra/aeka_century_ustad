@@ -8229,7 +8229,7 @@
             "children": [
               {
                 "id": 1811,
-                "name": "Exec Office",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dark Series Application images (8).jpg",
                 "children": [
                   {
@@ -8320,7 +8320,7 @@
               },
               {
                 "id": 1812,
-                "name": "Home Office",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Light Series/Light Application images (3).jpg",
                 "children": [
                   {
@@ -8457,7 +8457,7 @@
               },
               {
                 "id": 1813,
-                "name": "Meeting",
+                "name": "",
                 "image": "DECO/0.8mm LAM/Woodgrains-4.jpg",
                 "children": [
                   {
@@ -8583,7 +8583,7 @@
               },
               {
                 "id": 1814,
-                "name": "Reception",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_4577 copy.jpg",
                 "children": [
                   {
@@ -8722,7 +8722,7 @@
               },
               {
                 "id": 1815,
-                "name": "Coworking",
+                "name": "",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Study room-4.jpg",
                 "children": [
                   {
@@ -8768,7 +8768,7 @@
               },
               {
                 "id": 1816,
-                "name": "Corp Office",
+                "name": "",
                 "image": "StarLine Picture 2024/Texture Pic/Office space.jpg",
                 "children": [
                   {
@@ -8856,7 +8856,7 @@
             "children": [
               {
                 "id": 1821,
-                "name": "Exec Office",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dark Series Application images (8).jpg",
                 "children": [
                   {
@@ -9018,7 +9018,7 @@
               },
               {
                 "id": 1822,
-                "name": "Home Office",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Light Series/Light Application images (5).jpg",
                 "children": [
                   {
@@ -9202,7 +9202,7 @@
               },
               {
                 "id": 1823,
-                "name": "Meeting",
+                "name": "",
                 "image": "DECO/0.8mm LAM/Woodgrains-4.jpg",
                 "children": [
                   {
@@ -9376,7 +9376,7 @@
               },
               {
                 "id": 1824,
-                "name": "Reception",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_4577 copy.jpg",
                 "children": [
                   {
@@ -9529,7 +9529,7 @@
               },
               {
                 "id": 1825,
-                "name": "Coworking",
+                "name": "",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Study room-4.jpg",
                 "children": [
                   {
@@ -9666,7 +9666,7 @@
               },
               {
                 "id": 1826,
-                "name": "Corp Office",
+                "name": "",
                 "image": "StarLine Picture 2024/Texture Pic/Reception-2.jpg",
                 "children": [
                   {
@@ -9753,7 +9753,7 @@
             "children": [
               {
                 "id": 1831,
-                "name": "Exec Office",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Horizontal Application images (2).jpg",
                 "children": [
                   {
@@ -9845,7 +9845,7 @@
               },
               {
                 "id": 1832,
-                "name": "Home Office",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Light Series/Light Application images (2).jpg",
                 "children": [
                   {
@@ -9877,7 +9877,7 @@
               },
               {
                 "id": 1833,
-                "name": "Meeting",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/iStock-612746808.jpg",
                 "children": [
                   {
@@ -9900,7 +9900,7 @@
               },
               {
                 "id": 1834,
-                "name": "Coworking",
+                "name": "",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Office Space.jpg",
                 "children": [
                   {
@@ -14217,7 +14217,7 @@
             "children": [
               {
                 "id": 2341,
-                "name": "Elite",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dark Series Application images (7).jpg",
                 "children": [
                   {
@@ -14271,7 +14271,7 @@
               },
               {
                 "id": 2342,
-                "name": "Classic",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Dark Series/Dark Series Application images (7).jpg",
                 "children": [
                   {
@@ -14346,7 +14346,7 @@
               },
               {
                 "id": 2343,
-                "name": "Modern",
+                "name": "",
                 "image": "DECO/SENZURA/Dark Series Application images (7).jpg",
                 "children": [
                   {
@@ -14454,7 +14454,7 @@
               },
               {
                 "id": 2344,
-                "name": "Minimal",
+                "name": "",
                 "image": "DECO/0.8mm LAM/Solid section breaker_3.jpg",
                 "children": [
                   {
@@ -14521,7 +14521,7 @@
               },
               {
                 "id": 2345,
-                "name": "Industrial",
+                "name": "",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Kitchen.jpg",
                 "children": [
                   {
@@ -14577,7 +14577,7 @@
               },
               {
                 "id": 2346,
-                "name": "Rustic",
+                "name": "",
                 "image": "StarLine Picture 2024/Gloss Pic/Kitchen-5.jpg",
                 "children": [
                   {
@@ -14620,7 +14620,7 @@
               },
               {
                 "id": 2347,
-                "name": "Outdoor",
+                "name": "",
                 "image": "DECO/0.8mm LAM/Texture section breaker_1.jpg",
                 "children": [
                   {
@@ -14643,7 +14643,7 @@
               },
               {
                 "id": 2348,
-                "name": "Corp Office",
+                "name": "",
                 "image": "StarLine Picture 2024/Texture Pic/Cafeteria.jpg",
                 "children": [
                   {
@@ -15814,7 +15814,7 @@
             "children": [
               {
                 "id": 2621,
-                "name": "Home Office",
+                "name": "",
                 "image": "Senzura Catalogue 2023_Images/Light Series/Light Application images (3).jpg",
                 "children": [
                   {
@@ -15911,7 +15911,7 @@
               },
               {
                 "id": 2622,
-                "name": "Meeting",
+                "name": "",
                 "image": "NV/natzura jpeg 2021/shutterstock_127688347.jpg",
                 "children": [
                   {
@@ -15942,7 +15942,7 @@
               },
               {
                 "id": 2623,
-                "name": "Reception",
+                "name": "",
                 "image": "NV/Grohn Application Picture/IS_4577 copy.jpg",
                 "children": [
                   {
@@ -16023,7 +16023,7 @@
               },
               {
                 "id": 2624,
-                "name": "Coworking",
+                "name": "",
                 "image": "StarLine Picture 2024/Woodgrain Pic/Study room-4.jpg",
                 "children": [
                   {
@@ -16069,7 +16069,7 @@
               },
               {
                 "id": 2625,
-                "name": "Corp Office",
+                "name": "",
                 "image": "StarLine Picture 2024/Gloss Pic/Reception.jpg",
                 "children": [
                   {
