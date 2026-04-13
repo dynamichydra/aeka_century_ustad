@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/features/camera_pages/presentation/widgets/image_compare_slider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/features/camera_pages/data/dummy_data.dart';
@@ -314,6 +315,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           }
         },
         child: Scaffold(
+          drawer: const HomeDrawer(),
           backgroundColor: const Color(0xFFF8F8F8),
           body: SafeArea(
             child: Column(
@@ -1495,10 +1497,31 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         color: Colors.black,
                         size: 20,
                       ),
-                      onPressed: () {},
+                      onPressed: () {Scaffold.of(context).openDrawer();},
                     ),
                   ),
                   const Spacer(),
+                  Visibility(
+                    visible: _isApplied && _editExpanded,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black12, width: 1),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward,
+                        color: Colors.black,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 50),
                 ],
               ),
               SizedBox(

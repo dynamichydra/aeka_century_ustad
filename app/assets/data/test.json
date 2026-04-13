@@ -336,5 +336,58 @@
     "dining_table": ["4 Seater", "6 Seater", "8 Seater"],
     "kids_bed": ["Single bed", "Bunk bed"],
     "headboard": ["Single bed", "Queen bed", "King bed"]
-  }
+  },
+
+
+  "images": [
+    {
+      "id": 1000,
+      "name": "Modern Bedroom Setup",
+      "image": "bedroom1.jpg",
+      "interior_ids": [1],
+      "product_category_ids": [10],
+      "furniture_ids": [100, 101, 102],
+      "search_keywords": "bedroom bed chair table modern sleep"
+    },
+    {
+      "id": 1001,
+      "name": "Office Workspace",
+      "image": "office1.jpg",
+      "interior_ids": [2],
+      "product_category_ids": [12],
+      "furniture_ids": [101, 102, 103],
+      "search_keywords": "office chair table cabinet workspace desk"
+    },
+    {
+      "id": 1002,
+      "name": "Modern Kitchen",
+      "image": "kitchen1.jpg",
+      "interior_ids": [3],
+      "product_category_ids": [11],
+      "furniture_ids": [103],
+      "search_keywords": "kitchen cabinet storage modular kitchen"
+    },
+    {
+      "id": 1003,
+      "name": "Living Room Setup",
+      "image": "living1.jpg",
+      "interior_ids": [4],
+      "product_category_ids": [11, 12],
+      "furniture_ids": [104, 105, 103],
+      "search_keywords": "living room tv unit wall panel cabinet decor"
+    },
+    {
+      "id": 1004,
+      "name": "Bar Interior Design",
+      "image": "bar1.jpg",
+      "interior_ids": [4],
+      "product_category_ids": [12],
+      "furniture_ids": [107, 106],
+      "search_keywords": "bar unit stool modern bar setup"
+    }
+  ]
 }
+
+
+
+
