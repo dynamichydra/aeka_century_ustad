@@ -62,15 +62,34 @@ class ProductsCubit extends Cubit<ProductsState> {
   }
 
   Future<void> fetchProductsBySubCategory(String category, String subCategory, {required bool isInterior}) async {
-    if (subCategory == "All" || isInterior) {
+    if (subCategory == "All") {
       return fetchProductsByCategory(category, isInterior: isInterior);
     }
     
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
-      // The API uses /browse/product/{product}?subCategory={subCategory}
-      // category here corresponds to the furniture room/group which acts as the 'product' base in the API taxonomy for furnitures
-      final products = await _productRepository.getProductsByProduct(category, subCategory: subCategory);
+      // Standardizing based on user requirement:
+      // If Interior: subCategory (Icon) is the 'product'
+      // If Furniture: category (Group) is the 'product', subCategory (Icon) is 'subCategory'
+      final String productBase = isInterior ? subCategory : category;
+      final String? subFilter = isInterior ? null : subCategory;
+
+      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter);
+      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> fetchProductsByNestedSubCategory(String category, String subCategory, String nestedSubCategory, {required bool isInterior}) async {
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+    try {
+      // Standardizing for nested levels (mainly Interiors):
+      // Product remains the subCategory (Icon), and nestedSubCategory (Pill) is the sub-filter
+      final String productBase = isInterior ? subCategory : category;
+      final String? subFilter = isInterior ? nestedSubCategory : nestedSubCategory;
+
+      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter);
       emit(state.copyWith(isLoading: false, products: products, hasMore: false));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));

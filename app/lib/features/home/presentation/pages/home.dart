@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/home/home_cubit.dart';
@@ -452,30 +453,75 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     }
   }
 
-  Future<void> _openProductForEditing(String assetPath) async {
-    try {
-      final byteData = await rootBundle.load(assetPath);
-      final tempDir = await getTemporaryDirectory();
-      final fileName = assetPath.replaceAll("/", "_");
-      final file = File('${tempDir.path}/$fileName');
-      await file.writeAsBytes(
-        byteData.buffer.asUint8List(
-          byteData.offsetInBytes,
-          byteData.lengthInBytes,
+  Future<void> _openProductForEditing(ProductImageModel product) async {
+    final assetPath = product.image;
+    bool isLoaderShowing = false;
+    
+    // Show loading dialog for network images
+    if (product.isNetworkImage) {
+      isLoaderShowing = true;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: TColors.primary),
         ),
-      );
+      ).then((_) {
+        isLoaderShowing = false;
+      });
+    }
+
+    try {
+      File file;
+      if (product.isNetworkImage) {
+        final response = await http.get(Uri.parse(assetPath));
+        if (response.statusCode == 200) {
+          final tempDir = await getTemporaryDirectory();
+          final fileName = 'downloaded_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          file = File('${tempDir.path}/$fileName');
+          await file.writeAsBytes(response.bodyBytes);
+          
+          if (mounted && isLoaderShowing) {
+            isLoaderShowing = false;
+            Navigator.of(context, rootNavigator: true).pop();
+          }
+        } else {
+          throw Exception("Failed to download image: ${response.statusCode}");
+        }
+      } else {
+        final byteData = await rootBundle.load(assetPath);
+        final tempDir = await getTemporaryDirectory();
+        final fileName = assetPath.replaceAll("/", "_");
+        file = File('${tempDir.path}/$fileName');
+        await file.writeAsBytes(
+          byteData.buffer.asUint8List(
+            byteData.offsetInBytes,
+            byteData.lengthInBytes,
+          ),
+        );
+      }
+
       if (mounted) {
         context.push(
           AppRoutes.imagePreview,
           extra: {
             "imageFile": file,
-            "image_category": "",
-            "sub_category": "asdasdasdsa",
+            "image_category": product.category ?? _selectedCategory ?? "Furniture",
+            "sub_category": product.subcategory ?? _selectedSubCategory,
           },
         );
       }
     } catch (e) {
-      debugPrint("Error loading asset: $e");
+      if (mounted && isLoaderShowing) {
+        isLoaderShowing = false;
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      debugPrint("Error preparing image: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error preparing image: $e")),
+        );
+      }
     }
   }
 
@@ -868,7 +914,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
                                 return GestureDetector(
                                   onTap: () {
-                                    _openProductForEditing(product.image);
+                                    _openProductForEditing(product);
                                   },
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
@@ -911,7 +957,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
                                 return GestureDetector(
                                   onTap: () {
-                                    _openProductForEditing(product.image);
+                                    _openProductForEditing(product);
                                   },
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
@@ -1109,7 +1155,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           }
                         });
                         // Trigger dynamic API fetch for nested subcategory
-                        context.read<ProductsCubit>().fetchProductsByCategory(
+                        context.read<ProductsCubit>().fetchProductsByNestedSubCategory(
+                          selectedCategory,
+                          _selectedSubCategory,
                           nSubCat,
                           isInterior: selectedIndex == 0,
                         );
