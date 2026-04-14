@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/data/services/api_service.dart';
+import 'package:flutter/widgets.dart';
 
 class ProductPageResult {
   final List<ProductImageModel> items;
@@ -19,6 +21,101 @@ class ProductRepository {
   final ApiService _apiService;
 
   ProductRepository(this._apiService);
+
+  ProductImageModel _mapToModel(Map<String, dynamic> json) {
+    return ProductImageModel(
+      id: json['id'] ?? '',
+      name: json['product'] ?? json['furnitureCategory'] ?? 'Unknown',
+      image: json['imageUrl'] ?? '',
+      isTrending: false,
+      isNetwork: true,
+      category: json['furnitureCategory'],
+      subcategory: (json['subCategory'] as List?)?.join(', '),
+    );
+  }
+
+  Future<List<ProductImageModel>> getFeaturedProducts() async {
+    try {
+      final data = await _apiService.getFeaturedFurniture();
+      final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} featured products');
+      return products;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: getFeaturedProducts failure: $e');
+      return [];
+    }
+  }
+
+  Future<List<ProductImageModel>> getProductsByRoom(String room) async {
+    try {
+      final data = await _apiService.getFurnitureByRoom(room);
+      final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for room: $room');
+      return products;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: getProductsByRoom failure for $room: $e');
+      return [];
+    }
+  }
+
+  Future<List<ProductImageModel>> getProductsByGroup(String group) async {
+    try {
+      final data = await _apiService.getFurnitureByGroup(group);
+      final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for group: $group');
+      return products;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: getProductsByGroup failure for $group: $e');
+      return [];
+    }
+  }
+
+  Future<List<ProductImageModel>> getProductsByProduct(String product, {String? subCategory}) async {
+    try {
+      final data = await _apiService.getFurnitureByProduct(product, subCategory: subCategory);
+      final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for product: $product (Sub: ${subCategory ?? "None"})');
+      return products;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: getProductsByProduct failure for $product/$subCategory: $e');
+      return [];
+    }
+  }
+
+  Future<ProductImageModel?> uploadProductImage(File file) async {
+    try {
+      final data = await _apiService.uploadFurniture(file);
+      return _mapToModel(data.cast<String, dynamic>());
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<List<ProductImageModel>> searchProducts(String query) async {
+    try {
+      final data = await _apiService.searchFurnitureByText(query);
+      final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint('🔍 SEARCH_LOG: Text search "$query" found ${products.length} results');
+      return products;
+    } catch (e) {
+      debugPrint('❌ SEARCH_LOG ERROR: searchProducts failure for "$query": $e');
+      return [];
+    }
+  }
+
+  Future<List<ProductImageModel>> searchProductsByImage(File file) async {
+    try {
+      final data = await _apiService.searchFurnitureBySimilarImage(file);
+      final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint('🔍 SEARCH_LOG: Image search found ${products.length} similar results');
+      return products;
+    } catch (e) {
+      debugPrint('❌ SEARCH_LOG ERROR: searchProductsByImage failure: $e');
+      return [];
+    }
+  }
+
+  // --- Legacy Methods ---
 
   Future<List<ProductImageModel>> getProducts({int limit = 18}) async {
     final page = await getProductsPage(limit: limit, skip: 0);
@@ -46,17 +143,7 @@ class ProductRepository {
         );
       }
 
-      final assets = ProductImages.productImages;
-      final items = List<ProductImageModel>.generate(raw.length, (index) {
-        final item = (raw[index] as Map).cast<String, dynamic>();
-        final asset = assets[(skip + index) % assets.length];
-        return ProductImageModel(
-          id: (item['id'] ?? (skip + index + 1)).toString(),
-          name: asset.name.toString(),
-          image: asset.image,
-          isTrending: asset.isTrending
-        );
-      });
+      final items = raw.map((item) => _mapToModel((item as Map).cast<String, dynamic>())).toList();
 
       return ProductPageResult(
         items: items,
@@ -65,10 +152,9 @@ class ProductRepository {
         limit: (data['limit'] as num?)?.toInt() ?? limit,
       );
     } catch (_) {
-      final fallback = ProductImages.productImages;
       return ProductPageResult(
-        items: skip == 0 ? fallback.take(limit).toList() : const [],
-        total: fallback.length,
+        items: const [],
+        total: 0,
         skip: skip,
         limit: limit,
       );

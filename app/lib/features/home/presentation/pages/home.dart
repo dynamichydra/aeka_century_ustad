@@ -19,6 +19,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:century_ai/router/app_routes.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -63,6 +64,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   void initState() {
     super.initState();
     _loadProductsByCategoryFromAsset();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductsCubit>().fetchFeaturedProducts();
+    });
   }
 
   @override
@@ -107,7 +111,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           final category = catNode['name'] ?? 'Unknown';
           if (catNode['optional_all_img'] != null) {
             final rawIcon = catNode['optional_all_img'].toString();
-            _categoryIcons[category] = rawIcon.startsWith('assets/') ? rawIcon : 'assets/$rawIcon';
+            _categoryIcons[category] = rawIcon.startsWith('assets/')
+                ? rawIcon
+                : 'assets/$rawIcon';
           }
           final subCatsMap = <String, Map<String, List<ProductImageModel>>>{};
           final List<dynamic> catChildren = catNode['children'] ?? [];
@@ -140,7 +146,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             final subCat = subCatMapRaw['name'] ?? 'General';
             if (subCatMapRaw['image'] != null) {
               final rawIcon = subCatMapRaw['image'].toString();
-              _subCategoryIcons[subCat] = rawIcon.startsWith('assets/') ? rawIcon : 'assets/$rawIcon';
+              _subCategoryIcons[subCat] = rawIcon.startsWith('assets/')
+                  ? rawIcon
+                  : 'assets/$rawIcon';
             }
             final nestedGroups = <String, List<ProductImageModel>>{};
             final List<dynamic> subCatChildren = subCatMapRaw['children'] ?? [];
@@ -417,13 +425,29 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null && mounted) {
-      context.push(
-        AppRoutes.imagePreview,
-        extra: {
-          "imageFile": File(image.path),
-          "image_category": "asdasdasd",
-          "sub_category": "asdasdasdasd",
-        },
+      final File imageFile = File(image.path);
+      // Show upload option or directly upload
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Upload Furniture"),
+          content: const Text(
+            "Do you want to upload this image to the catalog?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.read<ProductsCubit>().uploadProductImage(imageFile);
+              },
+              child: const Text("Upload"),
+            ),
+          ],
+        ),
       );
     }
   }
@@ -461,14 +485,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final homeState = homeCubit.state;
 
     final ProductsState productsState = context.watch<ProductsCubit>().state;
-    final products = productsState.products.isEmpty
-        ? ProductImages.productImages
-        : productsState.products;
+    final List<ProductImageModel> displayProducts = productsState.products;
+    final products =
+        ProductImages.productImages; // Used only for category icons structure
     final quickProducts = _resolveQuickProducts(
-      products,
-      homeState.selectedIndex,
-    );
-    final visibleProducts = _resolveVisibleProducts(
       products,
       homeState.selectedIndex,
     );
@@ -498,7 +518,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           style: TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 16,
-                            color:  Color(0xFF5D5D5D)
+                            color: Color(0xFF5D5D5D),
                           ),
                         ),
                       ),
@@ -558,7 +578,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               maxWidth: 44,
                             ),
                             suffixIcon: GestureDetector(
-                              onTap: () => homeCubit.fetchResults(),
+                              onTap: () {
+                              final query = _searchController.text;
+                              homeCubit.fetchResults(query);
+                              context.read<ProductsCubit>().searchProducts(query);
+                            },
                               child: Container(
                                 margin: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
@@ -588,11 +612,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             hintStyle: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w100,
-                              color: Color(0xFF5D5D5D)
+                              color: Color(0xFF5D5D5D),
                             ),
                           ),
                           onChanged: (val) => homeCubit.setSearchQuery(val),
-                          onSubmitted: (_) => homeCubit.fetchResults(),
+                          onSubmitted: (val) {
+                            homeCubit.fetchResults(val);
+                            context.read<ProductsCubit>().searchProducts(val);
+                          },
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -633,24 +660,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 ],
                                 onTap: (index) {
                                   homeCubit.setSelectedIndex(index);
-                                  // Reset selected category to first of new tab
-                                  final newTabCategories =
-                                      _productsByTabCategorySub[index]?.keys;
-                                  if (newTabCategories != null &&
-                                      newTabCategories.isNotEmpty) {
-                                    setState(() {
-                                      _selectedCategory =
-                                          newTabCategories.first;
-                                      _selectedSubCategory = "All";
-                                      _selectedNestedSubCategory = "";
-                                    });
-                                  } else {
-                                    setState(() {
-                                      _selectedCategory = null;
-                                      _selectedSubCategory = "All";
-                                      _selectedNestedSubCategory = "";
-                                    });
-                                  }
+                                  // Fetch featured or generic products for the new tab
+                                  context
+                                      .read<ProductsCubit>()
+                                      .fetchFeaturedProducts();
                                 },
                               ),
                             ),
@@ -790,25 +803,18 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                   selectedBorderColor: const Color(0xFFEEEEEE),
                                   onTap: () {
                                     setState(() {
-                                      if (_selectedCategory != product.name) {
-                                        _selectedCategory = product.name;
-
-                                        final currentTabData =
-                                            _productsByTabCategorySub[homeState
-                                                .selectedIndex];
-                                        final categoryData =
-                                            currentTabData?[product.name];
-                                        if (categoryData != null &&
-                                            categoryData.length == 1) {
-                                          _selectedSubCategory =
-                                              categoryData.keys.first;
-                                        } else {
-                                          _selectedSubCategory = "All";
-                                        }
-
-                                        _selectedNestedSubCategory = "";
-                                      }
+                                      _selectedCategory = product.name;
+                                      _selectedSubCategory = "All";
+                                      _selectedNestedSubCategory = "";
                                     });
+                                    // Fetch products for this category from API
+                                    context
+                                        .read<ProductsCubit>()
+                                        .fetchProductsByCategory(
+                                          product.name,
+                                          isInterior:
+                                              homeState.selectedIndex == 0,
+                                        );
                                   },
                                   child: ClipOval(
                                     child: Image.asset(
@@ -837,11 +843,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     mainAxisSpacing: 12,
                                     childAspectRatio: 1, // square images
                                   ),
-                              itemCount: homeState.isLoading
+                              itemCount: productsState.isLoading
                                   ? 6
-                                  : visibleProducts.length,
+                                  : displayProducts.length,
                               itemBuilder: (context, index) {
-                                if (homeState.isLoading) {
+                                if (productsState.isLoading) {
                                   return Shimmer.fromColors(
                                     baseColor: Colors.grey[300]!,
                                     highlightColor: Colors.grey[100]!,
@@ -858,7 +864,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     ),
                                   );
                                 }
-                                final product = visibleProducts[index];
+                                final product = displayProducts[index];
 
                                 return GestureDetector(
                                   onTap: () {
@@ -869,6 +875,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: ProductContainers(
                                       imagePath: product.image,
                                       isTrending: product.isTrending,
+                                      isNetwork: product.isNetworkImage,
                                     ),
                                   ),
                                 );
@@ -877,13 +884,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           : ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: homeState.isLoading
+                              itemCount: productsState.isLoading
                                   ? 5
-                                  : visibleProducts.length,
+                                  : displayProducts.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
-                                if (homeState.isLoading) {
+                                if (productsState.isLoading) {
                                   return Shimmer.fromColors(
                                     baseColor: Colors.grey[300]!,
                                     highlightColor: Colors.grey[100]!,
@@ -900,7 +907,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     ),
                                   );
                                 }
-                                final product = visibleProducts[index];
+                                final product = displayProducts[index];
 
                                 return GestureDetector(
                                   onTap: () {
@@ -911,6 +918,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: ProductContainers(
                                       imagePath: product.image,
                                       isTrending: product.isTrending,
+                                      isNetwork: product.isNetworkImage,
                                     ),
                                   ),
                                 );
@@ -967,7 +975,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     // Determine if we have multiple subcategories or at least one meaningful subcategory name.
     final bool hasMultipleSubCats = categoryData.length > 1;
-    final bool hasMeaningfulSingleSubCat = categoryData.length == 1 &&
+    final bool hasMeaningfulSingleSubCat =
+        categoryData.length == 1 &&
         categoryData.keys.first.isNotEmpty &&
         categoryData.keys.first != "General";
 
@@ -1037,6 +1046,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             _selectedNestedSubCategory = "";
                           }
                         });
+                        // Trigger granular dynamic API fetch for subcategory
+                        context.read<ProductsCubit>().fetchProductsBySubCategory(
+                              selectedCategory,
+                              subCat,
+                              isInterior: selectedIndex == 0,
+                            );
                       },
                       child: Image.asset(
                         iconImage,
@@ -1093,6 +1108,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             _selectedNestedSubCategory = nSubCat;
                           }
                         });
+                        // Trigger dynamic API fetch for nested subcategory
+                        context.read<ProductsCubit>().fetchProductsByCategory(
+                          nSubCat,
+                          isInterior: selectedIndex == 0,
+                        );
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -1123,7 +1143,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             nSubCat,
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                              fontWeight: isSelected
+                                  ? FontWeight.w500
+                                  : FontWeight.normal,
                               color: const Color(0xFF5D5D5D),
                             ),
                           ),

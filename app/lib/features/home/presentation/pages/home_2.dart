@@ -19,6 +19,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:century_ai/router/app_routes.dart';
 
 class HomeScreen2 extends StatelessWidget {
@@ -65,6 +66,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   void initState() {
     super.initState();
     _loadProductsByCategoryFromAsset();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductsCubit>().fetchFeaturedProducts();
+    });
   }
 
   @override
@@ -389,6 +393,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       }
       _selectedNestedSubCategory = "";
     });
+
+    // Trigger dynamic API fetch for newly selected category
+    context.read<ProductsCubit>().fetchProductsByCategory(
+          categoryName,
+          isInterior: selectedIndex == 0,
+        );
   }
 
   Widget _buildQuickCategoryItem(ProductImageModel product, int selectedIndex) {
@@ -496,49 +506,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     );
   }
 
-  List<ProductImageModel> _resolveVisibleProducts(
-    List<ProductImageModel> fallbackProducts,
-    int selectedIndex,
-  ) {
-    final currentTabData = _productsByTabCategorySub[selectedIndex];
-    if (currentTabData == null || currentTabData.isEmpty) {
-      return fallbackProducts;
-    }
-
-    final selectedCategory = _selectedCategory;
-    if (selectedCategory == null) {
-      return fallbackProducts;
-    }
-
-    final categoryData = currentTabData[selectedCategory];
-    if (categoryData == null || categoryData.isEmpty) {
-      return fallbackProducts;
-    }
-
-    if (_selectedSubCategory == "All") {
-      final allItems = <ProductImageModel>[];
-      for (final subGroup in categoryData.values) {
-        for (final nestedGroup in subGroup.values) {
-          allItems.addAll(nestedGroup);
-        }
-      }
-      return allItems;
-    } else {
-      final subCatData = categoryData[_selectedSubCategory];
-      if (subCatData == null) return [];
-
-      if (_selectedNestedSubCategory.isEmpty ||
-          _selectedNestedSubCategory == "All") {
-        final allNestedItems = <ProductImageModel>[];
-        for (final items in subCatData.values) {
-          allNestedItems.addAll(items);
-        }
-        return allNestedItems;
-      } else {
-        return subCatData[_selectedNestedSubCategory] ?? [];
-      }
-    }
-  }
 
   Future<void> logDb() async {
     final db = await DbHelper.database;
@@ -551,13 +518,26 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null && mounted) {
-      context.push(
-        AppRoutes.imagePreview,
-        extra: {
-          "imageFile": File(image.path),
-          "image_category": "asdasdasd",
-          "sub_category": "asdasdasdasd",
-        },
+      final File imageFile = File(image.path);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Upload Furniture"),
+          content: const Text("Do you want to upload this image to the catalog?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.read<ProductsCubit>().uploadProductImage(imageFile);
+              },
+              child: const Text("Upload"),
+            ),
+          ],
+        ),
       );
     }
   }
@@ -595,14 +575,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final homeState = homeCubit.state;
 
     final ProductsState productsState = context.watch<ProductsCubit>().state;
-    final products = productsState.products.isEmpty
-        ? ProductImages.productImages
-        : productsState.products;
+    final List<ProductImageModel> displayProducts = productsState.products;
+    final products = ProductImages.productImages; // Used only for category icons structure
     final quickProducts = _resolveQuickProducts(
-      products,
-      homeState.selectedIndex,
-    );
-    final visibleProducts = _resolveVisibleProducts(
       products,
       homeState.selectedIndex,
     );
@@ -692,7 +667,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               maxWidth: 44,
                             ),
                             suffixIcon: GestureDetector(
-                              onTap: () => homeCubit.fetchResults(),
+                              onTap: () {
+                              final query = _searchController.text;
+                              homeCubit.fetchResults(query);
+                              context.read<ProductsCubit>().searchProducts(query);
+                            },
                               child: Container(
                                 margin: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
@@ -726,7 +705,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             ),
                           ),
                           onChanged: (val) => homeCubit.setSearchQuery(val),
-                          onSubmitted: (_) => homeCubit.fetchResults(),
+                          onSubmitted: (val) {
+                            homeCubit.fetchResults(val);
+                            context.read<ProductsCubit>().searchProducts(val);
+                          },
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -767,24 +749,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 ],
                                 onTap: (index) {
                                   homeCubit.setSelectedIndex(index);
-                                  // Reset selected category to first of new tab
-                                  final newTabCategories =
-                                      _productsByTabCategorySub[index]?.keys;
-                                  if (newTabCategories != null &&
-                                      newTabCategories.isNotEmpty) {
-                                    setState(() {
-                                      _selectedCategory =
-                                          newTabCategories.first;
-                                      _selectedSubCategory = "All";
-                                      _selectedNestedSubCategory = "";
-                                    });
-                                  } else {
-                                    setState(() {
-                                      _selectedCategory = null;
-                                      _selectedSubCategory = "All";
-                                      _selectedNestedSubCategory = "";
-                                    });
-                                  }
+                                  context.read<ProductsCubit>().fetchFeaturedProducts();
                                 },
                               ),
                             ),
@@ -929,11 +894,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     mainAxisSpacing: 12,
                                     childAspectRatio: 1, // square images
                                   ),
-                              itemCount: homeState.isLoading
+                              itemCount: productsState.isLoading
                                   ? 6
-                                  : visibleProducts.length,
+                                  : displayProducts.length,
                               itemBuilder: (context, index) {
-                                if (homeState.isLoading) {
+                                if (productsState.isLoading) {
                                   return Shimmer.fromColors(
                                     baseColor: Colors.grey[300]!,
                                     highlightColor: Colors.grey[100]!,
@@ -950,7 +915,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     ),
                                   );
                                 }
-                                final product = visibleProducts[index];
+                                final product = displayProducts[index];
 
                                 return GestureDetector(
                                   onTap: () {
@@ -961,6 +926,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: ProductContainers(
                                       imagePath: product.image,
                                       isTrending: product.isTrending,
+                                      isNetwork: product.isNetworkImage,
                                     ),
                                   ),
                                 );
@@ -969,13 +935,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           : ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: homeState.isLoading
+                              itemCount: productsState.isLoading
                                   ? 5
-                                  : visibleProducts.length,
+                                  : displayProducts.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
-                                if (homeState.isLoading) {
+                                if (productsState.isLoading) {
                                   return Shimmer.fromColors(
                                     baseColor: Colors.grey[300]!,
                                     highlightColor: Colors.grey[100]!,
@@ -992,7 +958,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     ),
                                   );
                                 }
-                                final product = visibleProducts[index];
+                                final product = displayProducts[index];
 
                                 return GestureDetector(
                                   onTap: () {
@@ -1003,6 +969,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: ProductContainers(
                                       imagePath: product.image,
                                       isTrending: product.isTrending,
+                                      isNetwork: product.isNetworkImage,
                                     ),
                                   ),
                                 );
@@ -1130,6 +1097,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             _selectedNestedSubCategory = "";
                           }
                         });
+                        // Trigger granular dynamic API fetch for subcategory
+                        context.read<ProductsCubit>().fetchProductsBySubCategory(
+                              _selectedCategory!,
+                              subCat,
+                              isInterior: selectedIndex == 0,
+                            );
                       },
                       child: Image.asset(
                         iconImage,
@@ -1184,6 +1157,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             _selectedNestedSubCategory = nSubCat;
                           }
                         });
+                        // Trigger dynamic API fetch for nested subcategory
+                        context.read<ProductsCubit>().fetchProductsByCategory(
+                              nSubCat,
+                              isInterior: selectedIndex == 0,
+                            );
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(

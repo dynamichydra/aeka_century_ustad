@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:century_ai/cubit/products/products_state.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/data/repositories/product_repository.dart';
@@ -35,6 +36,82 @@ class ProductsCubit extends Cubit<ProductsState> {
           errorMessage: e.toString(),
         ),
       );
+    }
+  }
+
+  Future<void> fetchFeaturedProducts() async {
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+    try {
+      final products = await _productRepository.getFeaturedProducts();
+      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> fetchProductsByCategory(String category, {required bool isInterior}) async {
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+    try {
+      final products = isInterior
+          ? await _productRepository.getProductsByRoom(category)
+          : await _productRepository.getProductsByGroup(category);
+      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> fetchProductsBySubCategory(String category, String subCategory, {required bool isInterior}) async {
+    if (subCategory == "All" || isInterior) {
+      return fetchProductsByCategory(category, isInterior: isInterior);
+    }
+    
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+    try {
+      // The API uses /browse/product/{product}?subCategory={subCategory}
+      // category here corresponds to the furniture room/group which acts as the 'product' base in the API taxonomy for furnitures
+      final products = await _productRepository.getProductsByProduct(category, subCategory: subCategory);
+      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> searchProducts(String query) async {
+    if (query.trim().isEmpty) {
+      return fetchFeaturedProducts();
+    }
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+    try {
+      final products = await _productRepository.searchProducts(query);
+      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> searchProductsByImage(File file) async {
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+    try {
+      final products = await _productRepository.searchProductsByImage(file);
+      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> uploadProductImage(File file) async {
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+    try {
+      final newProduct = await _productRepository.uploadProductImage(file);
+      if (newProduct != null) {
+        final updatedProducts = List<ProductImageModel>.from(state.products)..insert(0, newProduct);
+        emit(state.copyWith(isLoading: false, products: updatedProducts));
+      } else {
+        emit(state.copyWith(isLoading: false, errorMessage: 'Upload failed'));
+      }
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
   }
 

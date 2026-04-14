@@ -145,11 +145,12 @@ class TImages {
 class ProductImageModel {
   final String id;
   final String name;
-  final String image;
+  final String image; // Contains asset path or network URL
   final bool isTrending;
   final String? category;
   final String? subcategory;
   final String? nestedSubcategory;
+  final bool isNetwork;
 
   ProductImageModel({
     required this.id,
@@ -159,7 +160,10 @@ class ProductImageModel {
     this.category,
     this.subcategory,
     this.nestedSubcategory,
+    this.isNetwork = false,
   });
+
+  bool get isNetworkImage => image.startsWith('http') || isNetwork;
 }
 
 class TProductImages {

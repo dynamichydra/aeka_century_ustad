@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:century_ai/core/constants/api_constants.dart';
+import 'package:flutter/widgets.dart';
 
 class ApiService {
   late final Dio _dio;
@@ -14,16 +16,85 @@ class ApiService {
       ),
     );
 
-    // Optional: logging
+    // Enhanced logging for API interactions
     _dio.interceptors.add(
       LogInterceptor(
         request: true,
+        requestHeader: false,
         requestBody: true,
+        responseHeader: false,
         responseBody: true,
         error: true,
+        logPrint: (object) => debugPrint('📡 API_LOG: $object'),
       ),
     );
   }
+
+  // --- Furniture API ---
+
+  Future<List<dynamic>> getFeaturedFurniture() async {
+    final response = await _dio.get(TApiConstants.featuredBrowse);
+    return response.data as List<dynamic>;
+  }
+
+  Future<List<dynamic>> getFurnitureByRoom(String room) async {
+    final response = await _dio.get('${TApiConstants.roomBrowse}/$room');
+    return response.data as List<dynamic>;
+  }
+
+  Future<List<dynamic>> getFurnitureByGroup(String group) async {
+    final response = await _dio.get('${TApiConstants.groupBrowse}/$group');
+    return response.data as List<dynamic>;
+  }
+
+  Future<List<dynamic>> getFurnitureByProduct(String product, {String? subCategory}) async {
+    final queryParams = <String, dynamic>{};
+    if (subCategory != null && subCategory != 'All' && subCategory.isNotEmpty) {
+      queryParams['subCategory'] = subCategory;
+    }
+    final response = await _dio.get(
+      '${TApiConstants.productBrowse}/$product',
+      queryParameters: queryParams,
+    );
+    return response.data as List<dynamic>;
+  }
+
+  Future<dynamic> uploadFurniture(File file) async {
+    String fileName = file.path.split('/').last;
+    FormData formData = FormData.fromMap({
+      "file": await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+
+    final response = await _dio.post(
+      TApiConstants.upload,
+      data: formData,
+    );
+    return response.data;
+  }
+
+  Future<List<dynamic>> searchFurnitureByText(String query) async {
+    final response = await _dio.get(
+      TApiConstants.searchText,
+      queryParameters: {'q': query},
+    );
+    return response.data as List<dynamic>;
+  }
+
+  Future<List<dynamic>> searchFurnitureBySimilarImage(File file) async {
+    String fileName = file.path.split('/').last;
+    FormData formData = FormData.fromMap({
+      "file": await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+
+    final response = await _dio.post(
+      TApiConstants.searchSimilar,
+      data: formData,
+    );
+    return response.data as List<dynamic>;
+  }
+
+  // --- Legacy / Dummy API (from dummyjson.com) ---
+  // Note: These might fail if TApiConstants.baseUrl is set to the new furniture API.
 
   Future<Map<String, dynamic>> requestOtp(String phone) async {
     await Future<void>.delayed(const Duration(milliseconds: 700));
@@ -70,8 +141,12 @@ class ApiService {
     int skip = 0,
     int? page,
   }) async {
-    final pageData = await getProductsPage(limit: limit, skip: skip, page: page);
-    return (pageData['products'] as List?) ?? <dynamic>[];
+    final response = await _dio.get(
+      TApiConstants.products,
+      queryParameters: {'limit': limit, 'skip': skip},
+    );
+    final data = (response.data as Map).cast<String, dynamic>();
+    return (data['products'] as List?) ?? <dynamic>[];
   }
 
   Future<Map<String, dynamic>> getProductsPage({
@@ -92,8 +167,12 @@ class ApiService {
     int limit = 20,
     int page = 1,
   }) async {
-    final pageData = await getProductsPage(limit: limit, page: page);
-    return (pageData['products'] as List?) ?? <dynamic>[];
+    final response = await _dio.get(
+      TApiConstants.products,
+      queryParameters: {'limit': limit, 'skip': (page - 1) * limit},
+    );
+    final data = (response.data as Map).cast<String, dynamic>();
+    return (data['products'] as List?) ?? <dynamic>[];
   }
 
   Future<List<dynamic>> getPosts({int limit = 10}) async {
