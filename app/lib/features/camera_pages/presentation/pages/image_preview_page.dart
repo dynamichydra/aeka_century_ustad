@@ -6,17 +6,20 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/features/camera_pages/data/services/preview_service.dart';
+import 'package:century_ai/db/repositories/selected_images_repository.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final File imageFile;
   final String image_category;
   final String? sub_category;
+  final String? image_id;
 
   const ImagePreviewPage({
     super.key,
     required this.imageFile,
     required this.image_category,
     this.sub_category,
+    this.image_id,
   });
 
   @override
@@ -44,11 +47,45 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   @override
   void initState() {
     super.initState();
-    _currentFile = widget.imageFile;
+    _loadImage();
     print("==============");
+    print("image_id: ${widget.image_id}");
     print("image_category: ${widget.image_category}");
     print("sub_category: ${widget.sub_category}");
     print("==============");
+  }
+
+  Future<void> _loadImage() async {
+    // Try to load from SQLite if image_id is provided
+    if (widget.image_id != null) {
+      try {
+        final selectedImage = await SelectedImagesRepository.getImage(widget.image_id!);
+        if (selectedImage != null) {
+          print("✅ Loaded image from SQLite with ID: ${widget.image_id}");
+          // Write the image data to a temporary file
+          final tempDir = await getTemporaryDirectory();
+          final fileName = 'sqlite_${widget.image_id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final file = File('${tempDir.path}/$fileName');
+          await file.writeAsBytes(selectedImage.imageData);
+          
+          if (mounted) {
+            setState(() {
+              _currentFile = file;
+            });
+          }
+          return;
+        }
+      } catch (e) {
+        print("❌ Error loading image from SQLite: $e");
+      }
+    }
+    
+    // Fallback to the passed imageFile
+    if (mounted) {
+      setState(() {
+        _currentFile = widget.imageFile;
+      });
+    }
   }
 
   Future<void> _simulateApiCall(String assetPath) async {

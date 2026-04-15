@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:century_ai/db/db_helper.dart';
+import 'package:century_ai/db/db_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -220,7 +220,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Future<void> getLamCategory() async {
     try {
-      final db = await DbHelper.database;
+      final db = await DbCore.database;
       final result = await db.query("lam_category");
 
       if (result.isNotEmpty && mounted) {
@@ -261,7 +261,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Future<void> getLamSubCategory([dynamic catId]) async {
     try {
-      final db = await DbHelper.database;
+      final db = await DbCore.database;
       List<Map<String, dynamic>> result;
 
       if (catId != null) {

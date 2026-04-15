@@ -10,7 +10,9 @@ import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.da
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/cubit/products/products_state.dart';
-import 'package:century_ai/db/db_helper.dart';
+import 'package:century_ai/db/repositories/selected_images_repository.dart';
+import 'package:century_ai/db/models/selected_image_data.dart';
+import 'package:century_ai/db/db_core.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
@@ -21,6 +23,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:century_ai/features/home/presentation/widgets/search_bar.dart';
 import 'package:century_ai/router/app_routes.dart';
 
 class HomeScreen2 extends StatelessWidget {
@@ -226,23 +229,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       if (!mounted) return;
       setState(() {
         _productsByTabCategorySub = parsed;
-        // Set default category and sub-category for initial tab
-        final currentTab = context.read<HomeCubit>().state.selectedIndex;
-        final initialTabCategories =
-            _productsByTabCategorySub[currentTab]?.keys;
-        if (initialTabCategories != null && initialTabCategories.isNotEmpty) {
-          _selectedCategory = initialTabCategories.first;
-
-          // Robust default sub-category
-          final catData =
-              _productsByTabCategorySub[currentTab]?[_selectedCategory];
-          if (catData != null && catData.length == 1) {
-            _selectedSubCategory = catData.keys.first;
-          } else {
-            _selectedSubCategory = "All";
-          }
-          _selectedNestedSubCategory = "";
-        }
+        // Do NOT auto-select any category on initial load.
+        // _selectedCategory remains null until the user taps one.
       });
     } catch (e) {
       debugPrint('Error parsing assets/data/data.json: $e');
@@ -382,7 +370,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   void _selectCategory(String categoryName, int selectedIndex) {
-    if (_selectedCategory == categoryName) return;
     setState(() {
       _selectedCategory = categoryName;
       final currentTabData = _productsByTabCategorySub[selectedIndex];
@@ -406,9 +393,28 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     return CircularIconItem(
       label: product.name,
       isSelected: _selectedCategory == product.name,
-      useUnderline: true,
+      useUnderline: false,
       selectedBorderColor: const Color(0xFFEEEEEE),
-      onTap: () => _selectCategory(product.name, selectedIndex),
+      onTap: () {
+        // Tap again to deselect; tap new to select
+        if (_selectedCategory == product.name) {
+          setState(() {
+            _selectedCategory = null;
+            _selectedSubCategory = "All";
+            _selectedNestedSubCategory = "";
+          });
+          // Clear search when category is deselected
+          _searchController.clear();
+          context.read<HomeCubit>().clearSearch();
+          // Fetch featured products when category is deselected
+          context.read<ProductsCubit>().fetchFeaturedProducts();
+        } else {
+          // Clear search when selecting a category
+          _searchController.clear();
+          context.read<HomeCubit>().clearSearch();
+          _selectCategory(product.name, selectedIndex);
+        }
+      },
       child: ClipOval(child: Image.asset(product.image, fit: BoxFit.cover)),
     );
   }
@@ -509,7 +515,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
 
   Future<void> logDb() async {
-    final db = await DbHelper.database;
+    final db = await DbCore.database;
 
     final result = await db.query("products");
   }
@@ -563,13 +569,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     try {
       File file;
+      List<int> imageBytes;
+      
       if (product.isNetworkImage) {
         final response = await http.get(Uri.parse(assetPath));
         if (response.statusCode == 200) {
+          imageBytes = response.bodyBytes;
           final tempDir = await getTemporaryDirectory();
           final fileName = 'downloaded_${DateTime.now().millisecondsSinceEpoch}.jpg';
           file = File('${tempDir.path}/$fileName');
-          await file.writeAsBytes(response.bodyBytes);
+          await file.writeAsBytes(imageBytes);
           
           if (mounted && isLoaderShowing) {
             isLoaderShowing = false;
@@ -580,22 +589,34 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         }
       } else {
         final byteData = await rootBundle.load(assetPath);
+        imageBytes = byteData.buffer.asUint8List(
+          byteData.offsetInBytes,
+          byteData.lengthInBytes,
+        );
         final tempDir = await getTemporaryDirectory();
         final fileName = assetPath.replaceAll("/", "_");
         file = File('${tempDir.path}/$fileName');
-        await file.writeAsBytes(
-          byteData.buffer.asUint8List(
-            byteData.offsetInBytes,
-            byteData.lengthInBytes,
-          ),
-        );
+        await file.writeAsBytes(imageBytes);
       }
+
+      // Save to SQLite
+      await SelectedImagesRepository.saveImage(
+        SelectedImageData(
+          id: product.id,
+          imageData: imageBytes,
+          imagePath: assetPath,
+          category: product.category ?? _selectedCategory ?? "Furniture",
+          subcategory: product.subcategory ?? _selectedSubCategory,
+          selectedAt: DateTime.now(),
+        ),
+      );
 
       if (mounted) {
         context.push(
           AppRoutes.imagePreview,
           extra: {
             "imageFile": file,
+            "image_id": product.id,
             "image_category": product.category ?? _selectedCategory ?? "Furniture",
             "sub_category": product.subcategory ?? _selectedSubCategory,
           },
@@ -636,7 +657,18 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           fit: StackFit.expand,
           children: [
             RefreshIndicator(
-              onRefresh: () => context.read<ProductsCubit>().refreshProducts(),
+              onRefresh: () async {
+                // Clear search and categories on refresh
+                _searchController.clear();
+                setState(() {
+                  _selectedCategory = null;
+                  _selectedSubCategory = "All";
+                  _selectedNestedSubCategory = "";
+                });
+                context.read<HomeCubit>().clearSearch();
+                // Fetch featured products
+                return context.read<ProductsCubit>().fetchFeaturedProducts();
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Padding(
@@ -666,96 +698,22 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       ),
                       const SizedBox(height: 20),
                       // SearchInput(),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 10,
-                              spreadRadius: 0,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          cursorHeight: 15,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w100,
-                            fontSize: 13,
-                          ),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20,
-                            ),
-
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide.none,
-                            ),
-
-                            suffixIconConstraints: const BoxConstraints(
-                              maxHeight: 32,
-                              maxWidth: 44,
-                            ),
-                            suffixIcon: GestureDetector(
-                              onTap: () {
-                              final query = _searchController.text;
-                              homeCubit.fetchResults(query);
-                              context.read<ProductsCubit>().searchProducts(query);
-                            },
-                              child: Container(
-                                margin: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.12),
-                                      blurRadius: 4,
-                                      spreadRadius: 0,
-                                      offset: const Offset(0, 0),
-                                    ),
-                                  ],
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(4.0),
-                                  child: Image.asset(
-                                    "assets/icons/app_icons/ai_search.png",
-                                    width: 16,
-                                    height: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            hintText: "Ai based furniture idea search",
-                            hintStyle: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w100,
-                              color: Color(0xFF5D5D5D)
-                            ),
-                          ),
-                          onChanged: (val) => homeCubit.setSearchQuery(val),
-                          onSubmitted: (val) {
-                            homeCubit.fetchResults(val);
-                            context.read<ProductsCubit>().searchProducts(val);
-                          },
-                        ),
+                      HomeSearchBar(
+                        controller: _searchController,
+                        onCategoryCleared: () {
+                          setState(() {
+                            _selectedCategory = null;
+                            _selectedSubCategory = "All";
+                            _selectedNestedSubCategory = "";
+                          });
+                        },
+                        onSearchStarted: () {
+                          setState(() {
+                            _selectedCategory = null;
+                            _selectedSubCategory = "All";
+                            _selectedNestedSubCategory = "";
+                          });
+                        },
                       ),
                       const SizedBox(height: 16),
                       DefaultTabController(
@@ -1137,18 +1095,27 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       useUnderline: true,
                       isCircular: false,
                       onTap: () {
-                        setState(() {
-                          if (_selectedSubCategory != subCat) {
+                        // Tap again to deselect; tap new to select
+                        if (_selectedSubCategory == subCat) {
+                          setState(() {
+                            _selectedSubCategory = "All";
+                            _selectedNestedSubCategory = "";
+                          });
+                          context.read<ProductsCubit>().fetchProductsByCategory(
+                                _selectedCategory!,
+                                isInterior: selectedIndex == 0,
+                              );
+                        } else {
+                          setState(() {
                             _selectedSubCategory = subCat;
                             _selectedNestedSubCategory = "";
-                          }
-                        });
-                        // Trigger granular dynamic API fetch for subcategory
-                        context.read<ProductsCubit>().fetchProductsBySubCategory(
-                              _selectedCategory!,
-                              subCat,
-                              isInterior: selectedIndex == 0,
-                            );
+                          });
+                          context.read<ProductsCubit>().fetchProductsBySubCategory(
+                                _selectedCategory!,
+                                subCat,
+                                isInterior: selectedIndex == 0,
+                              );
+                        }
                       },
                       child: Image.asset(
                         iconImage,
@@ -1198,18 +1165,27 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     padding: const EdgeInsets.only(right: 16),
                     child: GestureDetector(
                       onTap: () {
-                        setState(() {
-                          if (_selectedNestedSubCategory != nSubCat) {
+                        // Tap again to deselect; tap new to select
+                        if (_selectedNestedSubCategory == nSubCat) {
+                          setState(() {
+                            _selectedNestedSubCategory = "";
+                          });
+                          context.read<ProductsCubit>().fetchProductsBySubCategory(
+                            _selectedCategory!,
+                            _selectedSubCategory,
+                            isInterior: selectedIndex == 0,
+                          );
+                        } else {
+                          setState(() {
                             _selectedNestedSubCategory = nSubCat;
-                          }
-                        });
-                        // Trigger dynamic API fetch for nested subcategory
-                        context.read<ProductsCubit>().fetchProductsByNestedSubCategory(
-                          _selectedCategory!,
-                          _selectedSubCategory,
-                          nSubCat,
-                          isInterior: selectedIndex == 0,
-                        );
+                          });
+                          context.read<ProductsCubit>().fetchProductsByNestedSubCategory(
+                            _selectedCategory!,
+                            _selectedSubCategory,
+                            nSubCat,
+                            isInterior: selectedIndex == 0,
+                          );
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(

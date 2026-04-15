@@ -69,6 +69,16 @@ class HomeCubit extends Cubit<HomeState> {
     logState();
   }
 
+  void clearSearch() {
+    emit(state.copyWith(searchQuery: ''));
+    logState();
+  }
+
+  void resetHomeState() {
+    emit(const HomeState());
+    logState();
+  }
+
   void logState() {
     // debugPrint("--- HomeCubit State Update ---");
     // // ... rest of logState
