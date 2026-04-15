@@ -72,6 +72,7 @@ final GoRouter router = GoRouter(
         File? imageFile;
         String imageCategory = "";
         String? subCategory;
+        String? image_id;
 
         if (state.extra is File) {
           imageFile = state.extra as File;
@@ -80,12 +81,14 @@ final GoRouter router = GoRouter(
           imageFile = data["imageFile"] as File?;
           imageCategory = data["image_category"] as String? ?? "";
           subCategory = data["sub_category"] as String?;
+          image_id = data["image_id"] as String?;
         }
 
         return ImagePreviewPage(
           imageFile: imageFile!,
           image_category: imageCategory,
           sub_category: subCategory,
+          image_id: image_id,
         );
       },
     ),
@@ -95,6 +98,7 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         File? imageFile;
         Color? pickedColor;
+        String? image_id;
 
         if (state.extra is File) {
           imageFile = state.extra as File;
@@ -102,9 +106,14 @@ final GoRouter router = GoRouter(
           final data = state.extra as Map<String, dynamic>;
           imageFile = data['imageFile'] as File?;
           pickedColor = data['pickedColor'] as Color?;
+          image_id = data['image_id'] as String?;
         }
 
-        return ImageEditPage(imageFile: imageFile!, pickedColor: pickedColor);
+        return ImageEditPage(
+          imageFile: imageFile!,
+          pickedColor: pickedColor,
+          image_id: image_id,
+        );
       },
     ),
     GoRoute(
@@ -113,6 +122,7 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         File? imageFile;
         Color? pickedColor;
+        String? image_id;
 
         if (state.extra is File) {
           imageFile = state.extra as File;
@@ -120,11 +130,13 @@ final GoRouter router = GoRouter(
           final data = state.extra as Map<String, dynamic>;
           imageFile = data['imageFile'] as File?;
           pickedColor = data['pickedColor'] as Color?;
+          image_id = data['image_id'] as String?;
         }
 
         return ImageEditScrollPage(
           imageFile: imageFile!,
           pickedColor: pickedColor,
+          image_id: image_id,
         );
       },
     ),

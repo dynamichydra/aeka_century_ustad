@@ -151,7 +151,13 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     }
 
     if (fileToEdit != null && mounted) {
-      context.push(route, extra: fileToEdit);
+      context.push(
+        route,
+        extra: {
+          'imageFile': fileToEdit,
+          'image_id': widget.image_id,
+        },
+      );
     }
   }
 

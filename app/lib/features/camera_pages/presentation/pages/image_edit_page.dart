@@ -12,10 +12,13 @@ import 'package:century_ai/core/network/apis/laminate_api.dart'; // Added API Im
 import 'package:century_ai/cubit/image_edit/image_edit_cubit.dart';
 import 'package:century_ai/cubit/image_edit/image_edit_state.dart';
 import 'package:century_ai/router/app_routes.dart';
+import 'package:century_ai/features/camera_pages/data/models/edit_record.dart';
+import 'package:century_ai/features/camera_pages/data/services/user_edits_service.dart';
 
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
   final Color? pickedColor;
+  final String? image_id;
 
   final bool scrollableEditSection;
   final bool showTextureDetailOnTap;
@@ -27,6 +30,7 @@ class ImageEditPage extends StatefulWidget {
     super.key,
     required this.imageFile,
     this.pickedColor,
+    this.image_id,
     this.scrollableEditSection = false,
     this.showTextureDetailOnTap = true,
     this.textureListHeight = 120,
@@ -55,10 +59,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   bool _compareExpanded = false;
   bool _editExpanded = true;
-  bool _isApplied = false;
-  final List<int> _selectedIndices = [0];
+  final List<int> _selectedIndices = [];
   double _sliderPosition = 0.5;
-  final List<ProductImageModel> _savedVersions = ProductImages.productImages;
+  
+  final UserEditsService _userEditsService = UserEditsService();
+  final String _ownerEmail = "anisasru@gmail.com";
+  List<EditRecord> _userEdits = [];
+  bool _isLoadingEdits = false;
+  
+  // Dummy versions fallback if no network edits yet
+  final List<ProductImageModel> _dummyVersions = ProductImages.productImages;
 
   // Dynamic Tap Variables
   Map<String, dynamic> _lastTapCoordinate = {"x": 423, "y": 12};
@@ -92,8 +102,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
         if (_selectedIndices.length < 3) {
           _selectedIndices.add(index);
 
-          final selectedImage = _savedVersions[index];
-          context.read<ImageEditCubit>().compareImageSelected(selectedImage);
+          if (_userEdits.isNotEmpty) {
+            // Log comparison for network image if needed
+            // Currently cubit expects ProductImageModel
+          } else {
+            final selectedImage = _dummyVersions[index];
+            context.read<ImageEditCubit>().compareImageSelected(selectedImage);
+          }
         }
       }
     });
@@ -124,6 +139,33 @@ class _ImageEditPageState extends State<ImageEditPage> {
       _selectedColor = {"name": "Picked Color", "hex": hex, "id": 999};
       _featuredColors.insert(0, _selectedColor!);
       _fetchTexturesByColor();
+    }
+    _fetchUserEditHistory();
+  }
+
+  Future<void> _fetchUserEditHistory() async {
+    if (widget.image_id == null) return;
+    
+    setState(() => _isLoadingEdits = true);
+    try {
+      final allEdits = await _userEditsService.getEdits(_ownerEmail);
+      // Filter by current furniture ID
+      final filtered = allEdits.where((e) => e.furnitureId == widget.image_id).toList();
+      
+      if (mounted) {
+        setState(() {
+          _userEdits = filtered;
+          _isLoadingEdits = false;
+          // auto-select first one if available to show comparison
+          if (_userEdits.isNotEmpty) {
+            _selectedIndices.clear();
+            _selectedIndices.add(0);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching user edits: $e");
+      if (mounted) setState(() => _isLoadingEdits = false);
     }
   }
 
@@ -494,7 +536,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _savedVersions.length,
+                itemCount: _userEdits.isNotEmpty ? _userEdits.length : _dummyVersions.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 12,
@@ -502,26 +544,34 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   childAspectRatio: 1.0,
                 ),
                 itemBuilder: (context, index) {
-                  final version = _savedVersions[index];
+                  final isNetwork = _userEdits.isNotEmpty;
+                  final String imgPath = isNetwork 
+                      ? _userEdits[index].editedImageUrl 
+                      : _dummyVersions[index].image;
+                  
                   final isSelected = _selectedIndices.contains(index);
                   return GestureDetector(
                     onTap: () {
                       _toggleSelection(index);
-                      // Already triggering context.read<ImageEditCubit>().compareImageSelected inside _toggleSelection
-                      // but we need context. However, context is not easily passed into _toggleSelection since it's used elsewhere too.
-                      // Let's modify _toggleSelection to accept context, or call the API directly here.
-                      // Actually, the easiest way is to pass context to _toggleSelection.
                     },
                     child: Stack(
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            version.image,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                          ),
+                          child: isNetwork 
+                            ? Image.network(
+                                imgPath,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
+                              )
+                            : Image.asset(
+                                imgPath,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
                         ),
                         Positioned(
                           top: 4,
@@ -555,7 +605,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
         children: [
           ImageCompareSlider(
             before: widget.imageFile,
-            after: _savedVersions[_selectedIndices[0]].image,
+            after: _userEdits.isNotEmpty 
+                ? _userEdits[_selectedIndices[0]].editedImageUrl 
+                : _dummyVersions[_selectedIndices[0]].image,
+            isAfterNetwork: _userEdits.isNotEmpty,
             position: _sliderPosition,
             onChanged: (val) => setState(() => _sliderPosition = val),
           ),
@@ -566,8 +619,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
               icon: "edit.png",
               onTap: () {
                 setState(() {
-                  _currentAssetPreview =
-                      _savedVersions[_selectedIndices[0]].image;
+                  _currentAssetPreview = _userEdits.isNotEmpty 
+                      ? _userEdits[_selectedIndices[0]].editedImageUrl 
+                      : _dummyVersions[_selectedIndices[0]].image;
                   _isEditVisible = true;
                   _compareExpanded = false;
                   _editExpanded = true;
@@ -601,9 +655,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
           itemCount: totalItems,
           itemBuilder: (context, index) {
             final isOriginal = index == 0;
-            final imageUrl = isOriginal
+            final isNetwork = _userEdits.isNotEmpty;
+            final String? imgPath = isOriginal
                 ? null
-                : _savedVersions[_selectedIndices[index - 1]].image;
+                : (isNetwork 
+                    ? _userEdits[_selectedIndices[index - 1]].editedImageUrl 
+                    : _dummyVersions[_selectedIndices[index - 1]].image);
 
             return Container(
               decoration: BoxDecoration(
@@ -614,7 +671,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 children: [
                   isOriginal
                       ? Image.file(widget.imageFile, fit: BoxFit.cover)
-                      : Image.asset(imageUrl!, fit: BoxFit.cover),
+                      : (isNetwork 
+                          ? Image.network(imgPath!, fit: BoxFit.cover)
+                          : Image.asset(imgPath!, fit: BoxFit.cover)),
 
                   _buildOverlayButtons(
                     bottom: 8,
@@ -627,7 +686,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                       context.push(
                         AppRoutes.imageFinalize,
                         extra: {
-                          'editedImage': imageUrl ?? widget.imageFile,
+                          'editedImage': imgPath ?? widget.imageFile,
                           'selectedColor': _selectedColor,
                           'selectedLamination': _selectedTexture,
                         },
@@ -635,7 +694,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     },
                     onEdit: () {
                       setState(() {
-                        _currentAssetPreview = imageUrl;
+                        _currentAssetPreview = imgPath;
                         _isEditVisible = true;
                         _compareExpanded = false;
                         _editExpanded = true;
@@ -1460,13 +1519,28 @@ class _ImageEditPageState extends State<ImageEditPage> {
       _isLongTap,
     );
 
+    // Automatically POST the edit to the history API
+    if (widget.image_id != null) {
+      _userEditsService.postEdit(
+        editedFile: widget.imageFile, // Placeholder: using current image as edited_file
+        furnitureId: widget.image_id!,
+        email: _ownerEmail,
+      ).then((newRecord) {
+        if (newRecord != null) {
+          debugPrint("✅ Edit record posted successfully: ${newRecord.id}");
+          _fetchUserEditHistory(); // Refresh history
+        }
+      });
+    }
+
     setState(() {
-      _isApplied = true;
       _isEditVisible = false;
       _compareExpanded = true;
       _editExpanded = false;
     });
   }
+
+  bool get _isApplied => _isEditVisible == false && _compareExpanded == true;
 
   Widget _buildBottomBarFixed() {
     if (!_editExpanded) {

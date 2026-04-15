@@ -7,6 +7,7 @@ class ImageCompareSlider extends StatelessWidget {
   final double height;
   final double position;
   final ValueChanged<double> onChanged;
+  final bool isAfterNetwork;
 
   const ImageCompareSlider({
     super.key,
@@ -15,12 +16,25 @@ class ImageCompareSlider extends StatelessWidget {
     required this.position,
     required this.onChanged,
     this.height = 360,
+    this.isAfterNetwork = false,
   });
 
-  Widget _buildImage(dynamic source, double width, double height) {
+  Widget _buildImage(dynamic source, double width, double height, {bool forceNetwork = false}) {
     if (source is File) {
       return Image.file(source, width: width, height: height, fit: BoxFit.cover);
     } else if (source is String) {
+      if (forceNetwork || source.startsWith('http')) {
+        return Image.network(
+          source,
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.error_outline),
+          ),
+        );
+      }
       return Image.asset(source, width: width, height: height, fit: BoxFit.cover);
     }
     return const SizedBox();
@@ -44,7 +58,7 @@ class ImageCompareSlider extends StatelessWidget {
               /// AFTER image (background)
               ClipRRect(
                 borderRadius: BorderRadius.circular(0),
-                child: _buildImage(after, width, actualHeight),
+                child: _buildImage(after, width, actualHeight, forceNetwork: isAfterNetwork),
               ),
 
               /// BEFORE image (clipped)
@@ -83,7 +97,6 @@ class ImageCompareSlider extends StatelessWidget {
     );
   }
 }
-
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
