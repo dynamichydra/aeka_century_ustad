@@ -707,12 +707,31 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             _selectedNestedSubCategory = "";
                           });
                         },
-                        onSearchStarted: () {
-                          setState(() {
-                            _selectedCategory = null;
-                            _selectedSubCategory = "All";
-                            _selectedNestedSubCategory = "";
-                          });
+                        onSearchStarted: (query) {
+                          // Find matching category in the current tab
+                          final currentTabData = _productsByTabCategorySub[homeState.selectedIndex];
+                          String? matchingCategory;
+                          
+                          if (currentTabData != null) {
+                            final queryLower = query.toLowerCase();
+                            for (final categoryName in currentTabData.keys) {
+                              final categoryLower = categoryName.toLowerCase();
+                              if (categoryLower.contains(queryLower) || queryLower.contains(categoryLower)) {
+                                matchingCategory = categoryName;
+                                break;
+                              }
+                            }
+                          }
+
+                          if (matchingCategory != null) {
+                            _selectCategory(matchingCategory, homeState.selectedIndex);
+                          } else {
+                            setState(() {
+                              _selectedCategory = null;
+                              _selectedSubCategory = "All";
+                              _selectedNestedSubCategory = "";
+                            });
+                          }
                         },
                       ),
                       const SizedBox(height: 16),

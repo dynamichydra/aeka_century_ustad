@@ -59,15 +59,18 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     // Try to load from SQLite if image_id is provided
     if (widget.image_id != null) {
       try {
-        final selectedImage = await SelectedImagesRepository.getImage(widget.image_id!);
+        final selectedImage = await SelectedImagesRepository.getImage(
+          widget.image_id!,
+        );
         if (selectedImage != null) {
           print("✅ Loaded image from SQLite with ID: ${widget.image_id}");
           // Write the image data to a temporary file
           final tempDir = await getTemporaryDirectory();
-          final fileName = 'sqlite_${widget.image_id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final fileName =
+              'sqlite_${widget.image_id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
           final file = File('${tempDir.path}/$fileName');
           await file.writeAsBytes(selectedImage.imageData);
-          
+
           if (mounted) {
             setState(() {
               _currentFile = file;
@@ -79,7 +82,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         print("❌ Error loading image from SQLite: $e");
       }
     }
-    
+
     // Fallback to the passed imageFile
     if (mounted) {
       setState(() {
@@ -341,6 +344,80 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                     ],
                   ),
+
+                  // child: Row(
+                  //   mainAxisSize: MainAxisSize.min,
+                  //   children: [
+                  //     SizedBox(
+                  //       width: 130,
+                  //       height: 44,
+                  //       child: ElevatedButton(
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: Colors.white,
+                  //           foregroundColor: Colors.black,
+                  //           padding: EdgeInsets.zero,
+                  //           elevation: 0,
+                  //           side: BorderSide.none,
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(30),
+                  //           ),
+                  //         ),
+                  //         onPressed: _handleEdit,
+                  //         child: Row(
+                  //           mainAxisAlignment: MainAxisAlignment.center,
+                  //           spacing: 8,
+                  //           children: [
+                  //             Image.asset(
+                  //               "assets/icons/app_icons/edit.png",
+                  //               height: 14,
+                  //             ),
+                  //             const Text(
+                  //               "Edit",
+                  //               style: TextStyle(
+                  //                 color: Colors.black,
+                  //                 fontWeight: FontWeight.w600,
+                  //                 fontSize: 14,
+                  //               ),
+                  //             ),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //     ),
+                  //     const SizedBox(width: 12),
+                  //     SizedBox(
+                  //       width: 160,
+                  //       height: 44,
+                  //       child: ElevatedButton(
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: Colors.white,
+                  //           foregroundColor: Colors.black,
+                  //           padding: EdgeInsets.zero,
+                  //           elevation: 0,
+                  //           side: BorderSide.none,
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(30),
+                  //           ),
+                  //         ),
+                  //         onPressed: _handleScrollEdit,
+                  //         child: const Row(
+                  //           mainAxisAlignment: MainAxisAlignment.center,
+                  //           spacing: 8,
+                  //           children: [
+                  //             Icon(Icons.unfold_more, size: 18),
+                  //             Text(
+                  //               "Edit Scroll",
+                  //               style: TextStyle(
+                  //                 color: Colors.black,
+                  //                 fontWeight: FontWeight.w600,
+                  //                 fontSize: 14,
+                  //               ),
+                  //             ),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -358,7 +435,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          onPressed: _handleEdit,
+                          onPressed: _handleScrollEdit,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             spacing: 8,
@@ -369,39 +446,6 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                               ),
                               const Text(
                                 "Edit",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      SizedBox(
-                        width: 160,
-                        height: 44,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            padding: EdgeInsets.zero,
-                            elevation: 0,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: _handleScrollEdit,
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            spacing: 8,
-                            children: [
-                              Icon(Icons.unfold_more, size: 18),
-                              Text(
-                                "Edit Scroll",
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.w600,

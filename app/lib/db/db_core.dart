@@ -9,37 +9,61 @@ class DbCore {
 
   static Future<Database> get database async {
     if (_database != null) return _database!;
+    return await _initDatabase();
+  }
 
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, "app.db");
+  static Future<Database> _initDatabase() async {
+    // Avoid multiple concurrent initializations
+    if (_database != null) return _database!;
 
-    print("🗄️ DB PATH: $path");
+    try {
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, "app.db");
 
-    // Check whether the database already physically exists
-    var exists = await databaseExists(path);
+      print("🗄️ [DbCore] DB PATH: $path");
 
-    if (!exists) {
-      print("📦 Copying fresh database from assets...");
+      // Check whether the database already physically exists
+      var exists = await databaseExists(path);
 
-      try {
-        await Directory(dirname(path)).create(recursive: true);
-      } catch (_) {}
+      if (!exists) {
+        print("📦 [DbCore] Copying fresh database from assets...");
 
-      // Copy from asset
-      ByteData data = await rootBundle.load("assets/db/app.db");
-      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+        try {
+          // Ensure directory exists - crucial for Android
+          await Directory(dirname(path)).create(recursive: true);
+        } catch (e) {
+          print("⚠️ [DbCore] Error creating directory: $e");
+        }
 
-      await File(path).writeAsBytes(bytes, flush: true);
-    } else {
-      print("📖 Opening existing local database...");
+        // Copy from asset
+        try {
+          ByteData data = await rootBundle.load("assets/db/app.db");
+          List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+
+          await File(path).writeAsBytes(bytes, flush: true);
+          print("✨ [DbCore] Database copied successfully");
+        } catch (e) {
+          print("❌ [DbCore] Error copying database from assets: $e");
+          // Re-throw to prevent opening a non-existent/empty database
+          rethrow;
+        }
+      } else {
+        print("📖 [DbCore] Opening existing local database...");
+      }
+
+      _database = await openDatabase(
+        path,
+        version: 1,
+        onOpen: (db) {
+          print("🔓 [DbCore] Database connection opened");
+        },
+      );
+
+      return _database!;
+    } catch (e) {
+      print("🚨 [DbCore] CRITICAL ERROR initializing database: $e");
+      rethrow;
     }
-
-    _database = await openDatabase(
-      path,
-      version: 1,
-    );
-
-    return _database!;
   }
 
   static Future<void> ensureTablesExist(Map<String, String> tableCreationScripts) async {

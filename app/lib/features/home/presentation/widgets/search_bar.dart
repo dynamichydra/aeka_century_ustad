@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class HomeSearchBar extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onCategoryCleared;
-  final VoidCallback onSearchStarted;
+  final void Function(String query) onSearchStarted;
 
   const HomeSearchBar({
     super.key,
@@ -26,7 +26,23 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
   @override
   void initState() {
     super.initState();
-    _isSearching = false;
+    _isSearching = false; // Always start with search icon
+    widget.controller.addListener(_handleControllerChange);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleControllerChange);
+    super.dispose();
+  }
+
+  void _handleControllerChange() {
+    // Only revert back to "Search" icon if the text becomes empty
+    if (widget.controller.text.isEmpty && _isSearching) {
+      setState(() {
+        _isSearching = false;
+      });
+    }
   }
 
   void _clearSearch() {
@@ -41,11 +57,14 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
   void _performSearch() {
     final query = widget.controller.text;
     if (query.isNotEmpty) {
+      // Dismiss the keyboard
+      FocusScope.of(context).unfocus();
+      
       setState(() {
         _isSearching = true;
       });
       widget.onCategoryCleared();
-      widget.onSearchStarted();
+      widget.onSearchStarted(query);
       context.read<HomeCubit>().fetchResults(query);
       context.read<ProductsCubit>().searchProducts(query);
     }
@@ -69,10 +88,7 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
       child: TextField(
         controller: widget.controller,
         cursorHeight: 15,
-        style: const TextStyle(
-          fontWeight: FontWeight.w100,
-          fontSize: 13,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.w100, fontSize: 13),
         decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white,
@@ -94,8 +110,8 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
             borderSide: BorderSide.none,
           ),
           suffixIconConstraints: const BoxConstraints(
-            maxHeight: 32,
-            maxWidth: 44,
+            maxHeight: 40,
+            maxWidth: 50,
           ),
           suffixIcon: GestureDetector(
             onTap: _isSearching ? _clearSearch : _performSearch,
@@ -118,13 +134,13 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
                 child: _isSearching
                     ? const Icon(
                         Icons.close,
-                        size: 16,
+                        size: 20,
                         color: TColors.primary,
                       )
                     : Image.asset(
                         "assets/icons/app_icons/ai_search.png",
-                        width: 16,
-                        height: 16,
+                        width: 20,
+                        height: 20,
                       ),
               ),
             ),
@@ -138,11 +154,6 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
         ),
         onChanged: (val) {
           context.read<HomeCubit>().setSearchQuery(val);
-          if (val.isEmpty) {
-            setState(() {
-              _isSearching = false;
-            });
-          }
         },
         onSubmitted: (val) {
           if (val.isNotEmpty) {

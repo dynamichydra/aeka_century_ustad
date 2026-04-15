@@ -609,11 +609,38 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             _selectedNestedSubCategory = "";
                           });
                         },
-                        onSearchStarted: () {
+                        onSearchStarted: (query) {
                           setState(() {
-                            _selectedCategory = null;
-                            _selectedSubCategory = "All";
-                            _selectedNestedSubCategory = "";
+                            // Find matching category in the current tab
+                            final currentTabData = _productsByTabCategorySub[homeState.selectedIndex];
+                            String? matchingCategory;
+                            
+                            if (currentTabData != null) {
+                              final queryLower = query.toLowerCase();
+                              for (final categoryName in currentTabData.keys) {
+                                final categoryLower = categoryName.toLowerCase();
+                                if (categoryLower.contains(queryLower) || queryLower.contains(categoryLower)) {
+                                  matchingCategory = categoryName;
+                                  break;
+                                }
+                              }
+                            }
+
+                            if (matchingCategory != null) {
+                              _selectedCategory = matchingCategory;
+                              _selectedSubCategory = "All";
+                              _selectedNestedSubCategory = "";
+                              
+                              // Trigger product fetch for the matched category
+                              context.read<ProductsCubit>().fetchProductsByCategory(
+                                matchingCategory,
+                                isInterior: homeState.selectedIndex == 0,
+                              );
+                            } else {
+                              _selectedCategory = null;
+                              _selectedSubCategory = "All";
+                              _selectedNestedSubCategory = "";
+                            }
                           });
                         },
                       ),

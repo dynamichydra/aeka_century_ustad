@@ -19,7 +19,7 @@ class ImageEditScrollPage extends StatelessWidget {
       imageFile: imageFile,
       pickedColor: pickedColor,
       scrollableEditSection: true,
-      showTextureDetailOnTap: false,
+      showTextureDetailOnTap: true,
       textureListHeight: 110,
       textureThumbWidth: 120,
       textureThumbHeight: 80,
