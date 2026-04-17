@@ -1,11 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
-
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/home/home_cubit.dart';
 import 'package:flutter/services.dart' show AssetManifest, rootBundle;
-import 'package:path_provider/path_provider.dart';
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
@@ -23,6 +20,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:century_ai/features/home/data/services/image_preparation_service.dart';
 import 'package:century_ai/features/home/presentation/widgets/search_bar.dart';
 import 'package:century_ai/router/app_routes.dart';
 
@@ -46,6 +44,8 @@ class _HomeScreenContent extends StatefulWidget {
 }
 
 class _HomeScreenContentState extends State<_HomeScreenContent> {
+  final ImagePreparationService _imagePreparationService =
+      const ImagePreparationService();
   final TextEditingController _searchController = TextEditingController();
   bool _isGridView = false;
   bool _quickExpanded = false;
@@ -524,33 +524,44 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    if (image != null && mounted) {
-      final File imageFile = File(image.path);
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Upload Furniture"),
-          content: const Text("Do you want to upload this image to the catalog?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.read<ProductsCubit>().uploadProductImage(imageFile);
-              },
-              child: const Text("Upload"),
-            ),
-          ],
+    if (image == null || !mounted) return;
+
+    final File imageFile = File(image.path);
+
+    try {
+      final imageBytes = await imageFile.readAsBytes();
+      final imageId = 'upload_${Uri.encodeComponent(imageFile.path)}';
+
+      await SelectedImagesRepository.saveImage(
+        SelectedImageData(
+          id: imageId,
+          imageData: imageBytes,
+          imagePath: imageFile.path,
+          category: 'Uploaded Image',
+          subcategory: 'User Upload',
+          selectedAt: DateTime.now(),
         ),
+      );
+
+      if (!mounted) return;
+      context.push(
+        AppRoutes.imagePreview,
+        extra: {
+          "imageFile": imageFile,
+          "image_id": imageId,
+          "image_category": "Uploaded Image",
+          "sub_category": "User Upload",
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error opening uploaded image: $e")),
       );
     }
   }
 
   Future<void> _openProductForEditing(ProductImageModel product) async {
-    final assetPath = product.image;
     bool isLoaderShowing = false;
     
     // Show loading dialog for network images
@@ -568,57 +579,25 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     }
 
     try {
-      File file;
-      List<int> imageBytes;
-      
-      if (product.isNetworkImage) {
-        final response = await http.get(Uri.parse(assetPath));
-        if (response.statusCode == 200) {
-          imageBytes = response.bodyBytes;
-          final tempDir = await getTemporaryDirectory();
-          final fileName = 'downloaded_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          file = File('${tempDir.path}/$fileName');
-          await file.writeAsBytes(imageBytes);
-          
-          if (mounted && isLoaderShowing) {
-            isLoaderShowing = false;
-            Navigator.of(context, rootNavigator: true).pop();
-          }
-        } else {
-          throw Exception("Failed to download image: ${response.statusCode}");
-        }
-      } else {
-        final byteData = await rootBundle.load(assetPath);
-        imageBytes = byteData.buffer.asUint8List(
-          byteData.offsetInBytes,
-          byteData.lengthInBytes,
-        );
-        final tempDir = await getTemporaryDirectory();
-        final fileName = assetPath.replaceAll("/", "_");
-        file = File('${tempDir.path}/$fileName');
-        await file.writeAsBytes(imageBytes);
-      }
-
-      // Save to SQLite
-      await SelectedImagesRepository.saveImage(
-        SelectedImageData(
-          id: product.id,
-          imageData: imageBytes,
-          imagePath: assetPath,
-          category: product.category ?? _selectedCategory ?? "Furniture",
-          subcategory: product.subcategory ?? _selectedSubCategory,
-          selectedAt: DateTime.now(),
-        ),
+      final prepared = await _imagePreparationService.prepareProductImage(
+        product: product,
+        fallbackCategory: _selectedCategory ?? "Furniture",
+        fallbackSubcategory: _selectedSubCategory,
       );
+
+      if (mounted && isLoaderShowing) {
+        isLoaderShowing = false;
+        Navigator.of(context, rootNavigator: true).pop();
+      }
 
       if (mounted) {
         context.push(
           AppRoutes.imagePreview,
           extra: {
-            "imageFile": file,
-            "image_id": product.id,
-            "image_category": product.category ?? _selectedCategory ?? "Furniture",
-            "sub_category": product.subcategory ?? _selectedSubCategory,
+            "imageFile": prepared.file,
+            "image_id": prepared.imageId,
+            "image_category": prepared.category,
+            "sub_category": prepared.subcategory,
           },
         );
       }

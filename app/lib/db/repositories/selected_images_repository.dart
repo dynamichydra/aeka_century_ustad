@@ -25,18 +25,25 @@ class SelectedImagesRepository {
     });
   }
 
-  /// Save selected image to database
+  /// Save selected image to database once.
+  /// The product_id is unique, so we skip saving duplicates.
   static Future<void> saveImage(SelectedImageData imageData) async {
     final db = await DbCore.database;
-    print("💾 Saving selected image with ID: ${imageData.id}");
+    final alreadyExists = await imageExists(imageData.id);
+    if (alreadyExists) {
+      print('Skipping duplicate image with ID: ${imageData.id}');
+      return;
+    }
+
+    print('Saving selected image with ID: ${imageData.id}');
 
     await db.insert(
       tableName,
       imageData.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictAlgorithm: ConflictAlgorithm.ignore,
     );
 
-    print("✅ Image saved successfully");
+    print('Image saved successfully');
   }
 
   /// Retrieve selected image by ID
@@ -50,11 +57,11 @@ class SelectedImagesRepository {
     );
 
     if (result.isNotEmpty) {
-      print("📥 Retrieved image with ID: $productId from database");
+      print('Retrieved image with ID: $productId from database');
       return SelectedImageData.fromMap(result.first);
     }
 
-    print("⚠️ No image found with ID: $productId");
+    print('No image found with ID: $productId');
     return null;
   }
 
@@ -62,7 +69,7 @@ class SelectedImagesRepository {
   static Future<void> deleteImage(String productId) async {
     final db = await DbCore.database;
 
-    print("🗑️ Deleting image with ID: $productId");
+    print('Deleting image with ID: $productId');
 
     await db.delete(
       tableName,
@@ -70,16 +77,16 @@ class SelectedImagesRepository {
       whereArgs: [productId],
     );
 
-    print("✅ Image deleted successfully");
+    print('Image deleted successfully');
   }
 
   /// Get all selected images
   static Future<List<SelectedImageData>> getAllImages() async {
     final db = await DbCore.database;
 
-    final result = await db.query(tableName);
+    final result = await db.query(tableName, orderBy: 'selected_at DESC');
 
-    print("📊 Retrieved ${result.length} images from database");
+    print('Retrieved ${result.length} images from database');
 
     return result.map((map) => SelectedImageData.fromMap(map)).toList();
   }
@@ -88,11 +95,11 @@ class SelectedImagesRepository {
   static Future<void> clearAllImages() async {
     final db = await DbCore.database;
 
-    print("🧹 Clearing all selected images...");
+    print('Clearing all selected images...');
 
     await db.delete(tableName);
 
-    print("✅ All images cleared");
+    print('All images cleared');
   }
 
   /// Get image count
@@ -103,7 +110,7 @@ class SelectedImagesRepository {
 
     final count = Sqflite.firstIntValue(result) ?? 0;
 
-    print("📈 Total images in database: $count");
+    print('Total images in database: $count');
 
     return count;
   }

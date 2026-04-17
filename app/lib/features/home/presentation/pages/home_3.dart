@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/home/home_cubit.dart';
-import 'package:flutter/services.dart' show AssetManifest, rootBundle;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
@@ -24,8 +24,8 @@ import 'package:century_ai/features/home/data/services/image_preparation_service
 import 'package:century_ai/features/home/presentation/widgets/search_bar.dart';
 import 'package:century_ai/router/app_routes.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen3 extends StatelessWidget {
+  const HomeScreen3({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +56,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   String _selectedNestedSubCategory = "";
 
   final Map<String, String> _categoryIcons = {};
+  final Map<String, String> _categoryAllIcons = {};
   final Map<String, String> _subCategoryIcons = {};
 
   double _bottomCtaReservedSpace(BuildContext context) {
@@ -81,145 +82,195 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
   Future<void> _loadProductsByCategoryFromAsset() async {
     try {
-      final rawJson = await rootBundle.loadString('assets/data/data.json');
-      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-      final allAssets = manifest.listAssets();
-      final exactAssetMap = <String, String>{};
-      final softAssetMap = <String, String>{};
-      final fileNameAssetMap = <String, String>{};
+      final rawJson = await rootBundle.loadString('assets/data/test.json');
+      final Map<String, dynamic> rootData = json.decode(rawJson);
 
-      for (final assetPath in allAssets) {
-        final exactKey = _normalizeAssetPath(assetPath);
-        final softKey = _normalizeAssetPathSoft(assetPath);
-        final fileNameKey = _fileNameFromPath(assetPath);
-
-        exactAssetMap[exactKey] = assetPath;
-        softAssetMap.putIfAbsent(softKey, () => assetPath);
-        if (fileNameKey.isNotEmpty) {
-          fileNameAssetMap.putIfAbsent(fileNameKey, () => assetPath);
-        }
-      }
+      final nestedSubCategories =
+          (rootData['nested_subcategories'] as Map?)?.cast<String, dynamic>() ??
+              <String, dynamic>{};
       final parsed =
           <
             int,
             Map<String, Map<String, Map<String, List<ProductImageModel>>>>
-          >{};
-      final List<dynamic> rootData = json.decode(rawJson);
+          >{
+            0: {},
+            1: {},
+          };
 
-      for (int tabIndex = 0; tabIndex < rootData.length; tabIndex++) {
-        final rootNode = rootData[tabIndex];
-        final List<dynamic> categories = rootNode['children'] ?? [];
-        parsed[tabIndex] = {};
-
-        for (final catNode in categories) {
-          final category = catNode['name'] ?? 'Unknown';
-          if (catNode['optional_all_img'] != null) {
-            final rawIcon = catNode['optional_all_img'].toString();
-            _categoryIcons[category] = rawIcon.startsWith('assets/')
-                ? rawIcon
-                : 'assets/$rawIcon';
-          }
-          final subCatsMap = <String, Map<String, List<ProductImageModel>>>{};
-          final List<dynamic> catChildren = catNode['children'] ?? [];
-
-          for (final subCatNode in catChildren) {
-            if (subCatNode is! Map) continue;
-            final subCatMapRaw = subCatNode.cast<String, dynamic>();
-
-            // If this node is a product directly under Category
-            if (subCatMapRaw['image_path'] != null) {
-              final product = _parseOneProduct(
-                subCatMapRaw,
-                category,
-                'General',
-                'General',
-                exactAssetMap,
-                softAssetMap,
-                fileNameAssetMap,
-              );
-              if (product != null) {
-                subCatsMap
-                    .putIfAbsent('General', () => {})
-                    .putIfAbsent('General', () => [])
-                    .add(product);
-              }
-              continue;
+      void parseTab(List<dynamic> flatItems, int tabIndex) {
+        final sorted = List<Map<String, dynamic>>.from(
+          flatItems.whereType<Map>().map((e) => e.cast<String, dynamic>()),
+        )..sort((a, b) {
+            final aParent = a['parent_id'];
+            final bParent = b['parent_id'];
+            if (aParent == null && bParent != null) return -1;
+            if (aParent != null && bParent == null) return 1;
+            if (aParent == null && bParent == null) {
+              final aOrder = (a['sort_order'] as num?)?.toInt() ?? 9999;
+              final bOrder = (b['sort_order'] as num?)?.toInt() ?? 9999;
+              if (aOrder != bOrder) return aOrder.compareTo(bOrder);
             }
+            return ((a['id'] as num?)?.toInt() ?? 0).compareTo(
+              (b['id'] as num?)?.toInt() ?? 0,
+            );
+          });
 
-            // Otherwise treated as a SubCategory
-            final subCat = subCatMapRaw['name'] ?? 'General';
-            if (subCatMapRaw['image'] != null) {
-              final rawIcon = subCatMapRaw['image'].toString();
-              _subCategoryIcons[subCat] = rawIcon.startsWith('assets/')
-                  ? rawIcon
-                  : 'assets/$rawIcon';
-            }
-            final nestedGroups = <String, List<ProductImageModel>>{};
-            final List<dynamic> subCatChildren = subCatMapRaw['children'] ?? [];
-
-            for (final nestedNode in subCatChildren) {
-              if (nestedNode is! Map) continue;
-              final nestedNodeMap = nestedNode.cast<String, dynamic>();
-
-              // If this node is a product directly under SubCategory
-              if (nestedNodeMap['image_path'] != null) {
-                final product = _parseOneProduct(
-                  nestedNodeMap,
-                  category,
-                  subCat,
-                  'General',
-                  exactAssetMap,
-                  softAssetMap,
-                  fileNameAssetMap,
-                );
-                if (product != null) {
-                  nestedGroups.putIfAbsent('General', () => []).add(product);
-                }
-                // Even if it's a product, it might have children according to some formats,
-                // but usually we stop here or continue.
-                if (nestedNodeMap['children'] == null ||
-                    (nestedNodeMap['children'] as List).isEmpty) {
-                  continue;
-                }
-              }
-
-              // Otherwise treated as a NestedSubCategory
-              final nestedSubCat = nestedNodeMap['name'] ?? 'General';
-              final itemsList = <ProductImageModel>[];
-              final List<dynamic> leafItems = nestedNodeMap['children'] ?? [];
-
-              for (final item in leafItems) {
-                if (item is! Map) continue;
-                final map = item.cast<String, dynamic>();
-                final product = _parseOneProduct(
-                  map,
-                  category,
-                  subCat,
-                  nestedSubCat,
-                  exactAssetMap,
-                  softAssetMap,
-                  fileNameAssetMap,
-                );
-                if (product != null) {
-                  itemsList.add(product);
-                }
-              }
-
-              if (itemsList.isNotEmpty) {
-                nestedGroups[nestedSubCat] = itemsList;
-              }
-            }
-
-            if (nestedGroups.isNotEmpty) {
-              subCatsMap[subCat] = nestedGroups;
-            }
-          }
-
-          if (subCatsMap.isNotEmpty) {
-            parsed[tabIndex]![category] = subCatsMap;
+        final parentById = <int, Map<String, dynamic>>{};
+        final childrenByParent = <int, List<Map<String, dynamic>>>{};
+        for (final item in sorted) {
+          final id = (item['id'] as num?)?.toInt();
+          if (id == null) continue;
+          if (item['parent_id'] == null) {
+            parentById[id] = item;
+          } else {
+            final parentId = (item['parent_id'] as num?)?.toInt();
+            if (parentId == null) continue;
+            childrenByParent.putIfAbsent(parentId, () => []).add(item);
           }
         }
+
+        final orderedParents = parentById.values.toList()
+          ..sort((a, b) {
+            final aOrder = (a['sort_order'] as num?)?.toInt() ?? 9999;
+            final bOrder = (b['sort_order'] as num?)?.toInt() ?? 9999;
+            if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+            return ((a['id'] as num?)?.toInt() ?? 0).compareTo(
+              (b['id'] as num?)?.toInt() ?? 0,
+            );
+          });
+
+        for (final parent in orderedParents) {
+          final category = (parent['name'] ?? 'Unknown').toString();
+          final rawCategoryIcon =
+              (parent['image'] ?? '')
+                  .toString()
+                  .trim();
+          final rawCategoryAllIcon =
+              (parent['optional_all_img'] ?? parent['image'] ?? '')
+                  .toString()
+                  .trim();
+          final categoryIcon = rawCategoryIcon.isEmpty
+              ? ""
+              : (rawCategoryIcon.startsWith('assets/')
+                    ? rawCategoryIcon
+                    : 'assets/$rawCategoryIcon');
+          final categoryAllIcon = rawCategoryAllIcon.isEmpty
+              ? ""
+              : (rawCategoryAllIcon.startsWith('assets/')
+                    ? rawCategoryAllIcon
+                    : 'assets/$rawCategoryAllIcon');
+          if (categoryIcon.isNotEmpty) {
+            _categoryIcons[category] = categoryIcon;
+          }
+          if (categoryAllIcon.isNotEmpty) {
+            _categoryAllIcons[category] = categoryAllIcon;
+          }
+
+          final categoryId = (parent['id'] as num?)?.toInt();
+          if (categoryId == null) continue;
+          final children = childrenByParent[categoryId] ?? <Map<String, dynamic>>[];
+          children.sort((a, b) {
+            final aOrder = (a['sort_order'] as num?)?.toInt() ?? 9999;
+            final bOrder = (b['sort_order'] as num?)?.toInt() ?? 9999;
+            if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+            return ((a['id'] as num?)?.toInt() ?? 0).compareTo(
+              (b['id'] as num?)?.toInt() ?? 0,
+            );
+          });
+
+          final subCatsMap = <String, Map<String, List<ProductImageModel>>>{};
+          for (final sub in children) {
+            final subCat = (sub['name'] ?? 'General').toString();
+            final rawSubIcon =
+                (sub['image'] ?? '')
+                    .toString()
+                    .trim();
+            final subIcon = rawSubIcon.isEmpty
+                ? ""
+                : (rawSubIcon.startsWith('assets/')
+                      ? rawSubIcon
+                      : 'assets/$rawSubIcon');
+            final iconToUse = subIcon.isNotEmpty ? subIcon : categoryIcon;
+            if (subIcon.isNotEmpty) {
+              _subCategoryIcons['$category::$subCat'] = subIcon;
+            }
+
+            final nestedKey = (sub['nested_key'] ?? '').toString();
+            final subId = (sub['id'] ?? '${category}_$subCat').toString();
+
+            if (nestedKey.isNotEmpty &&
+                nestedSubCategories[nestedKey] is List &&
+                (nestedSubCategories[nestedKey] as List).isNotEmpty) {
+              final nestedGroups = <String, List<ProductImageModel>>{};
+              final nestedNames = List<String>.from(
+                (nestedSubCategories[nestedKey] as List).map((e) => e.toString()),
+              );
+              for (final nestedName in nestedNames) {
+                nestedGroups[nestedName] = [
+                  ProductImageModel(
+                    id: '${subId}_$nestedName',
+                    name: category,
+                    image: iconToUse,
+                    category: category,
+                    subcategory: subCat,
+                    nestedSubcategory: nestedName,
+                    isTrending: false,
+                  ),
+                ];
+              }
+              subCatsMap[subCat] = nestedGroups;
+            } else {
+              subCatsMap[subCat] = {
+                'General': [
+                  ProductImageModel(
+                    id: subId,
+                    name: category,
+                    image: iconToUse,
+                    category: category,
+                    subcategory: subCat,
+                    nestedSubcategory: 'General',
+                    isTrending: false,
+                  ),
+                ],
+              };
+            }
+          }
+
+          if (subCatsMap.isEmpty) {
+            final parentNestedKey = (parent['nested_key'] ?? '').toString();
+            if (parentNestedKey.isNotEmpty &&
+                nestedSubCategories[parentNestedKey] is List &&
+                (nestedSubCategories[parentNestedKey] as List).isNotEmpty) {
+              final nestedGroups = <String, List<ProductImageModel>>{};
+              final nestedNames = List<String>.from(
+                (nestedSubCategories[parentNestedKey] as List).map(
+                  (e) => e.toString(),
+                ),
+              );
+              for (final nestedName in nestedNames) {
+                nestedGroups[nestedName] = [
+                  ProductImageModel(
+                    id: '${categoryId}_$nestedName',
+                    name: category,
+                    image: categoryIcon,
+                    category: category,
+                    subcategory: 'General',
+                    nestedSubcategory: nestedName,
+                    isTrending: false,
+                  ),
+                ];
+              }
+              subCatsMap['General'] = nestedGroups;
+            }
+          }
+
+          // Keep parent categories visible even when they do not have children.
+          parsed[tabIndex]![category] = subCatsMap;
+        }
       }
+
+      parseTab((rootData['interior'] as List?) ?? const [], 0);
+      parseTab((rootData['furniture'] as List?) ?? const [], 1);
 
       if (!mounted) return;
       setState(() {
@@ -228,62 +279,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         // _selectedCategory remains null until the user taps one.
       });
     } catch (e) {
-      debugPrint('Error parsing assets/data/_data.json: $e');
+      debugPrint('Error parsing assets/data/test.json: $e');
     }
-  }
-
-  ProductImageModel? _parseOneProduct(
-    Map<String, dynamic> map,
-    String category,
-    String subCat,
-    String nestedSubCat,
-    Map<String, String> exactAssetMap,
-    Map<String, String> softAssetMap,
-    Map<String, String> fileNameAssetMap,
-  ) {
-    final rawPath = (map['image_path'] ?? '').toString().trim();
-    if (rawPath.isEmpty) return null;
-
-    final prefixedPath = rawPath.startsWith('assets/')
-        ? rawPath
-        : 'assets/$rawPath';
-    final resolvedPath =
-        exactAssetMap[_normalizeAssetPath(prefixedPath)] ??
-        softAssetMap[_normalizeAssetPathSoft(prefixedPath)] ??
-        fileNameAssetMap[_fileNameFromPath(rawPath)];
-
-    if (resolvedPath == null) return null;
-
-    return ProductImageModel(
-      id:
-          (map['id'] ??
-                  '${category}_${subCat}_${nestedSubCat}_${DateTime.now().microsecondsSinceEpoch}')
-              .toString(),
-      name: category,
-      image: resolvedPath,
-      category: category,
-      subcategory: subCat,
-      nestedSubcategory: nestedSubCat,
-      isTrending: false,
-    );
-  }
-
-  String _normalizeAssetPath(String value) {
-    return value.replaceAll('\\', '/').trim().toLowerCase();
-  }
-
-  String _fileNameFromPath(String value) {
-    final normalized = value.replaceAll('\\', '/').trim().toLowerCase();
-    final index = normalized.lastIndexOf('/');
-    return index >= 0 ? normalized.substring(index + 1) : normalized;
-  }
-
-  String _normalizeAssetPathSoft(String value) {
-    return _normalizeAssetPath(value).replaceAll(RegExp(r'[\s_\-]+'), '');
-  }
-
-  String _normalizeCategory(String value) {
-    return value.trim().toLowerCase();
   }
 
   List<ProductImageModel> _resolveQuickProducts(
@@ -297,27 +294,33 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     final quickItems = <ProductImageModel>[];
     for (final entry in currentTabData.entries) {
-      if (entry.value.isEmpty) continue;
+      String iconImage = _categoryIcons[entry.key] ?? "";
+      if (iconImage.isEmpty) {
+        // Fallback for unexpected missing parent icon.
+        final allProducts = <ProductImageModel>[];
+        for (final nestedMap in entry.value.values) {
+          for (final productList in nestedMap.values) {
+            allProducts.addAll(productList);
+          }
+        }
 
-      // Collect all nested products to pick a random one
-      final allProducts = <ProductImageModel>[];
-      for (final nestedMap in entry.value.values) {
-        for (final productList in nestedMap.values) {
-          allProducts.addAll(productList);
+        if (allProducts.isNotEmpty) {
+          final stableIndex = entry.key.hashCode.abs() % allProducts.length;
+          iconImage = allProducts[stableIndex].image;
+        } else if (fallbackProducts.isNotEmpty) {
+          final stableIndex =
+              entry.key.hashCode.abs() % fallbackProducts.length;
+          iconImage = fallbackProducts[stableIndex].image;
+        } else {
+          continue;
         }
       }
-
-      if (allProducts.isEmpty) continue;
-
-      // Use deterministic selection based on name hash for stability
-      final stableIndex = entry.key.hashCode.abs() % allProducts.length;
-      final randomProduct = allProducts[stableIndex];
 
       quickItems.add(
         ProductImageModel(
           id: 'cat_${entry.key}',
           name: entry.key,
-          image: randomProduct.image,
+          image: iconImage,
           isTrending: false,
         ),
       );
@@ -327,11 +330,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   String _getSubCategoryIcon(
+    String categoryName,
     String subCatName,
     Map<String, Map<String, List<ProductImageModel>>> categoryData,
   ) {
-    if (_subCategoryIcons.containsKey(subCatName)) {
-      return _subCategoryIcons[subCatName]!;
+    final keyedName = '$categoryName::$subCatName';
+    if (_subCategoryIcons.containsKey(keyedName)) {
+      return _subCategoryIcons[keyedName]!;
     }
 
     final subCatData = categoryData[subCatName];
@@ -366,6 +371,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     if (allProducts.isEmpty) return "";
     final stableIndex = categoryName.hashCode.abs() % allProducts.length;
     return allProducts[stableIndex].image;
+  }
+
+  String _getParentCategoryAllIcon(
+    String categoryName,
+    Map<String, Map<String, List<ProductImageModel>>> categoryData,
+  ) {
+    if (_categoryAllIcons.containsKey(categoryName)) {
+      return _categoryAllIcons[categoryName]!;
+    }
+    return _getParentCategoryIcon(categoryName, categoryData);
   }
 
   List<ProductImageModel> _resolveVisibleProducts(
@@ -461,7 +476,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
   Future<void> _openProductForEditing(ProductImageModel product) async {
     bool isLoaderShowing = false;
-    
+
     // Show loading dialog for network images
     if (product.isNetworkImage) {
       isLoaderShowing = true;
@@ -506,9 +521,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       }
       debugPrint("Error preparing image: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error preparing image: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error preparing image: $e")));
       }
     }
   }
@@ -588,14 +603,18 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         onSearchStarted: (query) {
                           setState(() {
                             // Find matching category in the current tab
-                            final currentTabData = _productsByTabCategorySub[homeState.selectedIndex];
+                            final currentTabData =
+                                _productsByTabCategorySub[homeState
+                                    .selectedIndex];
                             String? matchingCategory;
-                            
+
                             if (currentTabData != null) {
                               final queryLower = query.toLowerCase();
                               for (final categoryName in currentTabData.keys) {
-                                final categoryLower = categoryName.toLowerCase();
-                                if (categoryLower.contains(queryLower) || queryLower.contains(categoryLower)) {
+                                final categoryLower = categoryName
+                                    .toLowerCase();
+                                if (categoryLower.contains(queryLower) ||
+                                    queryLower.contains(categoryLower)) {
                                   matchingCategory = categoryName;
                                   break;
                                 }
@@ -606,12 +625,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               _selectedCategory = matchingCategory;
                               _selectedSubCategory = "All";
                               _selectedNestedSubCategory = "";
-                              
+
                               // Trigger product fetch for the matched category
-                              context.read<ProductsCubit>().fetchProductsByCategory(
-                                matchingCategory,
-                                isInterior: homeState.selectedIndex == 0,
-                              );
+                              context
+                                  .read<ProductsCubit>()
+                                  .fetchProductsByCategory(
+                                    matchingCategory,
+                                    isInterior: homeState.selectedIndex == 0,
+                                  );
                             } else {
                               _selectedCategory = null;
                               _selectedSubCategory = "All";
@@ -1006,6 +1027,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     } else if (categoryData.length == 1) {
       nestedSubCategories.addAll(categoryData.values.first.keys);
     }
+    nestedSubCategories = nestedSubCategories
+        .where((item) => item.trim().isNotEmpty && item != "General")
+        .toList();
 
     final bool hasMultipleNestedSubCats = nestedSubCategories.length > 1;
 
@@ -1034,12 +1058,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   final isSelected = _selectedSubCategory == subCat;
                   String iconImage = "";
                   if (subCat == "All") {
-                    iconImage = _getParentCategoryIcon(
+                    iconImage = _getParentCategoryAllIcon(
                       selectedCategory,
                       categoryData,
                     );
                   } else {
-                    iconImage = _getSubCategoryIcon(subCat, categoryData);
+                    iconImage = _getSubCategoryIcon(
+                      selectedCategory,
+                      subCat,
+                      categoryData,
+                    );
                   }
 
                   if (iconImage.isEmpty) {
@@ -1056,22 +1084,23 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       useUnderline: true,
                       isCircular: false,
                       onTap: () {
-                        // Tap again to deselect; tap new to select
-                        if (_selectedSubCategory == subCat) {
+                        if (_selectedSubCategory == subCat || subCat == "All") {
                           setState(() {
                             _selectedSubCategory = "All";
                             _selectedNestedSubCategory = "";
                           });
                           context.read<ProductsCubit>().fetchProductsByCategory(
-                                selectedCategory,
-                                isInterior: selectedIndex == 0,
-                              );
+                            selectedCategory,
+                            isInterior: selectedIndex == 0,
+                          );
                         } else {
                           setState(() {
                             _selectedSubCategory = subCat;
                             _selectedNestedSubCategory = "";
                           });
-                          context.read<ProductsCubit>().fetchProductsBySubCategory(
+                          context
+                              .read<ProductsCubit>()
+                              .fetchProductsBySubCategory(
                                 selectedCategory,
                                 subCat,
                                 isInterior: selectedIndex == 0,
@@ -1113,7 +1142,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           ),
 
         // Nested SubCategories (Pills)
-        if (nestedSubCategories.length > 1) ...[
+        if (nestedSubCategories.isNotEmpty) ...[
           if (hasMultipleSubCats || hasMeaningfulSingleSubCat)
             const SizedBox(height: 10),
           SizedBox(
@@ -1128,26 +1157,49 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                     padding: const EdgeInsets.only(right: 16),
                     child: GestureDetector(
                       onTap: () {
+                        final effectiveSubCategory =
+                            _selectedSubCategory == "All" &&
+                                categoryData.length == 1
+                            ? categoryData.keys.first
+                            : _selectedSubCategory;
+                        final shouldUseCategoryOnly =
+                            effectiveSubCategory == "All" ||
+                            effectiveSubCategory.isEmpty ||
+                            effectiveSubCategory == "General";
+
                         // Tap again to deselect; tap new to select
                         if (_selectedNestedSubCategory == nSubCat) {
                           setState(() {
                             _selectedNestedSubCategory = "";
                           });
-                          context.read<ProductsCubit>().fetchProductsBySubCategory(
-                            selectedCategory,
-                            _selectedSubCategory,
-                            isInterior: selectedIndex == 0,
-                          );
+                          if (shouldUseCategoryOnly) {
+                            context.read<ProductsCubit>().fetchProductsByCategory(
+                              selectedCategory,
+                              isInterior: selectedIndex == 0,
+                            );
+                          } else {
+                            context
+                                .read<ProductsCubit>()
+                                .fetchProductsBySubCategory(
+                                  selectedCategory,
+                                  effectiveSubCategory,
+                                  isInterior: selectedIndex == 0,
+                                );
+                          }
                         } else {
                           setState(() {
                             _selectedNestedSubCategory = nSubCat;
                           });
-                          context.read<ProductsCubit>().fetchProductsByNestedSubCategory(
-                            selectedCategory,
-                            _selectedSubCategory,
-                            nSubCat,
-                            isInterior: selectedIndex == 0,
-                          );
+                            context
+                                .read<ProductsCubit>()
+                                .fetchProductsByNestedSubCategory(
+                                  selectedCategory,
+                                  shouldUseCategoryOnly
+                                      ? selectedCategory
+                                      : effectiveSubCategory,
+                                  nSubCat,
+                                  isInterior: selectedIndex == 0,
+                                );
                         }
                       },
                       child: Container(

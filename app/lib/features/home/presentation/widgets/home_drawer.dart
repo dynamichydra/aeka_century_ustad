@@ -52,6 +52,14 @@ class HomeDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Iconsax.home),
+            title: const Text("home 3"),
+            onTap: () {
+              context.go("/home_3");
+              Scaffold.of(context).closeDrawer();
+            },
+          ),
+          ListTile(
             leading: const Icon(Iconsax.user),
             title: const Text("Profile"),
             onTap: () => {},

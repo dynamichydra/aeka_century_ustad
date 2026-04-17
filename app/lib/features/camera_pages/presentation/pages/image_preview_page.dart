@@ -1,12 +1,14 @@
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:century_ai/router/app_routes.dart';
-import 'package:century_ai/features/camera_pages/data/services/preview_service.dart';
+import 'package:century_ai/db/models/selected_image_data.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
+import 'package:century_ai/features/camera_pages/data/services/preview_service.dart';
+import 'package:century_ai/router/app_routes.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final File imageFile;
@@ -29,93 +31,118 @@ class ImagePreviewPage extends StatefulWidget {
 class _ImagePreviewPageState extends State<ImagePreviewPage> {
   File? _currentFile;
   String? _currentAsset;
+  SelectedImageData? _currentSelection;
+  List<SelectedImageData> _exploreImages = [];
+  bool _isImageLoading = false;
   bool _isLoading = false;
   final PreviewService _previewService = PreviewService();
-
-  final List<String> exploreImages = [
-    'assets/images/furniture/page_13_r.jpg',
-    'assets/images/furniture/page_23_r.jpg',
-    'assets/images/furniture/page_24_l.jpg',
-    'assets/images/furniture/page_43_r.jpg',
-    'assets/images/furniture/page_51_r.jpg',
-    'assets/images/furniture/page_76_l.jpg',
-    'assets/images/furniture/page_88_l.jpg',
-    'assets/images/furniture/page_90_l.jpg',
-    'assets/images/furniture/page_125_r.jpg',
-  ];
 
   @override
   void initState() {
     super.initState();
-    _loadImage();
-    print("==============");
-    print("image_id: ${widget.image_id}");
-    print("image_category: ${widget.image_category}");
-    print("sub_category: ${widget.sub_category}");
-    print("==============");
+    _currentFile = widget.imageFile;
+    _currentSelection = SelectedImageData(
+      id: widget.image_id ?? _buildImageIdFromPath(widget.imageFile.path),
+      imageData: const <int>[],
+      imagePath: widget.imageFile.path,
+      category: widget.image_category,
+      subcategory: widget.sub_category,
+      selectedAt: DateTime.now(),
+    );
+    _initializePreview();
   }
 
-  Future<void> _loadImage() async {
-    // Try to load from SQLite if image_id is provided
-    if (widget.image_id != null) {
-      try {
-        final selectedImage = await SelectedImagesRepository.getImage(
-          widget.image_id!,
-        );
-        if (selectedImage != null) {
-          print("✅ Loaded image from SQLite with ID: ${widget.image_id}");
-          // Write the image data to a temporary file
-          final tempDir = await getTemporaryDirectory();
-          final fileName =
-              'sqlite_${widget.image_id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          final file = File('${tempDir.path}/$fileName');
-          await file.writeAsBytes(selectedImage.imageData);
+  Future<void> _initializePreview() async {
+    await _hydrateCurrentSelectionFromDb();
+    await _loadExploreImages();
+  }
 
-          if (mounted) {
-            setState(() {
-              _currentFile = file;
-            });
-          }
-          return;
-        }
-      } catch (e) {
-        print("❌ Error loading image from SQLite: $e");
-      }
+  Future<void> _hydrateCurrentSelectionFromDb() async {
+    final imageId = widget.image_id;
+    if (imageId == null) return;
+
+    try {
+      final selectedImage = await SelectedImagesRepository.getImage(imageId);
+      if (selectedImage == null || !mounted) return;
+
+      setState(() {
+        _currentSelection = selectedImage;
+      });
+    } catch (e) {
+      debugPrint('Error hydrating current image from SQLite: $e');
     }
+  }
 
-    // Fallback to the passed imageFile
+  Future<void> _loadExploreImages() async {
+    final allImages = await SelectedImagesRepository.getAllImages();
+
     if (mounted) {
       setState(() {
-        _currentFile = widget.imageFile;
+        _exploreImages = allImages;
       });
     }
   }
 
-  Future<void> _simulateApiCall(String assetPath) async {
+  Future<void> _selectExploreImage(SelectedImageData image) async {
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 1500));
+    try {
+      final resolved = await _resolvePreviewImage(image);
+      await _previewService.logPreviewDetails(
+        imageCategory: image.category ?? widget.image_category,
+        subCategory: image.subcategory ?? widget.sub_category ?? 'N/A',
+        interiorFurniture: image.category ?? widget.image_category,
+        isTrending: false,
+        isLiked: false,
+      );
 
-    // Log details as requested
-    await _previewService.logPreviewDetails(
-      imageCategory: widget.image_category,
-      subCategory: widget.sub_category ?? "N/A",
-      interiorFurniture:
-          "Generic Furniture", // Placeholder as per user's sample
-      isTrending: true,
-      isLiked: false,
-    );
+      if (mounted) {
+        setState(() {
+          _currentSelection = image;
+          _currentFile = resolved.file;
+          _currentAsset = resolved.assetPath;
+          _isImageLoading = false;
+          _isLoading = false;
+        });
+      }
 
-    if (mounted) {
-      setState(() {
-        _currentAsset = assetPath;
-        _currentFile = null;
-        _isLoading = false;
-      });
+      await _loadExploreImages();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not load image: $e')),
+        );
+      }
     }
+  }
+
+  Future<_ResolvedPreviewImage> _resolvePreviewImage(
+    SelectedImageData selectedImage,
+  ) async {
+    final savedPath = selectedImage.imagePath.trim();
+
+    if (savedPath.isNotEmpty) {
+      final savedFile = File(savedPath);
+      if (await savedFile.exists()) {
+        return _ResolvedPreviewImage(file: savedFile);
+      }
+
+      if (savedPath.startsWith('assets/')) {
+        return _ResolvedPreviewImage(assetPath: savedPath);
+      }
+    }
+
+    final tempDir = await getTemporaryDirectory();
+    final fileName =
+        'sqlite_${selectedImage.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final file = File('${tempDir.path}/$fileName');
+    await file.writeAsBytes(selectedImage.imageData);
+    return _ResolvedPreviewImage(file: file);
   }
 
   Future<void> _handleEdit() async {
@@ -131,11 +158,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
     if (_currentAsset != null) {
       try {
-        final byteData = await DefaultAssetBundle.of(
-          context,
-        ).load(_currentAsset!);
+        final byteData = await DefaultAssetBundle.of(context).load(_currentAsset!);
         final tempDir = await getTemporaryDirectory();
-        final fileName = _currentAsset!.replaceAll("/", "_");
+        final fileName = _currentAsset!.replaceAll('/', '_');
         final file = File('${tempDir.path}/$fileName');
         await file.writeAsBytes(
           byteData.buffer.asUint8List(
@@ -145,7 +170,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         );
         fileToEdit = file;
       } catch (e) {
-        debugPrint("Error saving asset for editing: $e");
+        debugPrint('Error saving asset for editing: $e');
         return;
       }
     }
@@ -155,10 +180,14 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         route,
         extra: {
           'imageFile': fileToEdit,
-          'image_id': widget.image_id,
+          'image_id': _currentSelection?.id ?? widget.image_id,
         },
       );
     }
+  }
+
+  String _buildImageIdFromPath(String path) {
+    return 'image_${Uri.encodeComponent(path.replaceAll('\\', '/'))}';
   }
 
   @override
@@ -172,25 +201,13 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Image Section with Overlays
                   Stack(
                     children: [
                       AspectRatio(
                         aspectRatio: 1,
-                        child: _currentFile != null
-                            ? Image.file(
-                                _currentFile!,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.asset(
-                                _currentAsset!,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
+                        child: _buildPreviewImage(),
                       ),
-                      // -- Overlays --
-                      if (!_isLoading) ...[
+                      if (!_isLoading && !_isImageLoading) ...[
                         _buildBoundingBox(
                           top: 50,
                           left: 30,
@@ -209,8 +226,6 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                           width: 100,
                           height: 100,
                         ),
-
-                        // Center Instruction
                         Positioned(
                           bottom: 40,
                           left: 0,
@@ -234,7 +249,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(
-                                  "Tap on the object to apply laminates",
+                                  'Tap on the object to apply laminates',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
@@ -248,11 +263,10 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ],
                     ],
                   ),
-
                   const Padding(
                     padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
                     child: Text(
-                      "More Products to Explore",
+                      'More Products to Explore',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -260,81 +274,83 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                     ),
                   ),
-
-                  // Product Grid
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1.0,
+                  if (!_isLoading && _exploreImages.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Text(
+                        'No related images saved yet.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
                         ),
-                    itemCount: exploreImages.length,
-                    itemBuilder: (context, index) {
-                      if (_isLoading) {
-                        return Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
-                          child: AspectRatio(
-                            aspectRatio: 1.0,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(4),
+                      ),
+                    )
+                  else
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.0,
+                          ),
+                      itemCount: _isLoading ? 6 : _exploreImages.length,
+                      itemBuilder: (context, index) {
+                        if (_isLoading) {
+                          return Shimmer.fromColors(
+                            baseColor: Colors.grey[300]!,
+                            highlightColor: Colors.grey[100]!,
+                            child: AspectRatio(
+                              aspectRatio: 1.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
                             ),
+                          );
+                        }
+
+                        final image = _exploreImages[index];
+                        return GestureDetector(
+                          onTap: () => _selectExploreImage(image),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: _buildExploreThumbnail(image),
+                              ),
+                              const Positioned(
+                                top: 8,
+                                left: 8,
+                                child: Icon(
+                                  Icons.local_fire_department,
+                                  color: Colors.red,
+                                  size: 16,
+                                ),
+                              ),
+                              const Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Icon(
+                                  Icons.favorite_border,
+                                  color: Colors.white70,
+                                  size: 16,
+                                ),
+                              ),
+                            ],
                           ),
                         );
-                      }
-                      return GestureDetector(
-                        onTap: _isLoading
-                            ? null
-                            : () => _simulateApiCall(exploreImages[index]),
-                        child: Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: Image.asset(
-                                exploreImages[index],
-                                fit: BoxFit.cover,
-                                height: double.infinity,
-                                width: double.infinity,
-                              ),
-                            ),
-                            // Corner Icons
-                            const Positioned(
-                              top: 8,
-                              left: 8,
-                              child: Icon(
-                                Icons.local_fire_department,
-                                color: Colors.red,
-                                size: 16,
-                              ),
-                            ),
-                            const Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Icon(
-                                Icons.favorite_border,
-                                color: Colors.white70,
-                                size: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 100), // Space for bottom button
+                      },
+                    ),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
-
-            // Floating Edit Button
             Positioned(
               bottom: 30,
               left: 0,
@@ -350,80 +366,6 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                     ],
                   ),
-
-                  // child: Row(
-                  //   mainAxisSize: MainAxisSize.min,
-                  //   children: [
-                  //     SizedBox(
-                  //       width: 130,
-                  //       height: 44,
-                  //       child: ElevatedButton(
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor: Colors.white,
-                  //           foregroundColor: Colors.black,
-                  //           padding: EdgeInsets.zero,
-                  //           elevation: 0,
-                  //           side: BorderSide.none,
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(30),
-                  //           ),
-                  //         ),
-                  //         onPressed: _handleEdit,
-                  //         child: Row(
-                  //           mainAxisAlignment: MainAxisAlignment.center,
-                  //           spacing: 8,
-                  //           children: [
-                  //             Image.asset(
-                  //               "assets/icons/app_icons/edit.png",
-                  //               height: 14,
-                  //             ),
-                  //             const Text(
-                  //               "Edit",
-                  //               style: TextStyle(
-                  //                 color: Colors.black,
-                  //                 fontWeight: FontWeight.w600,
-                  //                 fontSize: 14,
-                  //               ),
-                  //             ),
-                  //           ],
-                  //         ),
-                  //       ),
-                  //     ),
-                  //     const SizedBox(width: 12),
-                  //     SizedBox(
-                  //       width: 160,
-                  //       height: 44,
-                  //       child: ElevatedButton(
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor: Colors.white,
-                  //           foregroundColor: Colors.black,
-                  //           padding: EdgeInsets.zero,
-                  //           elevation: 0,
-                  //           side: BorderSide.none,
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(30),
-                  //           ),
-                  //         ),
-                  //         onPressed: _handleScrollEdit,
-                  //         child: const Row(
-                  //           mainAxisAlignment: MainAxisAlignment.center,
-                  //           spacing: 8,
-                  //           children: [
-                  //             Icon(Icons.unfold_more, size: 18),
-                  //             Text(
-                  //               "Edit Scroll",
-                  //               style: TextStyle(
-                  //                 color: Colors.black,
-                  //                 fontWeight: FontWeight.w600,
-                  //                 fontSize: 14,
-                  //               ),
-                  //             ),
-                  //           ],
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -447,11 +389,11 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                             spacing: 8,
                             children: [
                               Image.asset(
-                                "assets/icons/app_icons/edit.png",
+                                'assets/icons/app_icons/edit.png',
                                 height: 14,
                               ),
                               const Text(
-                                "Edit",
+                                'Edit',
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.w600,
@@ -473,6 +415,81 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     );
   }
 
+  Widget _buildPreviewImage() {
+    if (_isImageLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_currentFile != null) {
+      return Image.file(
+        _currentFile!,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
+    }
+
+    if (_currentAsset != null && _currentAsset!.isNotEmpty) {
+      return Image.asset(
+        _currentAsset!,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
+    }
+
+    return Container(
+      color: Colors.grey.shade200,
+      alignment: Alignment.center,
+      child: const Text(
+        'Image not available',
+        style: TextStyle(
+          color: Colors.black54,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExploreThumbnail(SelectedImageData image) {
+    final savedPath = image.imagePath.trim();
+
+    if (savedPath.startsWith('assets/')) {
+      return Image.asset(
+        savedPath,
+        fit: BoxFit.cover,
+        height: double.infinity,
+        width: double.infinity,
+      );
+    }
+
+    if (savedPath.isNotEmpty) {
+      final file = File(savedPath);
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          fit: BoxFit.cover,
+          height: double.infinity,
+          width: double.infinity,
+        );
+      }
+    }
+
+    if (image.imageData.isNotEmpty) {
+      return Image.memory(
+        Uint8List.fromList(image.imageData),
+        fit: BoxFit.cover,
+        height: double.infinity,
+        width: double.infinity,
+      );
+    }
+
+    return Container(
+      color: Colors.grey.shade300,
+      alignment: Alignment.center,
+      child: const Icon(Icons.image_not_supported_outlined),
+    );
+  }
+
   Widget _buildBoundingBox({
     required double top,
     required double left,
@@ -490,6 +507,13 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   }
 }
 
+class _ResolvedPreviewImage {
+  final File? file;
+  final String? assetPath;
+
+  const _ResolvedPreviewImage({this.file, this.assetPath});
+}
+
 class _DashedRectPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -503,13 +527,11 @@ class _DashedRectPainter extends CustomPainter {
 
     final path = Path();
 
-    // Top line
     for (double i = 0; i < size.width; i += dashWidth + dashSpace) {
       path.moveTo(i, 0);
       path.lineTo(i + dashWidth > size.width ? size.width : i + dashWidth, 0);
     }
 
-    // Bottom line
     for (double i = 0; i < size.width; i += dashWidth + dashSpace) {
       path.moveTo(i, size.height);
       path.lineTo(
@@ -518,13 +540,11 @@ class _DashedRectPainter extends CustomPainter {
       );
     }
 
-    // Left line
     for (double i = 0; i < size.height; i += dashWidth + dashSpace) {
       path.moveTo(0, i);
       path.lineTo(0, i + dashWidth > size.height ? size.height : i + dashWidth);
     }
 
-    // Right line
     for (double i = 0; i < size.height; i += dashWidth + dashSpace) {
       path.moveTo(size.width, i);
       path.lineTo(
