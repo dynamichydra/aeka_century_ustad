@@ -1,0 +1,50 @@
+ 49M	assets/
+ 21M	assets//images
+ 17M	assets//transaparent
+ 14M	assets//images/animations
+7.0M	assets//DECO
+6.1M	assets//images/animations/creating-product.gif
+4.2M	assets//transaparent/Dining
+3.4M	assets//DECO/SENZURA
+3.3M	assets//data
+3.2M	assets//images/furniture
+3.1M	assets//transaparent/Product_wise_product_category
+2.8M	assets//transaparent/Dining/Subcategories
+2.7M	assets//images/lamination
+2.4M	assets//transaparent/Office
+2.2M	assets//transaparent/Office/Sub_categories
+2.2M	assets//transaparent/Kids_Bed_room
+2.1M	assets//images/animations/uploading-files-from-computer-to-cloud-storage.gif
+1.9M	assets//transaparent/Bed_room
+1.9M	assets//images/animations/sammy-line-travel-backpack-with-passport-and-air-ticket.gif
+1.9M	assets//DECO/1mm LAM
+1.8M	assets//transaparent/Bed_room/Sub_categories
+1.7M	assets//DECO/SENZURA/Living room.jpg
+1.4M	assets//transaparent/Product_wise_product_category/Decorative_elements_1.jpg
+1.4M	assets//DECO/0.8mm LAM
+1.2M	assets//transaparent/Office/Sub_categories/office_table.png
+1.1M	assets//transaparent/Study
+1.1M	assets//transaparent/Kitchen
+1.1M	assets//transaparent/Kids_Bed_room/Kids_room.png
+1.1M	assets//transaparent/Dining/Subcategories/Crockery_cabinet_1.png
+1.1M	assets//images/animations/sammy-line-workout.gif
+1.1M	assets//images/animations/order-complete-car-delivery-animation.json
+972K	assets//transaparent/Dining/Subcategories/Dining_table_1.png
+908K	assets//transaparent/Dining/Dining_all.png
+880K	assets//transaparent/Bed_room/Sub_categories/Wardrobe_1.png
+856K	assets//transaparent/Kitchen/Kitchen.png
+836K	assets//images/furniture/designer_chair.png
+812K	assets//images/furniture/sofa_2_seater.png
+808K	assets//data/data.json
+792K	assets//fonts/urbanist
+792K	assets//fonts
+760K	assets//images/furniture/office_cubicle.png
+736K	assets//images/furniture/dressing_unit.png
+732K	assets//transaparent/Dining/Subcategories/Bar_unit_1.png
+728K	assets//logos
+712K	assets//transaparent/Office/Sub_categories/Reception_Area.jpg
+680K	assets//transaparent/Study/Study_room.jpg
+660K	assets//transaparent/Kids_Bed_room/Sub_category
+636K	assets//data/data copy.json
+588K	assets//transaparent/Dining/Dining.png
+588K	assets//data/data copy 2.json
