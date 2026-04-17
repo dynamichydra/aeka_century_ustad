@@ -48,6 +48,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       const ImagePreparationService();
   final TextEditingController _searchController = TextEditingController();
   bool _isGridView = false;
+  bool _quickExpanded = false;
   String? _selectedCategory;
   // TabIndex -> Category -> SubCategory -> NestedSubCategory -> Items
   Map<int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>>
@@ -361,6 +362,141 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       return _categoryAllIcons[categoryName]!;
     }
     return _getParentCategoryIcon(categoryName, categoryData);
+  }
+
+  Widget _buildQuickCategoryItem(ProductImageModel product, int selectedIndex) {
+    final homeState = context.read<HomeCubit>().state;
+    return CircularIconItem(
+      label: product.name,
+      isSelected: _selectedCategory == product.name,
+      useUnderline: false,
+      selectedBorderColor: const Color(0xFFEEEEEE),
+      onTap: () {
+        // Tap again to deselect; tap new to select
+        if (_selectedCategory == product.name) {
+          setState(() {
+            _selectedCategory = null;
+            _selectedSubCategory = "All";
+            _selectedNestedSubCategory = "";
+          });
+          // Clear search when category is deselected
+          _searchController.clear();
+          context.read<HomeCubit>().clearSearch();
+          // Fetch featured products when category is deselected
+          context.read<ProductsCubit>().fetchFeaturedProducts();
+        } else {
+          setState(() {
+            _selectedCategory = product.name;
+            _selectedSubCategory = "All";
+            _selectedNestedSubCategory = "";
+          });
+          // Clear search when category is selected
+          _searchController.clear();
+          context.read<HomeCubit>().clearSearch();
+          context.read<ProductsCubit>().fetchProductsByCategory(
+            product.name,
+            isInterior: selectedIndex == 0,
+          );
+        }
+      },
+      child: ClipOval(
+        child: Image.asset(product.image, fit: BoxFit.cover),
+      ),
+    );
+  }
+
+  Widget _buildSplitCategoryMenu(
+    List<ProductImageModel> quickProducts,
+    int selectedIndex,
+  ) {
+    const int columns = 4;
+    const double rowGap = 8;
+    const double itemWidth = 72;
+
+    final cells = <Widget>[];
+    if (!_quickExpanded && quickProducts.length > columns) {
+      cells.addAll(
+        quickProducts
+            .take(columns - 1)
+            .map((p) => _buildQuickCategoryItem(p, selectedIndex)),
+      );
+      cells.add(
+        CircularIconItem(
+          label: 'View More',
+          useUnderline: false,
+          onTap: () => setState(() => _quickExpanded = true),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFEEEEEE),
+              border: Border.all(color: Colors.transparent),
+            ),
+            child: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: Color(0xFF5D5D5D),
+            ),
+          ),
+        ),
+      );
+    } else {
+      cells.addAll(
+        quickProducts.map((p) => _buildQuickCategoryItem(p, selectedIndex)),
+      );
+      if (quickProducts.length > columns) {
+        cells.add(
+          CircularIconItem(
+            label: 'View Less',
+            useUnderline: false,
+            onTap: () => setState(() => _quickExpanded = false),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFEEEEEE),
+                border: Border.all(color: Colors.transparent),
+              ),
+              child: const Icon(
+                Icons.keyboard_arrow_up_rounded,
+                size: 20,
+                color: Color(0xFF5D5D5D),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    if (cells.isEmpty) return const SizedBox.shrink();
+
+    final rows = <List<Widget>>[];
+    for (int i = 0; i < cells.length; i += columns) {
+      final end = (i + columns < cells.length) ? i + columns : cells.length;
+      rows.add(cells.sublist(i, end));
+    }
+
+    return Column(
+      children: rows.asMap().entries.map((entry) {
+        final rowIndex = entry.key;
+        final rowItems = entry.value;
+
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: rowIndex == rows.length - 1 ? 0 : rowGap,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: rowItems
+                .map(
+                  (cell) => SizedBox(
+                    width: itemWidth,
+                    child: Center(child: cell),
+                  ),
+                )
+                .toList(),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   String _getParentCategoryIcon(
@@ -763,63 +899,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           ],
                         ),
                       ),
-                      SizedBox(
-                        height: 90,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: quickProducts.map((product) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: CircularIconItem(
-                                  label: product.name,
-                                  isSelected: _selectedCategory == product.name,
-                                  useUnderline: false,
-                                  selectedBorderColor: const Color(0xFFEEEEEE),
-                                  onTap: () {
-                                    // Tap again to deselect; tap new to select
-                                    if (_selectedCategory == product.name) {
-                                      setState(() {
-                                        _selectedCategory = null;
-                                        _selectedSubCategory = "All";
-                                        _selectedNestedSubCategory = "";
-                                      });
-                                      // Clear search when category is deselected
-                                      _searchController.clear();
-                                      context.read<HomeCubit>().clearSearch();
-                                      // Fetch featured products when category is deselected
-                                      context
-                                          .read<ProductsCubit>()
-                                          .fetchFeaturedProducts();
-                                    } else {
-                                      setState(() {
-                                        _selectedCategory = product.name;
-                                        _selectedSubCategory = "All";
-                                        _selectedNestedSubCategory = "";
-                                      });
-                                      // Clear search when category is selected
-                                      _searchController.clear();
-                                      context.read<HomeCubit>().clearSearch();
-                                      context
-                                          .read<ProductsCubit>()
-                                          .fetchProductsByCategory(
-                                            product.name,
-                                            isInterior:
-                                                homeState.selectedIndex == 0,
-                                          );
-                                    }
-                                  },
-                                  child: ClipOval(
-                                    child: Image.asset(
-                                      product.image,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                      const SizedBox(height: 10),
+                      _buildSplitCategoryMenu(
+                        quickProducts,
+                        homeState.selectedIndex,
                       ),
                       const SizedBox(height: 10),
                       _buildSubCategoryMenu(),
