@@ -9,7 +9,7 @@ class HomeState extends Equatable {
   final bool isLoading;
 
   const HomeState({
-    this.isExterior = true,
+    this.isExterior = false,
     this.isTrendingShowing = false,
     this.isLikedShowing = false,
     this.selectedIndex = 0,

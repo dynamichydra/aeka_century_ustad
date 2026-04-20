@@ -586,7 +586,36 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       Center(
                         child: ExteriorInteriorSwitchSlider(
                           value: homeState.isExterior,
-                          onChanged: (val) => homeCubit.setExterior(val),
+                          onChanged: (val) {
+                            homeCubit.setExterior(val);
+                            if (val) {
+                              setState(() {
+                                _selectedCategory = "Wall Panelling";
+                                _selectedSubCategory = "All";
+                                _selectedNestedSubCategory = "";
+                              });
+                              _searchController.clear();
+                              context.read<HomeCubit>().clearSearch();
+                              context
+                                  .read<ProductsCubit>()
+                                  .fetchProductsByCategory(
+                                    "Wall Panelling",
+                                    isInterior: false,
+                                  );
+                            } else {
+                              homeCubit.setSelectedIndex(0);
+                              setState(() {
+                                _selectedCategory = null;
+                                _selectedSubCategory = "All";
+                                _selectedNestedSubCategory = "";
+                              });
+                              _searchController.clear();
+                              context.read<HomeCubit>().clearSearch();
+                              context
+                                  .read<ProductsCubit>()
+                                  .fetchFeaturedProducts();
+                            }
+                          },
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -649,44 +678,75 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            SizedBox(
-                              width: 150,
-                              height: 20,
-                              child: TabBar(
-                                isScrollable: true,
-                                padding: EdgeInsets.zero,
-                                labelPadding: const EdgeInsets.only(right: 16),
-                                tabAlignment: TabAlignment.start,
-                                indicator: const UnderlineTabIndicator(
-                                  borderSide: BorderSide(
-                                    width: 1.5,
-                                    color: Color(0xFF5D5D5D),
+                            if (homeState.isExterior)
+                              SizedBox(
+                                width: 150,
+                                height: 20,
+                                child: TabBar(
+                                  isScrollable: true,
+                                  padding: EdgeInsets.zero,
+                                  labelPadding: const EdgeInsets.only(right: 16),
+                                  tabAlignment: TabAlignment.start,
+                                  indicator: const UnderlineTabIndicator(
+                                    borderSide: BorderSide(
+                                      width: 1.5,
+                                      color: Color(0xFF5D5D5D),
+                                    ),
                                   ),
+                                  indicatorSize: TabBarIndicatorSize.label,
+                                  dividerColor: Colors.transparent,
+                                  labelColor: const Color(0xFF5D5D5D),
+                                  unselectedLabelColor: const Color(
+                                    0xFF5D5D5D,
+                                  ).withOpacity(0.5),
+                                  labelStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  tabs: const [
+                                    Tab(text: "Wall Panelling"),
+                                  ],
+                                  onTap: (index) {},
                                 ),
-                                indicatorSize: TabBarIndicatorSize.label,
-                                dividerColor: Colors.transparent,
-                                labelColor: const Color(0xFF5D5D5D),
-                                unselectedLabelColor: const Color(
-                                  0xFF5D5D5D,
-                                ).withOpacity(0.5),
-                                labelStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                              )
+                            else
+                              SizedBox(
+                                width: 150,
+                                height: 20,
+                                child: TabBar(
+                                  isScrollable: true,
+                                  padding: EdgeInsets.zero,
+                                  labelPadding: const EdgeInsets.only(right: 16),
+                                  tabAlignment: TabAlignment.start,
+                                  indicator: const UnderlineTabIndicator(
+                                    borderSide: BorderSide(
+                                      width: 1.5,
+                                      color: Color(0xFF5D5D5D),
+                                    ),
+                                  ),
+                                  indicatorSize: TabBarIndicatorSize.label,
+                                  dividerColor: Colors.transparent,
+                                  labelColor: const Color(0xFF5D5D5D),
+                                  unselectedLabelColor: const Color(
+                                    0xFF5D5D5D,
+                                  ).withOpacity(0.5),
+                                  labelStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  tabs: const [
+                                    Tab(text: "Interiors"),
+                                    Tab(text: "Furnitures"),
+                                  ],
+                                  onTap: (index) {
+                                    homeCubit.setSelectedIndex(index);
+                                    // Fetch featured or generic products for the new tab
+                                    context
+                                        .read<ProductsCubit>()
+                                        .fetchFeaturedProducts();
+                                  },
                                 ),
-                                tabs: const [
-                                  Tab(text: "Interiors"),
-                                  Tab(text: "Furnitures"),
-                                ],
-                                onTap: (index) {
-                                  homeCubit.setSelectedIndex(index);
-                                  // Fetch featured or generic products for the new tab
-                                  context
-                                      .read<ProductsCubit>()
-                                      .fetchFeaturedProducts();
-                                },
                               ),
-                            ),
-
                             Row(
                               children: [
                                 Container(
@@ -806,69 +866,71 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 90,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: quickProducts.map((product) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: CircularIconItem(
-                                  label: product.name,
-                                  isSelected: _selectedCategory == product.name,
-                                  useUnderline: false,
-                                  selectedBorderColor: const Color(0xFFEEEEEE),
-                                  onTap: () {
-                                    // Tap again to deselect; tap new to select
-                                    if (_selectedCategory == product.name) {
-                                      setState(() {
-                                        _selectedCategory = null;
-                                        _selectedSubCategory = "All";
-                                        _selectedNestedSubCategory = "";
-                                      });
-                                      // Clear search when category is deselected
-                                      _searchController.clear();
-                                      context.read<HomeCubit>().clearSearch();
-                                      // Fetch featured products when category is deselected
-                                      context
-                                          .read<ProductsCubit>()
-                                          .fetchFeaturedProducts();
-                                    } else {
-                                      setState(() {
-                                        _selectedCategory = product.name;
-                                        _selectedSubCategory = "All";
-                                        _selectedNestedSubCategory = "";
-                                      });
-                                      // Clear search when category is selected
-                                      _searchController.clear();
-                                      context.read<HomeCubit>().clearSearch();
-                                      context
-                                          .read<ProductsCubit>()
-                                          .fetchProductsByCategory(
-                                            product.name,
-                                            isInterior:
-                                                homeState.selectedIndex == 0,
-                                          );
-                                    }
-                                  },
-                                  child: ClipOval(
-                                    child: Image.asset(
-                                      product.image,
-                                      fit: BoxFit.cover,
+                      const SizedBox(height: 16),
+                      if (!homeState.isExterior) ...[
+                        SizedBox(
+                          height: 90,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: quickProducts.map((product) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: CircularIconItem(
+                                    label: product.name,
+                                    isSelected: _selectedCategory == product.name,
+                                    useUnderline: false,
+                                    selectedBorderColor: const Color(0xFFEEEEEE),
+                                    onTap: () {
+                                      // Tap again to deselect; tap new to select
+                                      if (_selectedCategory == product.name) {
+                                        setState(() {
+                                          _selectedCategory = null;
+                                          _selectedSubCategory = "All";
+                                          _selectedNestedSubCategory = "";
+                                        });
+                                        // Clear search when category is deselected
+                                        _searchController.clear();
+                                        context.read<HomeCubit>().clearSearch();
+                                        // Fetch featured products when category is deselected
+                                        context
+                                            .read<ProductsCubit>()
+                                            .fetchFeaturedProducts();
+                                      } else {
+                                        setState(() {
+                                          _selectedCategory = product.name;
+                                          _selectedSubCategory = "All";
+                                          _selectedNestedSubCategory = "";
+                                        });
+                                        // Clear search when category is selected
+                                        _searchController.clear();
+                                        context.read<HomeCubit>().clearSearch();
+                                        context
+                                            .read<ProductsCubit>()
+                                            .fetchProductsByCategory(
+                                              product.name,
+                                              isInterior:
+                                                  homeState.selectedIndex == 0,
+                                            );
+                                      }
+                                    },
+                                    child: ClipOval(
+                                      child: Image.asset(
+                                        product.image,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                );
+                              }).toList(),
+                            ),
                           ),
                         ),
-                      ),
-                      // const SizedBox(height: 2),
-                      const SizedBox(height: 10),
-                      _buildSubCategoryMenu(),
-                      const SizedBox(height: 10),
+                        // const SizedBox(height: 2),
+                        const SizedBox(height: 10),
+                        _buildSubCategoryMenu(),
+                        const SizedBox(height: 10),
+                      ],
                       _isGridView
                           ? GridView.builder(
                               shrinkWrap: true,

@@ -59,14 +59,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   bool _compareExpanded = false;
   bool _editExpanded = true;
-  final List<int> _selectedIndices = [];
+  bool _hasAppliedOnce = false;
+  final ValueNotifier<List<int>> _selectedIndicesNotifier = ValueNotifier([]);
   double _sliderPosition = 0.5;
-  
+
   final UserEditsService _userEditsService = UserEditsService();
   final String _ownerEmail = "anisasru@gmail.com";
   List<EditRecord> _userEdits = [];
   bool _isLoadingEdits = false;
-  
+
   // Dummy versions fallback if no network edits yet
   final List<ProductImageModel> _dummyVersions = ProductImages.productImages;
 
@@ -93,25 +94,26 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   void _toggleSelection(int index) {
-    setState(() {
-      if (_selectedIndices.contains(index)) {
-        if (_selectedIndices.length > 1) {
-          _selectedIndices.remove(index);
-        }
-      } else {
-        if (_selectedIndices.length < 3) {
-          _selectedIndices.add(index);
+    final currentSelected = List<int>.from(_selectedIndicesNotifier.value);
+    if (currentSelected.contains(index)) {
+      if (currentSelected.length > 1) {
+        currentSelected.remove(index);
+        _selectedIndicesNotifier.value = currentSelected;
+      }
+    } else {
+      if (currentSelected.length < 3) {
+        currentSelected.add(index);
+        _selectedIndicesNotifier.value = currentSelected;
 
-          if (_userEdits.isNotEmpty) {
-            // Log comparison for network image if needed
-            // Currently cubit expects ProductImageModel
-          } else {
-            final selectedImage = _dummyVersions[index];
-            context.read<ImageEditCubit>().compareImageSelected(selectedImage);
-          }
+        if (_userEdits.isNotEmpty) {
+          // Log comparison for network image if needed
+          // Currently cubit expects ProductImageModel
+        } else {
+          final selectedImage = _dummyVersions[index];
+          context.read<ImageEditCubit>().compareImageSelected(selectedImage);
         }
       }
-    });
+    }
   }
 
   List<Map<String, dynamic>> _featuredColors = [
@@ -126,6 +128,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   void dispose() {
     _transformationController.dispose();
     _searchController.dispose();
+    _selectedIndicesNotifier.dispose();
     super.dispose();
   }
 
@@ -145,21 +148,22 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Future<void> _fetchUserEditHistory() async {
     if (widget.image_id == null) return;
-    
+
     setState(() => _isLoadingEdits = true);
     try {
       final allEdits = await _userEditsService.getEdits(_ownerEmail);
       // Filter by current furniture ID
-      final filtered = allEdits.where((e) => e.furnitureId == widget.image_id).toList();
-      
+      final filtered = allEdits
+          .where((e) => e.furnitureId == widget.image_id)
+          .toList();
+
       if (mounted) {
         setState(() {
           _userEdits = filtered;
           _isLoadingEdits = false;
           // auto-select first one if available to show comparison
           if (_userEdits.isNotEmpty) {
-            _selectedIndices.clear();
-            _selectedIndices.add(0);
+            _selectedIndicesNotifier.value = [0];
           }
         });
       }
@@ -365,9 +369,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 // Top Image Preview Area (Fixed Height)
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.40,
-                  child: _compareExpanded
-                      ? _buildTopComparisonSection()
-                      : _buildImageOverlaySection(),
+                  child: ValueListenableBuilder<List<int>>(
+                    valueListenable: _selectedIndicesNotifier,
+                    builder: (context, selectedIndices, child) {
+                      return _compareExpanded
+                          ? _buildTopComparisonSection(selectedIndices)
+                          : _buildImageOverlaySection();
+                    },
+                  ),
                 ),
 
                 // Collapsible Headers & Content (Accordion Style)
@@ -377,13 +386,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: SingleChildScrollView(
+                          child: Padding(
                             padding: const EdgeInsets.only(bottom: 80),
-                            physics: widget.scrollableEditSection
-                                ? const AlwaysScrollableScrollPhysics()
-                                : (_editExpanded
-                                      ? const NeverScrollableScrollPhysics()
-                                      : const AlwaysScrollableScrollPhysics()),
                             child: _buildCollapsibleHeaders(),
                           ),
                         ),
@@ -409,41 +413,48 @@ class _ImageEditPageState extends State<ImageEditPage> {
   Widget _buildCollapsibleHeaders() {
     return Column(
       children: [
-        if (_isApplied) ...[
+        if (_hasAppliedOnce) ...[
           // Compare & select Header
           _buildHeaderTile(
             title: "Compare & select",
             iconImg: "compare.png",
             isActive: _compareExpanded,
-            showArrow: _isEditVisible, // No arrow if it's the only header
+            showArrow: true,
             onTap: () {
-              if (!_isEditVisible) return; // Non-collapsible if only header
               setState(() {
                 _compareExpanded = !_compareExpanded;
-                _editExpanded = !_compareExpanded;
+                if (_compareExpanded) _editExpanded = false;
               });
             },
           ),
-          if (_compareExpanded) _buildCompareContent(),
+          if (_compareExpanded)
+            Expanded(
+              child: SingleChildScrollView(
+                child: _buildCompareContent(),
+              ),
+            ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
         ],
 
         // Edit & Design Header
-        if (_isEditVisible) ...[
-          _buildHeaderTile(
-            title: "Edit & Design",
-            iconImg: "edit.png",
-            isActive: _editExpanded,
-            showArrow: _isApplied,
-            onTap: () {
-              setState(() {
-                _editExpanded = !_editExpanded;
-                _compareExpanded = !_editExpanded;
-              });
-            },
+        _buildHeaderTile(
+          title: "Edit & Design",
+          iconImg: "edit.png",
+          isActive: _editExpanded,
+          showArrow: _hasAppliedOnce,
+          onTap: () {
+            setState(() {
+              _editExpanded = !_editExpanded;
+              if (_editExpanded) _compareExpanded = false;
+            });
+          },
+        ),
+        if (_editExpanded)
+          Expanded(
+            child: SingleChildScrollView(
+              child: _buildEditContent(),
+            ),
           ),
-          if (_editExpanded) _buildEditContent(),
-        ],
       ],
     );
   }
@@ -531,12 +542,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
       child: Column(
         children: [
           const SizedBox(height: 4),
-          Builder(
-            builder: (context) {
+          ValueListenableBuilder<List<int>>(
+            valueListenable: _selectedIndicesNotifier,
+            builder: (context, selectedIndices, child) {
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _userEdits.isNotEmpty ? _userEdits.length : _dummyVersions.length,
+                itemCount: _userEdits.isNotEmpty
+                    ? _userEdits.length
+                    : _dummyVersions.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 12,
@@ -545,11 +559,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 ),
                 itemBuilder: (context, index) {
                   final isNetwork = _userEdits.isNotEmpty;
-                  final String imgPath = isNetwork 
-                      ? _userEdits[index].editedImageUrl 
+                  final String imgPath = isNetwork
+                      ? _userEdits[index].editedImageUrl
                       : _dummyVersions[index].image;
-                  
-                  final isSelected = _selectedIndices.contains(index);
+
+                  final isSelected = selectedIndices.contains(index);
                   return GestureDetector(
                     onTap: () {
                       _toggleSelection(index);
@@ -558,20 +572,23 @@ class _ImageEditPageState extends State<ImageEditPage> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: isNetwork 
-                            ? Image.network(
-                                imgPath,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                                errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
-                              )
-                            : Image.asset(
-                                imgPath,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
+                          child: isNetwork
+                              ? Image.network(
+                                  imgPath,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  cacheWidth: 200, // Optimized cache size
+                                  errorBuilder: (c, e, s) =>
+                                      Container(color: Colors.grey[200]),
+                                )
+                              : Image.asset(
+                                  imgPath,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  cacheWidth: 200, // Optimized cache size
+                                ),
                         ),
                         Positioned(
                           top: 4,
@@ -597,17 +614,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
     );
   }
 
-  Widget _buildTopComparisonSection() {
-    final totalItems = 1 + _selectedIndices.length;
+  Widget _buildTopComparisonSection(List<int> selectedIndices) {
+    final totalItems = 1 + selectedIndices.length;
 
-    if (_selectedIndices.length == 1) {
+    if (selectedIndices.length == 1) {
       return Stack(
         children: [
           ImageCompareSlider(
             before: widget.imageFile,
-            after: _userEdits.isNotEmpty 
-                ? _userEdits[_selectedIndices[0]].editedImageUrl 
-                : _dummyVersions[_selectedIndices[0]].image,
+            after: _userEdits.isNotEmpty
+                ? _userEdits[selectedIndices[0]].editedImageUrl
+                : _dummyVersions[selectedIndices[0]].image,
             isAfterNetwork: _userEdits.isNotEmpty,
             position: _sliderPosition,
             onChanged: (val) => setState(() => _sliderPosition = val),
@@ -619,10 +636,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
               icon: "edit.png",
               onTap: () {
                 setState(() {
-                  _currentAssetPreview = _userEdits.isNotEmpty 
-                      ? _userEdits[_selectedIndices[0]].editedImageUrl 
-                      : _dummyVersions[_selectedIndices[0]].image;
-                  _isEditVisible = true;
+                  _currentAssetPreview = _userEdits.isNotEmpty
+                      ? _userEdits[selectedIndices[0]].editedImageUrl
+                      : _dummyVersions[selectedIndices[0]].image;
+                  _hasAppliedOnce = true;
                   _compareExpanded = false;
                   _editExpanded = true;
                 });
@@ -633,81 +650,135 @@ class _ImageEditPageState extends State<ImageEditPage> {
           ),
         ],
       );
-    } else {
-      final screenWidth = MediaQuery.of(context).size.width;
-      final screenHeight = MediaQuery.of(context).size.height;
-      // The parent box is hardcoded to 40% of screen height
-      final gridHeight = screenHeight * 0.40;
-      final cellWidth = screenWidth / 2;
-      final cellHeight = gridHeight / (totalItems > 2 ? 2 : 1);
-      final aspectRatio = cellWidth / cellHeight;
+    }
 
-      return Container(
-        color: Colors.white,
-        child: GridView.builder(
-          padding: EdgeInsets.zero,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: aspectRatio,
+    // Dynamic Layout to fill space for 2, 3, or 4 total items
+    final List<Widget> items = [];
+
+    // Add Original
+    items.add(_buildComparisonItem(
+      path: null,
+      isOriginal: true,
+      onRemove: () {},
+      onSelect: () {}, // Not applicable for original
+      onEdit: () {
+        setState(() {
+          _currentAssetPreview = null;
+          _hasAppliedOnce = true;
+          _compareExpanded = false;
+          _editExpanded = true;
+        });
+      },
+    ));
+
+    // Add Selected Versions
+    for (int i = 0; i < selectedIndices.length; i++) {
+      final index = selectedIndices[i];
+      final isNetwork = _userEdits.isNotEmpty;
+      final String imgPath = isNetwork
+          ? _userEdits[index].editedImageUrl
+          : _dummyVersions[index].image;
+
+      items.add(_buildComparisonItem(
+        path: imgPath,
+        isOriginal: false,
+        isNetwork: isNetwork,
+        onRemove: () => _toggleSelection(index),
+        onSelect: () {
+          context.push(
+            AppRoutes.imageFinalize,
+            extra: {
+              'editedImage': imgPath,
+              'selectedColor': _selectedColor,
+              'selectedLamination': _selectedTexture,
+            },
+          );
+        },
+        onEdit: () {
+          setState(() {
+            _currentAssetPreview = imgPath;
+            _hasAppliedOnce = true;
+            _compareExpanded = false;
+            _editExpanded = true;
+          });
+        },
+      ));
+    }
+
+    if (totalItems == 2) {
+      return Row(
+        children: items.map((e) => Expanded(child: e)).toList(),
+      );
+    } else if (totalItems == 3) {
+      return Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: items[0]),
+                Expanded(child: items[1]),
+              ],
+            ),
           ),
-          itemCount: totalItems,
-          itemBuilder: (context, index) {
-            final isOriginal = index == 0;
-            final isNetwork = _userEdits.isNotEmpty;
-            final String? imgPath = isOriginal
-                ? null
-                : (isNetwork 
-                    ? _userEdits[_selectedIndices[index - 1]].editedImageUrl 
-                    : _dummyVersions[_selectedIndices[index - 1]].image);
-
-            return Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 0.5),
-              ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  isOriginal
-                      ? Image.file(widget.imageFile, fit: BoxFit.cover)
-                      : (isNetwork 
-                          ? Image.network(imgPath!, fit: BoxFit.cover)
-                          : Image.asset(imgPath!, fit: BoxFit.cover)),
-
-                  _buildOverlayButtons(
-                    bottom: 8,
-                    isGrid: true,
-                    showRemove: true,
-                    onRemove: isOriginal
-                        ? () {}
-                        : () => _toggleSelection(_selectedIndices[index - 1]),
-                    onSelect: () {
-                      context.push(
-                        AppRoutes.imageFinalize,
-                        extra: {
-                          'editedImage': imgPath ?? widget.imageFile,
-                          'selectedColor': _selectedColor,
-                          'selectedLamination': _selectedTexture,
-                        },
-                      );
-                    },
-                    onEdit: () {
-                      setState(() {
-                        _currentAssetPreview = imgPath;
-                        _isEditVisible = true;
-                        _compareExpanded = false;
-                        _editExpanded = true;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+          Expanded(child: items[2]),
+        ],
+      );
+    } else {
+      // totalItems == 4
+      return Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: items[0]),
+                Expanded(child: items[1]),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: items[2]),
+                Expanded(child: items[3]),
+              ],
+            ),
+          ),
+        ],
       );
     }
+  }
+
+  Widget _buildComparisonItem({
+    required String? path,
+    required bool isOriginal,
+    bool isNetwork = false,
+    required VoidCallback onRemove,
+    required VoidCallback onEdit,
+    required VoidCallback onSelect,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.white, width: 0.5),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          isOriginal
+              ? Image.file(widget.imageFile, fit: BoxFit.cover)
+              : (isNetwork
+                  ? Image.network(path!, fit: BoxFit.cover, cacheWidth: 400)
+                  : Image.asset(path!, fit: BoxFit.cover, cacheWidth: 400)),
+          _buildOverlayButtons(
+            bottom: 8,
+            isGrid: true,
+            showRemove: !isOriginal,
+            onRemove: onRemove,
+            onSelect: onSelect,
+            onEdit: onEdit,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildOverlayButtons({
@@ -827,12 +898,19 @@ class _ImageEditPageState extends State<ImageEditPage> {
               child: Stack(
                 children: [
                   if (_currentAssetPreview != null)
-                    Image.asset(
-                      _currentAssetPreview!,
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.40,
-                      fit: BoxFit.cover,
-                    )
+                    _currentAssetPreview!.startsWith('http')
+                        ? Image.network(
+                            _currentAssetPreview!,
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.asset(
+                            _currentAssetPreview!,
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                          )
                   else
                     Image.file(
                       widget.imageFile,
@@ -1111,7 +1189,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-            const SizedBox(height: 4),
+        const SizedBox(height: 4),
         _buildChipRow(categoriesRow1, _selectedCategory, (val) {
           setState(() {
             if (_selectedCategory != val) {
@@ -1212,8 +1290,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color:
-                isSelected ? const Color(0xFFB5B5B5) : const Color(0xFFD9D9D9),
+            color: isSelected
+                ? const Color(0xFFB5B5B5)
+                : const Color(0xFFD9D9D9),
             width: 0.3,
           ),
           boxShadow: isSelected
@@ -1320,13 +1399,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 ? Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) => Container(
-                      color: Colors.grey[300],
-                    ),
+                    cacheWidth: 200, // Optimized cache size
+                    errorBuilder: (ctx, err, stack) =>
+                        Container(color: Colors.grey[300]),
                   )
-                : Container(
-                    color: Colors.grey[300],
-                  ),
+                : Container(color: Colors.grey[300]),
           ),
           if (isSelected && widget.showTextureDetailOnTap)
             Positioned.fill(
@@ -1521,26 +1598,29 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
     // Automatically POST the edit to the history API
     if (widget.image_id != null) {
-      _userEditsService.postEdit(
-        editedFile: widget.imageFile, // Placeholder: using current image as edited_file
-        furnitureId: widget.image_id!,
-        email: _ownerEmail,
-      ).then((newRecord) {
-        if (newRecord != null) {
-          debugPrint("✅ Edit record posted successfully: ${newRecord.id}");
-          _fetchUserEditHistory(); // Refresh history
-        }
-      });
+      _userEditsService
+          .postEdit(
+            editedFile: widget
+                .imageFile, // Placeholder: using current image as edited_file
+            furnitureId: widget.image_id!,
+            email: _ownerEmail,
+          )
+          .then((newRecord) {
+            if (newRecord != null) {
+              debugPrint("✅ Edit record posted successfully: ${newRecord.id}");
+              _fetchUserEditHistory(); // Refresh history
+            }
+          });
     }
 
     setState(() {
-      _isEditVisible = false;
+      _hasAppliedOnce = true;
       _compareExpanded = true;
       _editExpanded = false;
     });
   }
 
-  bool get _isApplied => _isEditVisible == false && _compareExpanded == true;
+  bool get _isApplied => _hasAppliedOnce;
 
   Widget _buildBottomBarFixed() {
     if (!_editExpanded) {
@@ -1571,7 +1651,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         color: Colors.black,
                         size: 20,
                       ),
-                      onPressed: () {Scaffold.of(context).openDrawer();},
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
                     ),
                   ),
                   const Spacer(),

@@ -680,7 +680,36 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       Center(
                         child: ExteriorInteriorSwitchSlider(
                           value: homeState.isExterior,
-                          onChanged: (val) => homeCubit.setExterior(val),
+                          onChanged: (val) {
+                            homeCubit.setExterior(val);
+                            if (val) {
+                              setState(() {
+                                _selectedCategory = "Wall Panelling";
+                                _selectedSubCategory = "All";
+                                _selectedNestedSubCategory = "";
+                              });
+                              _searchController.clear();
+                              context.read<HomeCubit>().clearSearch();
+                              context
+                                  .read<ProductsCubit>()
+                                  .fetchProductsByCategory(
+                                    "Wall Panelling",
+                                    isInterior: false,
+                                  );
+                            } else {
+                              homeCubit.setSelectedIndex(0);
+                              setState(() {
+                                _selectedCategory = null;
+                                _selectedSubCategory = "All";
+                                _selectedNestedSubCategory = "";
+                              });
+                              _searchController.clear();
+                              context.read<HomeCubit>().clearSearch();
+                              context
+                                  .read<ProductsCubit>()
+                                  .fetchFeaturedProducts();
+                            }
+                          },
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -743,43 +772,74 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            SizedBox(
-                              width: 150,
-                              height: 20,
-                              child: TabBar(
-                                isScrollable: true,
-                                padding: EdgeInsets.zero,
-                                labelPadding: const EdgeInsets.only(right: 16),
-                                tabAlignment: TabAlignment.start,
-                                indicator: const UnderlineTabIndicator(
-                                  borderSide: BorderSide(
-                                    width: 1.5,
-                                    color: Color(0xFF5D5D5D),
+                            if (homeState.isExterior)
+                              SizedBox(
+                                width: 150,
+                                height: 20,
+                                child: TabBar(
+                                  isScrollable: true,
+                                  padding: EdgeInsets.zero,
+                                  labelPadding: const EdgeInsets.only(right: 16),
+                                  tabAlignment: TabAlignment.start,
+                                  indicator: const UnderlineTabIndicator(
+                                    borderSide: BorderSide(
+                                      width: 1.5,
+                                      color: Color(0xFF5D5D5D),
+                                    ),
                                   ),
+                                  indicatorSize: TabBarIndicatorSize.label,
+                                  dividerColor: Colors.transparent,
+                                  labelColor: const Color(0xFF5D5D5D),
+                                  unselectedLabelColor: const Color(
+                                    0xFF5D5D5D,
+                                  ).withOpacity(0.5),
+                                  labelStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  tabs: const [
+                                    Tab(text: "Wall Panelling"),
+                                  ],
+                                  onTap: (index) {},
                                 ),
-                                indicatorSize: TabBarIndicatorSize.label,
-                                dividerColor: Colors.transparent,
-                                labelColor: const Color(0xFF5D5D5D),
-                                unselectedLabelColor: const Color(
-                                  0xFF5D5D5D,
-                                ).withOpacity(0.5),
-                                labelStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                              )
+                            else
+                              SizedBox(
+                                width: 150,
+                                height: 20,
+                                child: TabBar(
+                                  isScrollable: true,
+                                  padding: EdgeInsets.zero,
+                                  labelPadding: const EdgeInsets.only(right: 16),
+                                  tabAlignment: TabAlignment.start,
+                                  indicator: const UnderlineTabIndicator(
+                                    borderSide: BorderSide(
+                                      width: 1.5,
+                                      color: Color(0xFF5D5D5D),
+                                    ),
+                                  ),
+                                  indicatorSize: TabBarIndicatorSize.label,
+                                  dividerColor: Colors.transparent,
+                                  labelColor: const Color(0xFF5D5D5D),
+                                  unselectedLabelColor: const Color(
+                                    0xFF5D5D5D,
+                                  ).withOpacity(0.5),
+                                  labelStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  tabs: const [
+                                    Tab(text: "Interiors"),
+                                    Tab(text: "Furnitures"),
+                                  ],
+                                  onTap: (index) {
+                                    homeCubit.setSelectedIndex(index);
+                                    context
+                                        .read<ProductsCubit>()
+                                        .fetchFeaturedProducts();
+                                  },
                                 ),
-                                tabs: const [
-                                  Tab(text: "Interiors"),
-                                  Tab(text: "Furnitures"),
-                                ],
-                                onTap: (index) {
-                                  homeCubit.setSelectedIndex(index);
-                                  context
-                                      .read<ProductsCubit>()
-                                      .fetchFeaturedProducts();
-                                },
                               ),
-                            ),
-
                             Row(
                               children: [
                                 Container(
@@ -899,14 +959,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      _buildSplitCategoryMenu(
-                        quickProducts,
-                        homeState.selectedIndex,
-                      ),
-                      const SizedBox(height: 10),
-                      _buildSubCategoryMenu(),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 16),
+                      if (!homeState.isExterior) ...[
+                        _buildSplitCategoryMenu(
+                          quickProducts,
+                          homeState.selectedIndex,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildSubCategoryMenu(),
+                        const SizedBox(height: 10),
+                      ],
 
                       // Popular Image List (Vertical for now)
                       _isGridView

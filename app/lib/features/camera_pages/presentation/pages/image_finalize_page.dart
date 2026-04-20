@@ -167,7 +167,9 @@ class ImageFinalizePage extends StatelessWidget {
             color: const Color(0xFFF1F1F1),
             borderRadius: BorderRadius.circular(4),
             image: DecorationImage(
-              image: AssetImage(imagePath),
+              image: imagePath.startsWith('http')
+                  ? NetworkImage(imagePath) as ImageProvider
+                  : AssetImage(imagePath) as ImageProvider,
               fit: BoxFit.cover,
             ),
           ),
@@ -216,11 +218,17 @@ class ImageFinalizePage extends StatelessWidget {
         width: double.infinity,
       );
     } else if (image is String) {
-      return Image.asset(
-        image,
-        fit: BoxFit.cover,
-        width: double.infinity,
-      );
+      return image.startsWith('http')
+          ? Image.network(
+              image,
+              fit: BoxFit.cover,
+              width: double.infinity,
+            )
+          : Image.asset(
+              image,
+              fit: BoxFit.cover,
+              width: double.infinity,
+            );
     }
     return const Center(child: Icon(Icons.image_not_supported));
   }
