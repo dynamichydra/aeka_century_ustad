@@ -529,9 +529,31 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     final File imageFile = File(image.path);
 
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: TColors.primary),
+      ),
+    );
+
     try {
+      final productsCubit = context.read<ProductsCubit>();
+      final newProduct = await productsCubit.uploadProductImage(imageFile);
+
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+
+      if (newProduct == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to upload image to server.")),
+        );
+        return;
+      }
+
       final imageBytes = await imageFile.readAsBytes();
-      final imageId = 'upload_${Uri.encodeComponent(imageFile.path)}';
+      final imageId = newProduct.id;
 
       await SelectedImagesRepository.saveImage(
         SelectedImageData(
@@ -555,10 +577,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         },
       );
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error opening uploaded image: $e")),
-      );
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error processing image: $e")),
+        );
+      }
     }
   }
 

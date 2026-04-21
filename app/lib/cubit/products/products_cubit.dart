@@ -119,18 +119,21 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
-  Future<void> uploadProductImage(File file) async {
+  Future<ProductImageModel?> uploadProductImage(File file) async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
       final newProduct = await _productRepository.uploadProductImage(file);
       if (newProduct != null) {
         final updatedProducts = List<ProductImageModel>.from(state.products)..insert(0, newProduct);
         emit(state.copyWith(isLoading: false, products: updatedProducts));
+        return newProduct;
       } else {
         emit(state.copyWith(isLoading: false, errorMessage: 'Upload failed'));
+        return null;
       }
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      return null;
     }
   }
 

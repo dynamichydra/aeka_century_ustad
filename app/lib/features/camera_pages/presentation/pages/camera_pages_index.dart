@@ -7,8 +7,13 @@ import 'package:go_router/go_router.dart';
 import 'package:century_ai/core/constants/sizes.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/router/app_routes.dart';
+import 'package:century_ai/core/constants/colors.dart';
+import 'package:century_ai/cubit/products/products_cubit.dart';
+import 'package:century_ai/db/models/selected_image_data.dart';
+import 'package:century_ai/db/repositories/selected_images_repository.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CameraPagesIndex extends StatefulWidget {
   final bool fromColorPicker;
@@ -58,20 +63,69 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     if (!_controller!.value.isInitialized) return;
 
     final XFile file = await _controller!.takePicture();
+    final File imageFile = File(file.path);
 
-    // Navigate to edit page (example)
     if (!mounted) return;
-    if (widget.fromColorPicker) {
-      context.pushReplacement(AppRoutes.imageColorPicker, extra: {
-        'imageFile': File(file.path),
-        'originalImage': widget.originalImage,
-      });
-    } else {
-      context.pushReplacement(AppRoutes.imagePreview, extra: {
-        'imageFile': File(file.path),
-        'image_category': "",
-        'sub_category': "",
-      });
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: TColors.primary),
+      ),
+    );
+
+    try {
+      final productsCubit = context.read<ProductsCubit>();
+      final newProduct = await productsCubit.uploadProductImage(imageFile);
+
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+
+      if (newProduct == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to upload image to server.")),
+        );
+        return;
+      }
+
+      final imageBytes = await imageFile.readAsBytes();
+      final imageId = newProduct.id;
+
+      await SelectedImagesRepository.saveImage(
+        SelectedImageData(
+          id: imageId,
+          imageData: imageBytes,
+          imagePath: imageFile.path,
+          category: 'Uploaded Image',
+          subcategory: 'User Upload',
+          selectedAt: DateTime.now(),
+        ),
+      );
+
+      if (!mounted) return;
+      if (widget.fromColorPicker) {
+        context.pushReplacement(AppRoutes.imageColorPicker, extra: {
+          'imageFile': imageFile,
+          'image_id': imageId,
+          'originalImage': widget.originalImage,
+        });
+      } else {
+        context.pushReplacement(AppRoutes.imagePreview, extra: {
+          'imageFile': imageFile,
+          'image_id': imageId,
+          'image_category': "Uploaded Image",
+          'sub_category': "User Upload",
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error processing image: $e")),
+        );
+      }
     }
   }
 
@@ -79,19 +133,68 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    if (image != null) {
+    if (image == null || !mounted) return;
+
+    final File imageFile = File(image.path);
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: TColors.primary),
+      ),
+    );
+
+    try {
+      final productsCubit = context.read<ProductsCubit>();
+      final newProduct = await productsCubit.uploadProductImage(imageFile);
+
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+
+      if (newProduct == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to upload image to server.")),
+        );
+        return;
+      }
+
+      final imageBytes = await imageFile.readAsBytes();
+      final imageId = newProduct.id;
+
+      await SelectedImagesRepository.saveImage(
+        SelectedImageData(
+          id: imageId,
+          imageData: imageBytes,
+          imagePath: imageFile.path,
+          category: 'Uploaded Image',
+          subcategory: 'User Upload',
+          selectedAt: DateTime.now(),
+        ),
+      );
+
       if (!mounted) return;
       if (widget.fromColorPicker) {
         context.pushReplacement(AppRoutes.imageColorPicker, extra: {
-          'imageFile': File(image.path),
+          'imageFile': imageFile,
+          'image_id': imageId,
           'originalImage': widget.originalImage,
         });
       } else {
         context.pushReplacement(AppRoutes.imagePreview, extra: {
-          'imageFile': File(image.path),
-          'image_category': "",
-          'sub_category': "",
+          'imageFile': imageFile,
+          'image_id': imageId,
+          'image_category': "Uploaded Image",
+          'sub_category': "User Upload",
         });
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error processing image: $e")),
+        );
       }
     }
   }
