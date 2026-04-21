@@ -425,7 +425,7 @@
     {
       "id": 113,
       "name": "TV Unit",
-      "image": "DECO/1mm LAM/Page 171 - R.jpg",
+      "image": "DECO/SENZURA/tv_unit.jpg",
       "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(TV_Unit)_1.png",
       "parent_id": null,
       "preview_type": "normal",
@@ -489,7 +489,7 @@
     {
       "id": 121,
       "name": "Wall Panelling",
-      "image": "DECO/1mm LAM/Page 155 - R.jpg",
+      "image": "DECO/SENZURA/wall_pannling.jpg",
       "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Wall_panelling)_1.png",
       "parent_id": null,
       "preview_type": "normal",

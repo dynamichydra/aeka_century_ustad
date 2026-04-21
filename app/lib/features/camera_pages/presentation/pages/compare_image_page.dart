@@ -21,8 +21,8 @@ class _CompareImagePageState extends State<CompareImagePage> {
   final List<int> _selectedIndices = [0]; 
   double _sliderPosition = 0.5;
 
-  // Use the images defined in ProductImages within image_strings.dart
-  final List<ProductImageModel> _savedVersions = ProductImages.productImages;
+  // Saved versions - initialized as empty since ProductImages is removed
+  final List<ProductImageModel> _savedVersions = [];
 
   void _toggleSelection(int index) {
     setState(() {
@@ -87,63 +87,65 @@ class _CompareImagePageState extends State<CompareImagePage> {
 
                     // Grid of Versions
                     Expanded(
-                      child: GridView.builder(
-                        itemCount: _savedVersions.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.8,
-                        ),
-                        itemBuilder: (context, index) {
-                          final version = _savedVersions[index];
-                          final isSelected = _selectedIndices.contains(index);
-                          
-                          return GestureDetector(
-                            onTap: () => _toggleSelection(index),
-                            child: Stack(
-                              children: [
-                                Column(
-                                  children: [
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.asset(
-                                          version.image,
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
+                      child: _savedVersions.isEmpty 
+                        ? const Center(child: Text("No versions available for comparison"))
+                        : GridView.builder(
+                          itemCount: _savedVersions.length,
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.8,
+                          ),
+                          itemBuilder: (context, index) {
+                            final version = _savedVersions[index];
+                            final isSelected = _selectedIndices.contains(index);
+                            
+                            return GestureDetector(
+                              onTap: () => _toggleSelection(index),
+                              child: Stack(
+                                children: [
+                                  Column(
+                                    children: [
+                                      Expanded(
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.asset(
+                                            version.image,
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                          ),
                                         ),
                                       ),
+                                    ],
+                                  ),
+
+                                  // Selection Indicator (Top Left)
+                                  Positioned(
+                                    top: 4,
+                                    left: 4,
+                                    child: Icon(
+                                      isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                                      size: 18,
+                                      color: isSelected ? Colors.black : Colors.black54,
                                     ),
-                                  ],
-                                ),
-
-                                // Selection Indicator (Top Left)
-                                Positioned(
-                                  top: 4,
-                                  left: 4,
-                                  child: Icon(
-                                    isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                                    size: 18,
-                                    color: isSelected ? Colors.black : Colors.black54,
                                   ),
-                                ),
 
-                                // Heart Icon (Top Right)
-                                Positioned(
-                                  top: 4,
-                                  right: 4,
-                                  child: Icon(
-                                    Icons.favorite,
-                                    size: 18,
-                                    color: index < 3 ? Colors.red : Colors.white70,
+                                  // Heart Icon (Top Right)
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: Icon(
+                                      Icons.favorite,
+                                      size: 18,
+                                      color: index < 3 ? Colors.red : Colors.white70,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                     ),
                   ],
                 ),
@@ -157,7 +159,11 @@ class _CompareImagePageState extends State<CompareImagePage> {
 
   Widget _buildTopComparisonSection() {
     // Total items to compare = Original Image + Selected Designs
-    final totalItems = 1 + _selectedIndices.length;
+    final totalItems = 1 + (_savedVersions.isEmpty ? 0 : _selectedIndices.length);
+
+    if (_savedVersions.isEmpty || _selectedIndices.isEmpty) {
+       return Image.file(widget.originalImage, fit: BoxFit.cover);
+    }
 
     if (_selectedIndices.length == 1) {
       // Single Design Selection -> Slider View (Original vs Selected)

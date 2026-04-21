@@ -19,7 +19,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:century_ai/features/home/data/services/image_preparation_service.dart';
 import 'package:century_ai/features/home/presentation/widgets/search_bar.dart';
 import 'package:century_ai/router/app_routes.dart';
@@ -286,12 +285,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   List<ProductImageModel> _resolveQuickProducts(
-    List<ProductImageModel> fallbackProducts,
     int selectedIndex,
   ) {
     final currentTabData = _productsByTabCategorySub[selectedIndex];
     if (currentTabData == null || currentTabData.isEmpty) {
-      return fallbackProducts.take(4).toList();
+      return [];
     }
 
     final quickItems = <ProductImageModel>[];
@@ -309,10 +307,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         if (allProducts.isNotEmpty) {
           final stableIndex = entry.key.hashCode.abs() % allProducts.length;
           iconImage = allProducts[stableIndex].image;
-        } else if (fallbackProducts.isNotEmpty) {
-          final stableIndex =
-              entry.key.hashCode.abs() % fallbackProducts.length;
-          iconImage = fallbackProducts[stableIndex].image;
         } else {
           continue;
         }
@@ -328,7 +322,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       );
     }
 
-    return quickItems.isEmpty ? fallbackProducts.take(4).toList() : quickItems;
+    return quickItems;
   }
 
   String _getSubCategoryIcon(
@@ -629,10 +623,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     final ProductsState productsState = context.watch<ProductsCubit>().state;
     final List<ProductImageModel> displayProducts = productsState.products;
-    final products =
-        ProductImages.productImages; // Used only for category icons structure
     final quickProducts = _resolveQuickProducts(
-      products,
       homeState.selectedIndex,
     );
 
@@ -773,34 +764,23 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             if (homeState.isExterior)
-                              SizedBox(
-                                width: 150,
-                                height: 20,
-                                child: TabBar(
-                                  isScrollable: true,
-                                  padding: EdgeInsets.zero,
-                                  labelPadding: const EdgeInsets.only(right: 16),
-                                  tabAlignment: TabAlignment.start,
-                                  indicator: const UnderlineTabIndicator(
-                                    borderSide: BorderSide(
-                                      width: 1.5,
+                              Container(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
                                       color: Color(0xFF5D5D5D),
+                                      width: 1.5,
                                     ),
                                   ),
-                                  indicatorSize: TabBarIndicatorSize.label,
-                                  dividerColor: Colors.transparent,
-                                  labelColor: const Color(0xFF5D5D5D),
-                                  unselectedLabelColor: const Color(
-                                    0xFF5D5D5D,
-                                  ).withOpacity(0.5),
-                                  labelStyle: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                                ),
+                                child: const Text(
+                                  "Wall panelling",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF5D5D5D),
                                   ),
-                                  tabs: const [
-                                    Tab(text: "Wall Panelling"),
-                                  ],
-                                  onTap: (index) {},
                                 ),
                               )
                             else

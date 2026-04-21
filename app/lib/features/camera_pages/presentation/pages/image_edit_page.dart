@@ -69,7 +69,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
   bool _isLoadingEdits = false;
 
   // Dummy versions fallback if no network edits yet
-  final List<ProductImageModel> _dummyVersions = ProductImages.productImages;
 
   // Dynamic Tap Variables
   Map<String, dynamic> _lastTapCoordinate = {"x": 423, "y": 12};
@@ -108,9 +107,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
         if (_userEdits.isNotEmpty) {
           // Log comparison for network image if needed
           // Currently cubit expects ProductImageModel
-        } else {
-          final selectedImage = _dummyVersions[index];
-          context.read<ImageEditCubit>().compareImageSelected(selectedImage);
         }
       }
     }
@@ -647,7 +643,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 setState(() {
                   _currentAssetPreview = _userEdits.isNotEmpty
                       ? _userEdits[selectedIndices[0]].editedImageUrl
-                      : _dummyVersions[selectedIndices[0]].image;
+                      : null;
                   _hasAppliedOnce = true;
                   _compareExpanded = false;
                   _editExpanded = true;
