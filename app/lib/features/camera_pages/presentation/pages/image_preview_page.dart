@@ -1,7 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+
+import 'package:century_ai/core/constants/image_strings.dart';
+import 'package:century_ai/cubit/products/products_cubit.dart';
+import 'package:century_ai/cubit/products/products_state.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -107,8 +112,6 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           _isLoading = false;
         });
       }
-
-      await _loadExploreImages();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -116,6 +119,81 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not load image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _selectNetworkProduct(ProductImageModel product) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 1. Check if it already exists in SQLite
+      final existing = await SelectedImagesRepository.getImage(product.id);
+      if (existing != null) {
+        await _selectExploreImage(existing);
+        return;
+      }
+
+      // 2. Download the image bytes
+      final dio = Dio();
+      final response = await dio.get(
+        product.image,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to download image: ${response.statusCode}');
+      }
+
+      final Uint8List imageBytes = Uint8List.fromList(response.data);
+
+      // 3. Save to a temporary file for the current session representation
+      final tempDir = await getTemporaryDirectory();
+      final fileName = 'downloaded_${product.id}.jpg';
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsBytes(imageBytes);
+
+      // 4. Save to SQLite
+      final imageData = SelectedImageData(
+        id: product.id,
+        imageData: imageBytes,
+        imagePath: file.path,
+        category: product.category ?? widget.image_category,
+        subcategory: product.subcategory ?? widget.sub_category,
+        selectedAt: DateTime.now(),
+      );
+
+      await SelectedImagesRepository.saveImage(imageData);
+
+      // 5. Update UI
+      if (mounted) {
+        setState(() {
+          _currentSelection = imageData;
+          _currentFile = file;
+          _currentAsset = null;
+          _isImageLoading = false;
+          _isLoading = false;
+        });
+
+        // Trigger logging
+        await _previewService.logPreviewDetails(
+          imageCategory: imageData.category ?? widget.image_category,
+          subCategory: imageData.subcategory ?? widget.sub_category ?? 'N/A',
+          interiorFurniture: imageData.category ?? widget.image_category,
+          isTrending: product.isTrending,
+          isLiked: false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error downloading image: $e')),
         );
       }
     }
@@ -274,33 +352,22 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                     ),
                   ),
-                  if (!_isLoading && _exploreImages.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Text(
-                        'No related images saved yet.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    )
-                  else
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
+                  BlocBuilder<ProductsCubit, ProductsState>(
+                    builder: (context, state) {
+                      if (state.isLoading && state.products.isEmpty) {
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                             childAspectRatio: 1.0,
                           ),
-                      itemCount: _isLoading ? 6 : _exploreImages.length,
-                      itemBuilder: (context, index) {
-                        if (_isLoading) {
-                          return Shimmer.fromColors(
+                          itemCount: 6,
+                          itemBuilder: (context, index) => Shimmer.fromColors(
                             baseColor: Colors.grey[300]!,
                             highlightColor: Colors.grey[100]!,
                             child: AspectRatio(
@@ -312,41 +379,93 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                                 ),
                               ),
                             ),
-                          );
-                        }
-
-                        final image = _exploreImages[index];
-                        return GestureDetector(
-                          onTap: () => _selectExploreImage(image),
-                          child: Stack(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: _buildExploreThumbnail(image),
-                              ),
-                              const Positioned(
-                                top: 8,
-                                left: 8,
-                                child: Icon(
-                                  Icons.local_fire_department,
-                                  color: Colors.red,
-                                  size: 16,
-                                ),
-                              ),
-                              const Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Icon(
-                                  Icons.favorite_border,
-                                  color: Colors.white70,
-                                  size: 16,
-                                ),
-                              ),
-                            ],
                           ),
                         );
-                      },
-                    ),
+                      }
+
+                      final products = state.products;
+
+                      if (products.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Text(
+                            'No related images to explore.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.0,
+                        ),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+                          return GestureDetector(
+                            onTap: () => _selectNetworkProduct(product),
+                            child: Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Image.network(
+                                    product.image,
+                                    fit: BoxFit.cover,
+                                    height: double.infinity,
+                                    width: double.infinity,
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Shimmer.fromColors(
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[100]!,
+                                        child: Container(color: Colors.white),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Container(
+                                      color: Colors.grey[300],
+                                      child: const Icon(Icons.error_outline),
+                                    ),
+                                  ),
+                                ),
+                                if (product.isTrending)
+                                  const Positioned(
+                                    top: 8,
+                                    left: 8,
+                                    child: Icon(
+                                      Icons.local_fire_department,
+                                      color: Colors.red,
+                                      size: 16,
+                                    ),
+                                  ),
+                                const Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: Icon(
+                                    Icons.favorite_border,
+                                    color: Colors.white70,
+                                    size: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                   const SizedBox(height: 100),
                 ],
               ),

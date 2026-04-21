@@ -6,6 +6,7 @@ import 'package:century_ai/features/home/home.dart';
 import 'package:century_ai/features/home/presentation/pages/home_2.dart';
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/router/shell_route.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
@@ -43,7 +44,7 @@ final GoRouter router = GoRouter(
           builder: (context, state) => HomeScreen(),
         ),
         GoRoute(
-          path: "/home_2",
+          path: AppRoutes.home2,
           name: "home 2",
           builder: (context, state) => HomeScreen2(),
         ),
@@ -85,8 +86,12 @@ final GoRouter router = GoRouter(
           image_id = data["image_id"] as String?;
         }
 
+        if (imageFile == null) {
+          return Scaffold(body: Center(child: Text("Error: No image provided")));
+        }
+
         return ImagePreviewPage(
-          imageFile: imageFile!,
+          imageFile: imageFile,
           image_category: imageCategory,
           sub_category: subCategory,
           image_id: image_id,
@@ -110,8 +115,12 @@ final GoRouter router = GoRouter(
           image_id = data['image_id'] as String?;
         }
 
+        if (imageFile == null) {
+          return Scaffold(body: Center(child: Text("Error: No image for editing")));
+        }
+
         return ImageEditPage(
-          imageFile: imageFile!,
+          imageFile: imageFile,
           pickedColor: pickedColor,
           image_id: image_id,
         );
@@ -134,8 +143,12 @@ final GoRouter router = GoRouter(
           image_id = data['image_id'] as String?;
         }
 
+        if (imageFile == null) {
+          return Scaffold(body: Center(child: Text("Error: No image for editing")));
+        }
+
         return ImageEditScrollPage(
-          imageFile: imageFile!,
+          imageFile: imageFile,
           pickedColor: pickedColor,
           image_id: image_id,
         );
@@ -148,14 +161,20 @@ final GoRouter router = GoRouter(
         File? imageFile;
         File? originalImage;
 
-        if (state.extra is Map<String, dynamic>) {
+        if (state.extra is File) {
+          imageFile = state.extra as File;
+        } else if (state.extra is Map<String, dynamic>) {
           final data = state.extra as Map<String, dynamic>;
           imageFile = data['imageFile'] as File?;
           originalImage = data['originalImage'] as File?;
         }
 
+        if (imageFile == null) {
+          return Scaffold(body: Center(child: Text("Error: No image for color picking")));
+        }
+
         return ImageColorPickerPage(
-          imageFile: imageFile!,
+          imageFile: imageFile,
           originalImage: originalImage,
         );
       },
@@ -164,6 +183,9 @@ final GoRouter router = GoRouter(
       path: AppRoutes.imageFinalize,
       name: "Image Finalize",
       builder: (context, state) {
+        if (state.extra is! Map<String, dynamic>) {
+          return Scaffold(body: Center(child: Text("Error: Missing data for finalization")));
+        }
         final data = state.extra as Map<String, dynamic>;
         return ImageFinalizePage(
           editedImage: data['editedImage'],
@@ -184,7 +206,12 @@ final GoRouter router = GoRouter(
           originalImage =
               (state.extra as Map<String, dynamic>)['originalImage'] as File?;
         }
-        return CompareImagePage(originalImage: originalImage!);
+
+        if (originalImage == null) {
+          return Scaffold(body: Center(child: Text("Error: No image for comparison")));
+        }
+
+        return CompareImagePage(originalImage: originalImage);
       },
     ),
   ],

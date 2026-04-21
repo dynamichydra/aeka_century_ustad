@@ -202,7 +202,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   @override
   Widget build(BuildContext context) {
     if (!_isReady) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
       );
