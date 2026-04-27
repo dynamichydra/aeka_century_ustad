@@ -17,21 +17,33 @@ class ExteriorInteriorSwitchSlider extends StatelessWidget {
       child: Container(
         width: 140, // smaller width to fit row
         height: 28, // smaller height
-        padding: const EdgeInsets.all(2),
+        padding: const EdgeInsets.all(0.2),
         decoration: BoxDecoration(
-          color: const Color(0xFFD9D9D9), // background color
+          color: const Color(0xFFCCCCCC), // background color
           borderRadius: BorderRadius.circular(14), // half height for pill
           border: Border.all(color: const Color(0xFFD9D9D9), width: 0),
         ),
         child: Stack(
           children: [
+            // Inner outline that doesn't affect layout
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Color(0xFFEEEEEE),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
             // Sliding selected background
             AnimatedAlign(
               duration: const Duration(milliseconds: 200),
               alignment: value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
                 width: 70, // half of container width
-                height: 24,
+                height: 28,
                 decoration: BoxDecoration(
                   color: const Color(0xFFEEEEEE),
                   borderRadius: BorderRadius.circular(12),

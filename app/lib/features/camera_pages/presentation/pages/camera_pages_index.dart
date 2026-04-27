@@ -78,7 +78,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
     try {
       final productsCubit = context.read<ProductsCubit>();
-      final newProduct = await productsCubit.uploadProductImage(imageFile);
+      final newProduct = await productsCubit.uploadProductImageNew(imageFile);
 
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
@@ -148,7 +148,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
     try {
       final productsCubit = context.read<ProductsCubit>();
-      final newProduct = await productsCubit.uploadProductImage(imageFile);
+      final newProduct = await productsCubit.uploadProductImageNew(imageFile);
 
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader

@@ -119,7 +119,7 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
-  Future<ProductImageModel?> uploadProductImage(File file) async {
+  Future<ProductImageModel?> uploadProductImageNew(File file) async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
       final newProduct = await _productRepository.uploadProductImage(file);
