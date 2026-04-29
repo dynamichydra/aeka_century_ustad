@@ -354,6 +354,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 backgroundColor: Colors.green,
               ),
             );
+            if (state.editedImageFile != null) {
+              setState(() {
+                _currentAssetPreview = state.editedImageFile;
+                _hasAppliedOnce = true;
+              });
+            }
           }
         },
         child: Scaffold(
@@ -778,12 +784,19 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         cacheWidth: 400,
                         errorBuilder: (c, e, s) => Image.file(widget.imageFile, fit: BoxFit.cover),
                       )
-                    : Image.asset(
-                        path!,
-                        fit: BoxFit.cover,
-                        cacheWidth: 400,
-                        errorBuilder: (c, e, s) => Image.file(widget.imageFile, fit: BoxFit.cover),
-                      )),
+                    : (path!.startsWith('/') || path.contains('tryon_result'))
+                        ? Image.file(
+                            File(path),
+                            fit: BoxFit.cover,
+                            cacheWidth: 400,
+                            errorBuilder: (c, e, s) => Image.file(widget.imageFile, fit: BoxFit.cover),
+                          )
+                        : Image.asset(
+                            path,
+                            fit: BoxFit.cover,
+                            cacheWidth: 400,
+                            errorBuilder: (c, e, s) => Image.file(widget.imageFile, fit: BoxFit.cover),
+                          )),
           _buildOverlayButtons(
             bottom: 8,
             isGrid: true,
@@ -927,18 +940,31 @@ class _ImageEditPageState extends State<ImageEditPage> {
                               fit: BoxFit.cover,
                             ),
                           )
-                        : Image.asset(
-                            _currentAssetPreview!,
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) => Image.file(
-                              widget.imageFile,
-                              width: double.infinity,
-                              height: MediaQuery.of(context).size.height * 0.40,
-                              fit: BoxFit.cover,
-                            ),
-                          )
+                        : (_currentAssetPreview!.startsWith('/') || _currentAssetPreview!.contains('tryon_result'))
+                            ? Image.file(
+                                File(_currentAssetPreview!),
+                                width: double.infinity,
+                                height: MediaQuery.of(context).size.height * 0.40,
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) => Image.file(
+                                  widget.imageFile,
+                                  width: double.infinity,
+                                  height: MediaQuery.of(context).size.height * 0.40,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Image.asset(
+                                _currentAssetPreview!,
+                                width: double.infinity,
+                                height: MediaQuery.of(context).size.height * 0.40,
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) => Image.file(
+                                  widget.imageFile,
+                                  width: double.infinity,
+                                  height: MediaQuery.of(context).size.height * 0.40,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
                   else
                     Image.file(
                       widget.imageFile,
@@ -1617,11 +1643,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
         _selectedTexture!["coverImage"]?.toString() ?? "unknown_url";
 
     context.read<ImageEditCubit>().applyTextureSelected(
-      textureId,
-      textureUrl,
-      _lastTapCoordinate,
-      _isShortTap,
-      _isLongTap,
+      roomImage: widget.imageFile,
+      textureUrl: textureUrl,
+      coordinate: _lastTapCoordinate,
+      isShortTap: _isShortTap,
+      isLongTap: _isLongTap,
     );
 
     if (mounted) {

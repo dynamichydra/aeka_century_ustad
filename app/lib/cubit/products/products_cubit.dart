@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:century_ai/cubit/products/products_state.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/data/repositories/product_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProductsCubit extends Cubit<ProductsState> {
@@ -10,102 +11,150 @@ class ProductsCubit extends Cubit<ProductsState> {
   ProductsCubit(this._productRepository) : super(const ProductsState());
 
   Future<void> loadProducts({int limit = 12}) async {
-    emit(
-      state.copyWith(
-        isLoading: true,
-        isRefreshing: false,
-        isLoadingMore: false,
-        errorMessage: null,
-        limit: limit,
-      ),
-    );
+    return fetchFeaturedProducts(limit: limit);
+  }
+
+  Future<void> fetchFeaturedProducts({int limit = 12}) async {
+    emit(state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      offset: 0,
+      limit: limit,
+      clearQuery: true,
+      clearCategory: true,
+      clearRoom: true,
+      clearGroup: true,
+      clearProduct: true,
+    ));
     try {
-      final page = await _productRepository.getProductsPage(limit: limit, skip: 0);
-      final hasMore = (page.skip + page.items.length) < page.total;
-      emit(
-        state.copyWith(
-          isLoading: false,
-          products: page.items,
-          hasMore: hasMore,
-        ),
-      );
+      final products = await _productRepository.getFeaturedProducts(limit: limit, offset: 0);
+      emit(state.copyWith(
+        isLoading: false,
+        products: products,
+        hasMore: products.length >= limit,
+        offset: products.length,
+      ));
     } catch (e) {
-      emit(
-        state.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ),
-      );
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString(), hasMore: false));
     }
   }
 
-  Future<void> fetchFeaturedProducts() async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
-    try {
-      final products = await _productRepository.getFeaturedProducts();
-      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
-    } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
-    }
-  }
-
-  Future<void> fetchProductsByCategory(String category, {required bool isInterior}) async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+  Future<void> fetchProductsByCategory(String category, {required bool isInterior, int limit = 12}) async {
+    emit(state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      offset: 0,
+      limit: limit,
+      currentCategory: category,
+      isInterior: isInterior,
+      clearQuery: true,
+      clearRoom: !isInterior,
+      clearGroup: isInterior,
+      clearProduct: true,
+    ));
     try {
       final products = isInterior
-          ? await _productRepository.getProductsByRoom(category)
-          : await _productRepository.getProductsByGroup(category);
-      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+          ? await _productRepository.getProductsByRoom(category, limit: limit, offset: 0)
+          : await _productRepository.getProductsByGroup(category, limit: limit, offset: 0);
+      emit(state.copyWith(
+        isLoading: false,
+        products: products,
+        hasMore: products.length >= limit,
+        offset: products.length,
+      ));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString(), hasMore: false));
     }
   }
 
-  Future<void> fetchProductsBySubCategory(String category, String subCategory, {required bool isInterior}) async {
+  Future<void> fetchProductsBySubCategory(String category, String subCategory, {required bool isInterior, int limit = 12}) async {
     if (subCategory == "All") {
-      return fetchProductsByCategory(category, isInterior: isInterior);
+      return fetchProductsByCategory(category, isInterior: isInterior, limit: limit);
     }
     
-    emit(state.copyWith(isLoading: true, errorMessage: null));
-    try {
-      // Standardizing based on user requirement:
-      // If Interior: subCategory (Icon) is the 'product'
-      // If Furniture: category (Group) is the 'product', subCategory (Icon) is 'subCategory'
-      final String productBase = isInterior ? subCategory : category;
-      final String? subFilter = isInterior ? null : subCategory;
+    final String productBase = isInterior ? subCategory : category;
+    final String? subFilter = isInterior ? null : subCategory;
 
-      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter);
-      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+    emit(state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      offset: 0,
+      limit: limit,
+      currentCategory: category,
+      currentSubCategory: subCategory,
+      currentSubFilter: subFilter,
+      isInterior: isInterior,
+      clearQuery: true,
+      clearProduct: false,
+    ));
+    try {
+      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter, limit: limit, offset: 0);
+      emit(state.copyWith(
+        isLoading: false,
+        products: products,
+        hasMore: products.length >= limit,
+        offset: products.length,
+        currentProduct: productBase,
+      ));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString(), hasMore: false));
     }
   }
 
-  Future<void> fetchProductsByNestedSubCategory(String category, String subCategory, String nestedSubCategory, {required bool isInterior}) async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
-    try {
-      // Standardizing for nested levels (mainly Interiors):
-      // Product remains the subCategory (Icon), and nestedSubCategory (Pill) is the sub-filter
-      final String productBase = isInterior ? subCategory : category;
-      final String? subFilter = isInterior ? nestedSubCategory : nestedSubCategory;
+  Future<void> fetchProductsByNestedSubCategory(String category, String subCategory, String nestedSubCategory, {required bool isInterior, int limit = 12}) async {
+    final String productBase = isInterior ? subCategory : category;
+    final String? subFilter = nestedSubCategory;
 
-      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter);
-      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+    emit(state.copyWith(
+      isLoading: true, 
+      errorMessage: null,
+      offset: 0,
+      limit: limit,
+      currentCategory: category,
+      currentSubCategory: subCategory,
+      currentSubFilter: subFilter,
+      currentProduct: productBase,
+      isInterior: isInterior,
+      clearQuery: true,
+    ));
+    try {
+      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter, limit: limit, offset: 0);
+      emit(state.copyWith(
+        isLoading: false, 
+        products: products, 
+        hasMore: products.length >= limit,
+        offset: products.length,
+      ));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString(), hasMore: false));
     }
   }
 
-  Future<void> searchProducts(String query) async {
+  Future<void> searchProducts(String query, {int limit = 12}) async {
     if (query.trim().isEmpty) {
-      return fetchFeaturedProducts();
+      return fetchFeaturedProducts(limit: limit);
     }
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    emit(state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      offset: 0,
+      limit: limit,
+      currentQuery: query,
+      clearCategory: true,
+      clearRoom: true,
+      clearGroup: true,
+      clearProduct: true,
+    ));
     try {
-      final products = await _productRepository.searchProducts(query);
-      emit(state.copyWith(isLoading: false, products: products, hasMore: false));
+      final products = await _productRepository.searchProducts(query, limit: limit, offset: 0);
+      emit(state.copyWith(
+        isLoading: false,
+        products: products,
+        hasMore: products.length >= limit,
+        offset: products.length,
+      ));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString(), hasMore: false));
     }
   }
 
@@ -137,66 +186,45 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
-  Future<void> refreshProducts() async {
-    emit(state.copyWith(isRefreshing: true, errorMessage: null));
-    try {
-      final page = await _productRepository.getProductsPage(
-        limit: state.limit,
-        skip: 0,
-      );
-      final hasMore = (page.skip + page.items.length) < page.total;
-      emit(
-        state.copyWith(
-          isRefreshing: false,
-          products: page.items,
-          hasMore: hasMore,
-        ),
-      );
-    } catch (e) {
-      emit(
-        state.copyWith(
-          isRefreshing: false,
-          errorMessage: e.toString(),
-        ),
-      );
-    }
-  }
-
   Future<void> loadMoreProducts() async {
-    if (state.isLoadingMore || state.isLoading || state.isRefreshing || !state.hasMore) {
-      return;
-    }
+    if (state.isLoadingMore || !state.hasMore) return;
 
+    debugPrint('🔄 CUBIT_LOG: loadMoreProducts called. Current offset: ${state.offset}, Limit: ${state.limit}');
     emit(state.copyWith(isLoadingMore: true, errorMessage: null));
     try {
-      final page = await _productRepository.getProductsPage(
-        limit: state.limit,
-        skip: state.products.length,
-      );
-      final merged = <String, dynamic>{};
-      for (final p in state.products) {
-        merged[p.id] = p;
+      List<ProductImageModel> newProducts = [];
+      
+      if (state.currentQuery != null) {
+        debugPrint('🔍 CUBIT_LOG: Loading more for search query: ${state.currentQuery}');
+        newProducts = await _productRepository.searchProducts(state.currentQuery!, limit: state.limit, offset: state.offset);
+      } else if (state.currentProduct != null) {
+        debugPrint('📦 CUBIT_LOG: Loading more for product: ${state.currentProduct}, subFilter: ${state.currentSubFilter}');
+        newProducts = await _productRepository.getProductsByProduct(
+          state.currentProduct!, 
+          subCategory: (state.currentSubFilter == "All") ? null : state.currentSubFilter, 
+          limit: state.limit, 
+          offset: state.offset
+        );
+      } else if (state.currentCategory != null) {
+        debugPrint('📂 CUBIT_LOG: Loading more for category: ${state.currentCategory}, isInterior: ${state.isInterior}');
+        newProducts = state.isInterior == true
+            ? await _productRepository.getProductsByRoom(state.currentCategory!, limit: state.limit, offset: state.offset)
+            : await _productRepository.getProductsByGroup(state.currentCategory!, limit: state.limit, offset: state.offset);
+      } else {
+        debugPrint('✨ CUBIT_LOG: Loading more featured products');
+        newProducts = await _productRepository.getFeaturedProducts(limit: state.limit, offset: state.offset);
       }
-      for (final p in page.items) {
-        merged[p.id] = p;
-      }
-      final next = merged.values.cast<ProductImageModel>().toList();
-      final hasMore = (page.skip + page.items.length) < page.total;
 
-      emit(
-        state.copyWith(
-          isLoadingMore: false,
-          products: next,
-          hasMore: hasMore,
-        ),
-      );
+      debugPrint('✅ CUBIT_LOG: Fetched ${newProducts.length} more products');
+      emit(state.copyWith(
+        isLoadingMore: false,
+        products: [...state.products, ...newProducts],
+        hasMore: newProducts.length >= state.limit,
+        offset: state.offset + newProducts.length,
+      ));
     } catch (e) {
-      emit(
-        state.copyWith(
-          isLoadingMore: false,
-          errorMessage: e.toString(),
-        ),
-      );
+      debugPrint('❌ CUBIT_LOG ERROR: loadMoreProducts failure: $e');
+      emit(state.copyWith(isLoadingMore: false, errorMessage: e.toString(), hasMore: false));
     }
   }
 }

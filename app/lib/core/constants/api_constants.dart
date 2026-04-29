@@ -11,6 +11,7 @@ class TApiConstants {
   static const String upload = '/upload';
   static const String searchSimilar = '/search/similar';
   static const String searchText = '/search/text';
+  static const String tryOn = '/tryon';
 
   // Dummy endpoints (legacy)
   static const String products = '/products';

@@ -25,14 +25,39 @@ class ExteriorInteriorSwitchSlider extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Inner outline that doesn't affect layout
+            // Inner outline and true soft inset shadow
             Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Color(0xFFEEEEEE),
-                    width: 1,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      // Base shadow (dark)
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                      ),
+                      // Light highlight on bottom
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.6),
+                        spreadRadius: -1.0,
+                        blurRadius: 3.0,
+                        offset: const Offset(0, 2),
+                      ),
+                      // Center track background color that softens outwards
+                      const BoxShadow(
+                        color: Color(0xFFCCCCCC),
+                        spreadRadius: -2.0,
+                        blurRadius: 4.0,
+                        offset: Offset(0, 0),
+                      ),
+                    ],
+                  ),
+                  foregroundDecoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFFEEEEEE),
+                      width: 1,
+                    ),
                   ),
                 ),
               ),

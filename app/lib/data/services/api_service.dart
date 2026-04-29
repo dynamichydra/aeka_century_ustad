@@ -32,23 +32,35 @@ class ApiService {
 
   // --- Furniture API ---
 
-  Future<List<dynamic>> getFeaturedFurniture() async {
-    final response = await _dio.get(TApiConstants.featuredBrowse);
+  Future<List<dynamic>> getFeaturedFurniture({int limit = 10, int offset = 0}) async {
+    final response = await _dio.get(
+      TApiConstants.featuredBrowse,
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
     return response.data as List<dynamic>;
   }
 
-  Future<List<dynamic>> getFurnitureByRoom(String room) async {
-    final response = await _dio.get('${TApiConstants.roomBrowse}/$room');
+  Future<List<dynamic>> getFurnitureByRoom(String room, {int limit = 20, int offset = 0}) async {
+    final response = await _dio.get(
+      '${TApiConstants.roomBrowse}/$room',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
     return response.data as List<dynamic>;
   }
 
-  Future<List<dynamic>> getFurnitureByGroup(String group) async {
-    final response = await _dio.get('${TApiConstants.groupBrowse}/$group');
+  Future<List<dynamic>> getFurnitureByGroup(String group, {int limit = 20, int offset = 0}) async {
+    final response = await _dio.get(
+      '${TApiConstants.groupBrowse}/$group',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
     return response.data as List<dynamic>;
   }
 
-  Future<List<dynamic>> getFurnitureByProduct(String product, {String? subCategory}) async {
-    final queryParams = <String, dynamic>{};
+  Future<List<dynamic>> getFurnitureByProduct(String product, {String? subCategory, int limit = 20, int offset = 0}) async {
+    final queryParams = <String, dynamic>{
+      'limit': limit,
+      'offset': offset,
+    };
     if (subCategory != null && subCategory != 'All' && subCategory.isNotEmpty) {
       queryParams['subCategory'] = subCategory;
     }
@@ -72,10 +84,14 @@ class ApiService {
     return response.data;
   }
 
-  Future<List<dynamic>> searchFurnitureByText(String query) async {
+  Future<List<dynamic>> searchFurnitureByText(String query, {int limit = 20, int offset = 0}) async {
     final response = await _dio.get(
       TApiConstants.searchText,
-      queryParameters: {'q': query},
+      queryParameters: {
+        'q': query,
+        'limit': limit,
+        'offset': offset,
+      },
     );
     return response.data as List<dynamic>;
   }
@@ -91,6 +107,39 @@ class ApiService {
       data: formData,
     );
     return response.data as List<dynamic>;
+  }
+
+  Future<List<int>> tryOnFurniture({
+    required File roomImage,
+    required File patternImage,
+    required int x,
+    required int y,
+  }) async {
+    String roomFileName = roomImage.path.split('/').last;
+    String patternFileName = patternImage.path.split('/').last;
+
+    FormData formData = FormData.fromMap({
+      "room_image": await MultipartFile.fromFile(roomImage.path, filename: roomFileName),
+      "pattern_image": await MultipartFile.fromFile(patternImage.path, filename: patternFileName),
+      "x": x,
+      "y": y,
+    });
+
+    debugPrint('🚀 API_LOG: POST ${TApiConstants.tryOn}');
+    debugPrint('📦 API_LOG: FormData - x: $x, y: $y');
+    debugPrint('📦 API_LOG: Room File: $roomFileName');
+    debugPrint('📦 API_LOG: Pattern File: $patternFileName');
+
+    final response = await _dio.post(
+      TApiConstants.tryOn,
+      data: formData,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    
+    debugPrint('✅ API_LOG: Response Status: ${response.statusCode}');
+    debugPrint('📄 API_LOG: Response size: ${response.data.length} bytes');
+    
+    return response.data as List<int>;
   }
 
   // --- Legacy / Dummy API (from dummyjson.com) ---

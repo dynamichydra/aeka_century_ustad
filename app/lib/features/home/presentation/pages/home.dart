@@ -53,6 +53,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   Map<int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>>
   _productsByTabCategorySub = {};
   String _selectedNestedSubCategory = "";
+  final ScrollController _scrollController = ScrollController();
 
   final Map<String, String> _categoryIcons = {};
   final Map<String, String> _categoryAllIcons = {};
@@ -68,13 +69,22 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   void initState() {
     super.initState();
     _loadProductsByCategoryFromAsset();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductsCubit>().fetchFeaturedProducts();
     });
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 400) {
+      context.read<ProductsCubit>().loadMoreProducts();
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -535,6 +545,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 return context.read<ProductsCubit>().fetchFeaturedProducts();
               },
               child: SingleChildScrollView(
+                controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -562,7 +573,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             homeCubit.setExterior(val);
                             if (val) {
                               setState(() {
-                                _selectedCategory = "Wall Panelling";
+                                _selectedCategory = "Exterior Building Material";
                                 _selectedSubCategory = "All";
                                 _selectedNestedSubCategory = "";
                               });
@@ -571,7 +582,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context
                                   .read<ProductsCubit>()
                                   .fetchProductsByCategory(
-                                    "Wall Panelling",
+                                    "Exterior Building Material",
                                     isInterior: false,
                                   );
                             } else {
@@ -638,6 +649,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               _selectedCategory = null;
                               _selectedSubCategory = "All";
                               _selectedNestedSubCategory = "";
+
+                              // Trigger search API if no category matched
+                              context.read<ProductsCubit>().searchProducts(query);
                             }
                           });
                         },
@@ -984,6 +998,26 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 );
                               },
                             ),
+                      if (productsState.isLoadingMore)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFFEA202C),
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                      if (productsState.isLoadingMore)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFFEA202C),
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
                       SizedBox(height: _bottomCtaReservedSpace(context)),
                     ],
                   ),

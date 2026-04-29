@@ -1,7 +1,10 @@
 import 'package:century_ai/core/network/api_client.dart';
+import 'package:century_ai/data/services/api_service.dart';
+import 'dart:io';
 
 class ImageEditService {
   final ApiClient api = ApiClient();
+  final ApiService _apiService = ApiService();
 
   /// Post Compare Image Details
   Future<dynamic> postCompareImageDetails({
@@ -69,5 +72,25 @@ print("--- ImageEditService: Sending Request ---");
     //   },
     // );
     // return res;
+  }
+
+  Future<File> tryOnFurniture({
+    required File roomImage,
+    required File patternImage,
+    required int x,
+    required int y,
+  }) async {
+    final bytes = await _apiService.tryOnFurniture(
+      roomImage: roomImage,
+      patternImage: patternImage,
+      x: x,
+      y: y,
+    );
+
+    // Save bytes to a temporary file
+    final tempDir = await Directory.systemTemp.createTemp();
+    final file = File('${tempDir.path}/tryon_result.png');
+    await file.writeAsBytes(bytes);
+    return file;
   }
 }

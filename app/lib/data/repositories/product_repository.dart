@@ -34,11 +34,11 @@ class ProductRepository {
     );
   }
 
-  Future<List<ProductImageModel>> getFeaturedProducts() async {
+  Future<List<ProductImageModel>> getFeaturedProducts({int limit = 10, int offset = 0}) async {
     try {
-      final data = await _apiService.getFeaturedFurniture();
+      final data = await _apiService.getFeaturedFurniture(limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} featured products');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} featured products (Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getFeaturedProducts failure: $e');
@@ -46,11 +46,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByRoom(String room) async {
+  Future<List<ProductImageModel>> getProductsByRoom(String room, {int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByRoom(room);
+      final data = await _apiService.getFurnitureByRoom(room, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for room: $room');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for room: $room (Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByRoom failure for $room: $e');
@@ -58,11 +58,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByGroup(String group) async {
+  Future<List<ProductImageModel>> getProductsByGroup(String group, {int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByGroup(group);
+      final data = await _apiService.getFurnitureByGroup(group, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for group: $group');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for group: $group (Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByGroup failure for $group: $e');
@@ -70,11 +70,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByProduct(String product, {String? subCategory}) async {
+  Future<List<ProductImageModel>> getProductsByProduct(String product, {String? subCategory, int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByProduct(product, subCategory: subCategory);
+      final data = await _apiService.getFurnitureByProduct(product, subCategory: subCategory, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for product: $product (Sub: ${subCategory ?? "None"})');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for product: $product (Sub: ${subCategory ?? "None"}, Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByProduct failure for $product/$subCategory: $e');
@@ -91,11 +91,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> searchProducts(String query) async {
+  Future<List<ProductImageModel>> searchProducts(String query, {int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.searchFurnitureByText(query);
+      final data = await _apiService.searchFurnitureByText(query, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('🔍 SEARCH_LOG: Text search "$query" found ${products.length} results');
+      debugPrint('🔍 SEARCH_LOG: Text search "$query" found ${products.length} results (Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ SEARCH_LOG ERROR: searchProducts failure for "$query": $e');

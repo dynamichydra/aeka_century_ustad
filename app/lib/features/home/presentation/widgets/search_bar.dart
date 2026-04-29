@@ -66,7 +66,6 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
       widget.onCategoryCleared();
       widget.onSearchStarted(query);
       context.read<HomeCubit>().fetchResults(query);
-      context.read<ProductsCubit>().searchProducts(query);
     }
   }
 

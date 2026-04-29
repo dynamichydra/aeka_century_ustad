@@ -65,6 +65,25 @@
       "sort_order": 6
     },
     {
+      "id": 35,
+      "name": "Sofa",
+      "image": "images/furniture/sofa_2_seater.png",
+      "optional_all_img": "images/furniture/sofa_2_seater.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 7,
+      "nested_key": "sofa"
+    },
+    {
+      "id": 36,
+      "name": "Center Table",
+      "image": "transaparent/center_table/center_table.png",
+      "optional_all_img": "transaparent/center_table/center_table.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 8
+    },
+    {
       "id": 8,
       "name": "Kitchen",
       "image": "DECO/SENZURA/Dark Series Application images (7).jpg",
@@ -84,7 +103,7 @@
     },
     {
       "id": 10,
-      "name": "Dining",
+      "name": "Dining Room",
       "image": "DECO/SENZURA/Medium Application images (4).jpg",
       "optional_all_img": "transaparent/Dining/Dining_all.png",
       "parent_id": null,
@@ -102,13 +121,23 @@
       "nested_key": "dining_table"
     },
     {
+      "id": 34,
+      "name": "Dining Table + Chairs",
+      "image": "transaparent/Dining/Subcategories/Dining_table_1.png",
+      "optional_all_img": "transaparent/Dining/Subcategories/Dining_table_1.png",
+      "parent_id": 10,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "dining_table"
+    },
+    {
       "id": 12,
       "name": "Bar Unit",
       "image": "transaparent/Dining/Subcategories/Bar_unit_1.png",
       "optional_all_img": "transaparent/Dining/Subcategories/Bar_unit_1.png",
       "parent_id": 10,
       "preview_type": "normal",
-      "sort_order": 2
+      "sort_order": 3
     },
     {
       "id": 13,
@@ -168,6 +197,16 @@
       "sort_order": 4
     },
     {
+      "id": 37,
+      "name": "Bed",
+      "image": "transaparent/Bed_room/Bedroom_all.png",
+      "optional_all_img": "transaparent/Bed_room/Bedroom_all.png",
+      "parent_id": 14,
+      "preview_type": "normal",
+      "sort_order": 5,
+      "nested_key": "Bed"
+    },
+    {
       "id": 19,
       "name": "Study",
       "image": "DECO/SENZURA/Study room.webp",
@@ -194,6 +233,15 @@
       "preview_type": "normal",
       "sort_order": 2,
       "nested_key": "bookshelves"
+    },
+    {
+      "id": 39,
+      "name": "Chair",
+      "image": "images/furniture/designer_chair.png",
+      "optional_all_img": "images/furniture/designer_chair.png",
+      "parent_id": 19,
+      "preview_type": "normal",
+      "sort_order": 3
     },
     {
       "id": 22,
@@ -242,6 +290,15 @@
       "preview_type": "normal",
       "sort_order": 2,
       "nested_key": "wardrobe"
+    },
+    {
+      "id": 38,
+      "name": "Study Table",
+      "image": "transaparent/Study/subcategories/Study_table.png",
+      "optional_all_img": "transaparent/Study/subcategories/Study_table.png",
+      "parent_id": 24,
+      "preview_type": "normal",
+      "sort_order": 3
     },
     {
       "id": 27,
@@ -488,7 +545,7 @@
     },
     {
       "id": 121,
-      "name": "Wall Panelling",
+      "name": "Exterior Building Material",
       "image": "DECO/SENZURA/wall_pannling.jpg",
       "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Wall_panelling)_1.png",
       "parent_id": null,
@@ -616,7 +673,12 @@
     ],
     "sofa": [
       "1 Seater",
-      "2 Seater"
+      "2 Seater",
+      "3 Seater",
+      "4 Seater",
+      "5 Seater",
+      "6 Seater",
+      "L-Shape"
     ],
     "Bed": [
       "Kid's Bed",
@@ -630,6 +692,12 @@
       "1 Drawer",
       "2 Drawer",
       "4 Drawer"
+    ],
+    "dining_table": [
+      "2 Seater",
+      "4 Seater",
+      "6 Seater",
+      "8 Seater"
     ]
   }
 }

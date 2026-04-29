@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'image_edit_state.dart';
 import 'package:century_ai/core/constants/image_strings.dart'; // For ProductImageModel
+import 'dart:io';
+import 'package:dio/dio.dart';
 
 class ImageEditCubit extends Cubit<ImageEditState> {
   final ImageEditService _imageEditService = ImageEditService();
@@ -41,13 +43,13 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     }
   }
 
-  Future<void> applyTextureSelected(
-    String textureId, 
-    String textureUrl,
-    Map<String, dynamic> coordinate,
-    bool isShortTap,
-    bool isLongTap,
-  ) async {
+  Future<void> applyTextureSelected({
+    required File roomImage,
+    required String textureUrl,
+    required Map<String, dynamic> coordinate,
+    required bool isShortTap,
+    required bool isLongTap,
+  }) async {
     emit(state.copyWith(
       isApplyLoading: true,
       clearError: true,
@@ -55,19 +57,31 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     ));
 
     try {
-      final response = await _imageEditService.postApplyTexture(
-        selectedId: textureId,
-        coordinate: coordinate,
-        isShortTap: isShortTap,
-        isLongTap: isLongTap,
-        selectedTexturePatterns: textureUrl,
+      // 1. Download pattern image to a temporary file
+      debugPrint('🎨 AI_TRYON_LOG: Starting applyTextureSelected');
+      debugPrint('🖼️ AI_TRYON_LOG: Room Image Path: ${roomImage.path}');
+      debugPrint('🧪 AI_TRYON_LOG: Texture URL: $textureUrl');
+      debugPrint('📍 AI_TRYON_LOG: Coordinates: $coordinate');
+      
+      final tempDir = await Directory.systemTemp.createTemp();
+      final patternFile = File('${tempDir.path}/pattern_image.png');
+      await Dio().download(textureUrl, patternFile.path);
+      debugPrint('✅ AI_TRYON_LOG: Pattern downloaded to: ${patternFile.path}');
+
+      // 2. Call the AI service
+      final resultFile = await _imageEditService.tryOnFurniture(
+        roomImage: roomImage,
+        patternImage: patternFile,
+        x: (coordinate['x'] as num).toInt(),
+        y: (coordinate['y'] as num).toInt(),
       );
-      
-      debugPrint("Apply Texture API Response: $response");
-      
+
+      debugPrint('✨ AI_TRYON_LOG: Result received: ${resultFile.path}');
+
       emit(state.copyWith(
         isApplyLoading: false,
         successMessage: "Texture applied successfully.",
+        editedImageFile: resultFile.path,
       ));
     } catch (e) {
       debugPrint("Apply Texture API Error: $e");

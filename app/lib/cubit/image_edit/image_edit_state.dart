@@ -5,12 +5,14 @@ class ImageEditState extends Equatable {
   final bool isApplyLoading;
   final String? errorMessage;
   final String? successMessage;
+  final String? editedImageFile;
 
   const ImageEditState({
     this.isCompareLoading = false,
     this.isApplyLoading = false,
     this.errorMessage,
     this.successMessage,
+    this.editedImageFile,
   });
 
   ImageEditState copyWith({
@@ -18,6 +20,7 @@ class ImageEditState extends Equatable {
     bool? isApplyLoading,
     String? errorMessage,
     String? successMessage,
+    String? editedImageFile,
     bool clearError = false,
     bool clearSuccess = false,
   }) {
@@ -26,6 +29,7 @@ class ImageEditState extends Equatable {
       isApplyLoading: isApplyLoading ?? this.isApplyLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       successMessage: clearSuccess ? null : (successMessage ?? this.successMessage),
+      editedImageFile: editedImageFile ?? this.editedImageFile,
     );
   }
 
@@ -35,5 +39,6 @@ class ImageEditState extends Equatable {
         isApplyLoading,
         errorMessage,
         successMessage,
+        editedImageFile,
       ];
 }
