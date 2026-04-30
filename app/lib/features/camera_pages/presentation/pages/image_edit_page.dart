@@ -55,6 +55,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   final LaminateService _laminateApi = LaminateService();
   bool _isEditVisible = true;
   bool _isLoadingTextures = false;
+  bool _isPrecaching = false;
   List<dynamic> _apiTextures = [];
 
   bool _compareExpanded = false;
@@ -348,17 +349,47 @@ class _ImageEditPageState extends State<ImageEditPage> {
               ),
             );
           } else if (state.successMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.successMessage!),
-                backgroundColor: Colors.green,
-              ),
-            );
             if (state.editedImageFile != null) {
               setState(() {
+                _isPrecaching = true;
                 _currentAssetPreview = state.editedImageFile;
-                _hasAppliedOnce = true;
               });
+              final imageProvider = FileImage(File(state.editedImageFile!));
+              precacheImage(imageProvider, context)
+                  .then((_) {
+                    if (mounted) {
+                      setState(() {
+                        _hasAppliedOnce = true;
+                        _isPrecaching = false;
+                      });
+                    }
+                  })
+                  .catchError((e) {
+                    if (mounted) {
+                      setState(() {
+                        _hasAppliedOnce = true;
+                        _isPrecaching = false;
+                      });
+                    }
+                  });
+
+              // Automatically POST the actual AI-edited image to history
+              if (widget.image_id != null) {
+                _userEditsService
+                    .postEdit(
+                      editedFile: File(state.editedImageFile!),
+                      furnitureId: widget.image_id!,
+                      email: _ownerEmail,
+                    )
+                    .then((newRecord) {
+                      if (newRecord != null) {
+                        debugPrint(
+                          "✅ AI-Edited record posted successfully: ${newRecord.id}",
+                        );
+                        _fetchUserEditHistory(); // Refresh history
+                      }
+                    });
+              }
             }
           }
         },
@@ -374,9 +405,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   child: ValueListenableBuilder<List<int>>(
                     valueListenable: _selectedIndicesNotifier,
                     builder: (context, selectedIndices, child) {
-                      return _compareExpanded
-                          ? _buildTopComparisonSection(selectedIndices)
-                          : _buildImageOverlaySection();
+                      return BlocBuilder<ImageEditCubit, ImageEditState>(
+                        builder: (context, state) {
+                          if (state.isApplyLoading || _isPrecaching) {
+                            return _buildGeneratingBlock();
+                          }
+                          return _compareExpanded
+                              ? _buildTopComparisonSection(selectedIndices)
+                              : _buildImageOverlaySection();
+                        },
+                      );
                     },
                   ),
                 ),
@@ -552,73 +590,95 @@ class _ImageEditPageState extends State<ImageEditPage> {
       child: Column(
         children: [
           const SizedBox(height: 4),
-          ValueListenableBuilder<List<int>>(
-            valueListenable: _selectedIndicesNotifier,
-            builder: (context, selectedIndices, child) {
-                if (_userEdits.isEmpty) {
-                  return const SizedBox(
-                    height: 120,
-                    child: Center(
-                      child: Text(
-                        "No comparison versions available yet.\nApply a design to see versions here.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+          BlocBuilder<ImageEditCubit, ImageEditState>(
+            builder: (context, state) {
+              return ValueListenableBuilder<List<int>>(
+                valueListenable: _selectedIndicesNotifier,
+                builder: (context, selectedIndices, child) {
+                  final bool isLoading = state.isApplyLoading || _isPrecaching;
+                  if (_userEdits.isEmpty && !isLoading) {
+                    return const SizedBox(
+                      height: 120,
+                      child: Center(
+                        child: Text(
+                          "No comparison versions available yet.\nApply a design to see versions here.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
                       ),
-                    ),
-                  );
-                }
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _userEdits.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.0,
-                  ),
-                  itemBuilder: (context, index) {
-                    final String imgPath = _userEdits[index].editedImageUrl;
-                    final isSelected = selectedIndices.contains(index);
-                    return GestureDetector(
-                      onTap: () {
-                        _toggleSelection(index);
-                      },
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              imgPath,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              cacheWidth: 200, // Optimized cache size
-                              errorBuilder: (c, e, s) => Container(
-                                color: Colors.grey[200],
-                                child: const Center(
-                                  child: Icon(Icons.broken_image_outlined,
-                                      color: Colors.grey),
+                    );
+                  }
+
+                  final int itemCount = _userEdits.length + (isLoading ? 1 : 0);
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: itemCount,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.0,
+                        ),
+                    itemBuilder: (context, index) {
+                      // Show loading placeholder as the first item if loading
+                      if (isLoading && index == 0) {
+                        return _buildLoadingVersionPlaceholder();
+                      }
+
+                      // Adjust index if we are showing a loader at index 0
+                      final editIndex = isLoading ? index - 1 : index;
+                      final String imgPath =
+                          _userEdits[editIndex].editedImageUrl;
+                      final isSelected = selectedIndices.contains(editIndex);
+
+                      return GestureDetector(
+                        onTap: () {
+                          _toggleSelection(editIndex);
+                        },
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imgPath,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                cacheWidth: 200,
+                                errorBuilder: (c, e, s) => Container(
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.broken_image_outlined,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          Positioned(
-                            top: 4,
-                            left: 4,
-                            child: Icon(
-                              isSelected
-                                  ? Icons.radio_button_checked
-                                  : Icons.radio_button_off,
-                              size: 18,
-                              color: isSelected ? Colors.black : Colors.black54,
+                            Positioned(
+                              top: 4,
+                              left: 4,
+                              child: Icon(
+                                isSelected
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_off,
+                                size: 18,
+                                color: isSelected
+                                    ? Colors.black
+                                    : Colors.black54,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
             },
           ),
           const SizedBox(height: 20),
@@ -782,21 +842,24 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         path!,
                         fit: BoxFit.cover,
                         cacheWidth: 400,
-                        errorBuilder: (c, e, s) => Image.file(widget.imageFile, fit: BoxFit.cover),
+                        errorBuilder: (c, e, s) =>
+                            Image.file(widget.imageFile, fit: BoxFit.cover),
                       )
                     : (path!.startsWith('/') || path.contains('tryon_result'))
-                        ? Image.file(
-                            File(path),
-                            fit: BoxFit.cover,
-                            cacheWidth: 400,
-                            errorBuilder: (c, e, s) => Image.file(widget.imageFile, fit: BoxFit.cover),
-                          )
-                        : Image.asset(
-                            path,
-                            fit: BoxFit.cover,
-                            cacheWidth: 400,
-                            errorBuilder: (c, e, s) => Image.file(widget.imageFile, fit: BoxFit.cover),
-                          )),
+                    ? Image.file(
+                        File(path),
+                        fit: BoxFit.cover,
+                        cacheWidth: 400,
+                        errorBuilder: (c, e, s) =>
+                            Image.file(widget.imageFile, fit: BoxFit.cover),
+                      )
+                    : Image.asset(
+                        path,
+                        fit: BoxFit.cover,
+                        cacheWidth: 400,
+                        errorBuilder: (c, e, s) =>
+                            Image.file(widget.imageFile, fit: BoxFit.cover),
+                      )),
           _buildOverlayButtons(
             bottom: 8,
             isGrid: true,
@@ -926,52 +989,42 @@ class _ImageEditPageState extends State<ImageEditPage> {
               },
               child: Stack(
                 children: [
-                  if (_currentAssetPreview != null && _currentAssetPreview!.isNotEmpty)
+                  // Base Image (Always visible to prevent blank frames)
+                  Image.file(
+                    widget.imageFile,
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.height * 0.40,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                  ),
+
+                  // Applied Design Layer
+                  if (_currentAssetPreview != null &&
+                      _currentAssetPreview!.isNotEmpty)
                     _currentAssetPreview!.startsWith('http')
                         ? Image.network(
                             _currentAssetPreview!,
                             width: double.infinity,
                             height: MediaQuery.of(context).size.height * 0.40,
                             fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) => Image.file(
-                              widget.imageFile,
-                              width: double.infinity,
-                              height: MediaQuery.of(context).size.height * 0.40,
-                              fit: BoxFit.cover,
-                            ),
+                            gaplessPlayback: true,
                           )
-                        : (_currentAssetPreview!.startsWith('/') || _currentAssetPreview!.contains('tryon_result'))
-                            ? Image.file(
-                                File(_currentAssetPreview!),
-                                width: double.infinity,
-                                height: MediaQuery.of(context).size.height * 0.40,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, e, s) => Image.file(
-                                  widget.imageFile,
-                                  width: double.infinity,
-                                  height: MediaQuery.of(context).size.height * 0.40,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : Image.asset(
-                                _currentAssetPreview!,
-                                width: double.infinity,
-                                height: MediaQuery.of(context).size.height * 0.40,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, e, s) => Image.file(
-                                  widget.imageFile,
-                                  width: double.infinity,
-                                  height: MediaQuery.of(context).size.height * 0.40,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                  else
-                    Image.file(
-                      widget.imageFile,
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.40,
-                      fit: BoxFit.cover,
-                    ),
+                        : (_currentAssetPreview!.startsWith('/') ||
+                              _currentAssetPreview!.contains('tryon_result'))
+                        ? Image.file(
+                            File(_currentAssetPreview!),
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                          )
+                        : Image.asset(
+                            _currentAssetPreview!,
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                          ),
 
                   // Dashed Bounding Boxes (Simulated Positions)
                   _buildDashedBox(top: 40, left: 100, width: 80, height: 100),
@@ -1031,7 +1084,48 @@ class _ImageEditPageState extends State<ImageEditPage> {
             ],
           ),
         ),
+        // Redundant overlay removed as it's now handled by _buildGeneratingBlock in the main stack
+        const SizedBox.shrink(),
       ],
+    );
+  }
+
+  Widget _buildGeneratingBlock() {
+    return Container(
+      width: double.infinity,
+      height: MediaQuery.of(context).size.height * 0.40,
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        image: DecorationImage(
+          image: FileImage(widget.imageFile),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.black.withOpacity(0.6),
+            BlendMode.darken,
+          ),
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "GENERTING...",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1635,45 +1729,27 @@ class _ImageEditPageState extends State<ImageEditPage> {
       return;
     }
 
-    final textureId =
-        _selectedTexture!["id"]?.toString() ??
-        _selectedTexture!["sku"]?.toString() ??
-        "unknown";
     final textureUrl =
         _selectedTexture!["coverImage"]?.toString() ?? "unknown_url";
 
+    // Use current edited image as base if it exists and is a local file
+    File baseImage = widget.imageFile;
+    if (_currentAssetPreview != null &&
+        (_currentAssetPreview!.startsWith('/') ||
+            _currentAssetPreview!.contains('tryon_result'))) {
+      baseImage = File(_currentAssetPreview!);
+    }
+
     context.read<ImageEditCubit>().applyTextureSelected(
-      roomImage: widget.imageFile,
+      roomImage: baseImage,
       textureUrl: textureUrl,
       coordinate: _lastTapCoordinate,
       isShortTap: _isShortTap,
       isLongTap: _isLongTap,
     );
 
-    if (mounted) {
-      setState(() {
-        _hasAppliedOnce = true;
-      });
-    }
-
-    // Automatically POST the edit to the history API
-    if (widget.image_id != null) {
-      _userEditsService
-          .postEdit(
-            editedFile: widget
-                .imageFile, // Placeholder: using current image as edited_file
-            furnitureId: widget.image_id!,
-            email: _ownerEmail,
-          )
-          .then((newRecord) {
-            if (newRecord != null) {
-              debugPrint("✅ Edit record posted successfully: ${newRecord.id}");
-              _fetchUserEditHistory(); // Refresh history
-            }
-          });
-    }
-
     setState(() {
+      _isPrecaching = true;
       _hasAppliedOnce = true;
       _compareExpanded = true;
       _editExpanded = false;
@@ -1717,38 +1793,48 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     ),
                   ),
                   const Spacer(),
-                  Visibility(
-                    visible: _hasAppliedOnce && _editExpanded,
-                    maintainSize: true,
-                    maintainAnimation: true,
-                    maintainState: true,
-                    child: GestureDetector(
-                      onTap: () {
-                        context.push(
-                          AppRoutes.imageFinalize,
-                          extra: {
-                            'editedImage':
-                                _currentAssetPreview ?? widget.imageFile,
-                            'selectedColor': _selectedColor ?? {},
-                            'selectedLamination': _selectedTexture ?? {},
+                  BlocBuilder<ImageEditCubit, ImageEditState>(
+                    builder: (context, state) {
+                      return Visibility(
+                        visible:
+                            _hasAppliedOnce &&
+                            _editExpanded &&
+                            !state.isApplyLoading,
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        child: GestureDetector(
+                          onTap: () {
+                            context.push(
+                              AppRoutes.imageFinalize,
+                              extra: {
+                                'editedImage':
+                                    _currentAssetPreview ?? widget.imageFile,
+                                'selectedColor': _selectedColor ?? {},
+                                'selectedLamination': _selectedTexture ?? {},
+                              },
+                            );
                           },
-                        );
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black12, width: 1),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.black12,
+                                width: 1,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_forward,
+                              color: Colors.black,
+                              size: 20,
+                            ),
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.arrow_forward,
-                          color: Colors.black,
-                          size: 20,
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 50),
                 ],
@@ -1756,39 +1842,47 @@ class _ImageEditPageState extends State<ImageEditPage> {
               SizedBox(
                 width: 120,
                 height: 40,
-                child: ElevatedButton(
-                  onPressed: () => _applyChanges(context),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    elevation: 0,
-                    side: const BorderSide(color: Colors.black12, width: 1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
-                  child: BlocBuilder<ImageEditCubit, ImageEditState>(
-                    builder: (context, state) {
-                      if (state.isApplyLoading) {
-                        return const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.black,
-                          ),
-                        );
-                      }
-                      return const Text(
-                        "Apply",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                child: BlocBuilder<ImageEditCubit, ImageEditState>(
+                  builder: (context, state) {
+                    final isLoading = state.isApplyLoading;
+                    return ElevatedButton(
+                      onPressed: isLoading
+                          ? null
+                          : () => _applyChanges(context),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        disabledBackgroundColor: Colors.grey[100],
+                        side: BorderSide(
+                          color: isLoading
+                              ? Colors.transparent
+                              : Colors.black12,
+                          width: 1,
                         ),
-                      );
-                    },
-                  ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black54,
+                              ),
+                            )
+                          : const Text(
+                              "Apply",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -1820,47 +1914,48 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   border: Border.all(color: Colors.black12, width: 1),
                 ),
                 child: IconButton(
-                  icon: const Icon(
-                    Icons.menu,
-                    color: Colors.black,
-                    size: 20,
-                  ),
+                  icon: const Icon(Icons.menu, color: Colors.black, size: 20),
                   onPressed: () {
                     Scaffold.of(context).openDrawer();
                   },
                 ),
               ),
-              Visibility(
-                visible: _hasAppliedOnce,
-                maintainSize: true,
-                maintainAnimation: true,
-                maintainState: true,
-                child: GestureDetector(
-                  onTap: () {
-                    context.push(
-                      AppRoutes.imageFinalize,
-                      extra: {
-                        'editedImage': _currentAssetPreview ?? widget.imageFile,
-                        'selectedColor': _selectedColor ?? {},
-                        'selectedLamination': _selectedTexture ?? {},
+              BlocBuilder<ImageEditCubit, ImageEditState>(
+                builder: (context, state) {
+                  return Visibility(
+                    visible: _hasAppliedOnce && !state.isApplyLoading,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: GestureDetector(
+                      onTap: () {
+                        context.push(
+                          AppRoutes.imageFinalize,
+                          extra: {
+                            'editedImage':
+                                _currentAssetPreview ?? widget.imageFile,
+                            'selectedColor': _selectedColor ?? {},
+                            'selectedLamination': _selectedTexture ?? {},
+                          },
+                        );
                       },
-                    );
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black12, width: 1),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black12, width: 1),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward,
+                          color: Colors.black,
+                          size: 20,
+                        ),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.arrow_forward,
-                      color: Colors.black,
-                      size: 20,
-                    ),
-                  ),
-                ),
+                  );
+                },
               ),
             ],
           ),
@@ -1869,10 +1964,58 @@ class _ImageEditPageState extends State<ImageEditPage> {
     );
   }
 
-  
+  Widget _buildLoadingVersionPlaceholder() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black12, width: 0.5),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Animated Pulse Effect
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.3, end: 0.6),
+            duration: const Duration(milliseconds: 800),
+            builder: (context, opacity, child) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(opacity),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              );
+            },
+            onEnd:
+                () {}, // Handled by repetition logic if using AnimationController
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Generating...",
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-
 
 class _DashedRectPainter extends CustomPainter {
   @override

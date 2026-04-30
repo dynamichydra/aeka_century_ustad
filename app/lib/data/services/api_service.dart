@@ -127,6 +127,14 @@ class ApiService {
     required int x,
     required int y,
   }) async {
+    // Ensure files exist before proceeding
+    if (!await roomImage.exists()) {
+      throw Exception('Room image file does not exist at path: ${roomImage.path}');
+    }
+    if (!await patternImage.exists()) {
+      throw Exception('Pattern image file does not exist at path: ${patternImage.path}');
+    }
+
     String roomFileName = roomImage.path.split('/').last;
     String patternFileName = patternImage.path.split('/').last;
 
@@ -139,19 +147,21 @@ class ApiService {
         patternImage.path,
         filename: patternFileName,
       ),
-      "x": x,
-      "y": y,
+      "x": x.toString(),
+      "y": y.toString(),
     });
 
     debugPrint('🚀 API_LOG: POST ${TApiConstants.tryOn}');
     debugPrint('📦 API_LOG: FormData - x: $x, y: $y');
-    debugPrint('📦 API_LOG: Room File: $roomFileName');
-    debugPrint('📦 API_LOG: Pattern File: $patternFileName');
+    debugPrint('📦 API_LOG: Files count: 3');
 
     final response = await _dio.post(
       TApiConstants.tryOn,
       data: formData,
-      options: Options(responseType: ResponseType.bytes),
+      options: Options(
+        responseType: ResponseType.bytes,
+        contentType: 'multipart/form-data',
+      ),
     );
 
     debugPrint('✅ API_LOG: Response Status: ${response.statusCode}');

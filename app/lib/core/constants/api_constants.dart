@@ -11,7 +11,7 @@ class TApiConstants {
   static const String upload = '/upload';
   static const String searchSimilar = '/search/similar';
   static const String searchText = '/search/text';
-  static const String tryOn = '/tryon';
+  static const String tryOn = 'https://ustad-api-507497848998.asia-south1.run.app/tryon';
 
   // Dummy endpoints (legacy)
   static const String products = '/products';
