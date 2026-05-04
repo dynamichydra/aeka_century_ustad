@@ -67,8 +67,8 @@
     {
       "id": 35,
       "name": "Sofa",
-      "image": "images/furniture/sofa_2_seater.png",
-      "optional_all_img": "images/furniture/sofa_2_seater.png",
+      "image": "transaparent/Living_room/Living_room_sub_categories/sofa.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/sofa.png",
       "parent_id": 1,
       "preview_type": "normal",
       "sort_order": 7,
@@ -227,7 +227,7 @@
     {
       "id": 21,
       "name": "Bookshelves",
-      "image": "DECO/SENZURA/Storage units.jpg",
+      "image": "transaparent/Study/subcategories/Bookshelves.png",
       "optional_all_img": "transaparent/Study/subcategories/Bookshelves.png",
       "parent_id": 19,
       "preview_type": "normal",
@@ -237,8 +237,8 @@
     {
       "id": 39,
       "name": "Chair",
-      "image": "images/furniture/designer_chair.png",
-      "optional_all_img": "images/furniture/designer_chair.png",
+      "image": "transaparent/Study/subcategories/study_chair.png",
+      "optional_all_img": "transaparent/Study/subcategories/study_chair.png",
       "parent_id": 19,
       "preview_type": "normal",
       "sort_order": 3
