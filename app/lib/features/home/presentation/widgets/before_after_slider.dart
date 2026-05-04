@@ -46,19 +46,27 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
               ),
 
               // BEFORE image (clipped)
-              ClipRect(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: _sliderPosition,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.asset(
-                      widget.beforeImage,
-                      width: width,
-                      height: widget.height,
-                      fit: BoxFit.cover,
+              SizedBox(
+                width: width,
+                height: widget.height,
+                child: Stack(
+                  children: [
+                    ClipRect(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: _sliderPosition,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.asset(
+                            widget.beforeImage,
+                            width: width,
+                            height: widget.height,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
 
@@ -98,15 +106,16 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
                           )
                         ],
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
-                            Icons.arrow_back_ios,
-                            size: 8,
-                          ),const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 8,
+                          Icon(
+                            Icons.chevron_left,
+                            size: 14,
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 14,
                           ),
                         ],
                       ),

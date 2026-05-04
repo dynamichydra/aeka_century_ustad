@@ -695,6 +695,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       Center(
                         child: Text(
                           "Lets design Furniture with Century Decor",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 16,
@@ -710,7 +711,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             homeCubit.setExterior(val);
                             if (val) {
                               setState(() {
-                                _selectedCategory = "Exterior Building Material";
+                                _selectedCategory = null;
                                 _selectedSubCategory = "All";
                                 _selectedNestedSubCategory = "";
                               });
@@ -718,10 +719,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context.read<HomeCubit>().clearSearch();
                               context
                                   .read<ProductsCubit>()
-                                  .fetchProductsByCategory(
-                                    "Exterior Building Material",
-                                    isInterior: false,
-                                  );
+                                  .fetchFeaturedProducts();
                             } else {
                               homeCubit.setSelectedIndex(0);
                               setState(() {
@@ -966,7 +964,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                               ? Icons.grid_view
                                               : Icons.view_list,
                                           size: 16,
-                                          color: Colors.black87,
+                                          color: const Color(0xFF898888),
                                         ),
                                       ),
                                     ),

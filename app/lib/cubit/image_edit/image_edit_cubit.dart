@@ -61,7 +61,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
       debugPrint('🎨 AI_TRYON_LOG: Starting applyTextureSelected');
       debugPrint('🖼️ AI_TRYON_LOG: Room Image Path: ${roomImage.path}');
       debugPrint('🧪 AI_TRYON_LOG: Texture URL: $textureUrl');
-      debugPrint('📍 AI_TRYON_LOG: Coordinates: $coordinate');
+
       
       final tempDir = await Directory.systemTemp.createTemp();
       final patternFile = File('${tempDir.path}/pattern_image.png');

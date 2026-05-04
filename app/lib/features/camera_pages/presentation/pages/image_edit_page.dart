@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:century_ai/db/db_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -72,12 +74,76 @@ class _ImageEditPageState extends State<ImageEditPage> {
   // Dummy versions fallback if no network edits yet
 
   // Dynamic Tap Variables
-  Map<String, dynamic> _lastTapCoordinate = {"x": 423, "y": 12};
+  Map<String, dynamic>? _lastTapCoordinate;
+  Offset? _tapPosForDot;
   bool _isShortTap = true;
   bool _isLongTap = false;
 
   final TransformationController _transformationController =
       TransformationController();
+
+  double? _originalImageWidth;
+  double? _originalImageHeight;
+
+  Future<void> _getImageDimensions() async {
+    try {
+      final Completer<ui.Image> completer = Completer();
+      final ImageStream stream =
+          FileImage(widget.imageFile).resolve(ImageConfiguration.empty);
+      stream.addListener(
+        ImageStreamListener((ImageInfo info, bool _) {
+          if (!completer.isCompleted) {
+            completer.complete(info.image);
+          }
+        }),
+      );
+      final ui.Image image = await completer.future;
+      if (mounted) {
+        setState(() {
+          _originalImageWidth = image.width.toDouble();
+          _originalImageHeight = image.height.toDouble();
+        });
+        debugPrint(
+          '📸 Original Image Size: ${_originalImageWidth}x${_originalImageHeight}',
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error getting image dimensions: $e');
+    }
+  }
+
+  Offset _mapLocalToOriginal(Offset localPos, Size viewSize) {
+    if (_originalImageWidth == null || _originalImageHeight == null) {
+      return localPos;
+    }
+
+    final double imageWidth = _originalImageWidth!;
+    final double imageHeight = _originalImageHeight!;
+    final double viewWidth = viewSize.width;
+    final double viewHeight = viewSize.height;
+
+    // BoxFit.cover logic: it scales the image to the smallest scale that covers the view
+    final double scale =
+        (viewWidth / imageWidth > viewHeight / imageHeight)
+            ? viewWidth / imageWidth
+            : viewHeight / imageHeight;
+
+    final double scaledWidth = imageWidth * scale;
+    final double scaledHeight = imageHeight * scale;
+
+    // Offset is usually centered
+    final double offsetX = (viewWidth - scaledWidth) / 2;
+    final double offsetY = (viewHeight - scaledHeight) / 2;
+
+    final double mappedX = (localPos.dx - offsetX) / scale;
+    final double mappedY = (localPos.dy - offsetY) / scale;
+
+    // Clamp to image boundaries
+    return Offset(
+      mappedX.clamp(0, imageWidth),
+      mappedY.clamp(0, imageHeight),
+    );
+  }
 
   void _zoomIn() {
     final double currentScale = _transformationController.value
@@ -132,6 +198,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   @override
   void initState() {
     super.initState();
+    _getImageDimensions();
     getLamCategory();
     if (widget.pickedColor != null) {
       final hex =
@@ -698,7 +765,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             after: _userEdits[selectedIndices[0]].editedImageUrl,
             isAfterNetwork: true,
             position: _sliderPosition,
-            onChanged: (val) => setState(() => _sliderPosition = val),
+            onChanged: (val) => _sliderPosition = val,
           ),
           Positioned(
             bottom: 24,
@@ -968,21 +1035,43 @@ class _ImageEditPageState extends State<ImageEditPage> {
             boundaryMargin: const EdgeInsets.all(20),
             child: GestureDetector(
               onTapDown: (details) {
+                final viewSize = Size(
+                  MediaQuery.of(context).size.width,
+                  MediaQuery.of(context).size.height * 0.40,
+                );
+                final mappedPos = _mapLocalToOriginal(
+                  details.localPosition,
+                  viewSize,
+                );
+
+                debugPrint(
+                  '📍 Coordinate Selected (Tap): Screen(x: ${details.localPosition.dx.toStringAsFixed(1)}, y: ${details.localPosition.dy.toStringAsFixed(1)}) -> Image(x: ${mappedPos.dx.toInt()}, y: ${mappedPos.dy.toInt()})',
+                );
+
                 setState(() {
-                  _lastTapCoordinate = {
-                    "x": details.localPosition.dx,
-                    "y": details.localPosition.dy,
-                  };
+                  _lastTapCoordinate = {"x": mappedPos.dx, "y": mappedPos.dy};
+                  _tapPosForDot = details.localPosition;
                   _isShortTap = true;
                   _isLongTap = false;
                 });
               },
               onLongPressStart: (details) {
+                final viewSize = Size(
+                  MediaQuery.of(context).size.width,
+                  MediaQuery.of(context).size.height * 0.40,
+                );
+                final mappedPos = _mapLocalToOriginal(
+                  details.localPosition,
+                  viewSize,
+                );
+
+                debugPrint(
+                  '📍 Coordinate Selected (Long Press): Screen(x: ${details.localPosition.dx.toStringAsFixed(1)}, y: ${details.localPosition.dy.toStringAsFixed(1)}) -> Image(x: ${mappedPos.dx.toInt()}, y: ${mappedPos.dy.toInt()})',
+                );
+
                 setState(() {
-                  _lastTapCoordinate = {
-                    "x": details.localPosition.dx,
-                    "y": details.localPosition.dy,
-                  };
+                  _lastTapCoordinate = {"x": mappedPos.dx, "y": mappedPos.dy};
+                  _tapPosForDot = details.localPosition;
                   _isShortTap = false;
                   _isLongTap = true;
                 });
@@ -1025,6 +1114,50 @@ class _ImageEditPageState extends State<ImageEditPage> {
                             fit: BoxFit.cover,
                             gaplessPlayback: true,
                           ),
+
+                  // Selected Coordinate Dot
+                  if (_tapPosForDot != null)
+                    Positioned(
+                      left: _tapPosForDot!.dx - 12,
+                      top: _tapPosForDot!.dy - 12,
+                      child: IgnorePointer(
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 4,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
 
                   // Dashed Bounding Boxes (Simulated Positions)
                   _buildDashedBox(top: 40, left: 100, width: 80, height: 100),
@@ -1729,6 +1862,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
       return;
     }
 
+    if (_lastTapCoordinate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please tap on the image to select a location first."),
+          backgroundColor: Colors.black87,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     final textureUrl =
         _selectedTexture!["coverImage"]?.toString() ?? "unknown_url";
 
@@ -1743,7 +1887,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     context.read<ImageEditCubit>().applyTextureSelected(
       roomImage: baseImage,
       textureUrl: textureUrl,
-      coordinate: _lastTapCoordinate,
+      coordinate: _lastTapCoordinate!,
       isShortTap: _isShortTap,
       isLongTap: _isLongTap,
     );

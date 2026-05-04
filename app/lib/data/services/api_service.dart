@@ -152,7 +152,7 @@ class ApiService {
     });
 
     debugPrint('🚀 API_LOG: POST ${TApiConstants.tryOn}');
-    debugPrint('📦 API_LOG: FormData - x: $x, y: $y');
+
     debugPrint('📦 API_LOG: Files count: 3');
 
     final response = await _dio.post(

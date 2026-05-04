@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
-class ImageCompareSlider extends StatelessWidget {
+class ImageCompareSlider extends StatefulWidget {
   final dynamic before;
   final dynamic after;
   final double height;
@@ -19,9 +19,36 @@ class ImageCompareSlider extends StatelessWidget {
     this.isAfterNetwork = false,
   });
 
+  @override
+  State<ImageCompareSlider> createState() => _ImageCompareSliderState();
+}
+
+class _ImageCompareSliderState extends State<ImageCompareSlider> {
+  late ValueNotifier<double> _positionNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    _positionNotifier = ValueNotifier(widget.position);
+  }
+
+  @override
+  void didUpdateWidget(ImageCompareSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.position != widget.position) {
+      _positionNotifier.value = widget.position;
+    }
+  }
+
+  @override
+  void dispose() {
+    _positionNotifier.dispose();
+    super.dispose();
+  }
+
   Widget _buildImage(dynamic source, double width, double height, {bool forceNetwork = false}) {
     if (source is File) {
-      return Image.file(source, width: width, height: height, fit: BoxFit.cover);
+      return Image.file(source, width: width, height: height, fit: BoxFit.cover, gaplessPlayback: true);
     } else if (source is String) {
       if (forceNetwork || source.startsWith('http')) {
         return Image.network(
@@ -29,13 +56,14 @@ class ImageCompareSlider extends StatelessWidget {
           width: width,
           height: height,
           fit: BoxFit.cover,
+          gaplessPlayback: true,
           errorBuilder: (context, error, stackTrace) => Container(
             color: Colors.grey[200],
             child: const Icon(Icons.error_outline),
           ),
         );
       }
-      return Image.asset(source, width: width, height: height, fit: BoxFit.cover);
+      return Image.asset(source, width: width, height: height, fit: BoxFit.cover, gaplessPlayback: true);
     }
     return const SizedBox();
   }
@@ -45,50 +73,71 @@ class ImageCompareSlider extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final actualHeight = (height != 360) ? height : constraints.maxHeight;
+        final actualHeight = (widget.height != 360) ? widget.height : constraints.maxHeight;
 
         return GestureDetector(
           onHorizontalDragUpdate: (details) {
             if (width == 0) return;
-            final newPos = (position + details.delta.dx / width).clamp(0.0, 1.0);
-            onChanged(newPos);
+            final newPos = (_positionNotifier.value + details.delta.dx / width).clamp(0.0, 1.0);
+            _positionNotifier.value = newPos;
+            widget.onChanged(newPos);
           },
           child: Stack(
             children: [
               /// AFTER image (background)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(0),
-                child: _buildImage(after, width, actualHeight, forceNetwork: isAfterNetwork),
-              ),
-
-              /// BEFORE image (clipped)
-              ClipRect(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: position,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(0),
-                    child: _buildImage(before, width, actualHeight),
-                  ),
+              RepaintBoundary(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(0),
+                  child: _buildImage(widget.after, width, actualHeight, forceNetwork: widget.isAfterNetwork),
                 ),
               ),
 
-              /// DIVIDER
-              Positioned(
-                left: width * position - 1,
-                top: 0,
-                bottom: 0,
-                child: CustomPaint(
-                  size: Size(2, actualHeight),
-                  painter: DashedLinePainter(),
-                ),
-              ),
+              ValueListenableBuilder<double>(
+                valueListenable: _positionNotifier,
+                builder: (context, position, child) {
+                  return SizedBox(
+                    width: width,
+                    height: actualHeight,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        /// BEFORE image (clipped)
+                        ClipRect(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: position,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(0),
+                              child: _buildImage(
+                                widget.before,
+                                width,
+                                actualHeight,
+                              ),
+                            ),
+                          ),
+                        ),
 
-              /// HANDLE
-              Positioned(
-                left: width * position - 18,
-                top: actualHeight / 2 - 18,
-                child: const _SliderHandle(),
+                        /// DIVIDER
+                        Positioned(
+                          left: width * position - 1,
+                          top: 0,
+                          bottom: 0,
+                          child: CustomPaint(
+                            size: Size(2, actualHeight),
+                            painter: DashedLinePainter(),
+                          ),
+                        ),
+
+                        /// HANDLE
+                        Positioned(
+                          left: width * position - 18,
+                          top: actualHeight / 2 - 18,
+                          child: const _SliderHandle(),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -161,12 +210,12 @@ class _SliderHandle extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.arrow_back_ios,
-                size: 8,
+                Icons.chevron_left,
+                size: 14,
               ),
               Icon(
-                Icons.arrow_forward_ios,
-                size: 8,
+                Icons.chevron_right,
+                size: 14,
               ),
             ],
           ),

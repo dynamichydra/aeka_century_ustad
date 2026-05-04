@@ -545,21 +545,12 @@
     },
     {
       "id": 121,
-      "name": "Exterior Building Material",
+      "name": "Wall Panelling",
       "image": "DECO/SENZURA/wall_pannling.jpg",
       "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Wall_panelling)_1.png",
       "parent_id": null,
       "preview_type": "normal",
       "sort_order": 7
-    },
-    {
-      "id": 123,
-      "name": "Wardrobe",
-      "image": "DECO/SENZURA/iStock-590260798.jpg",
-      "optional_all_img": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png",
-      "parent_id": null,
-      "preview_type": "normal",
-      "sort_order": 8
     },
     {
       "id": 124,

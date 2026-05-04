@@ -173,7 +173,7 @@ class _CompareImagePageState extends State<CompareImagePage> {
             before: widget.originalImage,
             after: _savedVersions[_selectedIndices[0]].image,
             position: _sliderPosition,
-            onChanged: (val) => setState(() => _sliderPosition = val),
+            onChanged: (val) => _sliderPosition = val,
           ),
           // ONLY Edit Button in Bottom Right for Slider mode
           Positioned(
