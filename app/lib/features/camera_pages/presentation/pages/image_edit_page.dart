@@ -1245,7 +1245,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             ),
             const SizedBox(height: 16),
             const Text(
-              "GENERTING...",
+              "GENERATING...",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,
