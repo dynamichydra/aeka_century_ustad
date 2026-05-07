@@ -7,7 +7,8 @@ import 'package:century_ai/db/models/selected_image_data.dart';
 class SelectedImagesRepository {
   static const String tableName = 'selected_images';
 
-  static const String _createTableScript = '''
+  static const String _createTableScript =
+      '''
     CREATE TABLE IF NOT EXISTS $tableName (
       product_id TEXT PRIMARY KEY,
       image_data BLOB NOT NULL,
@@ -20,9 +21,7 @@ class SelectedImagesRepository {
 
   /// Initialize the selected_images table
   static Future<void> initializeTable() async {
-    await DbCore.ensureTablesExist({
-      tableName: _createTableScript,
-    });
+    await DbCore.ensureTablesExist({tableName: _createTableScript});
   }
 
   /// Save selected image to database once.
@@ -71,11 +70,7 @@ class SelectedImagesRepository {
 
     print('Deleting image with ID: $productId');
 
-    await db.delete(
-      tableName,
-      where: 'product_id = ?',
-      whereArgs: [productId],
-    );
+    await db.delete(tableName, where: 'product_id = ?', whereArgs: [productId]);
 
     print('Image deleted successfully');
   }
@@ -106,7 +101,9 @@ class SelectedImagesRepository {
   static Future<int> getImageCount() async {
     final db = await DbCore.database;
 
-    final result = await db.rawQuery('SELECT COUNT(*) as count FROM $tableName');
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM $tableName',
+    );
 
     final count = Sqflite.firstIntValue(result) ?? 0;
 

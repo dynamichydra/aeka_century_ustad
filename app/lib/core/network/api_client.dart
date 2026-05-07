@@ -1,12 +1,9 @@
 import 'package:dio/dio.dart';
 
 class ApiClient {
+  static const String baseUrl = "https://designnavigator.centuryply.com/api/";
 
-  static const String baseUrl =
-      "https://dummynavigator.centuryply.com/api";
-
-  static const String token =
-      "h+jN0UoxQfElOH2ZvP1srXJWm29EjpQgTCbCpiu3O84=";
+  static const String token = "JYKcj98luq3W0FFtKBFpU1QHGkI8J6CEQkah2Y-BAEA";
 
   late Dio dio;
 
@@ -42,10 +39,7 @@ class ApiClient {
     );
   }
 
-  Future<dynamic> post(
-      String endpoint,
-      Map<String, dynamic> data,
-      ) async {
+  Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
     final response = await dio.post(endpoint, data: data);
     return response.data;
   }

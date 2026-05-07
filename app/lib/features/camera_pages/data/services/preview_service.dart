@@ -21,7 +21,7 @@ class PreviewService {
     };
 
     print("Request Parameters: $params");
-    
+
     // try {
     //   final response = await _dio.post(
     //     'my api endpoint', // Dummy endpoint
@@ -30,7 +30,7 @@ class PreviewService {
     // } catch (e) {
     //   debugPrint("API Call skipped/failed (Expected for dummy): $e");
     // }
-    
+
     debugPrint("-----------------------------------");
   }
 }

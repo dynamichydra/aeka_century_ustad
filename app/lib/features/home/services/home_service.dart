@@ -19,7 +19,6 @@ class HomeService {
       'liked': isLiked,
       'category': category,
     };
-    
 
     print("Request Parameters: $params");
     // try {

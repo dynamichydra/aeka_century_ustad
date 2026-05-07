@@ -96,33 +96,31 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
       final nestedSubCategories =
           (rootData['nested_subcategories'] as Map?)?.cast<String, dynamic>() ??
-              <String, dynamic>{};
+          <String, dynamic>{};
       final parsed =
-          <
-            int,
-            Map<String, Map<String, Map<String, List<ProductImageModel>>>>
-          >{
+          <int, Map<String, Map<String, Map<String, List<ProductImageModel>>>>>{
             0: {},
             1: {},
           };
 
       void parseTab(List<dynamic> flatItems, int tabIndex) {
-        final sorted = List<Map<String, dynamic>>.from(
-          flatItems.whereType<Map>().map((e) => e.cast<String, dynamic>()),
-        )..sort((a, b) {
-            final aParent = a['parent_id'];
-            final bParent = b['parent_id'];
-            if (aParent == null && bParent != null) return -1;
-            if (aParent != null && bParent == null) return 1;
-            if (aParent == null && bParent == null) {
-              final aOrder = (a['sort_order'] as num?)?.toInt() ?? 9999;
-              final bOrder = (b['sort_order'] as num?)?.toInt() ?? 9999;
-              if (aOrder != bOrder) return aOrder.compareTo(bOrder);
-            }
-            return ((a['id'] as num?)?.toInt() ?? 0).compareTo(
-              (b['id'] as num?)?.toInt() ?? 0,
-            );
-          });
+        final sorted =
+            List<Map<String, dynamic>>.from(
+              flatItems.whereType<Map>().map((e) => e.cast<String, dynamic>()),
+            )..sort((a, b) {
+              final aParent = a['parent_id'];
+              final bParent = b['parent_id'];
+              if (aParent == null && bParent != null) return -1;
+              if (aParent != null && bParent == null) return 1;
+              if (aParent == null && bParent == null) {
+                final aOrder = (a['sort_order'] as num?)?.toInt() ?? 9999;
+                final bOrder = (b['sort_order'] as num?)?.toInt() ?? 9999;
+                if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+              }
+              return ((a['id'] as num?)?.toInt() ?? 0).compareTo(
+                (b['id'] as num?)?.toInt() ?? 0,
+              );
+            });
 
         final parentById = <int, Map<String, dynamic>>{};
         final childrenByParent = <int, List<Map<String, dynamic>>>{};
@@ -150,10 +148,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
         for (final parent in orderedParents) {
           final category = (parent['name'] ?? 'Unknown').toString();
-          final rawCategoryIcon =
-              (parent['image'] ?? '')
-                  .toString()
-                  .trim();
+          final rawCategoryIcon = (parent['image'] ?? '').toString().trim();
           final rawCategoryAllIcon =
               (parent['optional_all_img'] ?? parent['image'] ?? '')
                   .toString()
@@ -177,7 +172,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
           final categoryId = (parent['id'] as num?)?.toInt();
           if (categoryId == null) continue;
-          final children = childrenByParent[categoryId] ?? <Map<String, dynamic>>[];
+          final children =
+              childrenByParent[categoryId] ?? <Map<String, dynamic>>[];
           children.sort((a, b) {
             final aOrder = (a['sort_order'] as num?)?.toInt() ?? 9999;
             final bOrder = (b['sort_order'] as num?)?.toInt() ?? 9999;
@@ -190,10 +186,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           final subCatsMap = <String, Map<String, List<ProductImageModel>>>{};
           for (final sub in children) {
             final subCat = (sub['name'] ?? 'General').toString();
-            final rawSubIcon =
-                (sub['image'] ?? '')
-                    .toString()
-                    .trim();
+            final rawSubIcon = (sub['image'] ?? '').toString().trim();
             final subIcon = rawSubIcon.isEmpty
                 ? ""
                 : (rawSubIcon.startsWith('assets/')
@@ -212,7 +205,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 (nestedSubCategories[nestedKey] as List).isNotEmpty) {
               final nestedGroups = <String, List<ProductImageModel>>{};
               final nestedNames = List<String>.from(
-                (nestedSubCategories[nestedKey] as List).map((e) => e.toString()),
+                (nestedSubCategories[nestedKey] as List).map(
+                  (e) => e.toString(),
+                ),
               );
               for (final nestedName in nestedNames) {
                 nestedGroups[nestedName] = [
@@ -292,9 +287,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     }
   }
 
-  List<ProductImageModel> _resolveQuickProducts(
-    int selectedIndex,
-  ) {
+  List<ProductImageModel> _resolveQuickProducts(int selectedIndex) {
     final currentTabData = _productsByTabCategorySub[selectedIndex];
     if (currentTabData == null || currentTabData.isEmpty) {
       return [];
@@ -387,7 +380,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     return allProducts[stableIndex].image;
   }
 
-
   Future<void> logDb() async {
     final db = await DbCore.database;
 
@@ -452,9 +444,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     } catch (e) {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error processing image: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
       }
     }
   }
@@ -520,9 +512,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     final ProductsState productsState = context.watch<ProductsCubit>().state;
     final List<ProductImageModel> displayProducts = productsState.products;
-    final quickProducts = _resolveQuickProducts(
-      homeState.selectedIndex,
-    );
+    final quickProducts = _resolveQuickProducts(homeState.selectedIndex);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -541,8 +531,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   _selectedNestedSubCategory = "";
                 });
                 context.read<HomeCubit>().clearSearch();
-                // Fetch featured products
-                return context.read<ProductsCubit>().fetchFeaturedProducts();
+                return context
+                    .read<ProductsCubit>()
+                    .fetchFeaturedProducts(isExterior: homeState.isExterior);
               },
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -582,7 +573,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context.read<HomeCubit>().clearSearch();
                               context
                                   .read<ProductsCubit>()
-                                  .fetchFeaturedProducts();
+                                  .fetchFeaturedProducts(isExterior: true);
                             } else {
                               homeCubit.setSelectedIndex(0);
                               setState(() {
@@ -594,7 +585,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context.read<HomeCubit>().clearSearch();
                               context
                                   .read<ProductsCubit>()
-                                  .fetchFeaturedProducts();
+                                  .fetchFeaturedProducts(isExterior: false);
                             }
                           },
                         ),
@@ -649,7 +640,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               _selectedNestedSubCategory = "";
 
                               // Trigger search API if no category matched
-                              context.read<ProductsCubit>().searchProducts(query);
+                              context.read<ProductsCubit>().searchProducts(
+                                query,
+                              );
                             }
                           });
                         },
@@ -689,7 +682,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 child: TabBar(
                                   isScrollable: true,
                                   padding: EdgeInsets.zero,
-                                  labelPadding: const EdgeInsets.only(right: 16),
+                                  labelPadding: const EdgeInsets.only(
+                                    right: 16,
+                                  ),
                                   tabAlignment: TabAlignment.start,
                                   indicator: const UnderlineTabIndicator(
                                     borderSide: BorderSide(
@@ -713,10 +708,18 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                   ],
                                   onTap: (index) {
                                     homeCubit.setSelectedIndex(index);
-                                    // Fetch featured or generic products for the new tab
+                                    setState(() {
+                                      _selectedCategory = null;
+                                      _selectedSubCategory = "All";
+                                      _selectedNestedSubCategory = "";
+                                    });
+                                    _searchController.clear();
+                                    context.read<HomeCubit>().clearSearch();
                                     context
                                         .read<ProductsCubit>()
-                                        .fetchFeaturedProducts();
+                                        .fetchFeaturedProducts(
+                                          isExterior: false,
+                                        );
                                   },
                                 ),
                               ),
@@ -851,9 +854,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                   padding: const EdgeInsets.only(right: 12),
                                   child: CircularIconItem(
                                     label: product.name,
-                                    isSelected: _selectedCategory == product.name,
+                                    isSelected:
+                                        _selectedCategory == product.name,
                                     useUnderline: false,
-                                    selectedBorderColor: const Color(0xFFEEEEEE),
+                                    selectedBorderColor: const Color(
+                                      0xFFEEEEEE,
+                                    ),
                                     onTap: () {
                                       // Tap again to deselect; tap new to select
                                       if (_selectedCategory == product.name) {

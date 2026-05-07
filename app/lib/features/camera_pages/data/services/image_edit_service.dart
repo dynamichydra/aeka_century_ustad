@@ -50,7 +50,7 @@ class ImageEditService {
   }) async {
     // Replace with actual endpoint once available
 
-print("--- ImageEditService: Sending Request ---");
+    print("--- ImageEditService: Sending Request ---");
     final params = {
       "selected_id": selectedId,
       "coordinate": coordinate,

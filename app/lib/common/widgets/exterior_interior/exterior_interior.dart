@@ -13,7 +13,10 @@ class ExteriorInteriorSwitchSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => onChanged(!value),
+      onTap: () {
+        onChanged(!value);
+        print('value = $value');
+      },
       child: Container(
         width: 140, // smaller width to fit row
         height: 36, // smaller height

@@ -88,8 +88,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
   Future<void> _getImageDimensions() async {
     try {
       final Completer<ui.Image> completer = Completer();
-      final ImageStream stream =
-          FileImage(widget.imageFile).resolve(ImageConfiguration.empty);
+      final ImageStream stream = FileImage(
+        widget.imageFile,
+      ).resolve(ImageConfiguration.empty);
       stream.addListener(
         ImageStreamListener((ImageInfo info, bool _) {
           if (!completer.isCompleted) {
@@ -123,10 +124,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
     final double viewHeight = viewSize.height;
 
     // BoxFit.cover logic: it scales the image to the smallest scale that covers the view
-    final double scale =
-        (viewWidth / imageWidth > viewHeight / imageHeight)
-            ? viewWidth / imageWidth
-            : viewHeight / imageHeight;
+    final double scale = (viewWidth / imageWidth > viewHeight / imageHeight)
+        ? viewWidth / imageWidth
+        : viewHeight / imageHeight;
 
     final double scaledWidth = imageWidth * scale;
     final double scaledHeight = imageHeight * scale;
@@ -139,10 +139,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     final double mappedY = (localPos.dy - offsetY) / scale;
 
     // Clamp to image boundaries
-    return Offset(
-      mappedX.clamp(0, imageWidth),
-      mappedY.clamp(0, imageHeight),
-    );
+    return Offset(mappedX.clamp(0, imageWidth), mappedY.clamp(0, imageHeight));
   }
 
   void _zoomIn() {

@@ -3,24 +3,31 @@ import 'package:dio/dio.dart';
 import '../models/edit_record.dart';
 
 class UserEditsService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'https://century-ustad-api-507497848998.asia-south1.run.app',
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 15),
-  ));
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: 'https://century-ustad-api-507497848998.asia-south1.run.app',
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+    ),
+  );
 
   UserEditsService() {
-    _dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-      logPrint: (obj) => print('USTAD_API: $obj'),
-    ));
+    _dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        logPrint: (obj) => print('USTAD_API: $obj'),
+      ),
+    );
   }
 
   /// Fetch all edits for a specific owner
   Future<List<EditRecord>> getEdits(String email) async {
     try {
-      final response = await _dio.get('/me/edits', queryParameters: {'owner': email});
+      final response = await _dio.get(
+        '/me/edits',
+        queryParameters: {'owner': email},
+      );
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         return data.map((e) => EditRecord.fromJson(e)).toList();

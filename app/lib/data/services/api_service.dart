@@ -36,9 +36,11 @@ class ApiService {
     int limit = 10,
     int offset = 0,
   }) async {
+    final queryParams = {'limit': limit, 'offset': offset};
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.featuredBrowse} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.featuredBrowse,
-      queryParameters: {'limit': limit, 'offset': offset},
+      queryParameters: queryParams,
     );
     return response.data as List<dynamic>;
   }
@@ -48,9 +50,12 @@ class ApiService {
     int limit = 20,
     int offset = 0,
   }) async {
+    final url = '${TApiConstants.roomBrowse}/$room';
+    final queryParams = {'limit': limit, 'offset': offset};
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}$url | Params: $queryParams');
     final response = await _dio.get(
-      '${TApiConstants.roomBrowse}/$room',
-      queryParameters: {'limit': limit, 'offset': offset},
+      url,
+      queryParameters: queryParams,
     );
     return response.data as List<dynamic>;
   }
@@ -60,9 +65,12 @@ class ApiService {
     int limit = 20,
     int offset = 0,
   }) async {
+    final url = '${TApiConstants.groupBrowse}/$group';
+    final queryParams = {'limit': limit, 'offset': offset};
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}$url | Params: $queryParams');
     final response = await _dio.get(
-      '${TApiConstants.groupBrowse}/$group',
-      queryParameters: {'limit': limit, 'offset': offset},
+      url,
+      queryParameters: queryParams,
     );
     return response.data as List<dynamic>;
   }
@@ -77,8 +85,10 @@ class ApiService {
     if (subCategory != null && subCategory != 'All' && subCategory.isNotEmpty) {
       queryParams['subCategory'] = subCategory;
     }
+    final url = '${TApiConstants.productBrowse}/$product';
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}$url | Params: $queryParams');
     final response = await _dio.get(
-      '${TApiConstants.productBrowse}/$product',
+      url,
       queryParameters: queryParams,
     );
     return response.data as List<dynamic>;
@@ -90,6 +100,7 @@ class ApiService {
       "file": await MultipartFile.fromFile(file.path, filename: fileName),
     });
 
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.upload} | POST multipart/form-data (File: $fileName)');
     final response = await _dio.post(TApiConstants.upload, data: formData);
 
     return response.data;
@@ -101,9 +112,11 @@ class ApiService {
     int limit = 20,
     int offset = 0,
   }) async {
+    final queryParams = {'q': query, 'limit': limit, 'offset': offset};
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.searchText} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.searchText,
-      queryParameters: {'q': query, 'limit': limit, 'offset': offset},
+      queryParameters: queryParams,
     );
     return response.data as List<dynamic>;
   }
@@ -114,6 +127,7 @@ class ApiService {
       "file": await MultipartFile.fromFile(file.path, filename: fileName),
     });
 
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.searchSimilar} | POST multipart/form-data');
     final response = await _dio.post(
       TApiConstants.searchSimilar,
       data: formData,
@@ -151,9 +165,7 @@ class ApiService {
       "y": y.toString(),
     });
 
-    debugPrint('🚀 API_LOG: POST ${TApiConstants.tryOn}');
-
-    debugPrint('📦 API_LOG: Files count: 3');
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.tryOn} | POST Try-On (Room: $roomFileName, Pattern: $patternFileName, X: $x, Y: $y)');
 
     final response = await _dio.post(
       TApiConstants.tryOn,
@@ -221,9 +233,11 @@ class ApiService {
     int skip = 0,
     int? page,
   }) async {
+    final queryParams = {'limit': limit, 'skip': skip};
+    debugPrint('🛒 FETCH_PRODUCT (Legacy): ${TApiConstants.baseUrl}${TApiConstants.products} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.products,
-      queryParameters: {'limit': limit, 'skip': skip},
+      queryParameters: queryParams,
     );
     final data = (response.data as Map).cast<String, dynamic>();
     return (data['products'] as List?) ?? <dynamic>[];
@@ -236,9 +250,11 @@ class ApiService {
   }) async {
     // dummyjson uses skip+limit pagination, not page directly.
     final effectiveSkip = page != null && page > 0 ? (page - 1) * limit : skip;
+    final queryParams = {'limit': limit, 'skip': effectiveSkip};
+    debugPrint('🛒 FETCH_PRODUCT (Legacy): ${TApiConstants.baseUrl}${TApiConstants.products} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.products,
-      queryParameters: {'limit': limit, 'skip': effectiveSkip},
+      queryParameters: queryParams,
     );
     return (response.data as Map).cast<String, dynamic>();
   }
@@ -247,9 +263,11 @@ class ApiService {
     int limit = 20,
     int page = 1,
   }) async {
+    final queryParams = {'limit': limit, 'skip': (page - 1) * limit};
+    debugPrint('🛒 FETCH_PRODUCT (Legacy): ${TApiConstants.baseUrl}${TApiConstants.products} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.products,
-      queryParameters: {'limit': limit, 'skip': (page - 1) * limit},
+      queryParameters: queryParams,
     );
     final data = (response.data as Map).cast<String, dynamic>();
     return (data['products'] as List?) ?? <dynamic>[];

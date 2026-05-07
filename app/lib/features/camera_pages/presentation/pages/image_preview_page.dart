@@ -117,9 +117,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not load image: $e')));
       }
     }
   }
@@ -192,9 +192,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error downloading image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error downloading image: $e')));
       }
     }
   }
@@ -236,7 +236,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
     if (_currentAsset != null) {
       try {
-        final byteData = await DefaultAssetBundle.of(context).load(_currentAsset!);
+        final byteData = await DefaultAssetBundle.of(
+          context,
+        ).load(_currentAsset!);
         final tempDir = await getTemporaryDirectory();
         final fileName = _currentAsset!.replaceAll('/', '_');
         final file = File('${tempDir.path}/$fileName');
@@ -281,10 +283,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                 children: [
                   Stack(
                     children: [
-                      AspectRatio(
-                        aspectRatio: 1,
-                        child: _buildPreviewImage(),
-                      ),
+                      AspectRatio(aspectRatio: 1, child: _buildPreviewImage()),
                       if (!_isLoading && !_isImageLoading) ...[
                         _buildBoundingBox(
                           top: 50,
@@ -361,11 +360,11 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1.0,
-                          ),
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 1.0,
+                              ),
                           itemCount: 6,
                           itemBuilder: (context, index) => Shimmer.fromColors(
                             baseColor: Colors.grey[300]!,
@@ -388,7 +387,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       if (products.isEmpty) {
                         return const Padding(
                           padding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           child: Text(
                             'No related images to explore.',
                             style: TextStyle(
@@ -405,11 +406,11 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1.0,
-                        ),
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 1.0,
+                            ),
                         itemCount: products.length,
                         itemBuilder: (context, index) {
                           final product = products[index];
@@ -426,18 +427,24 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                                     width: double.infinity,
                                     loadingBuilder:
                                         (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Shimmer.fromColors(
-                                        baseColor: Colors.grey[300]!,
-                                        highlightColor: Colors.grey[100]!,
-                                        child: Container(color: Colors.white),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        Container(
-                                      color: Colors.grey[300],
-                                      child: const Icon(Icons.error_outline),
-                                    ),
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Shimmer.fromColors(
+                                            baseColor: Colors.grey[300]!,
+                                            highlightColor: Colors.grey[100]!,
+                                            child: Container(
+                                              color: Colors.white,
+                                            ),
+                                          );
+                                        },
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                              color: Colors.grey[300],
+                                              child: const Icon(
+                                                Icons.error_outline,
+                                              ),
+                                            ),
                                   ),
                                 ),
                                 if (product.isTrending)

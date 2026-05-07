@@ -14,12 +14,13 @@ class ProductsCubit extends Cubit<ProductsState> {
     return fetchFeaturedProducts(limit: limit);
   }
 
-  Future<void> fetchFeaturedProducts({int limit = 12}) async {
+  Future<void> fetchFeaturedProducts({int limit = 12, bool isExterior = false}) async {
     emit(state.copyWith(
       isLoading: true,
       errorMessage: null,
       offset: 0,
       limit: limit,
+      isInterior: !isExterior,
       clearQuery: true,
       clearCategory: true,
       clearRoom: true,
@@ -27,12 +28,20 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearProduct: true,
     ));
     try {
-      final products = await _productRepository.getFeaturedProducts(limit: limit, offset: 0);
+      final products = isExterior
+          ? await _productRepository.getProductsByProduct(
+              "Exterior Building Material",
+              limit: limit,
+              offset: 0)
+          : await _productRepository.getFeaturedProducts(
+              limit: limit, offset: 0);
       emit(state.copyWith(
         isLoading: false,
         products: products,
         hasMore: products.length >= limit,
         offset: products.length,
+        currentProduct: isExterior ? "Exterior Building Material" : null,
+        currentSubFilter: null,
       ));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString(), hasMore: false));
@@ -132,7 +141,7 @@ class ProductsCubit extends Cubit<ProductsState> {
 
   Future<void> searchProducts(String query, {int limit = 12}) async {
     if (query.trim().isEmpty) {
-      return fetchFeaturedProducts(limit: limit);
+      return fetchFeaturedProducts(limit: limit, isExterior: state.isInterior == false);
     }
     emit(state.copyWith(
       isLoading: true,

@@ -38,7 +38,10 @@ class DbCore {
         // Copy from asset
         try {
           ByteData data = await rootBundle.load("assets/db/app.db");
-          List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+          List<int> bytes = data.buffer.asUint8List(
+            data.offsetInBytes,
+            data.lengthInBytes,
+          );
 
           await File(path).writeAsBytes(bytes, flush: true);
           print("✨ [DbCore] Database copied successfully");
@@ -66,7 +69,9 @@ class DbCore {
     }
   }
 
-  static Future<void> ensureTablesExist(Map<String, String> tableCreationScripts) async {
+  static Future<void> ensureTablesExist(
+    Map<String, String> tableCreationScripts,
+  ) async {
     if (_database == null) {
       await database;
     }
