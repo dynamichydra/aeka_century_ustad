@@ -41,10 +41,12 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   bool _isImageLoading = false;
   bool _isLoading = false;
   final PreviewService _previewService = PreviewService();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _currentFile = widget.imageFile;
     _currentSelection = SelectedImageData(
       id: widget.image_id ?? _buildImageIdFromPath(widget.imageFile.path),
@@ -57,9 +59,32 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     _initializePreview();
   }
 
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _initializePreview() async {
     await _hydrateCurrentSelectionFromDb();
     await _loadExploreImages();
+    _refreshSimilarProducts();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      context.read<ProductsCubit>().loadMoreProducts();
+    }
+  }
+
+  void _refreshSimilarProducts() {
+    if (!mounted) return;
+    final id = _currentSelection?.id ?? widget.image_id;
+    if (id == null || id.trim().isEmpty) return;
+    context.read<ProductsCubit>().fetchSimilarProducts(id, limit: 12);
   }
 
   Future<void> _hydrateCurrentSelectionFromDb() async {
@@ -111,6 +136,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           _isImageLoading = false;
           _isLoading = false;
         });
+        _refreshSimilarProducts();
       }
     } catch (e) {
       if (mounted) {
@@ -177,6 +203,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           _isImageLoading = false;
           _isLoading = false;
         });
+        _refreshSimilarProducts();
 
         // Trigger logging
         await _previewService.logPreviewDetails(
@@ -278,6 +305,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         child: Stack(
           children: [
             SingleChildScrollView(
+              controller: _scrollController,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -382,76 +410,87 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                         );
                       }
 
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 1.0,
-                            ),
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          final product = products[index];
-                          return GestureDetector(
-                            onTap: () => _selectNetworkProduct(product),
-                            child: Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: Image.network(
-                                    product.image,
-                                    fit: BoxFit.cover,
-                                    height: double.infinity,
-                                    width: double.infinity,
-                                    loadingBuilder:
-                                        (context, child, loadingProgress) {
-                                          if (loadingProgress == null)
-                                            return child;
-                                          return Shimmer.fromColors(
-                                            baseColor: Colors.grey[300]!,
-                                            highlightColor: Colors.grey[100]!,
-                                            child: Container(
-                                              color: Colors.white,
-                                            ),
-                                          );
-                                        },
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            Container(
-                                              color: Colors.grey[300],
-                                              child: const Icon(
-                                                Icons.error_outline,
-                                              ),
-                                            ),
-                                  ),
+                      return Column(
+                        children: [
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 1.0,
                                 ),
-                                if (product.isTrending)
-                                  const Positioned(
-                                    top: 8,
-                                    left: 8,
-                                    child: Icon(
-                                      Icons.local_fire_department,
-                                      color: Colors.red,
-                                      size: 16,
+                            itemCount: products.length,
+                            itemBuilder: (context, index) {
+                              final product = products[index];
+                              return GestureDetector(
+                                onTap: () => _selectNetworkProduct(product),
+                                child: Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Image.network(
+                                        product.image,
+                                        fit: BoxFit.cover,
+                                        height: double.infinity,
+                                        width: double.infinity,
+                                        loadingBuilder:
+                                            (context, child, loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                return child;
+                                              }
+                                              return Shimmer.fromColors(
+                                                baseColor: Colors.grey[300]!,
+                                                highlightColor:
+                                                    Colors.grey[100]!,
+                                                child: Container(
+                                                  color: Colors.white,
+                                                ),
+                                              );
+                                            },
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Container(
+                                                  color: Colors.grey[300],
+                                                  child: const Icon(
+                                                    Icons.error_outline,
+                                                  ),
+                                                ),
+                                      ),
                                     ),
-                                  ),
-                                const Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: Icon(
-                                    Icons.favorite_border,
-                                    color: Colors.white70,
-                                    size: 16,
-                                  ),
+                                    if (product.isTrending)
+                                      const Positioned(
+                                        top: 8,
+                                        left: 8,
+                                        child: Icon(
+                                          Icons.local_fire_department,
+                                          color: Colors.red,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    const Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: Icon(
+                                        Icons.favorite_border,
+                                        color: Colors.white70,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              );
+                            },
+                          ),
+                          if (state.isLoadingMore)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(child: CircularProgressIndicator()),
                             ),
-                          );
-                        },
+                        ],
                       );
                     },
                   ),

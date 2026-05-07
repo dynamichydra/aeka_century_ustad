@@ -115,6 +115,29 @@ class ProductRepository {
     }
   }
 
+  Future<List<ProductImageModel>> getSimilarProducts(
+    String id, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final data = await _apiService.getSimilarProducts(
+        id,
+        limit: limit,
+        offset: offset,
+      );
+      final products =
+          data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint(
+        'REPO_LOG: Fetched ${products.length} similar products for id: $id (Offset: $offset, Limit: $limit)',
+      );
+      return products;
+    } catch (e) {
+      debugPrint('REPO_LOG ERROR: getSimilarProducts failure for id $id: $e');
+      return [];
+    }
+  }
+
   // --- Legacy Methods ---
 
   Future<List<ProductImageModel>> getProducts({int limit = 18}) async {

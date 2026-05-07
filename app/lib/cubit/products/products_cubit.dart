@@ -14,6 +14,52 @@ class ProductsCubit extends Cubit<ProductsState> {
     return fetchFeaturedProducts(limit: limit);
   }
 
+  Future<void> fetchSimilarProducts(
+    String imageId, {
+    int limit = 12,
+  }) async {
+    if (imageId.trim().isEmpty) return;
+
+    emit(
+      state.copyWith(
+        isLoading: true,
+        errorMessage: null,
+        offset: 0,
+        limit: limit,
+        currentSimilarImageId: imageId,
+        clearQuery: true,
+        clearCategory: true,
+        clearRoom: true,
+        clearGroup: true,
+        clearProduct: true,
+      ),
+    );
+
+    try {
+      final products = await _productRepository.getSimilarProducts(
+        imageId,
+        limit: limit,
+        offset: 0,
+      );
+      emit(
+        state.copyWith(
+          isLoading: false,
+          products: products,
+          hasMore: products.length >= limit,
+          offset: products.length,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: e.toString(),
+          hasMore: false,
+        ),
+      );
+    }
+  }
+
   Future<void> fetchFeaturedProducts({int limit = 12, bool isExterior = false}) async {
     emit(state.copyWith(
       isLoading: true,
@@ -26,6 +72,7 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearRoom: true,
       clearGroup: true,
       clearProduct: true,
+      clearSimilarImageId: true,
     ));
     try {
       final products = isExterior
@@ -60,6 +107,7 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearRoom: !isInterior,
       clearGroup: isInterior,
       clearProduct: true,
+      clearSimilarImageId: true,
     ));
     try {
       final products = isInterior
@@ -95,6 +143,7 @@ class ProductsCubit extends Cubit<ProductsState> {
       isInterior: isInterior,
       clearQuery: true,
       clearProduct: false,
+      clearSimilarImageId: true,
     ));
     try {
       final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter, limit: limit, offset: 0);
@@ -125,6 +174,7 @@ class ProductsCubit extends Cubit<ProductsState> {
       currentProduct: productBase,
       isInterior: isInterior,
       clearQuery: true,
+      clearSimilarImageId: true,
     ));
     try {
       final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter, limit: limit, offset: 0);
@@ -153,6 +203,7 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearRoom: true,
       clearGroup: true,
       clearProduct: true,
+      clearSimilarImageId: true,
     ));
     try {
       final products = await _productRepository.searchProducts(query, limit: limit, offset: 0);
@@ -168,7 +219,11 @@ class ProductsCubit extends Cubit<ProductsState> {
   }
 
   Future<void> searchProductsByImage(File file) async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    emit(state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      clearSimilarImageId: true,
+    ));
     try {
       final products = await _productRepository.searchProductsByImage(file);
       emit(state.copyWith(isLoading: false, products: products, hasMore: false));
@@ -203,7 +258,13 @@ class ProductsCubit extends Cubit<ProductsState> {
     try {
       List<ProductImageModel> newProducts = [];
       
-      if (state.currentQuery != null) {
+      if (state.currentSimilarImageId != null) {
+        newProducts = await _productRepository.getSimilarProducts(
+          state.currentSimilarImageId!,
+          limit: state.limit,
+          offset: state.offset,
+        );
+      } else if (state.currentQuery != null) {
         debugPrint('🔍 CUBIT_LOG: Loading more for search query: ${state.currentQuery}');
         newProducts = await _productRepository.searchProducts(state.currentQuery!, limit: state.limit, offset: state.offset);
       } else if (state.currentProduct != null) {

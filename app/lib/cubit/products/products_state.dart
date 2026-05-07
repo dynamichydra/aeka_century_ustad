@@ -12,6 +12,7 @@ class ProductsState extends Equatable {
   final String? errorMessage;
 
   // Track current fetch context for infinite scroll
+  final String? currentSimilarImageId;
   final String? currentCategory;
   final String? currentSubCategory;
   final String? currentSubFilter;
@@ -30,6 +31,7 @@ class ProductsState extends Equatable {
     this.offset = 0,
     this.products = const <ProductImageModel>[],
     this.errorMessage,
+    this.currentSimilarImageId,
     this.currentCategory,
     this.currentSubCategory,
     this.currentSubFilter,
@@ -49,6 +51,7 @@ class ProductsState extends Equatable {
     int? offset,
     List<ProductImageModel>? products,
     String? errorMessage,
+    String? currentSimilarImageId,
     String? currentCategory,
     String? currentSubCategory,
     String? currentSubFilter,
@@ -62,6 +65,7 @@ class ProductsState extends Equatable {
     bool clearRoom = false,
     bool clearGroup = false,
     bool clearProduct = false,
+    bool clearSimilarImageId = false,
   }) {
     return ProductsState(
       isLoading: isLoading ?? this.isLoading,
@@ -72,6 +76,8 @@ class ProductsState extends Equatable {
       offset: offset ?? this.offset,
       products: products ?? this.products,
       errorMessage: errorMessage,
+      currentSimilarImageId:
+          clearSimilarImageId ? null : (currentSimilarImageId ?? this.currentSimilarImageId),
       currentCategory: clearCategory ? null : (currentCategory ?? this.currentCategory),
       currentSubCategory: clearCategory ? null : (currentSubCategory ?? this.currentSubCategory),
       currentSubFilter: clearCategory ? null : (currentSubFilter ?? this.currentSubFilter),
@@ -93,6 +99,7 @@ class ProductsState extends Equatable {
     offset,
     products,
     errorMessage,
+    currentSimilarImageId,
     currentCategory,
     currentSubCategory,
     currentSubFilter,

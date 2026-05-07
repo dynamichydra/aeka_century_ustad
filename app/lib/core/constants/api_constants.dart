@@ -8,6 +8,7 @@ class TApiConstants {
   static const String roomBrowse = '/browse/room';
   static const String groupBrowse = '/browse/group';
   static const String productBrowse = '/browse/product';
+  static const String similarProducts = '/similar/products';
   static const String upload = '/upload';
   static const String searchSimilar = '/search/similar';
   static const String searchText = '/search/text';

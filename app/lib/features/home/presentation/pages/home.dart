@@ -392,6 +392,17 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     if (image == null || !mounted) return;
 
+    final lowerPath = image.path.toLowerCase();
+    final isAllowed = lowerPath.endsWith('.jpg') ||
+        lowerPath.endsWith('.jpeg') ||
+        lowerPath.endsWith('.png');
+    if (!isAllowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a JPG/JPEG or PNG image.')),
+      );
+      return;
+    }
+
     final File imageFile = File(image.path);
 
     // Show loading dialog

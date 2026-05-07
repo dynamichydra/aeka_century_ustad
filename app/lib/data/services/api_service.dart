@@ -94,6 +94,20 @@ class ApiService {
     return response.data as List<dynamic>;
   }
 
+  Future<List<dynamic>> getSimilarProducts(
+    String id, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final url = '${TApiConstants.similarProducts}/$id';
+    final queryParams = {'limit': limit, 'offset': offset};
+    debugPrint(
+      '🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}$url | Params: $queryParams',
+    );
+    final response = await _dio.get(url, queryParameters: queryParams);
+    return response.data as List<dynamic>;
+  }
+
   Future<dynamic> uploadFurniture(File file) async {
     String fileName = file.path.split('/').last;
     FormData formData = FormData.fromMap({
