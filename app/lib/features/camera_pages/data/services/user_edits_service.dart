@@ -6,8 +6,8 @@ class UserEditsService {
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: 'https://century-ustad-api-507497848998.asia-south1.run.app',
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
+      connectTimeout: const Duration(minutes: 2),
+      receiveTimeout: const Duration(minutes: 2),
     ),
   );
 

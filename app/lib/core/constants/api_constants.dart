@@ -4,7 +4,7 @@ class TApiConstants {
   static const String baseUrl = 'https://century-ustad-api-507497848998.asia-south1.run.app';
 
   // Furniture endpoints
-  static const String featuredBrowse = '/browse/featured';
+  static const String featuredBrowse = '/browse/interior';
   static const String roomBrowse = '/browse/room';
   static const String groupBrowse = '/browse/group';
   static const String productBrowse = '/browse/product';

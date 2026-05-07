@@ -285,24 +285,6 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                     children: [
                       AspectRatio(aspectRatio: 1, child: _buildPreviewImage()),
                       if (!_isLoading && !_isImageLoading) ...[
-                        _buildBoundingBox(
-                          top: 50,
-                          left: 30,
-                          width: 120,
-                          height: 120,
-                        ),
-                        _buildBoundingBox(
-                          top: 140,
-                          left: 210,
-                          width: 120,
-                          height: 80,
-                        ),
-                        _buildBoundingBox(
-                          top: 250,
-                          left: 10,
-                          width: 100,
-                          height: 100,
-                        ),
                         Positioned(
                           bottom: 40,
                           left: 0,

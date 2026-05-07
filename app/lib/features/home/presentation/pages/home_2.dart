@@ -719,7 +719,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context.read<HomeCubit>().clearSearch();
                               context
                                   .read<ProductsCubit>()
-                                  .fetchFeaturedProducts();
+                                  .fetchFeaturedProducts(isExterior: true);
                             } else {
                               homeCubit.setSelectedIndex(0);
                               setState(() {
@@ -731,7 +731,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context.read<HomeCubit>().clearSearch();
                               context
                                   .read<ProductsCubit>()
-                                  .fetchFeaturedProducts();
+                                  .fetchFeaturedProducts(isExterior: false);
                             }
                           },
                         ),

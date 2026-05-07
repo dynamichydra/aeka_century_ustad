@@ -1155,48 +1155,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         ),
                       ),
                     ),
-
-                  // Dashed Bounding Boxes (Simulated Positions)
-                  _buildDashedBox(top: 40, left: 100, width: 80, height: 100),
-                  _buildDashedBox(top: 150, left: 150, width: 120, height: 80),
-                  _buildDashedBox(top: 250, left: 50, width: 100, height: 120),
-
-                  // Hand Icon Instruction Overlay
-                  Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        top: MediaQuery.of(context).size.height * 0.3,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.touch_app_outlined,
-                            color: Colors.white,
-                            size: 36,
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              "Tap on the object to apply laminates",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
