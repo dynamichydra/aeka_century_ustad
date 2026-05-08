@@ -205,6 +205,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
       _fetchTexturesByColor();
     }
     _fetchUserEditHistory();
+
+    // Initialize Cubit with original image
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ImageEditCubit>().initOriginalImage(widget.imageFile.path);
+    });
   }
 
   Future<void> _fetchUserEditHistory() async {
@@ -401,122 +406,119 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ImageEditCubit(),
-      child: BlocListener<ImageEditCubit, ImageEditState>(
-        listener: (context, state) {
-          if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Colors.red,
-              ),
-            );
-          } else if (state.successMessage != null) {
-            if (state.editedImageFile != null) {
-              setState(() {
-                _isPrecaching = true;
-                _currentAssetPreview = state.editedImageFile;
-              });
-              final imageProvider = FileImage(File(state.editedImageFile!));
-              precacheImage(imageProvider, context)
-                  .then((_) {
-                    if (mounted) {
-                      setState(() {
-                        _hasAppliedOnce = true;
-                        _isPrecaching = false;
-                      });
-                    }
-                  })
-                  .catchError((e) {
-                    if (mounted) {
-                      setState(() {
-                        _hasAppliedOnce = true;
-                        _isPrecaching = false;
-                      });
+    return BlocListener<ImageEditCubit, ImageEditState>(
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state.successMessage != null) {
+          if (state.editedImageFile != null) {
+            setState(() {
+              _isPrecaching = true;
+              _currentAssetPreview = state.editedImageFile;
+            });
+            final imageProvider = FileImage(File(state.editedImageFile!));
+            precacheImage(imageProvider, context)
+                .then((_) {
+                  if (mounted) {
+                    setState(() {
+                      _hasAppliedOnce = true;
+                      _isPrecaching = false;
+                    });
+                  }
+                })
+                .catchError((e) {
+                  if (mounted) {
+                    setState(() {
+                      _hasAppliedOnce = true;
+                      _isPrecaching = false;
+                    });
+                  }
+                });
+
+            // Automatically POST the actual AI-edited image to history
+            if (widget.image_id != null) {
+              _userEditsService
+                  .postEdit(
+                    editedFile: File(state.editedImageFile!),
+                    furnitureId: widget.image_id!,
+                    email: _ownerEmail,
+                  )
+                  .then((newRecord) {
+                    if (newRecord != null) {
+                      debugPrint(
+                        "✅ AI-Edited record posted successfully: ${newRecord.id}",
+                      );
+                      _fetchUserEditHistory(); // Refresh history
                     }
                   });
-
-              // Automatically POST the actual AI-edited image to history
-              if (widget.image_id != null) {
-                _userEditsService
-                    .postEdit(
-                      editedFile: File(state.editedImageFile!),
-                      furnitureId: widget.image_id!,
-                      email: _ownerEmail,
-                    )
-                    .then((newRecord) {
-                      if (newRecord != null) {
-                        debugPrint(
-                          "✅ AI-Edited record posted successfully: ${newRecord.id}",
-                        );
-                        _fetchUserEditHistory(); // Refresh history
-                      }
-                    });
-              }
             }
           }
-        },
-        child: Scaffold(
-          drawer: const HomeDrawer(),
-          backgroundColor: const Color(0xFFF8F8F8),
-          body: SafeArea(
-            child: Column(
-              children: [
-                // Top Image Preview Area (Fixed Height)
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.40,
-                  child: ValueListenableBuilder<List<int>>(
-                    valueListenable: _selectedIndicesNotifier,
-                    builder: (context, selectedIndices, child) {
-                      return BlocBuilder<ImageEditCubit, ImageEditState>(
-                        builder: (context, state) {
-                          if (state.isApplyLoading || _isPrecaching) {
-                            return _buildGeneratingBlock();
-                          }
-                          return _compareExpanded
-                              ? _buildTopComparisonSection(selectedIndices)
-                              : _buildImageOverlaySection();
-                        },
-                      );
-                    },
-                  ),
+        }
+      },
+      child: Scaffold(
+        drawer: const HomeDrawer(),
+        backgroundColor: const Color(0xFFF8F8F8),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Top Image Preview Area (Fixed Height)
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.40,
+                child: ValueListenableBuilder<List<int>>(
+                  valueListenable: _selectedIndicesNotifier,
+                  builder: (context, selectedIndices, child) {
+                    return BlocBuilder<ImageEditCubit, ImageEditState>(
+                      builder: (context, state) {
+                        if (state.isApplyLoading || _isPrecaching) {
+                          return _buildGeneratingBlock();
+                        }
+                        return _compareExpanded
+                            ? _buildTopComparisonSection(selectedIndices)
+                            : _buildImageOverlaySection();
+                      },
+                    );
+                  },
                 ),
+              ),
 
-                // Collapsible Headers & Content (Accordion Style)
-                Expanded(
-                  child: Container(
-                    color: Colors.white,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 0),
-                            child: _buildCollapsibleHeaders(),
-                          ),
+              // Collapsible Headers & Content (Accordion Style)
+              Expanded(
+                child: Container(
+                  color: Colors.white,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 0),
+                          child: _buildCollapsibleHeaders(),
                         ),
-                        // Fixed Bottom Bar Area (Edit Mode)
-                        if (_editExpanded)
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: _buildBottomBarFixed(),
-                          ),
-                        // Fixed Bottom Bar Area (Compare Mode)
-                        if (_compareExpanded)
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: _buildBottomBarFixed2(),
-                          ),
-                      ],
-                    ),
+                      ),
+                      // Fixed Bottom Bar Area (Edit Mode)
+                      if (_editExpanded)
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: _buildBottomBarFixed(),
+                        ),
+                      // Fixed Bottom Bar Area (Compare Mode)
+                      if (_compareExpanded)
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: _buildBottomBarFixed2(),
+                        ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -824,8 +826,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
               AppRoutes.imageFinalize,
               extra: {
                 'editedImage': imgPath,
-                'selectedColor': _selectedColor,
-                'selectedLamination': _selectedTexture,
+                'selectedColor':
+                    _selectedColor ??
+                    {"name": "None", "hex": "#FFFFFF", "id": 0},
+                'selectedLamination':
+                    _selectedTexture ?? {"name": "None", "coverImage": ""},
               },
             );
           },
@@ -1051,6 +1056,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   _isShortTap = true;
                   _isLongTap = false;
                 });
+
+                // Automatically trigger area selection in Cubit
+                context.read<ImageEditCubit>().selectArea(_lastTapCoordinate!);
               },
               onLongPressStart: (details) {
                 final viewSize = Size(
@@ -1072,6 +1080,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   _isShortTap = false;
                   _isLongTap = true;
                 });
+
+                // Automatically trigger area selection in Cubit
+                context.read<ImageEditCubit>().selectArea(_lastTapCoordinate!);
               },
               child: Stack(
                 children: [
@@ -1179,41 +1190,54 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Widget _buildGeneratingBlock() {
-    return Container(
-      width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.40,
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        image: DecorationImage(
-          image: FileImage(widget.imageFile),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(
-            Colors.black.withOpacity(0.6),
-            BlendMode.darken,
-          ),
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "GENERATING...",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+    return StreamBuilder<int>(
+      stream: Stream.periodic(const Duration(seconds: 2), (i) => i % 3),
+      builder: (context, snapshot) {
+        final messages = [
+          "Generating...",
+          "Applying AI design...",
+          "Please wait while we create your design...",
+        ];
+        final message = messages[snapshot.data ?? 0];
+
+        return Container(
+          width: double.infinity,
+          height: MediaQuery.of(context).size.height * 0.40,
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            image: DecorationImage(
+              image: FileImage(widget.imageFile),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.6),
+                BlendMode.darken,
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  message.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1679,6 +1703,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
     return GestureDetector(
       onTap: () {
         setState(() => _selectedTexture = texture);
+        // Automatically trigger pattern selection in Cubit
+        context.read<ImageEditCubit>().selectPattern(texture);
       },
       child: SizedBox(
         width: isGrid ? null : widget.textureThumbWidth,
@@ -1943,11 +1969,46 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 height: 40,
                 child: BlocBuilder<ImageEditCubit, ImageEditState>(
                   builder: (context, state) {
-                    final isLoading = state.isApplyLoading;
+                    final isLoading = state.isGenerating;
                     return ElevatedButton(
                       onPressed: isLoading
                           ? null
-                          : () => _applyChanges(context),
+                          : () {
+                              if (state.currentGeneratedImage == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Please generate an image first.",
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              // Trigger comparison details API call
+                              if (state.selectedPattern != null) {
+                                final pattern = state.selectedPattern!;
+                                final model = ProductImageModel(
+                                  id: pattern['id']?.toString() ?? '0',
+                                  name:
+                                      pattern['name']?.toString() ??
+                                      'AI Design',
+                                  image:
+                                      pattern['coverImage']?.toString() ?? '',
+                                  isTrending: false,
+                                  category: _selectedCategory,
+                                  subcategory: _selectedSubCategory,
+                                );
+                                context
+                                    .read<ImageEditCubit>()
+                                    .compareImageSelected(model);
+                              }
+
+                              setState(() {
+                                _compareExpanded = true;
+                                _editExpanded = false;
+                              });
+                            },
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.zero,
                         backgroundColor: Colors.white,
@@ -2032,9 +2093,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
                           AppRoutes.imageFinalize,
                           extra: {
                             'editedImage':
-                                _currentAssetPreview ?? widget.imageFile,
-                            'selectedColor': _selectedColor ?? {},
-                            'selectedLamination': _selectedTexture ?? {},
+                                state.currentGeneratedImage ??
+                                widget.imageFile.path,
+                            'selectedColor':
+                                _selectedColor ??
+                                {"name": "None", "hex": "#FFFFFF", "id": 0},
+                            'selectedLamination':
+                                _selectedTexture ??
+                                {"name": "None", "coverImage": ""},
                           },
                         );
                       },

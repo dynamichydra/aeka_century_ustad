@@ -7,7 +7,9 @@ import 'package:century_ai/features/home/presentation/pages/home_2.dart';
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/router/shell_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:century_ai/cubit/image_edit/image_edit_cubit.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: AppRoutes.home,
@@ -119,10 +121,13 @@ final GoRouter router = GoRouter(
           return Scaffold(body: Center(child: Text("Error: No image for editing")));
         }
 
-        return ImageEditPage(
-          imageFile: imageFile,
-          pickedColor: pickedColor,
-          image_id: image_id,
+        return BlocProvider(
+          create: (_) => ImageEditCubit(),
+          child: ImageEditPage(
+            imageFile: imageFile,
+            pickedColor: pickedColor,
+            image_id: image_id,
+          ),
         );
       },
     ),
@@ -147,10 +152,13 @@ final GoRouter router = GoRouter(
           return Scaffold(body: Center(child: Text("Error: No image for editing")));
         }
 
-        return ImageEditScrollPage(
-          imageFile: imageFile,
-          pickedColor: pickedColor,
-          image_id: image_id,
+        return BlocProvider(
+          create: (_) => ImageEditCubit(),
+          child: ImageEditScrollPage(
+            imageFile: imageFile,
+            pickedColor: pickedColor,
+            image_id: image_id,
+          ),
         );
       },
     ),
@@ -184,14 +192,13 @@ final GoRouter router = GoRouter(
       name: "Image Finalize",
       builder: (context, state) {
         if (state.extra is! Map<String, dynamic>) {
-          return Scaffold(body: Center(child: Text("Error: Missing data for finalization")));
+          return const Scaffold(body: Center(child: Text("Error: Missing data for finalization")));
         }
         final data = state.extra as Map<String, dynamic>;
         return ImageFinalizePage(
           editedImage: data['editedImage'],
           selectedColor: data['selectedColor'] as Map<String, dynamic>,
-          selectedLamination:
-              data['selectedLamination'] as Map<String, dynamic>,
+          selectedLamination: data['selectedLamination'] as Map<String, dynamic>,
         );
       },
     ),

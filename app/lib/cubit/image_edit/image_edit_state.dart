@@ -7,12 +7,26 @@ class ImageEditState extends Equatable {
   final String? successMessage;
   final String? editedImageFile;
 
+  // New fields for AI generation flow
+  final String? originalImage;
+  final String? currentGeneratedImage;
+  final List<Map<String, String>> generatedHistory;
+  final Map<String, dynamic>? selectedPattern;
+  final Map<String, dynamic>? selectedArea;
+  final bool isGenerating;
+
   const ImageEditState({
     this.isCompareLoading = false,
     this.isApplyLoading = false,
     this.errorMessage,
     this.successMessage,
     this.editedImageFile,
+    this.originalImage,
+    this.currentGeneratedImage,
+    this.generatedHistory = const [],
+    this.selectedPattern,
+    this.selectedArea,
+    this.isGenerating = false,
   });
 
   ImageEditState copyWith({
@@ -21,6 +35,12 @@ class ImageEditState extends Equatable {
     String? errorMessage,
     String? successMessage,
     String? editedImageFile,
+    String? originalImage,
+    String? currentGeneratedImage,
+    List<Map<String, String>>? generatedHistory,
+    Map<String, dynamic>? selectedPattern,
+    Map<String, dynamic>? selectedArea,
+    bool? isGenerating,
     bool clearError = false,
     bool clearSuccess = false,
   }) {
@@ -28,8 +48,16 @@ class ImageEditState extends Equatable {
       isCompareLoading: isCompareLoading ?? this.isCompareLoading,
       isApplyLoading: isApplyLoading ?? this.isApplyLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      successMessage: clearSuccess ? null : (successMessage ?? this.successMessage),
+      successMessage:
+          clearSuccess ? null : (successMessage ?? this.successMessage),
       editedImageFile: editedImageFile ?? this.editedImageFile,
+      originalImage: originalImage ?? this.originalImage,
+      currentGeneratedImage:
+          currentGeneratedImage ?? this.currentGeneratedImage,
+      generatedHistory: generatedHistory ?? this.generatedHistory,
+      selectedPattern: selectedPattern ?? this.selectedPattern,
+      selectedArea: selectedArea ?? this.selectedArea,
+      isGenerating: isGenerating ?? this.isGenerating,
     );
   }
 
@@ -40,5 +68,11 @@ class ImageEditState extends Equatable {
         errorMessage,
         successMessage,
         editedImageFile,
+        originalImage,
+        currentGeneratedImage,
+        generatedHistory,
+        selectedPattern,
+        selectedArea,
+        isGenerating,
       ];
 }

@@ -11,7 +11,88 @@ class ImageEditCubit extends Cubit<ImageEditState> {
 
   ImageEditCubit() : super(const ImageEditState());
 
+  void initOriginalImage(String imagePath) {
+    emit(state.copyWith(originalImage: imagePath));
+  }
+
+  void selectPattern(Map<String, dynamic> pattern) {
+    emit(state.copyWith(selectedPattern: pattern));
+    _checkAndGenerate();
+  }
+
+  void selectArea(Map<String, dynamic> area) {
+    emit(state.copyWith(selectedArea: area));
+    _checkAndGenerate();
+  }
+
+  void _checkAndGenerate() {
+    if (state.selectedPattern != null &&
+        state.selectedArea != null &&
+        !state.isGenerating) {
+      generateAIImage();
+    }
+  }
+
+  Future<void> generateAIImage() async {
+    if (state.originalImage == null ||
+        state.selectedPattern == null ||
+        state.selectedArea == null) return;
+
+    emit(state.copyWith(
+      isGenerating: true,
+      isApplyLoading: true, // Keep for backward compatibility if needed
+      clearError: true,
+      clearSuccess: true,
+    ));
+
+    try {
+      final roomImage = File(state.originalImage!);
+      final textureUrl =
+          state.selectedPattern!["coverImage"]?.toString() ?? "";
+      final coordinate = state.selectedArea!;
+
+      debugPrint('🎨 AI_GEN: Starting generation');
+      
+      // Download pattern
+      final tempDir = await Directory.systemTemp.createTemp();
+      final patternFile = File('${tempDir.path}/pattern_image.png');
+      await Dio().download(textureUrl, patternFile.path);
+
+      // AI Service
+      final resultFile = await _imageEditService.tryOnFurniture(
+        roomImage: roomImage,
+        patternImage: patternFile,
+        x: (coordinate['x'] as num).toInt(),
+        y: (coordinate['y'] as num).toInt(),
+      );
+
+      final newGeneratedImage = resultFile.path;
+      final updatedHistory = List<Map<String, String>>.from(state.generatedHistory);
+      updatedHistory.add({
+        'original': state.originalImage!,
+        'generated': newGeneratedImage,
+      });
+
+      emit(state.copyWith(
+        isGenerating: false,
+        isApplyLoading: false,
+        currentGeneratedImage: newGeneratedImage,
+        editedImageFile: newGeneratedImage, // Keep for backward compatibility
+        generatedHistory: updatedHistory,
+        successMessage: "AI design applied successfully.",
+      ));
+    } catch (e) {
+      debugPrint("AI Generation Error: $e");
+      emit(state.copyWith(
+        isGenerating: false,
+        isApplyLoading: false,
+        errorMessage: "Failed to generate AI design: $e",
+      ));
+    }
+  }
+
   Future<void> compareImageSelected(ProductImageModel image) async {
+    // ... existing implementation ...
     emit(state.copyWith(
       isCompareLoading: true,
       clearError: true,
@@ -43,6 +124,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     }
   }
 
+  // Deprecated in favor of selectPattern + selectArea automatic flow
   Future<void> applyTextureSelected({
     required File roomImage,
     required String textureUrl,
@@ -50,45 +132,12 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     required bool isShortTap,
     required bool isLongTap,
   }) async {
+    // Forward to new logic for compatibility if needed, 
+    // but better to use selectPattern/selectArea
     emit(state.copyWith(
-      isApplyLoading: true,
-      clearError: true,
-      clearSuccess: true,
+      selectedPattern: {"coverImage": textureUrl},
+      selectedArea: coordinate,
     ));
-
-    try {
-      // 1. Download pattern image to a temporary file
-      debugPrint('🎨 AI_TRYON_LOG: Starting applyTextureSelected');
-      debugPrint('🖼️ AI_TRYON_LOG: Room Image Path: ${roomImage.path}');
-      debugPrint('🧪 AI_TRYON_LOG: Texture URL: $textureUrl');
-
-      
-      final tempDir = await Directory.systemTemp.createTemp();
-      final patternFile = File('${tempDir.path}/pattern_image.png');
-      await Dio().download(textureUrl, patternFile.path);
-      debugPrint('✅ AI_TRYON_LOG: Pattern downloaded to: ${patternFile.path}');
-
-      // 2. Call the AI service
-      final resultFile = await _imageEditService.tryOnFurniture(
-        roomImage: roomImage,
-        patternImage: patternFile,
-        x: (coordinate['x'] as num).toInt(),
-        y: (coordinate['y'] as num).toInt(),
-      );
-
-      debugPrint('✨ AI_TRYON_LOG: Result received: ${resultFile.path}');
-
-      emit(state.copyWith(
-        isApplyLoading: false,
-        successMessage: "Texture applied successfully.",
-        editedImageFile: resultFile.path,
-      ));
-    } catch (e) {
-      debugPrint("Apply Texture API Error: $e");
-      emit(state.copyWith(
-        isApplyLoading: false,
-        errorMessage: "Failed to apply texture: $e",
-      ));
-    }
+    await generateAIImage();
   }
 }
