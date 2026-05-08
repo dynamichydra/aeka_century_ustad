@@ -16,20 +16,30 @@ class ImageEditCubit extends Cubit<ImageEditState> {
   }
 
   void selectPattern(Map<String, dynamic> pattern) {
-    emit(state.copyWith(selectedPattern: pattern));
+    emit(state.copyWith(
+      selectedPattern: pattern,
+      hasPatternChanged: true,
+    ));
     _checkAndGenerate();
   }
 
   void selectArea(Map<String, dynamic> area) {
-    emit(state.copyWith(selectedArea: area));
+    emit(state.copyWith(
+      selectedArea: area,
+      hasAreaChanged: true,
+    ));
     _checkAndGenerate();
   }
 
   void _checkAndGenerate() {
-    if (state.selectedPattern != null &&
-        state.selectedArea != null &&
-        !state.isGenerating) {
-      generateAIImage();
+    final bool isFirstTime = state.generatedHistory.isEmpty;
+    final bool bothSelected = state.selectedPattern != null && state.selectedArea != null;
+    final bool bothChanged = state.hasPatternChanged && state.hasAreaChanged;
+
+    if (bothSelected && !state.isGenerating) {
+      if (isFirstTime || bothChanged) {
+        generateAIImage();
+      }
     }
   }
 
@@ -79,6 +89,8 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         currentGeneratedImage: newGeneratedImage,
         editedImageFile: newGeneratedImage, // Keep for backward compatibility
         generatedHistory: updatedHistory,
+        hasPatternChanged: false,
+        hasAreaChanged: false,
         successMessage: "AI design applied successfully.",
       ));
     } catch (e) {

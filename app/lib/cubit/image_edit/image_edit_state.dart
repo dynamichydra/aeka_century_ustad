@@ -14,6 +14,8 @@ class ImageEditState extends Equatable {
   final Map<String, dynamic>? selectedPattern;
   final Map<String, dynamic>? selectedArea;
   final bool isGenerating;
+  final bool hasPatternChanged;
+  final bool hasAreaChanged;
 
   const ImageEditState({
     this.isCompareLoading = false,
@@ -27,6 +29,8 @@ class ImageEditState extends Equatable {
     this.selectedPattern,
     this.selectedArea,
     this.isGenerating = false,
+    this.hasPatternChanged = false,
+    this.hasAreaChanged = false,
   });
 
   ImageEditState copyWith({
@@ -41,6 +45,8 @@ class ImageEditState extends Equatable {
     Map<String, dynamic>? selectedPattern,
     Map<String, dynamic>? selectedArea,
     bool? isGenerating,
+    bool? hasPatternChanged,
+    bool? hasAreaChanged,
     bool clearError = false,
     bool clearSuccess = false,
   }) {
@@ -58,6 +64,8 @@ class ImageEditState extends Equatable {
       selectedPattern: selectedPattern ?? this.selectedPattern,
       selectedArea: selectedArea ?? this.selectedArea,
       isGenerating: isGenerating ?? this.isGenerating,
+      hasPatternChanged: hasPatternChanged ?? this.hasPatternChanged,
+      hasAreaChanged: hasAreaChanged ?? this.hasAreaChanged,
     );
   }
 
@@ -74,5 +82,7 @@ class ImageEditState extends Equatable {
         selectedPattern,
         selectedArea,
         isGenerating,
+        hasPatternChanged,
+        hasAreaChanged,
       ];
 }
