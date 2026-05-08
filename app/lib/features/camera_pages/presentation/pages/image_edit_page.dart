@@ -675,7 +675,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     );
                   }
 
-                  final int itemCount = _userEdits.length + (isLoading ? 1 : 0);
+                  final int itemCount = _userEdits.length + (isLoading ? 1 : 0) + 1; // +1 for Original
 
                   return GridView.builder(
                     shrinkWrap: true,
@@ -689,13 +689,79 @@ class _ImageEditPageState extends State<ImageEditPage> {
                           childAspectRatio: 1.0,
                         ),
                     itemBuilder: (context, index) {
-                      // Show loading placeholder as the first item if loading
-                      if (isLoading && index == 0) {
+                      // Original Image is always the first item
+                      if (index == 0) {
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _currentAssetPreview = null;
+                              _hasAppliedOnce = true;
+                              _compareExpanded = false;
+                              _editExpanded = true;
+                            });
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.black12, width: 1),
+                            ),
+                            child: Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    widget.imageFile,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    cacheWidth: 200,
+                                  ),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: Colors.black.withOpacity(0.05),
+                                  ),
+                                ),
+                                const Center(
+                                  child: Icon(
+                                    Icons.edit_outlined,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 4,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    color: Colors.black45,
+                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                                    child: const Text(
+                                      "Original",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Adjust index for subsequent items
+                      final int effectiveIndex = index - 1;
+
+                      // Show loading placeholder if loading
+                      if (isLoading && effectiveIndex == 0) {
                         return _buildLoadingVersionPlaceholder();
                       }
 
-                      // Adjust index if we are showing a loader at index 0
-                      final editIndex = isLoading ? index - 1 : index;
+                      // Adjust index further if loader is present
+                      final editIndex = isLoading ? effectiveIndex - 1 : effectiveIndex;
+                      if (editIndex < 0) return const SizedBox.shrink(); // Safety check for loader
+                      
                       final String imgPath =
                           _userEdits[editIndex].editedImageUrl;
                       final isSelected = selectedIndices.contains(editIndex);
