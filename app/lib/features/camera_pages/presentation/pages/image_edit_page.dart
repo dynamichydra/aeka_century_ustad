@@ -58,6 +58,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   bool _isEditVisible = true;
   bool _isLoadingTextures = false;
   bool _isPrecaching = false;
+  bool _isUploading = false;
   List<dynamic> _apiTextures = [];
 
   bool _compareExpanded = false;
@@ -439,24 +440,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     });
                   }
                 });
-
-            // Automatically POST the actual AI-edited image to history
-            if (widget.image_id != null) {
-              _userEditsService
-                  .postEdit(
-                    editedFile: File(state.editedImageFile!),
-                    furnitureId: widget.image_id!,
-                    email: _ownerEmail,
-                  )
-                  .then((newRecord) {
-                    if (newRecord != null) {
-                      debugPrint(
-                        "✅ AI-Edited record posted successfully: ${newRecord.id}",
-                      );
-                      _fetchUserEditHistory(); // Refresh history
-                    }
-                  });
-            }
           }
         }
       },
@@ -2035,17 +2018,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 height: 40,
                 child: BlocBuilder<ImageEditCubit, ImageEditState>(
                   builder: (context, state) {
-                    final isLoading = state.isGenerating;
+                    final bool isGenerating = state.isGenerating;
+                    final bool isLoading = isGenerating || _isUploading;
+                    
                     return ElevatedButton(
                       onPressed: isLoading
                           ? null
-                          : () {
+                          : () async {
                               if (state.currentGeneratedImage == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text(
-                                      "Please generate an image first.",
-                                    ),
+                                    content: Text("Please generate an image first."),
                                   ),
                                 );
                                 return;
@@ -2056,24 +2039,47 @@ class _ImageEditPageState extends State<ImageEditPage> {
                                 final pattern = state.selectedPattern!;
                                 final model = ProductImageModel(
                                   id: pattern['id']?.toString() ?? '0',
-                                  name:
-                                      pattern['name']?.toString() ??
-                                      'AI Design',
-                                  image:
-                                      pattern['coverImage']?.toString() ?? '',
+                                  name: pattern['name']?.toString() ?? 'AI Design',
+                                  image: pattern['coverImage']?.toString() ?? '',
                                   isTrending: false,
                                   category: _selectedCategory,
                                   subcategory: _selectedSubCategory,
                                 );
-                                context
-                                    .read<ImageEditCubit>()
-                                    .compareImageSelected(model);
+                                context.read<ImageEditCubit>().compareImageSelected(model);
                               }
 
-                              setState(() {
-                                _compareExpanded = true;
-                                _editExpanded = false;
-                              });
+                              // Post the actual AI-edited image to history on Apply
+                              if (widget.image_id != null && state.currentGeneratedImage != null) {
+                                setState(() => _isUploading = true);
+                                try {
+                                  final newRecord = await _userEditsService.postEdit(
+                                    editedFile: File(state.currentGeneratedImage!),
+                                    furnitureId: widget.image_id!,
+                                    email: _ownerEmail,
+                                  );
+
+                                  if (newRecord != null) {
+                                    debugPrint("✅ AI-Edited record posted manually on Apply: ${newRecord.id}");
+                                    await _fetchUserEditHistory(); // Wait for history refresh
+                                  }
+                                } catch (e) {
+                                  debugPrint("❌ Error uploading AI-edited image: $e");
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Upload failed: $e")),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) setState(() => _isUploading = false);
+                                }
+                              }
+
+                              if (mounted) {
+                                setState(() {
+                                  _compareExpanded = true;
+                                  _editExpanded = false;
+                                });
+                              }
                             },
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.zero,
