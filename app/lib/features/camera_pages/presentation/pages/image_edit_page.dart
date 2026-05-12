@@ -16,6 +16,8 @@ import 'package:century_ai/cubit/image_edit/image_edit_state.dart';
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/features/camera_pages/data/models/edit_record.dart';
 import 'package:century_ai/features/camera_pages/data/services/user_edits_service.dart';
+import 'package:lottie/lottie.dart';
+
 
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
@@ -1240,12 +1242,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Widget _buildGeneratingBlock() {
     return StreamBuilder<int>(
-      stream: Stream.periodic(const Duration(seconds: 2), (i) => i % 3),
+      stream: Stream.periodic(const Duration(seconds: 2), (i) => i % 4),
       builder: (context, snapshot) {
         final messages = [
-          "Generating...",
-          "Applying AI design...",
-          "Please wait while we create your design...",
+          "Analyzing Image...",
+          "Applying AI Design...",
+          "Perfecting Textures...",
+          "Finalizing Result...",
         ];
         final message = messages[snapshot.data ?? 0];
 
@@ -1253,42 +1256,72 @@ class _ImageEditPageState extends State<ImageEditPage> {
           width: double.infinity,
           height: MediaQuery.of(context).size.height * 0.40,
           decoration: BoxDecoration(
-            color: Colors.grey[900],
+            color: Colors.black.withOpacity(0.4),
             image: DecorationImage(
               image: FileImage(widget.imageFile),
               fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.6),
-                BlendMode.darken,
-              ),
             ),
           ),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  message.toUpperCase(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
+          child: ClipRRect(
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Premium AI Lottie Animation (Local)
+                      Lottie.asset(
+                        'assets/images/animations/ai_star_ui_animation.json',
+                        height: 180,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        message.toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2.5,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "ARTIFICIAL INTELLIGENCE AT WORK",
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         );
       },
     );
   }
+
 
   Widget _buildZoomButton({
     required IconData icon,
