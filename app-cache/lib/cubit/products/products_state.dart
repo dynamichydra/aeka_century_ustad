@@ -20,7 +20,9 @@ class ProductsState extends Equatable {
   final String? currentRoom;
   final String? currentGroup;
   final String? currentProduct;
+  final String? currentOwnerId;
   final bool? isInterior;
+  final bool isTrending;
 
   const ProductsState({
     this.isLoading = false,
@@ -39,7 +41,9 @@ class ProductsState extends Equatable {
     this.currentRoom,
     this.currentGroup,
     this.currentProduct,
+    this.currentOwnerId,
     this.isInterior,
+    this.isTrending = false,
   });
 
   ProductsState copyWith({
@@ -59,7 +63,9 @@ class ProductsState extends Equatable {
     String? currentRoom,
     String? currentGroup,
     String? currentProduct,
+    String? currentOwnerId,
     bool? isInterior,
+    bool? isTrending,
     bool clearQuery = false,
     bool clearCategory = false,
     bool clearRoom = false,
@@ -85,7 +91,9 @@ class ProductsState extends Equatable {
       currentRoom: clearRoom ? null : (currentRoom ?? this.currentRoom),
       currentGroup: clearGroup ? null : (currentGroup ?? this.currentGroup),
       currentProduct: clearProduct ? null : (currentProduct ?? this.currentProduct),
+      currentOwnerId: currentOwnerId ?? this.currentOwnerId,
       isInterior: isInterior ?? this.isInterior,
+      isTrending: isTrending ?? this.isTrending,
     );
   }
 
@@ -107,6 +115,8 @@ class ProductsState extends Equatable {
     currentRoom,
     currentGroup,
     currentProduct,
+    currentOwnerId,
     isInterior,
+    isTrending,
   ];
 }

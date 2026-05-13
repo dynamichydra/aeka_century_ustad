@@ -765,6 +765,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       customBorder: const CircleBorder(),
                                       onTap: () {
                                         homeCubit.toggleTrending();
+                                        final isNowTrending = !homeState.isTrendingShowing;
+                                        if (isNowTrending) {
+                                          context.read<ProductsCubit>().fetchTrendingProducts(
+                                            ownerId: "user@example.com",
+                                          );
+                                        } else {
+                                          context.read<ProductsCubit>().fetchFeaturedProducts(
+                                            isExterior: homeState.isExterior,
+                                          );
+                                        }
                                       },
                                       child: Padding(
                                         padding: const EdgeInsets.all(8),

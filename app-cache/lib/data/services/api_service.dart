@@ -107,6 +107,24 @@ class ApiService {
     final response = await _dio.get(url, queryParameters: queryParams);
     return response.data as List<dynamic>;
   }
+  
+  Future<List<dynamic>> getTrendingProducts({
+    required String ownerId,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final queryParams = {
+      'ownerId': ownerId,
+      'limit': limit,
+      'offset': offset,
+    };
+    debugPrint('🛒 FETCH_TRENDING: ${TApiConstants.baseUrl}${TApiConstants.trendingProducts} | Params: $queryParams');
+    final response = await _dio.get(
+      TApiConstants.trendingProducts,
+      queryParameters: queryParams,
+    );
+    return response.data as List<dynamic>;
+  }
 
   Future<dynamic> uploadFurniture(File file) async {
     String fileName = file.path.split('/').last;

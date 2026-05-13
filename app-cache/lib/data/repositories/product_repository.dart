@@ -138,6 +138,29 @@ class ProductRepository {
     }
   }
 
+  Future<List<ProductImageModel>> getTrendingProducts({
+    required String ownerId,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final data = await _apiService.getTrendingProducts(
+        ownerId: ownerId,
+        limit: limit,
+        offset: offset,
+      );
+      final products =
+          data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint(
+        '📦 REPO_LOG: Fetched ${products.length} trending products for owner: $ownerId (Offset: $offset, Limit: $limit)',
+      );
+      return products;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: getTrendingProducts failure: $e');
+      return [];
+    }
+  }
+
   // --- Legacy Methods ---
 
   Future<List<ProductImageModel>> getProducts({int limit = 18}) async {
