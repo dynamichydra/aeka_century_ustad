@@ -1,0 +1,694 @@
+{
+  "interior": [
+    {
+      "id": 1,
+      "name": "Living Room",
+      "image": "DECO/SENZURA/Living room.jpg",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(All)_1.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 1
+    },
+    {
+      "id": 2,
+      "name": "Chest of Drawers",
+      "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 1
+    },
+    {
+      "id": 3,
+      "name": "Shoe Cabinet",
+      "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Shoe_Cabinet)_1.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Shoe_Cabinet)_1.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "shoe_cabinet"
+    },
+    {
+      "id": 4,
+      "name": "Wall Panelling",
+      "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Wall_panelling)_1.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Wall_panelling)_1.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 3
+    },
+    {
+      "id": 5,
+      "name": "TV Unit",
+      "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(TV_Unit)_1.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(TV_Unit)_1.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 4
+    },
+    {
+      "id": 6,
+      "name": "Reception Area Furniture",
+      "image": "transaparent/Office/Sub_categories/Reception_Area.jpg",
+      "optional_all_img": "transaparent/Office/Sub_categories/Reception_Area.jpg",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 5
+    },
+    {
+      "id": 7,
+      "name": "Coffee Table",
+      "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Coffee_table)_1.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Coffee_table)_1.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 6
+    },
+    {
+      "id": 35,
+      "name": "Sofa",
+      "image": "transaparent/Living_room/Living_room_sub_categories/sofa.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/sofa.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 7,
+      "nested_key": "sofa"
+    },
+    {
+      "id": 36,
+      "name": "Center Table",
+      "image": "transaparent/center_table/center_table.png",
+      "optional_all_img": "transaparent/center_table/center_table.png",
+      "parent_id": 1,
+      "preview_type": "normal",
+      "sort_order": 8
+    },
+    {
+      "id": 8,
+      "name": "Kitchen",
+      "image": "DECO/SENZURA/Dark Series Application images (7).jpg",
+      "optional_all_img": "transaparent/Kitchen/Kitchen.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 2
+    },
+    {
+      "id": 9,
+      "name": "Kitchen Cabinet",
+      "image": "transaparent/Kitchen/Subcategories/Kitchen_cabinet.png",
+      "optional_all_img": "transaparent/Kitchen/Subcategories/Kitchen_cabinet.png",
+      "parent_id": 8,
+      "preview_type": "normal",
+      "sort_order": 1
+    },
+    {
+      "id": 10,
+      "name": "Dining Room",
+      "image": "DECO/SENZURA/Medium Application images (4).jpg",
+      "optional_all_img": "transaparent/Dining/Dining_all.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 3
+    },
+    {
+      "id": 11,
+      "name": "Dining Table",
+      "image": "transaparent/Dining/Subcategories/Dining_table_1.png",
+      "optional_all_img": "transaparent/Dining/Subcategories/Dining_table_1.png",
+      "parent_id": 10,
+      "preview_type": "normal",
+      "sort_order": 1,
+      "nested_key": "dining_table"
+    },
+    {
+      "id": 34,
+      "name": "Dining Table + Chairs",
+      "image": "transaparent/Dining/Subcategories/Dining_table_1.png",
+      "optional_all_img": "transaparent/Dining/Subcategories/Dining_table_1.png",
+      "parent_id": 10,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "dining_table"
+    },
+    {
+      "id": 12,
+      "name": "Bar Unit",
+      "image": "transaparent/Dining/Subcategories/Bar_unit_1.png",
+      "optional_all_img": "transaparent/Dining/Subcategories/Bar_unit_1.png",
+      "parent_id": 10,
+      "preview_type": "normal",
+      "sort_order": 3
+    },
+    {
+      "id": 13,
+      "name": "Crockery Cabinet",
+      "image": "transaparent/Dining/Subcategories/Crockery_cabinet_1.png",
+      "optional_all_img": "transaparent/Dining/Subcategories/Crockery_cabinet_1.png",
+      "parent_id": 10,
+      "preview_type": "normal",
+      "sort_order": 3,
+      "nested_key": "crockery_cabinet"
+    },
+    {
+      "id": 14,
+      "name": "Bedroom",
+      "image": "DECO/SENZURA/Beds & related.webp",
+      "optional_all_img": "transaparent/Bed_room/Bedroom_all.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 4
+    },
+    {
+      "id": 15,
+      "name": "Wardrobe",
+      "image": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png",
+      "optional_all_img": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png",
+      "parent_id": 14,
+      "preview_type": "normal",
+      "sort_order": 1,
+      "nested_key": "wardrobe"
+    },
+    {
+      "id": 16,
+      "name": "Bedside Table",
+      "image": "transaparent/Bed_room/Sub_categories/bed_side_table_1.png",
+      "optional_all_img": "transaparent/Bed_room/Sub_categories/bed_side_table_1.png",
+      "parent_id": 14,
+      "preview_type": "normal",
+      "sort_order": 2
+    },
+    {
+      "id": 17,
+      "name": "Headboard",
+      "image": "transaparent/Bed_room/Sub_categories/Headboard_1.png",
+      "optional_all_img": "transaparent/Bed_room/Sub_categories/Headboard_1.png",
+      "parent_id": 14,
+      "preview_type": "normal",
+      "sort_order": 3,
+      "nested_key": "headboard"
+    },
+    {
+      "id": 18,
+      "name": "Dressing Unit",
+      "image": "transaparent/Bed_room/Sub_categories/Dressing_unit_1.png",
+      "optional_all_img": "transaparent/Bed_room/Sub_categories/Dressing_unit_1.png",
+      "parent_id": 14,
+      "preview_type": "normal",
+      "sort_order": 4
+    },
+    {
+      "id": 37,
+      "name": "Bed",
+      "image": "transaparent/Bed_room/Bedroom_all.png",
+      "optional_all_img": "transaparent/Bed_room/Bedroom_all.png",
+      "parent_id": 14,
+      "preview_type": "normal",
+      "sort_order": 5,
+      "nested_key": "Bed"
+    },
+    {
+      "id": 19,
+      "name": "Study",
+      "image": "DECO/SENZURA/Study room.webp",
+      "optional_all_img": "transaparent/Study/Study_room_all.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 5
+    },
+    {
+      "id": 20,
+      "name": "Study Table",
+      "image": "transaparent/Study/subcategories/Study_table.png",
+      "optional_all_img": "transaparent/Study/subcategories/Study_table.png",
+      "parent_id": 19,
+      "preview_type": "normal",
+      "sort_order": 1
+    },
+    {
+      "id": 21,
+      "name": "Bookshelves",
+      "image": "transaparent/Study/subcategories/Bookshelves.png",
+      "optional_all_img": "transaparent/Study/subcategories/Bookshelves.png",
+      "parent_id": 19,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "bookshelves"
+    },
+    {
+      "id": 39,
+      "name": "Chair",
+      "image": "transaparent/Study/subcategories/study_chair.png",
+      "optional_all_img": "transaparent/Study/subcategories/study_chair.png",
+      "parent_id": 19,
+      "preview_type": "normal",
+      "sort_order": 3
+    },
+    {
+      "id": 22,
+      "name": "Bathroom",
+      "image": "DECO/SENZURA/Bathroom.jpg",
+      "optional_all_img": "DECO/SENZURA/Bathroom cabinet.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 6
+    },
+    {
+      "id": 23,
+      "name": "Bathroom Cabinet",
+      "image": "transaparent/Bathroom/Sub_categories/Bathroom_cabinet.jpg",
+      "optional_all_img": "transaparent/Bathroom/Sub_categories/Bathroom_cabinet.jpg",
+      "parent_id": 22,
+      "preview_type": "normal",
+      "sort_order": 1,
+      "nested_key": "bathroom_cabinet"
+    },
+    {
+      "id": 24,
+      "name": "Kids Room",
+      "image": "DECO/NATZURA/shutterstock_1276883560.jpg",
+      "optional_all_img": "transaparent/Kids_Bed_room/Kids_room.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 7
+    },
+    {
+      "id": 25,
+      "name": "Kids Bed",
+      "image": "transaparent/Kids_Bed_room/Sub_category/Kids_bed_1.png",
+      "optional_all_img": "transaparent/Kids_Bed_room/Sub_category/Kids_bed_1.png",
+      "parent_id": 24,
+      "preview_type": "normal",
+      "sort_order": 1,
+      "nested_key": "Bed"
+    },
+    {
+      "id": 26,
+      "name": "Kids Wardrobe",
+      "image": "transaparent/Kids_Bed_room/Sub_category/Kids_wardrobe_1.png",
+      "optional_all_img": "transaparent/Kids_Bed_room/Sub_category/Kids_wardrobe_1.png",
+      "parent_id": 24,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "wardrobe"
+    },
+    {
+      "id": 38,
+      "name": "Study Table",
+      "image": "transaparent/Study/subcategories/Study_table.png",
+      "optional_all_img": "transaparent/Study/subcategories/Study_table.png",
+      "parent_id": 24,
+      "preview_type": "normal",
+      "sort_order": 3
+    },
+    {
+      "id": 27,
+      "name": "Office",
+      "image": "transaparent/Office/Office.jpg",
+      "optional_all_img": "transaparent/Office/Office_all.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 8
+    },
+    {
+      "id": 28,
+      "name": "Reception Area",
+      "image": "transaparent/Office/Sub_categories/Reception_Area.jpg",
+      "optional_all_img": "transaparent/Office/Sub_categories/Reception_Area.jpg",
+      "parent_id": 27,
+      "preview_type": "normal",
+      "sort_order": 1
+    },
+    {
+      "id": 29,
+      "name": "Conference Room",
+      "image": "transaparent/Office/Sub_categories/Conference_room.png",
+      "optional_all_img": "transaparent/Office/Sub_categories/Conference_room.png",
+      "parent_id": 27,
+      "preview_type": "normal",
+      "sort_order": 2
+    },
+    {
+      "id": 30,
+      "name": "Cafeteria",
+      "image": "transaparent/Office/Sub_categories/Cafeteria.png",
+      "optional_all_img": "transaparent/Office/Sub_categories/Cafeteria.png",
+      "parent_id": 27,
+      "preview_type": "normal",
+      "sort_order": 3
+    },
+    {
+      "id": 31,
+      "name": "Office Table",
+      "image": "transaparent/Office/Sub_categories/office_table.png",
+      "optional_all_img": "transaparent/Office/Sub_categories/office_table.png",
+      "parent_id": 27,
+      "preview_type": "normal",
+      "sort_order": 4
+    },
+    {
+      "id": 32,
+      "name": "Office Cabinet",
+      "image": "transaparent/Office/Sub_categories/office_cabinet.png",
+      "optional_all_img": "transaparent/Office/Sub_categories/office_cabinet.png",
+      "parent_id": 27,
+      "preview_type": "normal",
+      "sort_order": 5
+    },
+    {
+      "id": 33,
+      "name": "Office Cubicles",
+      "image": "transaparent/Office/Sub_categories/Office_cubicles.png",
+      "optional_all_img": "transaparent/Office/Sub_categories/Office_cubicles.png",
+      "parent_id": 27,
+      "preview_type": "normal",
+      "sort_order": 6    
+    }
+  ],
+  "furniture": [
+    {
+      "id": 100,
+      "name": "Beds",
+      "image": "DECO/NATZURA/shutterstock_1276883560.jpg",
+      "optional_all_img": "transaparent/Bed_room/Bedroom_all.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 1
+    },
+    {
+      "id": 101,
+      "name": "Kids Bed",
+      "image": "transaparent/Kids_Bed_room/Sub_category/Kids_bed_1.png",
+      "optional_all_img": "transaparent/Kids_Bed_room/Sub_category/Kids_bed_1.png",
+      "parent_id": 100,
+      "preview_type": "normal",
+      "sort_order": 1
+    },
+    {
+      "id": 102,
+      "name": "Headboard",
+      "image": "transaparent/Bed_room/Sub_categories/Headboard_1.png",
+      "optional_all_img": "transaparent/Bed_room/Sub_categories/Headboard_1.png",
+      "parent_id": 100,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "headboard"
+    },
+    {
+      "id": 103,
+      "name": "Bookshelves",
+      "image": "DECO/SENZURA/Storage units.jpg",
+      "optional_all_img": "transaparent/Study/subcategories/Bookshelves.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "bookshelves"
+    },
+    {
+      "id": 105,
+      "name": "Cabinet",
+      "image": "DECO/SENZURA/Storage units.jpg",
+      "optional_all_img": "transaparent/Kitchen/Subcategories/Kitchen_cabinet.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 3
+    },
+    {
+      "id": 106,
+      "name": "Shoe Cabinet",
+      "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Shoe_Cabinet)_1.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Shoe_Cabinet)_1.png",
+      "parent_id": 105,
+      "preview_type": "normal",
+      "sort_order": 1,
+      "nested_key": "shoe_cabinet"
+    },
+    {
+      "id": 107,
+      "name": "Crockery Cabinet",
+      "image": "transaparent/Dining/Subcategories/Crockery_cabinet_1.png",
+      "optional_all_img": "transaparent/Dining/Subcategories/Crockery_cabinet_1.png",
+      "parent_id": 105,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "crockery_cabinet"
+    },
+    {
+      "id": 108,
+      "name": "Bathroom Cabinet",
+      "image": "DECO/SENZURA/Bathroom cabinet.png",
+      "optional_all_img": "DECO/SENZURA/Bathroom cabinet.png",
+      "parent_id": 105,
+      "preview_type": "normal",
+      "sort_order": 3,
+      "nested_key": "bathroom_cabinet"
+    },
+    {
+      "id": 109,
+      "name": "Office Cabinet",
+      "image": "transaparent/Office/Sub_categories/office_cabinet.png",
+      "optional_all_img": "transaparent/Office/Sub_categories/office_cabinet.png",
+      "parent_id": 105,
+      "preview_type": "normal",
+      "sort_order": 4,
+      "nested_key": "office_cabinet"
+    },
+    {
+      "id": 110,
+      "name": "Kitchen Cabinet",
+      "image": "transaparent/Kitchen/Subcategories/Kitchen_cabinet.png",
+      "optional_all_img": "transaparent/Kitchen/Subcategories/Kitchen_cabinet.png",
+      "parent_id": 105,
+      "preview_type": "normal",
+      "sort_order": 5
+    },
+    {
+      "id": 111,
+      "name": "Drawers",
+      "image": "DECO/SENZURA/Light Application images (5).jpg",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 4
+    },
+    {
+      "id": 112,
+      "name": "Chest of Drawers",
+      "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
+      "parent_id": 111,
+      "preview_type": "normal",
+      "sort_order": 1
+    },
+    {
+      "id": 113,
+      "name": "TV Unit",
+      "image": "DECO/SENZURA/tv_unit.jpg",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(TV_Unit)_1.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 5
+    },
+    {
+      "id": 115,
+      "name": "Tables",
+      "image": "DECO/SENZURA/Table.jpg",
+      "optional_all_img": "transaparent/Dining/Dining_all.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 6
+    },
+    {
+      "id": 116,
+      "name": "Dining Table",
+      "image": "transaparent/Dining/Subcategories/Dining_table_1.png",
+      "optional_all_img": "transaparent/Dining/Subcategories/Dining_table_1.png",
+      "parent_id": 115,
+      "preview_type": "normal",
+      "sort_order": 1,
+      "nested_key": "dining_table"
+    },
+    {
+      "id": 117,
+      "name": "Study Table",
+      "image": "transaparent/Study/subcategories/Study_table.png",
+      "optional_all_img": "transaparent/Study/subcategories/Study_table.png",
+      "parent_id": 115,
+      "preview_type": "normal",
+      "sort_order": 2
+    },
+    {
+      "id": 118,
+      "name": "Office Table",
+      "image": "transaparent/Office/Sub_categories/office_table.png",
+      "optional_all_img": "transaparent/Office/Sub_categories/office_table.png",
+      "parent_id": 115,
+      "preview_type": "normal",
+      "sort_order": 3
+    },
+    {
+      "id": 119,
+      "name": "Centre Table",
+      "image": "transaparent/center_table/center_table.png",
+      "optional_all_img": "transaparent/center_table/center_table.png",
+      "parent_id": 115,
+      "preview_type": "normal",
+      "sort_order": 4
+    },
+    {
+      "id": 120,
+      "name": "Coffee Table",
+      "image": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Coffee_table)_1.png",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Coffee_table)_1.png",
+      "parent_id": 115,
+      "preview_type": "normal",
+      "sort_order": 5
+    },
+    {
+      "id": 121,
+      "name": "Wall Panelling",
+      "image": "DECO/SENZURA/wall_pannling.jpg",
+      "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Wall_panelling)_1.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 7
+    },
+    {
+      "id": 124,
+      "name": "Kids Wardrobe",
+      "image": "transaparent/Kids_Bed_room/Sub_category/Kids_wardrobe_1.png",
+      "optional_all_img": "transaparent/Kids_Bed_room/Sub_category/Kids_wardrobe_1.png",
+      "parent_id": 123,
+      "preview_type": "normal",
+      "sort_order": 1,
+      "nested_key": "wardrobe"
+    },
+    {
+      "id": 125,
+      "name": "Wardrobe",
+      "image": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png",
+      "optional_all_img": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png",
+      "parent_id": 123,
+      "preview_type": "normal",
+      "sort_order": 2,
+      "nested_key": "wardrobe"
+    },
+    {
+      "id": 126,
+      "name": "Dressing Unit",
+      "image": "images/furniture/dressing_unit.png",
+      "optional_all_img": "transaparent/Bed_room/Sub_categories/Dressing_unit_1.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 9
+    },
+    {
+      "id": 128,
+      "name": "Sofa",
+      "image": "images/furniture/sofa_2_seater.png",
+      "optional_all_img": "images/furniture/sofa_2_seater.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 10,
+      "nested_key": "sofa"
+    },
+    {
+      "id": 130,
+      "name": "Chair",
+      "image": "images/furniture/designer_chair.png",
+      "optional_all_img": "images/furniture/designer_chair.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 11
+    },
+    {
+      "id": 132,
+      "name": "Office Cubicles",
+      "image": "images/furniture/office_cubicle.png",
+      "optional_all_img": "transaparent/Office/Office_all.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 12
+    }
+  ],
+  "nested_subcategories": {
+    "shoe_cabinet": [
+      "1 Door",
+      "2 Door",
+      "Open rack",
+      "Rack with seating",
+      "Tilt out shoe rack"
+    ],
+    "dining_table": [
+      "4 Seater",
+      "6 Seater",
+      "8 Seater"
+    ],
+    "crockery_cabinet": [
+      "1 Door",
+      "2 Door",
+      "3 Door",
+      "4 Door"
+    ],
+    "wardrobe": [
+      "1 Door",
+      "2 Door",
+      "3 Door",
+      "4 Door",
+      "4+ Door",
+      "Sliding Door"
+    ],
+    "headboard": [
+      "Single bed",
+      "Queen bed",
+      "King bed"
+    ],
+    "bookshelves": [
+      "Open rack",
+      "1 Door",
+      "2 Door",
+      "3 Door"
+    ],
+    "bathroom_cabinet": [
+      "Mirror",
+      "Wall Mounted",
+      "Standing",
+      "Tall Storage",
+      "Corner"
+    ],
+    "office_cabinet": [
+      "1 Door",
+      "2 Door",
+      "3 Door",
+      "4 Door",
+      "4+ Door"
+    ],
+    "sofa": [
+      "1 Seater",
+      "2 Seater",
+      "3 Seater",
+      "4 Seater",
+      "5 Seater",
+      "6 Seater",
+      "L-Shape"
+    ],
+    "Bed": [
+      "Kid's Bed",
+      "Single bed",
+      "Double Bed",
+      "Queen bed",
+      "King bed",
+      "Bunk bed"
+    ],
+    "Drawers":[
+      "1 Drawer",
+      "2 Drawer",
+      "4 Drawer"
+    ],
+    "dining_table": [
+      "2 Seater",
+      "4 Seater",
+      "6 Seater",
+      "8 Seater"
+    ]
+  }
+}

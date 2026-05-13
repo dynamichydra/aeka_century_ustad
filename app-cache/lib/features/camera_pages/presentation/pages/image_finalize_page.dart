@@ -1,0 +1,235 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
+import 'package:century_ai/core/constants/image_strings.dart';
+import 'package:century_ai/core/constants/sizes.dart';
+
+class ImageFinalizePage extends StatelessWidget {
+  final dynamic editedImage;
+  final Map<String, dynamic> selectedColor;
+  final Map<String, dynamic> selectedLamination;
+
+  const ImageFinalizePage({
+    super.key,
+    required this.editedImage,
+    required this.selectedColor,
+    required this.selectedLamination,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+    return Scaffold(
+      key: scaffoldKey,
+      drawer: const HomeDrawer(),
+      backgroundColor: Colors.white,
+      body: 
+          Column(
+            children: [
+              /// ---------------- IMAGE AREA ----------------
+              SafeArea(
+                bottom: false,
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.45,
+                  child: _buildFinalImage(),
+                ),
+              ),
+
+              /// ---------------- BOTTOM PANEL ----------------
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Design",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 24,
+                        ),
+                      ),
+                      const Text(
+                        "AI Based Color & Pattern Search",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Selected Color Section
+                      Text(
+                        "Selected Color : ${selectedColor['name']}",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          _buildColorCircle(_parseHex(selectedColor['hex'])),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Variant Section
+                      Text(
+                        "Variant: ${selectedColor['id']} SL",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Pattern & Texture Section
+                      const Text(
+                        "Pattern & Texture",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          _buildTextureItem(
+                            selectedLamination['name'],
+                            "${selectedLamination['id']} SL",
+                            selectedLamination['image'],
+                          ),
+                        ],
+                      ),
+
+                      const Spacer(),
+
+                      // Action Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildActionButton(Icons.bookmark_outline, () {}),
+                          _buildActionButton(Icons.delete_outline, () => context.pop()),
+                          _buildActionButton(Icons.share_outlined, () {
+                            final image = editedImage;
+                            if (image is File) {
+                              Share.shareXFiles([XFile(image.path)], text: 'Check out my design!');
+                            } else if (image is String) {
+                              Share.share('Check out this design: $image');
+                            }
+                          }),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        
+    );
+  }
+
+  Widget _buildColorCircle(Color color) {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+      ),
+    );
+  }
+
+  Color _parseHex(String hex) {
+    hex = hex.replaceAll("#", "");
+    return Color(int.parse("FF$hex", radix: 16));
+  }
+
+  Widget _buildTextureItem(String name, String code, String imagePath) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 80,
+          height: 45,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F1F1),
+            borderRadius: BorderRadius.circular(4),
+            image: DecorationImage(
+              image: imagePath.startsWith('http')
+                  ? NetworkImage(imagePath) as ImageProvider
+                  : AssetImage(imagePath) as ImageProvider,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          name,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.normal),
+        ),
+        Text(
+          code,
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 4,
+              color: Colors.black.withOpacity(0.1),
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 24, color: Colors.black),
+      ),
+    );
+  }
+
+  Widget _buildFinalImage() {
+    final image = editedImage;
+    if (image is File) {
+      return Image.file(
+        image,
+        fit: BoxFit.cover,
+        width: double.infinity,
+      );
+    } else if (image is String) {
+      return image.startsWith('http')
+          ? Image.network(
+              image,
+              fit: BoxFit.cover,
+              width: double.infinity,
+            )
+          : Image.asset(
+              image,
+              fit: BoxFit.cover,
+              width: double.infinity,
+            );
+    }
+    return const Center(child: Icon(Icons.image_not_supported));
+  }
+}
