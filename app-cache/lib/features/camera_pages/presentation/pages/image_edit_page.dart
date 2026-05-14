@@ -480,7 +480,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 .then((_) {
                   if (mounted) {
                     setState(() {
-                      _hasAppliedOnce = true;
                       _isPrecaching = false;
                     });
                   }
@@ -488,7 +487,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 .catchError((e) {
                   if (mounted) {
                     setState(() {
-                      _hasAppliedOnce = true;
                       _isPrecaching = false;
                     });
                   }
@@ -515,7 +513,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         }
                         return _compareExpanded
                             ? _buildTopComparisonSection(selectedIndices)
-                            : _buildImageOverlaySection();
+                            : RepaintBoundary(child: _buildImageOverlaySection());
                       },
                     );
                   },
@@ -679,7 +677,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           const SizedBox(height: 6),
           _buildCategorySelection(),
           const SizedBox(height: 12),
-          _buildTextureSelection(),
+          RepaintBoundary(child: _buildTextureSelection()),
           const SizedBox(height: 10),
         ],
       ),
@@ -750,7 +748,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                                     fit: BoxFit.cover,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    cacheWidth: 200,
+                                    cacheWidth: 300,
                                   ),
                                 ),
                                 Container(
@@ -1195,6 +1193,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     height: MediaQuery.of(context).size.height * 0.40,
                     fit: BoxFit.cover,
                     gaplessPlayback: true,
+                    cacheWidth: 800,
                   ),
 
                   // Applied Design Layer
@@ -1207,6 +1206,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                             height: MediaQuery.of(context).size.height * 0.40,
                             fit: BoxFit.cover,
                             gaplessPlayback: true,
+                            cacheWidth: 800,
                           )
                         : (_currentAssetPreview!.startsWith('/') ||
                               _currentAssetPreview!.contains('tryon_result'))
@@ -1216,6 +1216,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                             height: MediaQuery.of(context).size.height * 0.40,
                             fit: BoxFit.cover,
                             gaplessPlayback: true,
+                            cacheWidth: 800,
                           )
                         : Image.asset(
                             _currentAssetPreview!,
@@ -1292,84 +1293,43 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Widget _buildGeneratingBlock() {
-    return StreamBuilder<int>(
-      stream: Stream.periodic(const Duration(seconds: 2), (i) => i % 4),
-      builder: (context, snapshot) {
-        final messages = [
-          "Analyzing Image...",
-          "Applying AI Design...",
-          "Perfecting Textures...",
-          "Finalizing Result...",
-        ];
-        final message = messages[snapshot.data ?? 0];
-
-        return Container(
-          width: double.infinity,
-          height: MediaQuery.of(context).size.height * 0.40,
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            image: DecorationImage(
-              image: FileImage(widget.imageFile),
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: ClipRRect(
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                color: Colors.black.withOpacity(0.3),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Premium AI Lottie Animation (Local)
-                      Lottie.asset(
-                        'assets/images/animations/ai_star_ui_animation.json',
-                        height: 180,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        message.toUpperCase(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2.5,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black26,
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "ARTIFICIAL INTELLIGENCE AT WORK",
-                        style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ],
+    return Container(
+      width: double.infinity,
+      height: MediaQuery.of(context).size.height * 0.40,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.4),
+        image: DecorationImage(
+          image: FileImage(widget.imageFile),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            color: Colors.black.withOpacity(0.3),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Premium AI Lottie Animation (Local)
+                  Lottie.asset(
+                    'assets/images/animations/ai_star_ui_animation.json',
+                    height: 180,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      );
+                    },
                   ),
-                ),
+                ],
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -1792,6 +1752,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 ? CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
+                    memCacheWidth: 200,
                     placeholder: (ctx, url) => Shimmer.fromColors(
                       baseColor: Colors.grey[300]!,
                       highlightColor: Colors.grey[100]!,
@@ -1968,54 +1929,62 @@ class _ImageEditPageState extends State<ImageEditPage> {
     );
   }
 
-  void _applyChanges(BuildContext context) {
-    if (_selectedTexture == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select a texture pattern first."),
-          backgroundColor: Colors.black87,
-          duration: Duration(seconds: 2),
-        ),
+  Future<void> _finalizeEdit() async {
+
+print("+++++++++++++++++++++++++++++++++++++++++");
+print("agduqgdjagkjsdhjahsgdjafsdhasfhgdasasdaas");
+print("agduqgdjagkjsdhjahsgdjafsdhasfhgdasasdaas");
+print("+++++++++++++++++++++++++++++++++++++++++");
+
+    final state = context.read<ImageEditCubit>().state;
+    
+    // Trigger comparison details API call
+    if (state.selectedPattern != null) {
+      final pattern = state.selectedPattern!;
+      final model = ProductImageModel(
+        id: pattern['id']?.toString() ?? '0',
+        name: pattern['name']?.toString() ?? 'AI Design',
+        image: pattern['coverImage']?.toString() ?? '',
+        isTrending: false,
+        category: _selectedCategory,
+        subcategory: _selectedSubCategory,
       );
-      return;
+      context.read<ImageEditCubit>().compareImageSelected(model);
     }
 
-    if (_lastTapCoordinate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please tap on the image to select a location first."),
-          backgroundColor: Colors.black87,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
+    // Post the actual AI-edited image to history
+    if (widget.image_id != null && state.currentGeneratedImage != null) {
+      setState(() => _isUploading = true);
+      try {
+        final newRecord = await _userEditsService.postEdit(
+          editedFile: File(state.currentGeneratedImage!),
+          furnitureId: widget.image_id!,
+          email: _ownerEmail,
+        );
+
+        if (newRecord != null) {
+          debugPrint("✅ AI-Edited record posted manually on Finalize: ${newRecord.id}");
+          await _fetchUserEditHistory();
+        }
+      } catch (e) {
+        debugPrint("❌ Error uploading AI-edited image: $e");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Upload failed: $e")),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isUploading = false);
+      }
     }
 
-    final textureUrl =
-        _selectedTexture!["coverImage"]?.toString() ?? "unknown_url";
-
-    // Use current edited image as base if it exists and is a local file
-    File baseImage = widget.imageFile;
-    if (_currentAssetPreview != null &&
-        (_currentAssetPreview!.startsWith('/') ||
-            _currentAssetPreview!.contains('tryon_result'))) {
-      baseImage = File(_currentAssetPreview!);
+    if (mounted) {
+      setState(() {
+        _compareExpanded = true;
+        _editExpanded = false;
+        _hasAppliedOnce = true;
+      });
     }
-
-    context.read<ImageEditCubit>().applyTextureSelected(
-      roomImage: baseImage,
-      textureUrl: textureUrl,
-      coordinate: _lastTapCoordinate!,
-      isShortTap: _isShortTap,
-      isLongTap: _isLongTap,
-    );
-
-    setState(() {
-      _isPrecaching = true;
-      _hasAppliedOnce = true;
-      _compareExpanded = true;
-      _editExpanded = false;
-    });
   }
 
   bool get _isApplied => _hasAppliedOnce;
@@ -2066,17 +2035,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         maintainAnimation: true,
                         maintainState: true,
                         child: GestureDetector(
-                          onTap: () {
-                            context.push(
-                              AppRoutes.imageFinalize,
-                              extra: {
-                                'editedImage':
-                                    _currentAssetPreview ?? widget.imageFile,
-                                'selectedColor': _selectedColor ?? {},
-                                'selectedLamination': _selectedTexture ?? {},
-                              },
-                            );
-                          },
+                          onTap: _finalizeEdit,
                           child: Container(
                             width: 40,
                             height: 40,
@@ -2108,75 +2067,21 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   builder: (context, state) {
                     final bool isGenerating = state.isGenerating;
                     final bool isLoading = isGenerating || _isUploading;
-                    
+                    final bool hasResult = state.currentGeneratedImage != null;
+
                     return ElevatedButton(
-                      onPressed: isLoading
+                      onPressed: (isLoading || !hasResult)
                           ? null
-                          : () async {
-                              if (state.currentGeneratedImage == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Please generate an image first."),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              // Trigger comparison details API call
-                              if (state.selectedPattern != null) {
-                                final pattern = state.selectedPattern!;
-                                final model = ProductImageModel(
-                                  id: pattern['id']?.toString() ?? '0',
-                                  name: pattern['name']?.toString() ?? 'AI Design',
-                                  image: pattern['coverImage']?.toString() ?? '',
-                                  isTrending: false,
-                                  category: _selectedCategory,
-                                  subcategory: _selectedSubCategory,
-                                );
-                                context.read<ImageEditCubit>().compareImageSelected(model);
-                              }
-
-                              // Post the actual AI-edited image to history on Apply
-                              if (widget.image_id != null && state.currentGeneratedImage != null) {
-                                setState(() => _isUploading = true);
-                                try {
-                                  final newRecord = await _userEditsService.postEdit(
-                                    editedFile: File(state.currentGeneratedImage!),
-                                    furnitureId: widget.image_id!,
-                                    email: _ownerEmail,
-                                  );
-
-                                  if (newRecord != null) {
-                                    debugPrint("✅ AI-Edited record posted manually on Apply: ${newRecord.id}");
-                                    await _fetchUserEditHistory(); // Wait for history refresh
-                                  }
-                                } catch (e) {
-                                  debugPrint("❌ Error uploading AI-edited image: $e");
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text("Upload failed: $e")),
-                                    );
-                                  }
-                                } finally {
-                                  if (mounted) setState(() => _isUploading = false);
-                                }
-                              }
-
-                              if (mounted) {
-                                setState(() {
-                                  _compareExpanded = true;
-                                  _editExpanded = false;
-                                });
-                              }
-                            },
+                          : _finalizeEdit,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.zero,
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
                         elevation: 0,
                         disabledBackgroundColor: Colors.grey[100],
+                        disabledForegroundColor: Colors.black26,
                         side: BorderSide(
-                          color: isLoading
+                          color: (isLoading || !hasResult)
                               ? Colors.transparent
                               : Colors.black12,
                           width: 1,
@@ -2185,22 +2090,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.black54,
-                              ),
-                            )
-                          : const Text(
-                              "Apply",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                      child: const Text(
+                        "Apply",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     );
                   },
                 ),

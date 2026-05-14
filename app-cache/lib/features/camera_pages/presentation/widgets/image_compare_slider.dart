@@ -29,14 +29,14 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
   @override
   void initState() {
     super.initState();
-    _positionNotifier = ValueNotifier(widget.position);
+    _positionNotifier = ValueNotifier(widget.position.clamp(0.02, 0.98));
   }
 
   @override
   void didUpdateWidget(ImageCompareSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.position != widget.position) {
-      _positionNotifier.value = widget.position;
+      _positionNotifier.value = widget.position.clamp(0.02, 0.98);
     }
   }
 
@@ -78,7 +78,7 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
         return GestureDetector(
           onHorizontalDragUpdate: (details) {
             if (width == 0) return;
-            final newPos = (_positionNotifier.value + details.delta.dx / width).clamp(0.0, 1.0);
+            final newPos = (_positionNotifier.value + details.delta.dx / width).clamp(0.02, 0.98);
             _positionNotifier.value = newPos;
             widget.onChanged(newPos);
           },

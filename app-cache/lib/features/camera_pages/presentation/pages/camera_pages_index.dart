@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -90,7 +91,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         return;
       }
 
-      final imageBytes = await imageFile.readAsBytes();
+      final imageBytes = await compute((File f) => f.readAsBytesSync(), imageFile);
       final imageId = newProduct.id;
 
       await SelectedImagesRepository.saveImage(
@@ -160,7 +161,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         return;
       }
 
-      final imageBytes = await imageFile.readAsBytes();
+      final imageBytes = await compute((File f) => f.readAsBytesSync(), imageFile);
       final imageId = newProduct.id;
 
       await SelectedImagesRepository.saveImage(
@@ -215,7 +216,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       body: Stack(
         children: [
           // 📷 Camera Preview (full screen)
-          Positioned.fill(child: CameraPreview(_controller!)),
+          Positioned.fill(child: RepaintBoundary(child: CameraPreview(_controller!))),
 
           // 🟦 Capture Area Overlay (stays above camera)
           const _CaptureOverlay(),
@@ -389,13 +390,34 @@ class _OverlayPainter extends CustomPainter {
       size.height * 0.45,
     );
 
-    // Dim background
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), dimPaint);
-
-    // Clear capture area
-    canvas.saveLayer(Rect.largest, Paint());
-    canvas.drawRect(captureRect, Paint()..blendMode = BlendMode.clear);
-    canvas.restore();
+    // Draw 4 rectangles around the capture area instead of using saveLayer + clear
+    // Top
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, captureRect.top), dimPaint);
+    // Bottom
+    canvas.drawRect(
+      Rect.fromLTWH(
+        0,
+        captureRect.bottom,
+        size.width,
+        size.height - captureRect.bottom,
+      ),
+      dimPaint,
+    );
+    // Left
+    canvas.drawRect(
+      Rect.fromLTWH(0, captureRect.top, captureRect.left, captureRect.height),
+      dimPaint,
+    );
+    // Right
+    canvas.drawRect(
+      Rect.fromLTWH(
+        captureRect.right,
+        captureRect.top,
+        size.width - captureRect.right,
+        captureRect.height,
+      ),
+      dimPaint,
+    );
 
     // White border
     canvas.drawRRect(

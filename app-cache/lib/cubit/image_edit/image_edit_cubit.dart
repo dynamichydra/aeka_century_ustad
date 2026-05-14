@@ -88,6 +88,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         isApplyLoading: false,
         currentGeneratedImage: newGeneratedImage,
         editedImageFile: newGeneratedImage, // Keep for backward compatibility
+        originalImage: newGeneratedImage, // UPDATE BASE FOR STACKING
         generatedHistory: updatedHistory,
         hasPatternChanged: false,
         hasAreaChanged: false,

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:century_ai/core/constants/image_strings.dart';
@@ -166,7 +167,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
       // 2. Use Cache Manager to get/download the file
       final file = await DefaultCacheManager().getSingleFile(product.image);
-      final Uint8List imageBytes = await file.readAsBytes();
+      final Uint8List imageBytes = await compute((File f) => f.readAsBytesSync(), file);
 
       // 3. Save to SQLite
       final imageData = SelectedImageData(
@@ -420,6 +421,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                                         fit: BoxFit.cover,
                                         height: double.infinity,
                                         width: double.infinity,
+                                        memCacheWidth: 300,
                                         placeholder: (context, url) => Shimmer.fromColors(
                                           baseColor: Colors.grey[300]!,
                                           highlightColor: Colors.grey[100]!,
@@ -546,6 +548,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         _currentFile!,
         width: double.infinity,
         fit: BoxFit.cover,
+        cacheWidth: 800, // Optimize memory for preview
       );
     }
 
@@ -591,6 +594,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           fit: BoxFit.cover,
           height: double.infinity,
           width: double.infinity,
+          cacheWidth: 300, // Optimize thumbnail memory
         );
       }
     }
