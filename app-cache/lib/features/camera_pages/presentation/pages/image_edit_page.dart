@@ -1931,11 +1931,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Future<void> _finalizeEdit() async {
 
-print("+++++++++++++++++++++++++++++++++++++++++");
-print("agduqgdjagkjsdhjahsgdjafsdhasfhgdasasdaas");
-print("agduqgdjagkjsdhjahsgdjafsdhasfhgdasasdaas");
-print("+++++++++++++++++++++++++++++++++++++++++");
-
     final state = context.read<ImageEditCubit>().state;
     
     // Trigger comparison details API call

@@ -76,8 +76,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 400) {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    
+    // Trigger when 200px from the bottom
+    if (currentScroll >= maxScroll - 200) {
       context.read<ProductsCubit>().loadMoreProducts();
     }
   }
@@ -549,14 +553,23 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   _selectedNestedSubCategory = "";
                 });
                 context.read<HomeCubit>().clearSearch();
+                context.read<HomeCubit>().resetFilters();
                 return context
                     .read<ProductsCubit>()
                     .fetchFeaturedProducts(isExterior: homeState.isExterior);
               },
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  if (scrollInfo.metrics.pixels >=
+                      scrollInfo.metrics.maxScrollExtent - 200) {
+                    context.read<ProductsCubit>().loadMoreProducts();
+                  }
+                  return false;
+                },
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 0,
@@ -764,11 +777,15 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
                                       onTap: () {
+                                        final wasTrending = homeState.isTrendingShowing;
                                         homeCubit.toggleTrending();
-                                        final isNowTrending = !homeState.isTrendingShowing;
+                                        
+                                        // Use future state values because toggle happened above
+                                        final isNowTrending = !wasTrending;
+                                        
                                         if (isNowTrending) {
                                           context.read<ProductsCubit>().fetchTrendingProducts(
-                                            ownerId: "user@example.com",
+                                            ownerId: "anisasru@gmail.com",
                                           );
                                         } else {
                                           context.read<ProductsCubit>().fetchFeaturedProducts(
@@ -811,7 +828,21 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
                                       onTap: () {
+                                        final wasLiked = homeState.isLikedShowing;
                                         homeCubit.toggleLiked();
+                                        
+                                        // Use future state values
+                                        final isNowLiked = !wasLiked;
+                                        
+                                        if (isNowLiked) {
+                                          context.read<ProductsCubit>().fetchFavoriteProducts(
+                                            ownerId: "anisasru@gmail.com",
+                                          );
+                                        } else {
+                                          context.read<ProductsCubit>().fetchFeaturedProducts(
+                                            isExterior: homeState.isExterior,
+                                          );
+                                        }
                                       },
                                       child: Padding(
                                         padding: const EdgeInsets.all(8),
@@ -981,7 +1012,15 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: ProductContainers(
                                       imagePath: product.image,
                                       isTrending: product.isTrending,
+                                      isFavorite: product.isFavorite,
                                       isNetwork: product.isNetworkImage,
+                                      id: product.id,
+                                      onFavoriteToggle: () {
+                                        context.read<ProductsCubit>().toggleFavorite(
+                                          itemId: product.id,
+                                          ownerId: "anisasru@gmail.com",
+                                        );
+                                      },
                                     ),
                                   ),
                                 );
@@ -1024,22 +1063,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: ProductContainers(
                                       imagePath: product.image,
                                       isTrending: product.isTrending,
+                                      isFavorite: product.isFavorite,
                                       isNetwork: product.isNetworkImage,
+                                      id: product.id,
+                                      onFavoriteToggle: () {
+                                        context.read<ProductsCubit>().toggleFavorite(
+                                          itemId: product.id,
+                                          ownerId: "anisasru@gmail.com",
+                                        );
+                                      },
                                     ),
                                   ),
                                 );
                               },
                             ),
-                      if (productsState.isLoadingMore)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFFEA202C),
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        ),
                       if (productsState.isLoadingMore)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 20),
@@ -1056,6 +1093,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 ),
               ),
             ),
+          ),
             Positioned(
               bottom: TSizes.defaultSpace,
               left: TSizes.defaultSpace,

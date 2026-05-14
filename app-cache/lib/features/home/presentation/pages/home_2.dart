@@ -78,8 +78,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 400) {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    
+    // Trigger when 200px from the bottom
+    if (currentScroll >= maxScroll - 200) {
       context.read<ProductsCubit>().loadMoreProducts();
     }
   }
@@ -689,13 +693,22 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   _selectedNestedSubCategory = "";
                 });
                 context.read<HomeCubit>().clearSearch();
+                context.read<HomeCubit>().resetFilters();
                 // Fetch featured products
                 return context.read<ProductsCubit>().fetchFeaturedProducts();
               },
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  if (scrollInfo.metrics.pixels >=
+                      scrollInfo.metrics.maxScrollExtent - 200) {
+                    context.read<ProductsCubit>().loadMoreProducts();
+                  }
+                  return false;
+                },
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 0,
@@ -1033,18 +1046,26 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 final product = displayProducts[index];
 
                                 return GestureDetector(
-                                  onTap: () {
-                                    _openProductForEditing(product);
-                                  },
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: ProductContainers(
-                                      imagePath: product.image,
-                                      isTrending: product.isTrending,
-                                      isNetwork: product.isNetworkImage,
-                                    ),
-                                  ),
-                                );
+                                   onTap: () {
+                                     _openProductForEditing(product);
+                                   },
+                                   child: ClipRRect(
+                                     borderRadius: BorderRadius.circular(8),
+                                     child: ProductContainers(
+                                       imagePath: product.image,
+                                       isTrending: product.isTrending,
+                                       isFavorite: product.isFavorite,
+                                       isNetwork: product.isNetworkImage,
+                                       id: product.id,
+                                       onFavoriteToggle: () {
+                                         context.read<ProductsCubit>().toggleFavorite(
+                                           itemId: product.id,
+                                           ownerId: "anisasru@gmail.com",
+                                         );
+                                       },
+                                     ),
+                                   ),
+                                 );
                               },
                             )
                           : ListView.separated(
@@ -1106,6 +1127,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 ),
               ),
             ),
+          ),
             Positioned(
               bottom: TSizes.defaultSpace,
               left: TSizes.defaultSpace,

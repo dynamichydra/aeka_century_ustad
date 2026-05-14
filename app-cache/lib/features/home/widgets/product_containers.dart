@@ -5,20 +5,23 @@ import 'package:shimmer/shimmer.dart';
 class ProductContainers extends StatelessWidget {
   final String imagePath;
   final bool isTrending;
+  final bool isFavorite;
 
   final bool isNetwork;
   final String? id;
+  final VoidCallback? onTap;
+  final VoidCallback? onFavoriteToggle;
 
   const ProductContainers({
     super.key,
     required this.imagePath,
     required this.isTrending,
+    this.isFavorite = false,
     this.isNetwork = false,
     this.id,
     this.onTap,
+    this.onFavoriteToggle,
   });
-
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -61,8 +64,12 @@ class ProductContainers extends StatelessWidget {
                 top: 0,
                 right: 6,
                 child: IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.favorite_border, size: 18),
+                  onPressed: onFavoriteToggle,
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    size: 18,
+                    color: isFavorite ? Colors.red : Colors.white,
+                  ),
                 ),
               ),
             ],

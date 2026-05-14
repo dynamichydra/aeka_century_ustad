@@ -136,6 +136,7 @@ class ProductImageModel {
   final String? subcategory;
   final String? nestedSubcategory;
   final bool isNetwork;
+  final bool isFavorite;
 
   ProductImageModel({
     required this.id,
@@ -146,8 +147,33 @@ class ProductImageModel {
     this.subcategory,
     this.nestedSubcategory,
     this.isNetwork = false,
+    this.isFavorite = false,
   });
 
   bool get isNetworkImage => image.startsWith('http') || isNetwork;
+
+  ProductImageModel copyWith({
+    String? id,
+    String? name,
+    String? image,
+    bool? isTrending,
+    String? category,
+    String? subcategory,
+    String? nestedSubcategory,
+    bool? isNetwork,
+    bool? isFavorite,
+  }) {
+    return ProductImageModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      image: image ?? this.image,
+      isTrending: isTrending ?? this.isTrending,
+      category: category ?? this.category,
+      subcategory: subcategory ?? this.subcategory,
+      nestedSubcategory: nestedSubcategory ?? this.nestedSubcategory,
+      isNetwork: isNetwork ?? this.isNetwork,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
 }
 

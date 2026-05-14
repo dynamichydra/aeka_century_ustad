@@ -230,6 +230,80 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
+  Future<void> fetchFavoriteProducts({
+    required String ownerId,
+  }) async {
+    emit(state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      offset: 0,
+      isFavoriteView: true,
+      isTrending: false,
+      currentOwnerId: ownerId,
+      clearQuery: true,
+      clearCategory: true,
+      clearRoom: true,
+      clearGroup: true,
+      clearProduct: true,
+      clearSimilarImageId: true,
+    ));
+    try {
+      final products = await _productRepository.getFavoriteProducts(
+        ownerId: ownerId,
+      );
+      emit(state.copyWith(
+        isLoading: false,
+        products: products,
+        hasMore: false, // Favorites endpoint doesn't seem to support pagination yet
+        offset: products.length,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+          isLoading: false, errorMessage: e.toString(), hasMore: false));
+    }
+  }
+
+  Future<void> toggleFavorite({
+    required String itemId,
+    required String ownerId,
+  }) async {
+    // Optimistic UI update
+    final updatedProducts = state.products.map((p) {
+      if (p.id == itemId) {
+        return p.copyWith(isFavorite: !p.isFavorite);
+      }
+      return p;
+    }).toList();
+
+    emit(state.copyWith(products: updatedProducts));
+
+    try {
+      final success = await _productRepository.toggleFavorite(
+        itemId: itemId,
+        ownerId: ownerId,
+      );
+      if (!success) {
+        // Rollback on failure
+        final rolledBackProducts = state.products.map((p) {
+          if (p.id == itemId) {
+            return p.copyWith(isFavorite: !p.isFavorite);
+          }
+          return p;
+        }).toList();
+        emit(state.copyWith(products: rolledBackProducts));
+      }
+    } catch (e) {
+      // Rollback on error
+      final rolledBackProducts = state.products.map((p) {
+        if (p.id == itemId) {
+          return p.copyWith(isFavorite: !p.isFavorite);
+        }
+        return p;
+      }).toList();
+      emit(state.copyWith(products: rolledBackProducts));
+    }
+  }
+
   Future<void> searchProducts(String query, {int limit = 12}) async {
     if (query.trim().isEmpty) {
       return fetchFeaturedProducts(limit: limit, isExterior: state.isInterior == false);

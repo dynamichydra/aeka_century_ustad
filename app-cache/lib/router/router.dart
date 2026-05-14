@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:century_ai/cubit/image_edit/image_edit_cubit.dart';
+import 'package:century_ai/cubit/products/products_cubit.dart';
+import 'package:century_ai/data/repositories/product_repository.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: AppRoutes.home,
@@ -92,11 +94,14 @@ final GoRouter router = GoRouter(
           return Scaffold(body: Center(child: Text("Error: No image provided")));
         }
 
-        return ImagePreviewPage(
-          imageFile: imageFile,
-          image_category: imageCategory,
-          sub_category: subCategory,
-          image_id: image_id,
+        return BlocProvider(
+          create: (context) => ProductsCubit(context.read<ProductRepository>()),
+          child: ImagePreviewPage(
+            imageFile: imageFile,
+            image_category: imageCategory,
+            sub_category: subCategory,
+            image_id: image_id,
+          ),
         );
       },
     ),

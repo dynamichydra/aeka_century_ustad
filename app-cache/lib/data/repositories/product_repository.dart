@@ -24,7 +24,7 @@ class ProductRepository {
 
   ProductImageModel _mapToModel(Map<String, dynamic> json) {
     return ProductImageModel(
-      id: json['id'] ?? '',
+      id: json['furnitureId']?.toString() ?? json['id']?.toString() ?? '',
       name: json['product'] ?? json['furnitureCategory'] ?? 'Unknown',
       image: json['imageUrl'] ?? '',
       isTrending: false,
@@ -161,6 +161,39 @@ class ProductRepository {
     }
   }
 
+  Future<List<ProductImageModel>> getFavoriteProducts({
+    required String ownerId,
+  }) async {
+    try {
+      final data = await _apiService.getFavoriteProducts(ownerId: ownerId);
+      final products = data.map((item) {
+        final model = _mapToModel(item.cast<String, dynamic>());
+        // Since we are fetching from the favorites endpoint, we can mark them as liked
+        return model.copyWith(isFavorite: true);
+      }).toList();
+      debugPrint(
+        '📦 REPO_LOG: Fetched ${products.length} favorite products for owner: $ownerId',
+      );
+      return products;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: getFavoriteProducts failure: $e');
+      return [];
+    }
+  }
+
+  Future<bool> toggleFavorite({
+    required String itemId,
+    required String ownerId,
+  }) async {
+    try {
+      await _apiService.toggleFavorite(itemId: itemId, ownerId: ownerId);
+      return true;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: toggleFavorite failure for $itemId: $e');
+      return false;
+    }
+  }
+
   // --- Legacy Methods ---
 
   Future<List<ProductImageModel>> getProducts({int limit = 18}) async {
@@ -207,8 +240,4 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getFavoriteProducts({int limit = 8}) async {
-    final products = await getProducts(limit: limit);
-    return products.take(limit).toList();
-  }
 }

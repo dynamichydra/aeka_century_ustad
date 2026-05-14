@@ -47,16 +47,23 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void toggleTrending() {
-    setTrending(!state.isTrendingShowing);
-  }
-
-  void setLiked(bool value) {
-    emit(state.copyWith(isLikedShowing: value));
+    final newValue = !state.isTrendingShowing;
+    if (newValue) {
+      emit(state.copyWith(isTrendingShowing: true, isLikedShowing: false));
+    } else {
+      emit(state.copyWith(isTrendingShowing: false));
+    }
     logState();
   }
 
   void toggleLiked() {
-    setLiked(!state.isLikedShowing);
+    final newValue = !state.isLikedShowing;
+    if (newValue) {
+      emit(state.copyWith(isLikedShowing: true, isTrendingShowing: false));
+    } else {
+      emit(state.copyWith(isLikedShowing: false));
+    }
+    logState();
   }
 
   void setSelectedIndex(int index) {
@@ -76,6 +83,11 @@ class HomeCubit extends Cubit<HomeState> {
 
   void resetHomeState() {
     emit(const HomeState());
+    logState();
+  }
+
+  void resetFilters() {
+    emit(state.copyWith(isTrendingShowing: false, isLikedShowing: false));
     logState();
   }
 

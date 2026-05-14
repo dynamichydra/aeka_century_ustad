@@ -14,6 +14,7 @@ class TApiConstants {
   static const String searchText = '/search/text';
   static const String trendingProducts = '/product/trending';
   static const String tryOn = 'https://ustad-api-507497848998.asia-south1.run.app/tryon';
+  static const String favorites = '/me/favourites';
 
   // Dummy endpoints (legacy)
   static const String products = '/products';

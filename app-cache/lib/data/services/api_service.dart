@@ -126,6 +126,38 @@ class ApiService {
     return response.data as List<dynamic>;
   }
 
+  Future<List<dynamic>> getFavoriteProducts({
+    required String ownerId,
+  }) async {
+    final queryParams = {
+      'ownerId': ownerId,
+    };
+    debugPrint('🛒 FETCH_FAVORITES: ${TApiConstants.baseUrl}${TApiConstants.favorites} | Params: $queryParams');
+    final response = await _dio.get(
+      TApiConstants.favorites,
+      queryParameters: queryParams,
+    );
+    return response.data as List<dynamic>;
+  }
+
+  Future<dynamic> toggleFavorite({
+    required String itemId,
+    required String ownerId,
+    String type = "FURNITURE",
+  }) async {
+    final data = {
+      "itemId": itemId,
+      "ownerId": ownerId,
+      "type": type,
+    };
+    debugPrint('🛒 TOGGLE_FAVORITE: ${TApiConstants.baseUrl}${TApiConstants.favorites} | Data: $data');
+    final response = await _dio.post(
+      TApiConstants.favorites,
+      data: data,
+    );
+    return response.data;
+  }
+
   Future<dynamic> uploadFurniture(File file) async {
     String fileName = file.path.split('/').last;
     FormData formData = FormData.fromMap({

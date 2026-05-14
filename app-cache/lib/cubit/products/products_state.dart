@@ -23,6 +23,7 @@ class ProductsState extends Equatable {
   final String? currentOwnerId;
   final bool? isInterior;
   final bool isTrending;
+  final bool isFavoriteView;
 
   const ProductsState({
     this.isLoading = false,
@@ -44,6 +45,7 @@ class ProductsState extends Equatable {
     this.currentOwnerId,
     this.isInterior,
     this.isTrending = false,
+    this.isFavoriteView = false,
   });
 
   ProductsState copyWith({
@@ -66,6 +68,7 @@ class ProductsState extends Equatable {
     String? currentOwnerId,
     bool? isInterior,
     bool? isTrending,
+    bool? isFavoriteView,
     bool clearQuery = false,
     bool clearCategory = false,
     bool clearRoom = false,
@@ -94,6 +97,7 @@ class ProductsState extends Equatable {
       currentOwnerId: currentOwnerId ?? this.currentOwnerId,
       isInterior: isInterior ?? this.isInterior,
       isTrending: isTrending ?? this.isTrending,
+      isFavoriteView: isFavoriteView ?? this.isFavoriteView,
     );
   }
 
@@ -118,5 +122,6 @@ class ProductsState extends Equatable {
     currentOwnerId,
     isInterior,
     isTrending,
+    isFavoriteView,
   ];
 }
