@@ -23,7 +23,6 @@ import 'package:lottie/lottie.dart';
 import 'package:uuid/uuid.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
 
-
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
   final Color? pickedColor;
@@ -61,7 +60,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
   Map<String, dynamic>? _selectedTexture;
   String? _currentAssetPreview; // Track the design selected from comparison
   String _sessionId = ""; // Unique ID for this editing session
-  late String _baseImage; // The image currently being used as a base for editing
+  late String
+  _baseImage; // The image currently being used as a base for editing
 
   final LaminateService _laminateApi = LaminateService();
   final LaminateCacheService _cacheService = LaminateCacheService();
@@ -78,7 +78,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   double _sliderPosition = 0.5;
 
   final UserEditsService _userEditsService = UserEditsService();
-  final String _ownerEmail = "anisasru@gmail.com";
+  final String _ownerEmail = "anisasru1@gmail.com";
   List<EditRecord> _userEdits = [];
   bool _isLoadingEdits = false;
 
@@ -222,11 +222,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
     // Initialize Cubit with original image
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ImageEditCubit>().initOriginalImage(
-            widget.imageFile.path,
-            furnitureId: widget.image_id,
-            ownerId: _ownerEmail,
-            sessionId: _sessionId,
-          );
+        widget.imageFile.path,
+        furnitureId: widget.image_id,
+        ownerId: _ownerEmail,
+        sessionId: _sessionId,
+      );
     });
   }
 
@@ -241,30 +241,71 @@ class _ImageEditPageState extends State<ImageEditPage> {
           .where((e) => e.furnitureId == widget.image_id)
           .toList();
 
-      // 2. Fetch from SQLite (ONLY CURRENT SESSION)
-      final localEdits = await EditHistoryRepository.getEditsBySessionId(_sessionId);
-      
-      // 3. Convert local to EditRecord for UI compatibility
-      final convertedLocal = localEdits.map((e) => EditRecord(
-        id: e.id,
-        originalImageUrl: e.originalImagePath,
-        editedImageUrl: e.editedImagePath,
-        ownerId: e.ownerId,
-        furnitureId: e.furnitureId,
-        createdAt: e.editedAt,
-      )).toList();
+      // 2. Fetch from SQLite (ALL EDITS FOR THIS FURNITURE)
+      final localEdits = await EditHistoryRepository.getEditsByFurnitureId(
+        widget.image_id!,
+      );
 
-      // 4. Merge (Avoid duplicates by ID if possible, or just append)
-      final List<EditRecord> merged = [...convertedLocal];
+      // 3. Convert local to EditRecord
+      final convertedLocal = localEdits
+          .map(
+            (e) => EditRecord(
+              id: e.id,
+              originalImageUrl: e.originalImagePath,
+              editedImageUrl: e.editedImagePath,
+              ownerId: e.ownerId,
+              furnitureId: e.furnitureId,
+              createdAt: e.editedAt,
+              laminateName: e.laminateName,
+            ),
+          )
+          .toList();
+
+      // 4. Merge and De-duplicate using Filename
+      final Map<String, EditRecord> uniqueMap = {};
+      String getFileName(String path) => path.split('/').last.split('?').first;
+
+      // Add Local
+      for (var record in convertedLocal) {
+        uniqueMap[getFileName(record.editedImageUrl)] = record;
+      }
+
+      // Add Network
       for (var net in filteredNetwork) {
-        if (!merged.any((m) => m.id == net.id)) {
-          merged.add(net);
+        final key = getFileName(net.editedImageUrl);
+        if (!uniqueMap.containsKey(key)) {
+          uniqueMap[key] = net;
         }
       }
 
       if (mounted) {
         setState(() {
-          _userEdits = merged;
+          // Add In-Memory designs from Cubit
+          final cubitHistory = context
+              .read<ImageEditCubit>()
+              .state
+              .generatedHistory;
+          for (var h in cubitHistory) {
+            final path = h['generated'] as String;
+            final key = getFileName(path);
+            if (!uniqueMap.containsKey(key)) {
+              uniqueMap[key] = EditRecord(
+                id: "mem_${DateTime.now().millisecondsSinceEpoch}",
+                originalImageUrl: h['original'] ?? "",
+                editedImageUrl: path,
+                ownerId: _ownerEmail,
+                furnitureId: widget.image_id ?? "",
+                createdAt: DateTime.now(),
+                laminateName: (h['laminate'] as Map<String, dynamic>?)?['name']
+                    ?.toString(),
+              );
+            }
+          }
+
+          _userEdits = uniqueMap.values.toList();
+          // Sort by creation time descending (latest first)
+          _userEdits.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
           _isLoadingEdits = false;
           // auto-select first one if available to show comparison
           if (_userEdits.isNotEmpty && _selectedIndicesNotifier.value.isEmpty) {
@@ -283,11 +324,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
     String subCat =
         (_selectedSubCategory == "All" || _selectedSubCategory == null)
-            ? ""
-            : _selectedSubCategory!;
+        ? ""
+        : _selectedSubCategory!;
 
     // 1. Try cache first BEFORE showing loading state
-    final cached = _cacheService.getCategoryTextures(_selectedCategory!, subCat);
+    final cached = _cacheService.getCategoryTextures(
+      _selectedCategory!,
+      subCat,
+    );
     if (cached != null && cached.isNotEmpty) {
       debugPrint("✅ Using cached textures for $_selectedCategory - $subCat");
       if (mounted) {
@@ -322,10 +366,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
               response is Map &&
               response['laminates'] != null) {
             _apiTextures = response['laminates'] as List<dynamic>;
-            
+
             // Save to cache
-            _cacheService.saveCategoryTextures(_selectedCategory!, subCat, _apiTextures);
-            
+            _cacheService.saveCategoryTextures(
+              _selectedCategory!,
+              subCat,
+              _apiTextures,
+            );
+
             if (_selectedTexture == null && _apiTextures.isNotEmpty) {
               _selectedTexture = _apiTextures[0];
             }
@@ -350,7 +398,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     if (_selectedColor == null) return;
 
     final hex = _selectedColor!["hex"];
-    
+
     // 1. Try cache first BEFORE showing loading state
     final cached = _cacheService.getHexTextures(hex);
     if (cached != null && cached.isNotEmpty) {
@@ -390,12 +438,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 _apiTextures = [];
               }
             }
-            
+
             // Save to cache
             if (_apiTextures.isNotEmpty) {
               _cacheService.saveHexTextures(hex, _apiTextures);
             }
-            
           } else {
             _apiTextures = [];
           }
@@ -545,7 +592,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         }
                         return _compareExpanded
                             ? _buildTopComparisonSection(selectedIndices)
-                            : RepaintBoundary(child: _buildImageOverlaySection());
+                            : RepaintBoundary(
+                                child: _buildImageOverlaySection(),
+                              );
                       },
                     );
                   },
@@ -741,7 +790,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     );
                   }
 
-                  final int itemCount = _userEdits.length + (isLoading ? 1 : 0) + 1; // +1 for Original
+                  final int itemCount = _userEdits.length + (isLoading ? 1 : 0);
 
                   return GridView.builder(
                     shrinkWrap: true,
@@ -755,79 +804,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
                           childAspectRatio: 1.0,
                         ),
                     itemBuilder: (context, index) {
-                      // Original Image is always the first item
-                      if (index == 0) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _currentAssetPreview = null;
-                              _hasAppliedOnce = true;
-                              _compareExpanded = false;
-                              _editExpanded = true;
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.black12, width: 1),
-                            ),
-                            child: Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    widget.imageFile,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    cacheWidth: 300,
-                                  ),
-                                ),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: Colors.black.withOpacity(0.05),
-                                  ),
-                                ),
-                                const Center(
-                                  child: Icon(
-                                    Icons.edit_outlined,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 4,
-                                  left: 0,
-                                  right: 0,
-                                  child: Container(
-                                    color: Colors.black45,
-                                    padding: const EdgeInsets.symmetric(vertical: 2),
-                                    child: const Text(
-                                      "Original",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      // Adjust index for subsequent items
-                      final int effectiveIndex = index - 1;
-
                       // Show loading placeholder if loading
-                      if (isLoading && effectiveIndex == 0) {
+                      if (isLoading && index == 0) {
                         return _buildLoadingVersionPlaceholder();
                       }
 
                       // Adjust index further if loader is present
-                      final editIndex = isLoading ? effectiveIndex - 1 : effectiveIndex;
-                      if (editIndex < 0) return const SizedBox.shrink(); // Safety check for loader
-                      
+                      final editIndex = isLoading ? index - 1 : index;
+                      if (editIndex < 0)
+                        return const SizedBox.shrink(); // Safety check for loader
+
                       final String imgPath =
                           _userEdits[editIndex].editedImageUrl;
                       final isSelected = selectedIndices.contains(editIndex);
@@ -909,9 +895,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
       return Stack(
         children: [
           ImageCompareSlider(
-            before: widget.imageFile,
+            before: widget.imageFile.path,
             after: _userEdits[selectedIndices[0]].editedImageUrl,
-            isAfterNetwork: _userEdits[selectedIndices[0]].editedImageUrl.startsWith('http'),
+            isAfterNetwork: _userEdits[selectedIndices[0]].editedImageUrl
+                .startsWith('http'),
             position: _sliderPosition,
             onChanged: (val) => _sliderPosition = val,
           ),
@@ -920,17 +907,36 @@ class _ImageEditPageState extends State<ImageEditPage> {
             right: 16,
             child: _buildCircleButton(
               icon: "edit.png",
-              onTap: () {
+              onTap: () async {
                 final newPath = _userEdits.isNotEmpty
                     ? _userEdits[selectedIndices[0]].editedImageUrl
                     : widget.imageFile.path;
+                // SAVE TO DATABASE BEFORE STARTING NEW SESSION
+                final cubit = context.read<ImageEditCubit>();
+                final historyItem = cubit.state.generatedHistory.firstWhere(
+                  (h) => h['generated'] == newPath,
+                  orElse: () => {},
+                );
+                await cubit.saveToDatabase(
+                  imgPath: newPath,
+                  laminate: historyItem['laminate'] as Map<String, dynamic>?,
+                );
+
                 setState(() {
                   _sessionId = const Uuid().v4(); // START NEW SESSION
                   _baseImage = newPath; // UPDATE BASE IMAGE
                   _currentAssetPreview = null; // Clear overlay since it's now the base
+                  _selectedIndicesNotifier.value = []; // CLEAR SELECTIONS FOR NEW SESSION
                   _hasAppliedOnce = true;
                   _compareExpanded = false;
                   _editExpanded = true;
+                  // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY
+                  _selectedTexture = null;
+                  _selectedColor = null;
+                  _selectedCategory = null;
+                  _selectedSubCategory = null;
+                  _tapPosForDot = null;
+                  _lastTapCoordinate = null;
                 });
                 // RE-INIT CUBIT WITH NEW IMAGE AND SESSION
                 context.read<ImageEditCubit>().initOriginalImage(
@@ -964,9 +970,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
             _sessionId = const Uuid().v4(); // START NEW SESSION
             _baseImage = widget.imageFile.path; // RESET TO ORIGINAL
             _currentAssetPreview = null;
+            _selectedIndicesNotifier.value = []; // CLEAR SELECTIONS FOR NEW SESSION
             _hasAppliedOnce = true;
             _compareExpanded = false;
             _editExpanded = true;
+            // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY
+            _selectedTexture = null;
+            _selectedColor = null;
+            _selectedCategory = null;
+            _selectedSubCategory = null;
+            _tapPosForDot = null;
+            _lastTapCoordinate = null;
           });
           // RE-INIT CUBIT WITH NEW SESSION
           context.read<ImageEditCubit>().initOriginalImage(
@@ -991,28 +1005,91 @@ class _ImageEditPageState extends State<ImageEditPage> {
           isOriginal: false,
           isNetwork: imgPath.startsWith('http'),
           onRemove: () => _toggleSelection(index),
-          onSelect: () {
+          onSelect: () async {
+            // 1. SAVE TO LOCAL DATABASE
+            final cubit = context.read<ImageEditCubit>();
+            final historyItem = cubit.state.generatedHistory.firstWhere(
+              (h) => h['generated'] == imgPath,
+              orElse: () => {},
+            );
+            await cubit.saveToDatabase(
+              imgPath: imgPath,
+              laminate: historyItem['laminate'] as Map<String, dynamic>?,
+            );
+
+            // 2. POST TO SERVER (THIS IS THE FINAL SELECTION)
+            if (widget.image_id != null) {
+              try {
+                await _userEditsService.postEdit(
+                  editedFile: File(imgPath),
+                  furnitureId: widget.image_id!,
+                  email: _ownerEmail,
+                );
+                debugPrint("✅ Final image posted to server on selection");
+              } catch (e) {
+                debugPrint("❌ Failed to post final image to server: $e");
+              }
+            }
+
+            final List<Map<String, dynamic>> usedLaminates = [];
+            for (var item in cubit.state.generatedHistory) {
+              if (item['laminate'] != null) {
+                final lam = item['laminate'] as Map<String, dynamic>;
+                if (!usedLaminates.any((element) => element['id'] == lam['id'])) {
+                  usedLaminates.add(lam);
+                }
+              }
+            }
+            if (usedLaminates.isEmpty && _selectedTexture != null) {
+              usedLaminates.add(_selectedTexture!);
+            }
+
             context.push(
               AppRoutes.imageFinalize,
               extra: {
                 'editedImage': imgPath,
-                'selectedColor':
-                    _selectedColor ??
-                    {"name": "None", "hex": "#FFFFFF", "id": 0},
-                'selectedLamination':
-                    _selectedTexture ?? {"name": "None", "coverImage": ""},
+                'usedLaminates': usedLaminates,
               },
             );
           },
-          onEdit: () {
+          onEdit: () async {
+            // SAVE TO DATABASE BEFORE STARTING NEW SESSION
+            final cubit = context.read<ImageEditCubit>();
+            final historyItem = cubit.state.generatedHistory.firstWhere(
+              (h) => h['generated'] == imgPath,
+              orElse: () => {},
+            );
+            await cubit.saveToDatabase(
+              imgPath: imgPath,
+              laminate: historyItem['laminate'] as Map<String, dynamic>?,
+            );
+
             setState(() {
               _sessionId = const Uuid().v4(); // START NEW SESSION
               _baseImage = imgPath; // UPDATE BASE IMAGE
               _currentAssetPreview = null; // Clear overlay since it's now the base
+              _selectedIndicesNotifier.value = []; // CLEAR SELECTIONS FOR NEW SESSION
               _hasAppliedOnce = true;
               _compareExpanded = false;
               _editExpanded = true;
+              // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY
+              _selectedTexture = null;
+              _selectedColor = null;
+              _selectedCategory = null;
+              _selectedSubCategory = null;
+              _tapPosForDot = null;
+              _lastTapCoordinate = null;
             });
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Continuing edit with selected design..."),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+
             // RE-INIT CUBIT WITH NEW IMAGE AND SESSION
             context.read<ImageEditCubit>().initOriginalImage(
               _baseImage,
@@ -1025,6 +1102,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
         ),
       );
     }
+
+    // ENSURE TOTAL ITEMS HANDLED (Limit to 4 for the split view, or keep as is)
+    // Actually, let's keep the logic but the Original is already items[0].
 
     if (totalItems == 1) {
       return items[0];
@@ -1085,7 +1165,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
         fit: StackFit.expand,
         children: [
           isOriginal
-              ? Image.file(widget.imageFile, fit: BoxFit.cover)
+              ? (widget.imageFile.path.startsWith('http')
+                    ? Image.network(
+                        widget.imageFile.path,
+                        fit: BoxFit.cover,
+                        cacheWidth: 400,
+                      )
+                    : Image.file(widget.imageFile, fit: BoxFit.cover))
               : (isNetwork
                     ? Image.network(
                         path!,
@@ -1155,7 +1241,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           const SizedBox(width: 8),
           _buildCircleButton(
             icon: "tick.png",
-            onTap: () {},
+            onTap: onEdit ?? () {}, // USE SAME LOGIC AS EDIT
             size: iconSize,
             padding: padding,
           ),
@@ -1388,9 +1474,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.4),
         image: DecorationImage(
-      image: _baseImage.startsWith('http')
-          ? NetworkImage(_baseImage) as ImageProvider
-          : FileImage(File(_baseImage)),
+          image: _baseImage.startsWith('http')
+              ? NetworkImage(_baseImage) as ImageProvider
+              : FileImage(File(_baseImage)),
           fit: BoxFit.cover,
         ),
       ),
@@ -1423,7 +1509,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
       ),
     );
   }
-
 
   Widget _buildZoomButton({
     required IconData icon,
@@ -2021,9 +2106,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
   }
 
   Future<void> _finalizeEdit() async {
-
     final state = context.read<ImageEditCubit>().state;
-    
+
     // Trigger comparison details API call
     if (state.selectedPattern != null) {
       final pattern = state.selectedPattern!;
@@ -2038,29 +2122,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
       context.read<ImageEditCubit>().compareImageSelected(model);
     }
 
-    // Post the actual AI-edited image to history
+    // ONLY SAVE TO LOCAL SQLITE WITH LAMINATES (NO SERVER POST YET)
     if (widget.image_id != null && state.currentGeneratedImage != null) {
-      setState(() => _isUploading = true);
       try {
-        final newRecord = await _userEditsService.postEdit(
-          editedFile: File(state.currentGeneratedImage!),
-          furnitureId: widget.image_id!,
-          email: _ownerEmail,
+        final cubit = context.read<ImageEditCubit>();
+        await cubit.saveToDatabase(
+          imgPath: state.currentGeneratedImage!,
+          laminate: state.selectedPattern,
         );
-
-        if (newRecord != null) {
-          debugPrint("✅ AI-Edited record posted manually on Finalize: ${newRecord.id}");
-          await _fetchUserEditHistory();
-        }
+        await _fetchUserEditHistory();
       } catch (e) {
-        debugPrint("❌ Error uploading AI-edited image: $e");
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Upload failed: $e")),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isUploading = false);
+        debugPrint("❌ Error saving local edit: $e");
       }
     }
 
@@ -2231,18 +2303,27 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     maintainState: true,
                     child: GestureDetector(
                       onTap: () {
+                        final cubit = context.read<ImageEditCubit>();
+                        final List<Map<String, dynamic>> usedLaminates = [];
+                        for (var item in cubit.state.generatedHistory) {
+                          if (item['laminate'] != null) {
+                            final lam = item['laminate'] as Map<String, dynamic>;
+                            if (!usedLaminates.any((element) => element['id'] == lam['id'])) {
+                              usedLaminates.add(lam);
+                            }
+                          }
+                        }
+                        if (usedLaminates.isEmpty && _selectedTexture != null) {
+                          usedLaminates.add(_selectedTexture!);
+                        }
+
                         context.push(
                           AppRoutes.imageFinalize,
                           extra: {
                             'editedImage':
                                 state.currentGeneratedImage ??
                                 widget.imageFile.path,
-                            'selectedColor':
-                                _selectedColor ??
-                                {"name": "None", "hex": "#FFFFFF", "id": 0},
-                            'selectedLamination':
-                                _selectedTexture ??
-                                {"name": "None", "coverImage": ""},
+                            'usedLaminates': usedLaminates,
                           },
                         );
                       },

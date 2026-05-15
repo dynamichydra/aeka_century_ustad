@@ -14,7 +14,10 @@ class EditHistoryRepository {
       original_image_path TEXT NOT NULL,
       edited_image_path TEXT NOT NULL,
       edited_at TEXT NOT NULL,
-      owner_id TEXT NOT NULL
+      owner_id TEXT NOT NULL,
+      used_laminates TEXT,
+      laminate_name TEXT,
+      laminate_sku TEXT
     )
   ''';
 

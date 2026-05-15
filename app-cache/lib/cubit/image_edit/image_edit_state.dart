@@ -10,7 +10,7 @@ class ImageEditState extends Equatable {
   // New fields for AI generation flow
   final String? originalImage;
   final String? currentGeneratedImage;
-  final List<Map<String, String>> generatedHistory;
+  final List<Map<String, dynamic>> generatedHistory;
   final Map<String, dynamic>? selectedPattern;
   final Map<String, dynamic>? selectedArea;
   final bool isGenerating;
@@ -47,7 +47,7 @@ class ImageEditState extends Equatable {
     String? editedImageFile,
     String? originalImage,
     String? currentGeneratedImage,
-    List<Map<String, String>>? generatedHistory,
+    List<Map<String, dynamic>>? generatedHistory,
     Map<String, dynamic>? selectedPattern,
     Map<String, dynamic>? selectedArea,
     bool? isGenerating,

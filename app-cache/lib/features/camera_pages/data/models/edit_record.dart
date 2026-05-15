@@ -7,6 +7,7 @@ class EditRecord {
   final String ownerId;
   final String furnitureId;
   final DateTime createdAt;
+  final String? laminateName;
 
   EditRecord({
     required this.id,
@@ -15,6 +16,7 @@ class EditRecord {
     required this.ownerId,
     required this.furnitureId,
     required this.createdAt,
+    this.laminateName,
   });
 
   factory EditRecord.fromJson(Map<String, dynamic> json) {

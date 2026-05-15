@@ -202,8 +202,7 @@ final GoRouter router = GoRouter(
         final data = state.extra as Map<String, dynamic>;
         return ImageFinalizePage(
           editedImage: data['editedImage'],
-          selectedColor: data['selectedColor'] as Map<String, dynamic>,
-          selectedLamination: data['selectedLamination'] as Map<String, dynamic>,
+          usedLaminates: data['usedLaminates'] as List<Map<String, dynamic>>? ?? [],
         );
       },
     ),

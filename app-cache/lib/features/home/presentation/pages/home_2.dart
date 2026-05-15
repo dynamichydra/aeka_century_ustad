@@ -918,7 +918,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         
                                         if (isNowTrending) {
                                           context.read<ProductsCubit>().fetchTrendingProducts(
-                                            ownerId: "anisasru@gmail.com",
+                                            ownerId: "anisasru1@gmail.com",
                                           );
                                         } else {
                                           context.read<ProductsCubit>().fetchFeaturedProducts(
@@ -969,7 +969,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                         
                                         if (isNowLiked) {
                                           context.read<ProductsCubit>().fetchFavoriteProducts(
-                                            ownerId: "anisasru@gmail.com",
+                                            ownerId: "anisasru1@gmail.com",
                                           );
                                         } else {
                                           context.read<ProductsCubit>().fetchFeaturedProducts(
@@ -1095,7 +1095,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                        onFavoriteToggle: () {
                                          context.read<ProductsCubit>().toggleFavorite(
                                            itemId: product.itemId ?? product.furnitureId ?? product.id,
-                                           ownerId: "anisasru@gmail.com",
+                                           ownerId: "anisasru1@gmail.com",
                                          );
                                        },
                                      ),
@@ -1146,7 +1146,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       onFavoriteToggle: () {
                                         context.read<ProductsCubit>().toggleFavorite(
                                           itemId: product.itemId ?? product.furnitureId ?? product.id,
-                                          ownerId: "anisasru@gmail.com",
+                                          ownerId: "anisasru1@gmail.com",
                                         );
                                       },
                                     ),

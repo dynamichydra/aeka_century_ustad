@@ -28,6 +28,9 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is required</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need access to save designs to your photo library.</string>
+
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Gallery access is required</string>
 	<key>UIApplicationSceneManifest</key>

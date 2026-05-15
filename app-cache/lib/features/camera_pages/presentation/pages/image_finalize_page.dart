@@ -1,224 +1,424 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
-import 'package:century_ai/core/constants/image_strings.dart';
-import 'package:century_ai/core/constants/sizes.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:gal/gal.dart';
 
-class ImageFinalizePage extends StatelessWidget {
+class ImageFinalizePage extends StatefulWidget {
   final dynamic editedImage;
-  final Map<String, dynamic> selectedColor;
-  final Map<String, dynamic> selectedLamination;
+  final List<Map<String, dynamic>> usedLaminates;
 
   const ImageFinalizePage({
     super.key,
     required this.editedImage,
-    required this.selectedColor,
-    required this.selectedLamination,
+    this.usedLaminates = const [],
   });
 
   @override
-  Widget build(BuildContext context) {
-    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  State<ImageFinalizePage> createState() => _ImageFinalizePageState();
+}
 
+class _ImageFinalizePageState extends State<ImageFinalizePage> {
+  bool _isProcessing = false;
+
+  Future<String?> _getLocalImagePath() async {
+    final image = widget.editedImage;
+    if (image is File) {
+      return image.path;
+    } else if (image is String) {
+      if (image.startsWith('http')) {
+        try {
+          final tempDir = await getTemporaryDirectory();
+          final tempPath = p.join(
+            tempDir.path,
+            'century_decor_studio_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          );
+          await Dio().download(image, tempPath);
+          return tempPath;
+        } catch (e) {
+          debugPrint("Error downloading image: $e");
+          return null;
+        }
+      } else {
+        // Check if it is a local absolute path
+        if (await File(image).exists()) {
+          return image;
+        }
+        // Otherwise, it's probably an asset path, which requires extraction if we want to save it.
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _handleShare() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    
+    try {
+      final path = await _getLocalImagePath();
+      if (path != null) {
+        await Share.shareXFiles(
+          [XFile(path)],
+          text: 'Check out my design from Century Decor Studio!',
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to prepare image for sharing')),
+        );
+      }
+    } finally {
+      setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _handleSave() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    
+    try {
+      // Check and request permission if needed
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        final granted = await Gal.requestAccess();
+        if (!granted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Storage permission is required to save images.')),
+          );
+          return;
+        }
+      }
+
+      final path = await _getLocalImagePath();
+      if (path != null) {
+        await Gal.putImage(path, album: 'Century Deco Studio');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image saved to gallery in "Century Deco Studio" album!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to prepare image for saving')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Save error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving image: $e')),
+      );
+    } finally {
+      setState(() => _isProcessing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      key: scaffoldKey,
-      drawer: const HomeDrawer(),
       backgroundColor: Colors.white,
-      body: 
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.pop(),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Image.asset(
+              'assets/icons/century_logo.png', // Assuming logo is available
+              height: 32,
+              errorBuilder: (context, error, stackTrace) => const SizedBox(),
+            ),
+          )
+        ],
+      ),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
           Column(
             children: [
-              /// ---------------- IMAGE AREA ----------------
-              SafeArea(
-                bottom: false,
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.45,
-                  child: _buildFinalImage(),
-                ),
-              ),
-
-              /// ---------------- BOTTOM PANEL ----------------
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                  ),
+                child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Design",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 24,
-                        ),
-                      ),
-                      const Text(
-                        "AI Based Color & Pattern Search",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      // Top Image
+                      _buildFinalImage(context),
+                      
+                      // Content Below Image
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Laminates used",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            if (widget.usedLaminates.isNotEmpty)
+                              SizedBox(
+                                height: 120,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: widget.usedLaminates.length,
+                                  separatorBuilder: (context, index) => const SizedBox(width: 16),
+                                  itemBuilder: (context, index) {
+                                    final lam = widget.usedLaminates[index];
+                                    return _buildLaminateItem(lam);
+                                  },
+                                ),
+                              )
+                            else
+                              const Text("No laminates applied", style: TextStyle(color: Colors.grey)),
 
-                      // Selected Color Section
-                      Text(
-                        "Selected Color : ${selectedColor['name']}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                            const SizedBox(height: 24),
+                            const Text(
+                              "Created by",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            
+                            // User Card
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  // Left side: User Info
+                                  Expanded(
+                                    flex: 2,
+                                    child: Column(
+                                      children: [
+                                        const CircleAvatar(
+                                          radius: 24,
+                                          backgroundColor: Colors.grey,
+                                          backgroundImage: AssetImage('assets/images/placeholder_user.png'), // placeholder
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          "Rahul Ghosh",
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                        ),
+                                        const Text(
+                                          "Contractor",
+                                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                                        ),
+                                        const Text(
+                                          "User Id:1234",
+                                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  
+                                  // Divider
+                                  Container(
+                                    height: 80,
+                                    width: 1.5,
+                                    color: Colors.red.shade400,
+                                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                                  ),
+                                  
+                                  // Right side: Contact Info
+                                  Expanded(
+                                    flex: 3,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _buildContactRow(Icons.phone, "+91 7654321908"),
+                                        const SizedBox(height: 12),
+                                        _buildContactRow(Icons.email, "rahulG@email.com"),
+                                        const SizedBox(height: 12),
+                                        _buildContactRow(Icons.location_on, "123 Street, Kolkata, West Bengal"),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 24),
+                            const Center(
+                              child: Text(
+                                "Century Decor Studio",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          _buildColorCircle(_parseHex(selectedColor['hex'])),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Variant Section
-                      Text(
-                        "Variant: ${selectedColor['id']} SL",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Pattern & Texture Section
-                      const Text(
-                        "Pattern & Texture",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          _buildTextureItem(
-                            selectedLamination['name'],
-                            "${selectedLamination['id']} SL",
-                            selectedLamination['image'],
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Bottom Actions
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _handleShare,
+                          icon: const Icon(Icons.share, color: Colors.black),
+                          label: const Text("Share", style: TextStyle(color: Colors.black)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            side: BorderSide(color: Colors.grey.shade300),
                           ),
-                        ],
+                        ),
                       ),
-
-                      const Spacer(),
-
-                      // Action Buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildActionButton(Icons.bookmark_outline, () {}),
-                          _buildActionButton(Icons.delete_outline, () => context.pop()),
-                          _buildActionButton(Icons.share_outlined, () {
-                            final image = editedImage;
-                            if (image is File) {
-                              Share.shareXFiles([XFile(image.path)], text: 'Check out my design!');
-                            } else if (image is String) {
-                              Share.share('Check out this design: $image');
-                            }
-                          }),
-                        ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _handleSave,
+                          icon: const Icon(Icons.download, color: Colors.black),
+                          label: const Text("Save", style: TextStyle(color: Colors.black)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            side: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-        
-    );
-  }
-
-  Widget _buildColorCircle(Color color) {
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey.shade300, width: 1),
+          
+          if (_isProcessing)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.red),
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Color _parseHex(String hex) {
-    hex = hex.replaceAll("#", "");
-    return Color(int.parse("FF$hex", radix: 16));
-  }
-
-  Widget _buildTextureItem(String name, String code, String imagePath) {
-    return Column(
+  Widget _buildContactRow(IconData icon, String text) {
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 80,
-          height: 45,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F1F1),
-            borderRadius: BorderRadius.circular(4),
-            image: DecorationImage(
-              image: imagePath.startsWith('http')
-                  ? NetworkImage(imagePath) as ImageProvider
-                  : AssetImage(imagePath) as ImageProvider,
-              fit: BoxFit.cover,
-            ),
+        Icon(icon, size: 16, color: Colors.black54),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 12, color: Colors.black87),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          name,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.normal),
-        ),
-        Text(
-          code,
-          style: const TextStyle(fontSize: 10, color: Colors.grey),
         ),
       ],
     );
   }
 
-  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
-    return InkWell(
-      onTap: onPressed,
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 4,
-              color: Colors.black.withOpacity(0.1),
-              offset: const Offset(0, 2),
+  Widget _buildLaminateItem(Map<String, dynamic> lam) {
+    final imagePath = lam['coverImage'] ?? '';
+    final name = lam['name'] ?? 'Texture';
+    final sku = lam['sku'] ?? '${lam['id'] ?? ''}';
+
+    return SizedBox(
+      width: 80,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey.shade200,
+              image: imagePath.isNotEmpty
+                  ? DecorationImage(
+                      image: imagePath.startsWith('http')
+                          ? NetworkImage(imagePath) as ImageProvider
+                          : AssetImage(imagePath),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-          ],
-        ),
-        child: Icon(icon, size: 24, color: Colors.black),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11, color: Colors.black87),
+          ),
+          Text(
+            sku,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildFinalImage() {
-    final image = editedImage;
+  Widget _buildFinalImage(BuildContext context) {
+    final image = widget.editedImage;
+    Widget imgWidget;
+
     if (image is File) {
-      return Image.file(
+      imgWidget = Image.file(
         image,
         fit: BoxFit.cover,
         width: double.infinity,
       );
     } else if (image is String) {
-      return image.startsWith('http')
+      imgWidget = image.startsWith('http')
           ? Image.network(
               image,
               fit: BoxFit.cover,
@@ -229,7 +429,14 @@ class ImageFinalizePage extends StatelessWidget {
               fit: BoxFit.cover,
               width: double.infinity,
             );
+    } else {
+      imgWidget = const Center(child: Icon(Icons.image_not_supported));
     }
-    return const Center(child: Icon(Icons.image_not_supported));
+
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.45,
+      width: double.infinity,
+      child: imgWidget,
+    );
   }
 }
