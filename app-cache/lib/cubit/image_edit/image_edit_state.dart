@@ -16,6 +16,9 @@ class ImageEditState extends Equatable {
   final bool isGenerating;
   final bool hasPatternChanged;
   final bool hasAreaChanged;
+  final String? furnitureId;
+  final String? ownerId;
+  final String? sessionId;
 
   const ImageEditState({
     this.isCompareLoading = false,
@@ -31,6 +34,9 @@ class ImageEditState extends Equatable {
     this.isGenerating = false,
     this.hasPatternChanged = false,
     this.hasAreaChanged = false,
+    this.furnitureId,
+    this.ownerId,
+    this.sessionId,
   });
 
   ImageEditState copyWith({
@@ -47,6 +53,9 @@ class ImageEditState extends Equatable {
     bool? isGenerating,
     bool? hasPatternChanged,
     bool? hasAreaChanged,
+    String? furnitureId,
+    String? ownerId,
+    String? sessionId,
     bool clearError = false,
     bool clearSuccess = false,
   }) {
@@ -66,6 +75,9 @@ class ImageEditState extends Equatable {
       isGenerating: isGenerating ?? this.isGenerating,
       hasPatternChanged: hasPatternChanged ?? this.hasPatternChanged,
       hasAreaChanged: hasAreaChanged ?? this.hasAreaChanged,
+      furnitureId: furnitureId ?? this.furnitureId,
+      ownerId: ownerId ?? this.ownerId,
+      sessionId: sessionId ?? this.sessionId,
     );
   }
 
@@ -84,5 +96,8 @@ class ImageEditState extends Equatable {
         isGenerating,
         hasPatternChanged,
         hasAreaChanged,
+        furnitureId,
+        ownerId,
+        sessionId,
       ];
 }

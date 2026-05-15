@@ -212,18 +212,27 @@ final GoRouter router = GoRouter(
       name: "compare",
       builder: (context, state) {
         File? originalImage;
+        String? furnitureId;
+        String? sessionId;
+
         if (state.extra is File) {
           originalImage = state.extra as File;
         } else if (state.extra is Map<String, dynamic>) {
-          originalImage =
-              (state.extra as Map<String, dynamic>)['originalImage'] as File?;
+          final data = state.extra as Map<String, dynamic>;
+          originalImage = data['originalImage'] as File?;
+          furnitureId = data['furnitureId'] as String?;
+          sessionId = data['sessionId'] as String?;
         }
 
         if (originalImage == null) {
           return Scaffold(body: Center(child: Text("Error: No image for comparison")));
         }
 
-        return CompareImagePage(originalImage: originalImage);
+        return CompareImagePage(
+          originalImage: originalImage,
+          furnitureId: furnitureId,
+          sessionId: sessionId,
+        );
       },
     ),
   ],

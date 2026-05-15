@@ -6,10 +6,20 @@ import 'package:century_ai/features/camera_pages/presentation/widgets/image_comp
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/features/camera_pages/data/dummy_data.dart';
 
+import 'package:century_ai/db/repositories/edit_history_repository.dart';
+import 'package:century_ai/db/models/edit_history_data.dart';
+
 class CompareImagePage extends StatefulWidget {
   final File originalImage;
+  final String? furnitureId;
+  final String? sessionId;
 
-  const CompareImagePage({super.key, required this.originalImage});
+  const CompareImagePage({
+    super.key,
+    required this.originalImage,
+    this.furnitureId,
+    this.sessionId,
+  });
 
   @override
   State<CompareImagePage> createState() => _CompareImagePageState();
@@ -22,7 +32,40 @@ class _CompareImagePageState extends State<CompareImagePage> {
   double _sliderPosition = 0.5;
 
   // Saved versions - initialized as empty since ProductImages is removed
-  final List<ProductImageModel> _savedVersions = [];
+  List<EditHistoryData> _savedVersions = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEditHistory();
+  }
+
+  Future<void> _loadEditHistory() async {
+    if (widget.furnitureId == null && widget.sessionId == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final List<EditHistoryData> edits;
+      if (widget.sessionId != null) {
+        edits = await EditHistoryRepository.getEditsBySessionId(widget.sessionId!);
+      } else {
+        edits = await EditHistoryRepository.getEditsByFurnitureId(widget.furnitureId!);
+      }
+      
+      setState(() {
+        _savedVersions = edits;
+        _isLoading = false;
+        // Automatically select the first edit if available for comparison
+        if (_savedVersions.isNotEmpty && _selectedIndices.length == 1) {
+          _selectedIndices.add(1); // Index 0 is Original, so 1 is first edit
+        }
+      });
+    } catch (e) {
+      debugPrint("Error loading edit history: $e");
+      setState(() => _isLoading = false);
+    }
+  }
 
   void _toggleSelection(int index) {
     setState(() {
@@ -87,10 +130,12 @@ class _CompareImagePageState extends State<CompareImagePage> {
 
                     // Grid of Versions
                     Expanded(
-                      child: _savedVersions.isEmpty 
+                      child: _isLoading 
+                        ? const Center(child: CircularProgressIndicator())
+                        : _savedVersions.isEmpty 
                         ? const Center(child: Text("No versions available for comparison"))
                         : GridView.builder(
-                          itemCount: _savedVersions.length,
+                          itemCount: _savedVersions.length + 1, // +1 for Original
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
                             crossAxisSpacing: 12,
@@ -98,7 +143,56 @@ class _CompareImagePageState extends State<CompareImagePage> {
                             childAspectRatio: 0.8,
                           ),
                           itemBuilder: (context, index) {
-                            final version = _savedVersions[index];
+                            if (index == 0) {
+                              // Original Image Tile
+                              final isSelected = _selectedIndices.contains(0);
+                              return GestureDetector(
+                                onTap: () => _toggleSelection(0),
+                                child: Stack(
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Image.file(
+                                              widget.originalImage,
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Positioned(
+                                      top: 4,
+                                      left: 4,
+                                      child: Icon(
+                                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                                        size: 18,
+                                        color: isSelected ? Colors.black : Colors.black54,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 4,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        color: Colors.black45,
+                                        padding: const EdgeInsets.symmetric(vertical: 2),
+                                        child: const Text(
+                                          "Original",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            final version = _savedVersions[index - 1];
                             final isSelected = _selectedIndices.contains(index);
                             
                             return GestureDetector(
@@ -110,8 +204,8 @@ class _CompareImagePageState extends State<CompareImagePage> {
                                       Expanded(
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(8),
-                                          child: Image.asset(
-                                            version.image,
+                                          child: Image.file(
+                                            File(version.editedImagePath),
                                             fit: BoxFit.cover,
                                             width: double.infinity,
                                           ),
@@ -131,14 +225,14 @@ class _CompareImagePageState extends State<CompareImagePage> {
                                     ),
                                   ),
 
-                                  // Heart Icon (Top Right)
+                                  // Optional Heart/Favorite Icon
                                   Positioned(
                                     top: 4,
                                     right: 4,
                                     child: Icon(
-                                      Icons.favorite,
+                                      Icons.favorite_border,
                                       size: 18,
-                                      color: index < 3 ? Colors.red : Colors.white70,
+                                      color: Colors.white70,
                                     ),
                                   ),
                                 ],
@@ -161,29 +255,34 @@ class _CompareImagePageState extends State<CompareImagePage> {
     // Total items to compare = Original Image + Selected Designs
     final totalItems = 1 + (_savedVersions.isEmpty ? 0 : _selectedIndices.length);
 
-    if (_savedVersions.isEmpty || _selectedIndices.isEmpty) {
+    if (_selectedIndices.length == 1 && _selectedIndices.contains(0)) {
        return Image.file(widget.originalImage, fit: BoxFit.cover);
     }
 
-    if (_selectedIndices.length == 1) {
-      // Single Design Selection -> Slider View (Original vs Selected)
+    if (_selectedIndices.length == 2 && _selectedIndices.contains(0)) {
+      // Single Design Selection vs Original -> Slider View
+      final selectedEditIndex = _selectedIndices.firstWhere((i) => i != 0) - 1;
+      final selectedEdit = _savedVersions[selectedEditIndex];
+
       return Stack(
         children: [
           ImageCompareSlider(
             before: widget.originalImage,
-            after: _savedVersions[_selectedIndices[0]].image,
+            after: selectedEdit.editedImagePath.startsWith('http') 
+                ? selectedEdit.editedImagePath 
+                : File(selectedEdit.editedImagePath),
+            isAfterNetwork: selectedEdit.editedImagePath.startsWith('http'),
             position: _sliderPosition,
-            onChanged: (val) => _sliderPosition = val,
+            onChanged: (val) => setState(() => _sliderPosition = val),
           ),
-          // ONLY Edit Button in Bottom Right for Slider mode
+          // Edit Button in Bottom Right
           Positioned(
             bottom: 24,
             right: 16,
             child: _buildCircleButton(
               icon: Iconsax.edit_2, 
               onTap: () {
-                // Return the selected design asset path to the edit page
-                context.pop(_savedVersions[_selectedIndices[0]].image);
+                context.pop(selectedEdit.editedImagePath);
               },
               size: 20,
               padding: 8,
@@ -192,18 +291,19 @@ class _CompareImagePageState extends State<CompareImagePage> {
         ],
       );
     } else {
-      // Multi Selection -> Grid View
+      // Multi Selection (could be multiple edits or edit without original) -> Grid View
       return GridView.builder(
         padding: EdgeInsets.zero,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1.0, // Square cells for better button visibility
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: _selectedIndices.length > 2 ? 2 : 1,
+          childAspectRatio: 1.0,
         ),
-        itemCount: totalItems,
+        itemCount: _selectedIndices.length,
         itemBuilder: (context, index) {
-          final isOriginal = index == 0;
-          final imageUrl = isOriginal ? null : _savedVersions[_selectedIndices[index - 1]].image;
+          final selectedIdx = _selectedIndices[index];
+          final isOriginal = selectedIdx == 0;
+          final String? imagePath = isOriginal ? null : _savedVersions[selectedIdx - 1].editedImagePath;
           
           return Container(
             decoration: BoxDecoration(
@@ -215,18 +315,22 @@ class _CompareImagePageState extends State<CompareImagePage> {
                 if (isOriginal)
                   Image.file(widget.originalImage, fit: BoxFit.cover)
                 else
-                  Image.asset(imageUrl!, fit: BoxFit.cover),
+                  Image.file(File(imagePath!), fit: BoxFit.cover),
                 
-                  _buildOverlayButtons(
-                    bottom: 12, 
-                    isGrid: true, 
-                    showRemove: !isOriginal, 
-                    onRemove: () => _toggleSelection(_selectedIndices[index - 1]),
-                    onEdit: () => context.pop(imageUrl),
+                if (!isOriginal)
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: _buildCircleButton(
+                      icon: Iconsax.edit_2, 
+                      onTap: () => context.pop(imagePath),
+                      size: 14,
+                      padding: 6,
+                    ),
                   ),
-                ],
-              ),
-            );
+              ],
+            ),
+          );
         },
       );
     }

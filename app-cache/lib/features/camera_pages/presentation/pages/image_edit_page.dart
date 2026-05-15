@@ -20,6 +20,8 @@ import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/features/camera_pages/data/models/edit_record.dart';
 import 'package:century_ai/features/camera_pages/data/services/user_edits_service.dart';
 import 'package:lottie/lottie.dart';
+import 'package:uuid/uuid.dart';
+import 'package:century_ai/db/repositories/edit_history_repository.dart';
 
 
 class ImageEditPage extends StatefulWidget {
@@ -58,6 +60,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
   List<Map<String, dynamic>> _lamCategories = [];
   Map<String, dynamic>? _selectedTexture;
   String? _currentAssetPreview; // Track the design selected from comparison
+  String _sessionId = ""; // Unique ID for this editing session
+  late String _baseImage; // The image currently being used as a base for editing
 
   final LaminateService _laminateApi = LaminateService();
   final LaminateCacheService _cacheService = LaminateCacheService();
@@ -202,6 +206,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
   @override
   void initState() {
     super.initState();
+    _sessionId = const Uuid().v4();
+    _baseImage = widget.imageFile.path;
     _getImageDimensions();
     getLamCategory();
     if (widget.pickedColor != null) {
@@ -215,7 +221,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
     // Initialize Cubit with original image
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ImageEditCubit>().initOriginalImage(widget.imageFile.path);
+      context.read<ImageEditCubit>().initOriginalImage(
+            widget.imageFile.path,
+            furnitureId: widget.image_id,
+            ownerId: _ownerEmail,
+            sessionId: _sessionId,
+          );
     });
   }
 
@@ -224,18 +235,39 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
     setState(() => _isLoadingEdits = true);
     try {
+      // 1. Fetch from Network
       final allEdits = await _userEditsService.getEdits(_ownerEmail);
-      // Filter by current furniture ID
-      final filtered = allEdits
+      final filteredNetwork = allEdits
           .where((e) => e.furnitureId == widget.image_id)
           .toList();
 
+      // 2. Fetch from SQLite (ONLY CURRENT SESSION)
+      final localEdits = await EditHistoryRepository.getEditsBySessionId(_sessionId);
+      
+      // 3. Convert local to EditRecord for UI compatibility
+      final convertedLocal = localEdits.map((e) => EditRecord(
+        id: e.id,
+        originalImageUrl: e.originalImagePath,
+        editedImageUrl: e.editedImagePath,
+        ownerId: e.ownerId,
+        furnitureId: e.furnitureId,
+        createdAt: e.editedAt,
+      )).toList();
+
+      // 4. Merge (Avoid duplicates by ID if possible, or just append)
+      final List<EditRecord> merged = [...convertedLocal];
+      for (var net in filteredNetwork) {
+        if (!merged.any((m) => m.id == net.id)) {
+          merged.add(net);
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _userEdits = filtered;
+          _userEdits = merged;
           _isLoadingEdits = false;
           // auto-select first one if available to show comparison
-          if (_userEdits.isNotEmpty) {
+          if (_userEdits.isNotEmpty && _selectedIndicesNotifier.value.isEmpty) {
             _selectedIndicesNotifier.value = [0];
           }
         });
@@ -808,22 +840,39 @@ class _ImageEditPageState extends State<ImageEditPage> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                imgPath,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                                cacheWidth: 200,
-                                errorBuilder: (c, e, s) => Container(
-                                  color: Colors.grey[200],
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.broken_image_outlined,
-                                      color: Colors.grey,
+                              child: imgPath.startsWith('http')
+                                  ? Image.network(
+                                      imgPath,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      cacheWidth: 200,
+                                      errorBuilder: (c, e, s) => Container(
+                                        color: Colors.grey[200],
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.broken_image_outlined,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Image.file(
+                                      File(imgPath),
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      cacheWidth: 200,
+                                      errorBuilder: (c, e, s) => Container(
+                                        color: Colors.grey[200],
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.broken_image_outlined,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ),
                             ),
                             Positioned(
                               top: 4,
@@ -862,7 +911,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           ImageCompareSlider(
             before: widget.imageFile,
             after: _userEdits[selectedIndices[0]].editedImageUrl,
-            isAfterNetwork: true,
+            isAfterNetwork: _userEdits[selectedIndices[0]].editedImageUrl.startsWith('http'),
             position: _sliderPosition,
             onChanged: (val) => _sliderPosition = val,
           ),
@@ -872,14 +921,25 @@ class _ImageEditPageState extends State<ImageEditPage> {
             child: _buildCircleButton(
               icon: "edit.png",
               onTap: () {
+                final newPath = _userEdits.isNotEmpty
+                    ? _userEdits[selectedIndices[0]].editedImageUrl
+                    : widget.imageFile.path;
                 setState(() {
-                  _currentAssetPreview = _userEdits.isNotEmpty
-                      ? _userEdits[selectedIndices[0]].editedImageUrl
-                      : null;
+                  _sessionId = const Uuid().v4(); // START NEW SESSION
+                  _baseImage = newPath; // UPDATE BASE IMAGE
+                  _currentAssetPreview = null; // Clear overlay since it's now the base
                   _hasAppliedOnce = true;
                   _compareExpanded = false;
                   _editExpanded = true;
                 });
+                // RE-INIT CUBIT WITH NEW IMAGE AND SESSION
+                context.read<ImageEditCubit>().initOriginalImage(
+                  newPath,
+                  furnitureId: widget.image_id,
+                  ownerId: _ownerEmail,
+                  sessionId: _sessionId,
+                );
+                _fetchUserEditHistory(); // REFRESH UI FOR NEW SESSION
               },
               size: 20,
               padding: 8,
@@ -901,11 +961,21 @@ class _ImageEditPageState extends State<ImageEditPage> {
         onSelect: () {}, // Not applicable for original
         onEdit: () {
           setState(() {
+            _sessionId = const Uuid().v4(); // START NEW SESSION
+            _baseImage = widget.imageFile.path; // RESET TO ORIGINAL
             _currentAssetPreview = null;
             _hasAppliedOnce = true;
             _compareExpanded = false;
             _editExpanded = true;
           });
+          // RE-INIT CUBIT WITH NEW SESSION
+          context.read<ImageEditCubit>().initOriginalImage(
+            _baseImage,
+            furnitureId: widget.image_id,
+            ownerId: _ownerEmail,
+            sessionId: _sessionId,
+          );
+          _fetchUserEditHistory(); // REFRESH UI FOR NEW SESSION
         },
       ),
     );
@@ -919,7 +989,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
         _buildComparisonItem(
           path: imgPath,
           isOriginal: false,
-          isNetwork: true,
+          isNetwork: imgPath.startsWith('http'),
           onRemove: () => _toggleSelection(index),
           onSelect: () {
             context.push(
@@ -936,11 +1006,21 @@ class _ImageEditPageState extends State<ImageEditPage> {
           },
           onEdit: () {
             setState(() {
-              _currentAssetPreview = imgPath;
+              _sessionId = const Uuid().v4(); // START NEW SESSION
+              _baseImage = imgPath; // UPDATE BASE IMAGE
+              _currentAssetPreview = null; // Clear overlay since it's now the base
               _hasAppliedOnce = true;
               _compareExpanded = false;
               _editExpanded = true;
             });
+            // RE-INIT CUBIT WITH NEW IMAGE AND SESSION
+            context.read<ImageEditCubit>().initOriginalImage(
+              _baseImage,
+              furnitureId: widget.image_id,
+              ownerId: _ownerEmail,
+              sessionId: _sessionId,
+            );
+            _fetchUserEditHistory(); // REFRESH UI FOR NEW SESSION
           },
         ),
       );
@@ -1186,15 +1266,24 @@ class _ImageEditPageState extends State<ImageEditPage> {
               },
               child: Stack(
                 children: [
-                  // Base Image (Always visible to prevent blank frames)
-                  Image.file(
-                    widget.imageFile,
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.height * 0.40,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                    cacheWidth: 800,
-                  ),
+                  // Base Image (Dynamic)
+                  _baseImage.startsWith('http')
+                      ? Image.network(
+                          _baseImage,
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.height * 0.40,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                          cacheWidth: 800,
+                        )
+                      : Image.file(
+                          File(_baseImage),
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.height * 0.40,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                          cacheWidth: 800,
+                        ),
 
                   // Applied Design Layer
                   if (_currentAssetPreview != null &&
@@ -1299,7 +1388,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.4),
         image: DecorationImage(
-          image: FileImage(widget.imageFile),
+      image: _baseImage.startsWith('http')
+          ? NetworkImage(_baseImage) as ImageProvider
+          : FileImage(File(_baseImage)),
           fit: BoxFit.cover,
         ),
       ),

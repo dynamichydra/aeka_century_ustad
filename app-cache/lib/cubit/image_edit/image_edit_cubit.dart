@@ -5,14 +5,25 @@ import 'image_edit_state.dart';
 import 'package:century_ai/core/constants/image_strings.dart'; // For ProductImageModel
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
+import 'package:century_ai/db/repositories/edit_history_repository.dart';
+import 'package:century_ai/db/models/edit_history_data.dart';
 
 class ImageEditCubit extends Cubit<ImageEditState> {
   final ImageEditService _imageEditService = ImageEditService();
 
   ImageEditCubit() : super(const ImageEditState());
 
-  void initOriginalImage(String imagePath) {
-    emit(state.copyWith(originalImage: imagePath));
+  void initOriginalImage(String imagePath, {String? furnitureId, String? ownerId, String? sessionId}) {
+    emit(state.copyWith(
+      originalImage: imagePath,
+      furnitureId: furnitureId,
+      ownerId: ownerId,
+      sessionId: sessionId,
+      generatedHistory: [], // CLEAR HISTORY FOR NEW SESSION
+    ));
   }
 
   void selectPattern(Map<String, dynamic> pattern) {
@@ -56,7 +67,19 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     ));
 
     try {
-      final roomImage = File(state.originalImage!);
+      File roomFile;
+      if (state.originalImage!.startsWith('http')) {
+        // DOWNLOAD NETWORK IMAGE TO TEMP FILE
+        final dio = Dio();
+        final tempDir = await getTemporaryDirectory();
+        final tempPath = p.join(tempDir.path, "temp_edit_${DateTime.now().millisecondsSinceEpoch}.png");
+        await dio.download(state.originalImage!, tempPath);
+        roomFile = File(tempPath);
+        debugPrint('🌐 Downloaded network image for editing: $tempPath');
+      } else {
+        roomFile = File(state.originalImage!);
+      }
+
       final textureUrl =
           state.selectedPattern!["coverImage"]?.toString() ?? "";
       final coordinate = state.selectedArea!;
@@ -70,25 +93,62 @@ class ImageEditCubit extends Cubit<ImageEditState> {
 
       // AI Service
       final resultFile = await _imageEditService.tryOnFurniture(
-        roomImage: roomImage,
+        roomImage: roomFile,
         patternImage: patternFile,
         x: (coordinate['x'] as num).toInt(),
         y: (coordinate['y'] as num).toInt(),
       );
 
       final newGeneratedImage = resultFile.path;
+      
+      // PERSISTENT STORAGE: Copy from temp to documents directory
+      String persistentPath = newGeneratedImage;
+      try {
+        final appDocDir = await getApplicationDocumentsDirectory();
+        final editDir = Directory(p.join(appDocDir.path, 'edits'));
+        if (!await editDir.exists()) {
+          await editDir.create(recursive: true);
+        }
+        
+        final fileName = 'edit_${DateTime.now().millisecondsSinceEpoch}.png';
+        final savedFile = await resultFile.copy(p.join(editDir.path, fileName));
+        persistentPath = savedFile.path;
+        debugPrint('💾 Saved edited image to permanent storage: $persistentPath');
+      } catch (e) {
+        debugPrint('❌ Failed to save to permanent storage, using temp: $e');
+      }
+
+      // SQLITE TRACKING: Save to local database
+      if (state.furnitureId != null) {
+        try {
+          final editData = EditHistoryData(
+            id: const Uuid().v4(),
+            furnitureId: state.furnitureId!,
+            sessionId: state.sessionId ?? "default_session",
+            originalImagePath: state.originalImage!,
+            editedImagePath: persistentPath,
+            editedAt: DateTime.now(),
+            ownerId: state.ownerId ?? "anisasru@gmail.com",
+          );
+          await EditHistoryRepository.saveEdit(editData);
+          debugPrint('✅ Edit tracked in SQLite');
+        } catch (e) {
+          debugPrint('❌ Failed to track edit in SQLite: $e');
+        }
+      }
+
       final updatedHistory = List<Map<String, String>>.from(state.generatedHistory);
       updatedHistory.add({
         'original': state.originalImage!,
-        'generated': newGeneratedImage,
+        'generated': persistentPath,
       });
 
       emit(state.copyWith(
         isGenerating: false,
         isApplyLoading: false,
-        currentGeneratedImage: newGeneratedImage,
-        editedImageFile: newGeneratedImage, // Keep for backward compatibility
-        originalImage: newGeneratedImage, // UPDATE BASE FOR STACKING
+        currentGeneratedImage: persistentPath,
+        editedImageFile: persistentPath, // Keep for backward compatibility
+        originalImage: persistentPath, // UPDATE BASE FOR STACKING
         generatedHistory: updatedHistory,
         hasPatternChanged: false,
         hasAreaChanged: false,

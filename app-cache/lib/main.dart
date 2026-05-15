@@ -5,6 +5,7 @@ import 'package:century_ai/cubit/profile/profile_cubit.dart';
 import 'package:century_ai/cubit/tips/tips_cubit.dart';
 import 'package:century_ai/db/db_core.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
+import 'package:century_ai/db/repositories/edit_history_repository.dart';
 import 'package:century_ai/router/router.dart';
 import 'package:century_ai/core/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ void main() async{
   await GetStorage.init();
   await DbCore.database;
   await SelectedImagesRepository.initializeTable();
+  await EditHistoryRepository.initializeTable();
   runApp(
     Portal(
       child:  MyApp(),
