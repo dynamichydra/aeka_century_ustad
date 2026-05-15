@@ -267,10 +267,14 @@ class ProductsCubit extends Cubit<ProductsState> {
     required String itemId,
     required String ownerId,
   }) async {
+    // Determine current state before optimistic update
+    final product = state.products.firstWhere((p) => p.id == itemId);
+    final wasFavorite = product.isFavorite;
+
     // Optimistic UI update
     final updatedProducts = state.products.map((p) {
       if (p.id == itemId) {
-        return p.copyWith(isFavorite: !p.isFavorite);
+        return p.copyWith(isFavorite: !wasFavorite);
       }
       return p;
     }).toList();
@@ -278,30 +282,39 @@ class ProductsCubit extends Cubit<ProductsState> {
     emit(state.copyWith(products: updatedProducts));
 
     try {
-      final success = await _productRepository.toggleFavorite(
-        itemId: itemId,
-        ownerId: ownerId,
-      );
+      final bool success;
+      if (wasFavorite) {
+        // Use DELETE to unfavorite
+        success = await _productRepository.removeFavorite(
+          itemId: itemId,
+          ownerId: ownerId,
+        );
+      } else {
+        // Use POST to favorite
+        success = await _productRepository.toggleFavorite(
+          itemId: itemId,
+          ownerId: ownerId,
+        );
+      }
+
       if (!success) {
         // Rollback on failure
-        final rolledBackProducts = state.products.map((p) {
-          if (p.id == itemId) {
-            return p.copyWith(isFavorite: !p.isFavorite);
-          }
-          return p;
-        }).toList();
-        emit(state.copyWith(products: rolledBackProducts));
+        _rollbackFavorite(itemId);
       }
     } catch (e) {
       // Rollback on error
-      final rolledBackProducts = state.products.map((p) {
-        if (p.id == itemId) {
-          return p.copyWith(isFavorite: !p.isFavorite);
-        }
-        return p;
-      }).toList();
-      emit(state.copyWith(products: rolledBackProducts));
+      _rollbackFavorite(itemId);
     }
+  }
+
+  void _rollbackFavorite(String itemId) {
+    final rolledBackProducts = state.products.map((p) {
+      if (p.id == itemId) {
+        return p.copyWith(isFavorite: !p.isFavorite);
+      }
+      return p;
+    }).toList();
+    emit(state.copyWith(products: rolledBackProducts));
   }
 
   Future<void> searchProducts(String query, {int limit = 12}) async {

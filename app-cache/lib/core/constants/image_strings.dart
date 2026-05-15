@@ -129,6 +129,8 @@ class TImages {
 
 class ProductImageModel {
   final String id;
+  final String? furnitureId;
+  final String? itemId;
   final String name;
   final String image; // Contains asset path or network URL
   final bool isTrending;
@@ -140,6 +142,8 @@ class ProductImageModel {
 
   ProductImageModel({
     required this.id,
+    this.furnitureId,
+    this.itemId,
     required this.name,
     required this.image,
     required this.isTrending,
@@ -154,6 +158,8 @@ class ProductImageModel {
 
   ProductImageModel copyWith({
     String? id,
+    String? furnitureId,
+    String? itemId,
     String? name,
     String? image,
     bool? isTrending,
@@ -165,6 +171,8 @@ class ProductImageModel {
   }) {
     return ProductImageModel(
       id: id ?? this.id,
+      furnitureId: furnitureId ?? this.furnitureId,
+      itemId: itemId ?? this.itemId,
       name: name ?? this.name,
       image: image ?? this.image,
       isTrending: isTrending ?? this.isTrending,

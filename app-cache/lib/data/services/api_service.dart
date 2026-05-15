@@ -158,6 +158,20 @@ class ApiService {
     return response.data;
   }
 
+  Future<dynamic> removeFavorite({
+    required String itemId,
+    required String ownerId,
+  }) async {
+    final url = '${TApiConstants.favorites}/$itemId';
+    final queryParams = {'ownerId': ownerId};
+    debugPrint('🛒 REMOVE_FAVORITE: ${TApiConstants.baseUrl}$url | Params: $queryParams');
+    final response = await _dio.delete(
+      url,
+      queryParameters: queryParams,
+    );
+    return response.data;
+  }
+
   Future<dynamic> uploadFurniture(File file) async {
     String fileName = file.path.split('/').last;
     FormData formData = FormData.fromMap({

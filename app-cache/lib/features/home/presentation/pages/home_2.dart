@@ -872,8 +872,15 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     Tab(text: "Interiors"),
                                     Tab(text: "Furnitures"),
                                   ],
-                                  onTap: (index) {
+                                   onTap: (index) {
                                     homeCubit.setSelectedIndex(index);
+                                    setState(() {
+                                      _selectedCategory = null;
+                                      _selectedSubCategory = "All";
+                                      _selectedNestedSubCategory = "";
+                                    });
+                                    _searchController.clear();
+                                    context.read<HomeCubit>().clearSearch();
                                     context
                                         .read<ProductsCubit>()
                                         .fetchFeaturedProducts();
@@ -903,7 +910,21 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
                                       onTap: () {
+                                        final wasTrending = homeState.isTrendingShowing;
                                         homeCubit.toggleTrending();
+                                        
+                                        // Use future state values
+                                        final isNowTrending = !wasTrending;
+                                        
+                                        if (isNowTrending) {
+                                          context.read<ProductsCubit>().fetchTrendingProducts(
+                                            ownerId: "anisasru@gmail.com",
+                                          );
+                                        } else {
+                                          context.read<ProductsCubit>().fetchFeaturedProducts(
+                                            isExterior: homeState.isExterior,
+                                          );
+                                        }
                                       },
                                       child: Padding(
                                         padding: const EdgeInsets.all(8),
@@ -940,7 +961,21 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
                                       onTap: () {
+                                        final wasLiked = homeState.isLikedShowing;
                                         homeCubit.toggleLiked();
+                                        
+                                        // Use future state values
+                                        final isNowLiked = !wasLiked;
+                                        
+                                        if (isNowLiked) {
+                                          context.read<ProductsCubit>().fetchFavoriteProducts(
+                                            ownerId: "anisasru@gmail.com",
+                                          );
+                                        } else {
+                                          context.read<ProductsCubit>().fetchFeaturedProducts(
+                                            isExterior: homeState.isExterior,
+                                          );
+                                        }
                                       },
                                       child: Padding(
                                         padding: const EdgeInsets.all(8),
@@ -1059,7 +1094,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                        id: product.id,
                                        onFavoriteToggle: () {
                                          context.read<ProductsCubit>().toggleFavorite(
-                                           itemId: product.id,
+                                           itemId: product.itemId ?? product.furnitureId ?? product.id,
                                            ownerId: "anisasru@gmail.com",
                                          );
                                        },
@@ -1105,7 +1140,15 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     child: ProductContainers(
                                       imagePath: product.image,
                                       isTrending: product.isTrending,
+                                      isFavorite: product.isFavorite,
                                       isNetwork: product.isNetworkImage,
+                                      id: product.id,
+                                      onFavoriteToggle: () {
+                                        context.read<ProductsCubit>().toggleFavorite(
+                                          itemId: product.itemId ?? product.furnitureId ?? product.id,
+                                          ownerId: "anisasru@gmail.com",
+                                        );
+                                      },
                                     ),
                                   ),
                                 );

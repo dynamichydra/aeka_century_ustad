@@ -159,7 +159,8 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
     try {
       // 1. Check if it already exists in SQLite
-      final existing = await SelectedImagesRepository.getImage(product.id);
+      final imageId = product.itemId ?? product.furnitureId ?? product.id;
+      final existing = await SelectedImagesRepository.getImage(imageId);
       if (existing != null) {
         await _selectExploreImage(existing);
         return;
@@ -171,7 +172,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
       // 3. Save to SQLite
       final imageData = SelectedImageData(
-        id: product.id,
+        id: imageId,
         imageData: imageBytes,
         imagePath: file.path,
         category: product.category ?? widget.image_category,

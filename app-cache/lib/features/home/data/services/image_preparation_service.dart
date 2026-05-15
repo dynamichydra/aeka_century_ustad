@@ -39,7 +39,7 @@ class ImagePreparationService {
       if (await existingFile.exists()) {
         return PreparedProductImage(
           file: existingFile,
-          imageId: product.id,
+          imageId: product.itemId ?? product.furnitureId ?? product.id,
           category: category,
           subcategory: subcategory,
         );
@@ -73,7 +73,7 @@ class ImagePreparationService {
 
     return PreparedProductImage(
       file: file,
-      imageId: product.id,
+      imageId: product.itemId ?? product.furnitureId ?? product.id,
       category: category,
       subcategory: subcategory,
     );

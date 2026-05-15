@@ -24,7 +24,12 @@ class ProductRepository {
 
   ProductImageModel _mapToModel(Map<String, dynamic> json) {
     return ProductImageModel(
-      id: json['furnitureId']?.toString() ?? json['id']?.toString() ?? '',
+      id: json['itemId']?.toString() ??
+          json['furnitureId']?.toString() ??
+          json['id']?.toString() ??
+          '',
+      furnitureId: json['furnitureId']?.toString(),
+      itemId: json['itemId']?.toString(),
       name: json['product'] ?? json['furnitureCategory'] ?? 'Unknown',
       image: json['imageUrl'] ?? '',
       isTrending: false,
@@ -190,6 +195,19 @@ class ProductRepository {
       return true;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: toggleFavorite failure for $itemId: $e');
+      return false;
+    }
+  }
+
+  Future<bool> removeFavorite({
+    required String itemId,
+    required String ownerId,
+  }) async {
+    try {
+      await _apiService.removeFavorite(itemId: itemId, ownerId: ownerId);
+      return true;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: removeFavorite failure for $itemId: $e');
       return false;
     }
   }

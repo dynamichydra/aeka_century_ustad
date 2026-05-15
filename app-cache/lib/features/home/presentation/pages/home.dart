@@ -616,7 +616,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context.read<HomeCubit>().clearSearch();
                               context
                                   .read<ProductsCubit>()
-                                  .fetchFeaturedProducts(isExterior: false);
+                                  .fetchFeaturedProducts(
+                                    isExterior: false,
+                                  );
                             }
                           },
                         ),
@@ -776,7 +778,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     shape: const CircleBorder(),
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
-                                      onTap: () {
+                                       onTap: () {
                                         final wasTrending = homeState.isTrendingShowing;
                                         homeCubit.toggleTrending();
                                         
@@ -827,7 +829,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     shape: const CircleBorder(),
                                     child: InkWell(
                                       customBorder: const CircleBorder(),
-                                      onTap: () {
+                                       onTap: () {
                                         final wasLiked = homeState.isLikedShowing;
                                         homeCubit.toggleLiked();
                                         
@@ -1017,7 +1019,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       id: product.id,
                                       onFavoriteToggle: () {
                                         context.read<ProductsCubit>().toggleFavorite(
-                                          itemId: product.id,
+                                          itemId: product.itemId ?? product.furnitureId ?? product.id,
                                           ownerId: "anisasru@gmail.com",
                                         );
                                       },
@@ -1068,7 +1070,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                       id: product.id,
                                       onFavoriteToggle: () {
                                         context.read<ProductsCubit>().toggleFavorite(
-                                          itemId: product.id,
+                                          itemId: product.itemId ?? product.furnitureId ?? product.id,
                                           ownerId: "anisasru@gmail.com",
                                         );
                                       },
