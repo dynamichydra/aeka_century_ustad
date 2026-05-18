@@ -1184,29 +1184,42 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         fit: BoxFit.cover,
                         cacheWidth: 400,
                       )
-                    : Image.file(widget.imageFile, fit: BoxFit.cover))
+                    : Image.file(
+                        widget.imageFile,
+                        fit: BoxFit.cover,
+                        cacheWidth: 400,
+                      ))
               : (isNetwork
                     ? Image.network(
                         path!,
                         fit: BoxFit.cover,
                         cacheWidth: 400,
-                        errorBuilder: (c, e, s) =>
-                            Image.file(widget.imageFile, fit: BoxFit.cover),
+                        errorBuilder: (c, e, s) => Image.file(
+                          widget.imageFile,
+                          fit: BoxFit.cover,
+                          cacheWidth: 400,
+                        ),
                       )
                     : (path!.startsWith('/') || path.contains('tryon_result'))
                     ? Image.file(
                         File(path),
                         fit: BoxFit.cover,
                         cacheWidth: 400,
-                        errorBuilder: (c, e, s) =>
-                            Image.file(widget.imageFile, fit: BoxFit.cover),
+                        errorBuilder: (c, e, s) => Image.file(
+                          widget.imageFile,
+                          fit: BoxFit.cover,
+                          cacheWidth: 400,
+                        ),
                       )
                     : Image.asset(
                         path,
                         fit: BoxFit.cover,
                         cacheWidth: 400,
-                        errorBuilder: (c, e, s) =>
-                            Image.file(widget.imageFile, fit: BoxFit.cover),
+                        errorBuilder: (c, e, s) => Image.file(
+                          widget.imageFile,
+                          fit: BoxFit.cover,
+                          cacheWidth: 400,
+                        ),
                       )),
           _buildOverlayButtons(
             bottom: 8,
@@ -2112,7 +2125,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           imgPath: state.currentGeneratedImage!,
           laminate: state.selectedPattern,
         );
-        await _fetchUserEditHistory();
+        _fetchUserEditHistory(); // ⚡ Run in background, do not block UI!
       } catch (e) {
         debugPrint("❌ Error saving local edit: $e");
       }
@@ -2192,7 +2205,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         maintainAnimation: true,
                         maintainState: true,
                         child: GestureDetector(
-                          onTap: _finalizeEdit,
+                          onTap: () {
+                            debugPrint("arrow touched");
+                          },
                           child: Container(
                             width: 40,
                             height: 40,

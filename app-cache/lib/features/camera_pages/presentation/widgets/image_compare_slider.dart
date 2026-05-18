@@ -63,6 +63,11 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
           ),
         );
       }
+      // Check if it is a local absolute path or if the file exists
+      final file = File(source);
+      if (source.startsWith('/') || source.startsWith('file:') || source.startsWith('content:') || file.existsSync()) {
+        return Image.file(file, width: width, height: height, fit: BoxFit.cover, gaplessPlayback: true);
+      }
       return Image.asset(source, width: width, height: height, fit: BoxFit.cover, gaplessPlayback: true);
     }
     return const SizedBox();
