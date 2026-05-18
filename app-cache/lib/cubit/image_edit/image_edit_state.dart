@@ -63,8 +63,9 @@ class ImageEditState extends Equatable {
       isCompareLoading: isCompareLoading ?? this.isCompareLoading,
       isApplyLoading: isApplyLoading ?? this.isApplyLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      successMessage:
-          clearSuccess ? null : (successMessage ?? this.successMessage),
+      successMessage: clearSuccess
+          ? null
+          : (successMessage ?? this.successMessage),
       editedImageFile: editedImageFile ?? this.editedImageFile,
       originalImage: originalImage ?? this.originalImage,
       currentGeneratedImage:
@@ -83,21 +84,21 @@ class ImageEditState extends Equatable {
 
   @override
   List<Object?> get props => [
-        isCompareLoading,
-        isApplyLoading,
-        errorMessage,
-        successMessage,
-        editedImageFile,
-        originalImage,
-        currentGeneratedImage,
-        generatedHistory,
-        selectedPattern,
-        selectedArea,
-        isGenerating,
-        hasPatternChanged,
-        hasAreaChanged,
-        furnitureId,
-        ownerId,
-        sessionId,
-      ];
+    isCompareLoading,
+    isApplyLoading,
+    errorMessage,
+    successMessage,
+    editedImageFile,
+    originalImage,
+    currentGeneratedImage,
+    generatedHistory,
+    selectedPattern,
+    selectedArea,
+    isGenerating,
+    hasPatternChanged,
+    hasAreaChanged,
+    furnitureId,
+    ownerId,
+    sessionId,
+  ];
 }

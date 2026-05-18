@@ -8,6 +8,7 @@ class EditRecord {
   final String furnitureId;
   final DateTime createdAt;
   final String? laminateName;
+  final String? usedLaminatesJson; // JSON string of used laminates
 
   EditRecord({
     required this.id,
@@ -17,7 +18,23 @@ class EditRecord {
     required this.furnitureId,
     required this.createdAt,
     this.laminateName,
+    this.usedLaminatesJson,
   });
+
+  List<Map<String, dynamic>> get usedLaminatesList {
+    if (usedLaminatesJson == null || usedLaminatesJson!.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(usedLaminatesJson!);
+      if (decoded is List) {
+        return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      } else if (decoded is Map) {
+        return [Map<String, dynamic>.from(decoded)];
+      }
+    } catch (e) {
+      // fallback
+    }
+    return [];
+  }
 
   factory EditRecord.fromJson(Map<String, dynamic> json) {
     return EditRecord(
@@ -29,6 +46,7 @@ class EditRecord {
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt']) 
           : DateTime.now(),
+      usedLaminatesJson: json['usedLaminates'] != null ? jsonEncode(json['usedLaminates']) : null,
     );
   }
 

@@ -73,7 +73,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     _loadProductsByCategoryFromAsset();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductsCubit>().fetchFeaturedProducts();
+      context.read<ProductsCubit>().fetchFeaturedProducts(ownerId: "anisasru1@gmail.com");
     });
   }
 
@@ -391,7 +391,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           _searchController.clear();
           context.read<HomeCubit>().clearSearch();
           // Fetch featured products when category is deselected
-          context.read<ProductsCubit>().fetchFeaturedProducts();
+          context.read<ProductsCubit>().fetchFeaturedProducts(ownerId: "anisasru1@gmail.com");
         } else {
           setState(() {
             _selectedCategory = product.name;
@@ -695,7 +695,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 context.read<HomeCubit>().clearSearch();
                 context.read<HomeCubit>().resetFilters();
                 // Fetch featured products
-                return context.read<ProductsCubit>().fetchFeaturedProducts();
+                return context.read<ProductsCubit>().fetchFeaturedProducts(ownerId: "anisasru1@gmail.com");
               },
               child: NotificationListener<ScrollNotification>(
                 onNotification: (ScrollNotification scrollInfo) {
@@ -743,7 +743,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context.read<HomeCubit>().clearSearch();
                               context
                                   .read<ProductsCubit>()
-                                  .fetchFeaturedProducts(isExterior: true);
+                                  .fetchFeaturedProducts(ownerId: "anisasru1@gmail.com", isExterior: true);
                             } else {
                               homeCubit.setSelectedIndex(0);
                               setState(() {
@@ -755,7 +755,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                               context.read<HomeCubit>().clearSearch();
                               context
                                   .read<ProductsCubit>()
-                                  .fetchFeaturedProducts(isExterior: false);
+                                  .fetchFeaturedProducts(ownerId: "anisasru1@gmail.com", isExterior: false);
                             }
                           },
                         ),
@@ -883,7 +883,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                     context.read<HomeCubit>().clearSearch();
                                     context
                                         .read<ProductsCubit>()
-                                        .fetchFeaturedProducts();
+                                        .fetchFeaturedProducts(ownerId: "anisasru1@gmail.com");
                                   },
                                 ),
                               ),
@@ -922,6 +922,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                           );
                                         } else {
                                           context.read<ProductsCubit>().fetchFeaturedProducts(
+                                            ownerId: "anisasru1@gmail.com",
                                             isExterior: homeState.isExterior,
                                           );
                                         }
@@ -973,6 +974,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                           );
                                         } else {
                                           context.read<ProductsCubit>().fetchFeaturedProducts(
+                                            ownerId: "anisasru1@gmail.com",
                                             isExterior: homeState.isExterior,
                                           );
                                         }

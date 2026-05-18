@@ -25,12 +25,14 @@ class ImageEditCubit extends Cubit<ImageEditState> {
   }) {
     // Emit a completely fresh state so nothing from the previous session
     // (selected laminate, generated images, success/error messages) leaks in.
-    emit(ImageEditState(
-      originalImage: imagePath,
-      furnitureId: furnitureId,
-      ownerId: ownerId,
-      sessionId: sessionId,
-    ));
+    emit(
+      ImageEditState(
+        originalImage: imagePath,
+        furnitureId: furnitureId,
+        ownerId: ownerId,
+        sessionId: sessionId,
+      ),
+    );
   }
 
   void selectPattern(Map<String, dynamic> pattern) {
@@ -41,6 +43,22 @@ class ImageEditCubit extends Cubit<ImageEditState> {
   void selectArea(Map<String, dynamic> area) {
     emit(state.copyWith(selectedArea: area, hasAreaChanged: true));
     _checkAndGenerate();
+  }
+
+  void clearSelection() {
+    emit(ImageEditState(
+      originalImage: state.originalImage,
+      currentGeneratedImage: state.currentGeneratedImage,
+      generatedHistory: state.generatedHistory,
+      furnitureId: state.furnitureId,
+      ownerId: state.ownerId,
+      sessionId: state.sessionId,
+      selectedPattern: null,
+      selectedArea: null,
+      isGenerating: false,
+      hasPatternChanged: false,
+      hasAreaChanged: false,
+    ));
   }
 
   void _checkAndGenerate() {
@@ -73,7 +91,8 @@ class ImageEditCubit extends Cubit<ImageEditState> {
 
     try {
       File roomFile;
-      final String baseImageToUse = state.currentGeneratedImage ?? state.originalImage!;
+      final String baseImageToUse =
+          state.currentGeneratedImage ?? state.originalImage!;
       if (baseImageToUse.startsWith('http')) {
         // DOWNLOAD NETWORK IMAGE TO TEMP FILE
         final dio = Dio();
@@ -228,6 +247,22 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     if (state.furnitureId == null) return;
 
     try {
+      final List<Map<String, dynamic>> sessionLaminates = [];
+      for (var hist in state.generatedHistory) {
+        if (hist['laminate'] != null) {
+          final lam = hist['laminate'] as Map<String, dynamic>;
+          if (!sessionLaminates.any((element) => element['id'] == lam['id'])) {
+            sessionLaminates.add(lam);
+          }
+        }
+        if (hist['generated'] == imgPath) {
+          break;
+        }
+      }
+      if (sessionLaminates.isEmpty && laminate != null) {
+        sessionLaminates.add(laminate);
+      }
+
       final editData = EditHistoryData(
         id: const Uuid().v4(),
         furnitureId: state.furnitureId!,
@@ -236,13 +271,13 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         editedImagePath: imgPath,
         editedAt: DateTime.now(),
         ownerId: state.ownerId ?? "anisasru1@gmail.com",
-        usedLaminates: laminate != null ? jsonEncode(laminate) : null,
+        usedLaminates: sessionLaminates.isNotEmpty ? jsonEncode(sessionLaminates) : null,
         laminateName: laminate?['name']?.toString(),
         laminateSku: laminate?['sku']?.toString(),
       );
 
       await EditHistoryRepository.saveEdit(editData);
-      debugPrint('✅ Edit saved to SQLite with laminates: ${laminate?['name']}');
+      debugPrint('✅ Edit saved to SQLite with laminates count: ${sessionLaminates.length}');
     } catch (e) {
       debugPrint('❌ Error saving to SQLite: $e');
     }

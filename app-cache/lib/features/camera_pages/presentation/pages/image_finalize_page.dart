@@ -1,3 +1,4 @@
+import 'package:century_ai/core/constants/image_strings.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -216,7 +217,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                         const CircleAvatar(
                                           radius: 24,
                                           backgroundColor: Colors.grey,
-                                          backgroundImage: AssetImage('assets/images/placeholder_user.png'), // placeholder
+                                          backgroundImage: AssetImage(TImages.user), // placeholder
                                         ),
                                         const SizedBox(height: 8),
                                         const Text(

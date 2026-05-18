@@ -10,12 +10,13 @@ class ProductsCubit extends Cubit<ProductsState> {
 
   ProductsCubit(this._productRepository) : super(const ProductsState());
 
-  Future<void> loadProducts({int limit = 12}) async {
-    return fetchFeaturedProducts(limit: limit);
+  Future<void> loadProducts({String? ownerId, int limit = 12}) async {
+    return fetchFeaturedProducts(ownerId: ownerId, limit: limit);
   }
 
   Future<void> fetchSimilarProducts(
     String imageId, {
+    String? ownerId,
     int limit = 12,
   }) async {
     if (imageId.trim().isEmpty) return;
@@ -28,6 +29,7 @@ class ProductsCubit extends Cubit<ProductsState> {
         offset: 0,
         limit: limit,
         currentSimilarImageId: imageId,
+        currentOwnerId: ownerId,
         clearQuery: true,
         clearCategory: true,
         clearRoom: true,
@@ -39,6 +41,7 @@ class ProductsCubit extends Cubit<ProductsState> {
     try {
       final products = await _productRepository.getSimilarProducts(
         imageId,
+        ownerId: ownerId,
         limit: limit,
         offset: 0,
       );
@@ -61,7 +64,7 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
-  Future<void> fetchFeaturedProducts({int limit = 12, bool isExterior = false}) async {
+  Future<void> fetchFeaturedProducts({String? ownerId, int limit = 12, bool isExterior = false}) async {
     emit(state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -74,22 +77,27 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearGroup: true,
       clearProduct: true,
       clearSimilarImageId: true,
+      currentOwnerId: ownerId,
       isTrending: false,
     ));
     try {
       final products = isExterior
-          ? await _productRepository.getProductsByProduct(
-              "Exterior Building Material",
+          ? await _productRepository.getExteriorProducts(
+              ownerId: ownerId,
               limit: limit,
-              offset: 0)
-          : await _productRepository.getFeaturedProducts(
-              limit: limit, offset: 0);
+              offset: 0,
+            )
+          : await _productRepository.getInteriorProducts(
+              ownerId: ownerId,
+              limit: limit,
+              offset: 0,
+            );
       emit(state.copyWith(
         isLoading: false,
         products: products,
         hasMore: products.length >= limit,
         offset: products.length,
-        currentProduct: isExterior ? "Exterior Building Material" : null,
+        currentProduct: isExterior ? "Exterior" : "Interior",
         currentSubFilter: null,
       ));
     } catch (e) {
@@ -97,7 +105,8 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
-  Future<void> fetchProductsByCategory(String category, {required bool isInterior, int limit = 12}) async {
+  Future<void> fetchProductsByCategory(String category, {required bool isInterior, String? ownerId, int limit = 12}) async {
+    final activeOwnerId = ownerId ?? state.currentOwnerId;
     emit(state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -110,12 +119,13 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearGroup: isInterior,
       clearProduct: true,
       clearSimilarImageId: true,
+      currentOwnerId: activeOwnerId,
       isTrending: false,
     ));
     try {
       final products = isInterior
-          ? await _productRepository.getProductsByRoom(category, limit: limit, offset: 0)
-          : await _productRepository.getProductsByGroup(category, limit: limit, offset: 0);
+          ? await _productRepository.getProductsByRoom(category, ownerId: activeOwnerId, limit: limit, offset: 0)
+          : await _productRepository.getProductsByGroup(category, ownerId: activeOwnerId, limit: limit, offset: 0);
       emit(state.copyWith(
         isLoading: false,
         products: products,
@@ -127,9 +137,10 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
-  Future<void> fetchProductsBySubCategory(String category, String subCategory, {required bool isInterior, int limit = 12}) async {
+  Future<void> fetchProductsBySubCategory(String category, String subCategory, {required bool isInterior, String? ownerId, int limit = 12}) async {
+    final activeOwnerId = ownerId ?? state.currentOwnerId;
     if (subCategory == "All") {
-      return fetchProductsByCategory(category, isInterior: isInterior, limit: limit);
+      return fetchProductsByCategory(category, isInterior: isInterior, ownerId: activeOwnerId, limit: limit);
     }
     
     final String productBase = isInterior ? subCategory : category;
@@ -147,10 +158,11 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearQuery: true,
       clearProduct: false,
       clearSimilarImageId: true,
+      currentOwnerId: activeOwnerId,
       isTrending: false,
     ));
     try {
-      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter, limit: limit, offset: 0);
+      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter, ownerId: activeOwnerId, limit: limit, offset: 0);
       emit(state.copyWith(
         isLoading: false,
         products: products,
@@ -163,7 +175,8 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
-  Future<void> fetchProductsByNestedSubCategory(String category, String subCategory, String nestedSubCategory, {required bool isInterior, int limit = 12}) async {
+  Future<void> fetchProductsByNestedSubCategory(String category, String subCategory, String nestedSubCategory, {required bool isInterior, String? ownerId, int limit = 12}) async {
+    final activeOwnerId = ownerId ?? state.currentOwnerId;
     final String productBase = isInterior ? subCategory : category;
     final String? subFilter = nestedSubCategory;
 
@@ -179,10 +192,11 @@ class ProductsCubit extends Cubit<ProductsState> {
       isInterior: isInterior,
       clearQuery: true,
       clearSimilarImageId: true,
+      currentOwnerId: activeOwnerId,
       isTrending: false,
     ));
     try {
-      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter, limit: limit, offset: 0);
+      final products = await _productRepository.getProductsByProduct(productBase, subCategory: subFilter, ownerId: activeOwnerId, limit: limit, offset: 0);
       emit(state.copyWith(
         isLoading: false, 
         products: products, 
@@ -397,6 +411,7 @@ class ProductsCubit extends Cubit<ProductsState> {
       } else if (state.currentSimilarImageId != null) {
         newProducts = await _productRepository.getSimilarProducts(
           state.currentSimilarImageId!,
+          ownerId: state.currentOwnerId,
           limit: state.limit,
           offset: state.offset,
         );
@@ -405,20 +420,35 @@ class ProductsCubit extends Cubit<ProductsState> {
         newProducts = await _productRepository.searchProducts(state.currentQuery!, limit: state.limit, offset: state.offset);
       } else if (state.currentProduct != null) {
         debugPrint('📦 CUBIT_LOG: Loading more for product: ${state.currentProduct}, subFilter: ${state.currentSubFilter}');
-        newProducts = await _productRepository.getProductsByProduct(
-          state.currentProduct!, 
-          subCategory: (state.currentSubFilter == "All") ? null : state.currentSubFilter, 
-          limit: state.limit, 
-          offset: state.offset
-        );
+        if (state.currentProduct == "Exterior") {
+          newProducts = await _productRepository.getExteriorProducts(
+            ownerId: state.currentOwnerId,
+            limit: state.limit,
+            offset: state.offset,
+          );
+        } else if (state.currentProduct == "Interior") {
+          newProducts = await _productRepository.getInteriorProducts(
+            ownerId: state.currentOwnerId,
+            limit: state.limit,
+            offset: state.offset,
+          );
+        } else {
+          newProducts = await _productRepository.getProductsByProduct(
+            state.currentProduct!, 
+            subCategory: (state.currentSubFilter == "All") ? null : state.currentSubFilter, 
+            ownerId: state.currentOwnerId,
+            limit: state.limit, 
+            offset: state.offset
+          );
+        }
       } else if (state.currentCategory != null) {
         debugPrint('📂 CUBIT_LOG: Loading more for category: ${state.currentCategory}, isInterior: ${state.isInterior}');
         newProducts = state.isInterior == true
-            ? await _productRepository.getProductsByRoom(state.currentCategory!, limit: state.limit, offset: state.offset)
-            : await _productRepository.getProductsByGroup(state.currentCategory!, limit: state.limit, offset: state.offset);
+            ? await _productRepository.getProductsByRoom(state.currentCategory!, ownerId: state.currentOwnerId, limit: state.limit, offset: state.offset)
+            : await _productRepository.getProductsByGroup(state.currentCategory!, ownerId: state.currentOwnerId, limit: state.limit, offset: state.offset);
       } else {
         debugPrint('✨ CUBIT_LOG: Loading more featured products');
-        newProducts = await _productRepository.getFeaturedProducts(limit: state.limit, offset: state.offset);
+        newProducts = await _productRepository.getFeaturedProducts(ownerId: state.currentOwnerId, limit: state.limit, offset: state.offset);
       }
 
       debugPrint('✅ CUBIT_LOG: Fetched ${newProducts.length} more products');

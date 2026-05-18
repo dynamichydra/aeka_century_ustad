@@ -36,12 +36,16 @@ class ProductRepository {
       isNetwork: true,
       category: json['furnitureCategory'],
       subcategory: (json['subCategory'] as List?)?.join(', '),
+      isFavorite: json['isFavourited'] == true ||
+          json['isFavorite'] == true ||
+          json['isFavourited']?.toString().toLowerCase() == 'true' ||
+          json['isFavorite']?.toString().toLowerCase() == 'true',
     );
   }
 
-  Future<List<ProductImageModel>> getFeaturedProducts({int limit = 10, int offset = 0}) async {
+  Future<List<ProductImageModel>> getFeaturedProducts({String? ownerId, int limit = 10, int offset = 0}) async {
     try {
-      final data = await _apiService.getFeaturedFurniture(limit: limit, offset: offset);
+      final data = await _apiService.getFeaturedFurniture(ownerId: ownerId, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
       debugPrint('📦 REPO_LOG: Fetched ${products.length} featured products (Offset: $offset, Limit: $limit)');
       return products;
@@ -51,11 +55,35 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByRoom(String room, {int limit = 20, int offset = 0}) async {
+  Future<List<ProductImageModel>> getInteriorProducts({String? ownerId, int limit = 10, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByRoom(room, limit: limit, offset: offset);
+      final data = await _apiService.getInteriorFurniture(ownerId: ownerId, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for room: $room (Offset: $offset, Limit: $limit)');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} interior products (Offset: $offset, Limit: $limit)');
+      return products;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: getInteriorProducts failure: $e');
+      return [];
+    }
+  }
+
+  Future<List<ProductImageModel>> getExteriorProducts({String? ownerId, int limit = 10, int offset = 0}) async {
+    try {
+      final data = await _apiService.getExteriorFurniture(ownerId: ownerId, limit: limit, offset: offset);
+      final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} exterior products (Offset: $offset, Limit: $limit)');
+      return products;
+    } catch (e) {
+      debugPrint('❌ REPO_LOG ERROR: getExteriorProducts failure: $e');
+      return [];
+    }
+  }
+
+  Future<List<ProductImageModel>> getProductsByRoom(String room, {String? ownerId, int limit = 20, int offset = 0}) async {
+    try {
+      final data = await _apiService.getFurnitureByRoom(room, ownerId: ownerId, limit: limit, offset: offset);
+      final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for room: $room, owner: $ownerId (Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByRoom failure for $room: $e');
@@ -63,11 +91,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByGroup(String group, {int limit = 20, int offset = 0}) async {
+  Future<List<ProductImageModel>> getProductsByGroup(String group, {String? ownerId, int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByGroup(group, limit: limit, offset: offset);
+      final data = await _apiService.getFurnitureByGroup(group, ownerId: ownerId, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for group: $group (Offset: $offset, Limit: $limit)');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for group: $group, owner: $ownerId (Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByGroup failure for $group: $e');
@@ -75,11 +103,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByProduct(String product, {String? subCategory, int limit = 20, int offset = 0}) async {
+  Future<List<ProductImageModel>> getProductsByProduct(String product, {String? subCategory, String? ownerId, int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByProduct(product, subCategory: subCategory, limit: limit, offset: offset);
+      final data = await _apiService.getFurnitureByProduct(product, subCategory: subCategory, ownerId: ownerId, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for product: $product (Sub: ${subCategory ?? "None"}, Offset: $offset, Limit: $limit)');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for product: $product, owner: $ownerId (Sub: ${subCategory ?? "None"}, Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByProduct failure for $product/$subCategory: $e');
@@ -122,12 +150,14 @@ class ProductRepository {
 
   Future<List<ProductImageModel>> getSimilarProducts(
     String id, {
+    String? ownerId,
     int limit = 20,
     int offset = 0,
   }) async {
     try {
       final data = await _apiService.getSimilarProducts(
         id,
+        ownerId: ownerId,
         limit: limit,
         offset: offset,
       );
