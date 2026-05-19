@@ -46,19 +46,21 @@ class ImageEditCubit extends Cubit<ImageEditState> {
   }
 
   void clearSelection() {
-    emit(ImageEditState(
-      originalImage: state.originalImage,
-      currentGeneratedImage: state.currentGeneratedImage,
-      generatedHistory: state.generatedHistory,
-      furnitureId: state.furnitureId,
-      ownerId: state.ownerId,
-      sessionId: state.sessionId,
-      selectedPattern: null,
-      selectedArea: null,
-      isGenerating: false,
-      hasPatternChanged: false,
-      hasAreaChanged: false,
-    ));
+    emit(
+      ImageEditState(
+        originalImage: state.originalImage,
+        currentGeneratedImage: state.currentGeneratedImage,
+        generatedHistory: state.generatedHistory,
+        furnitureId: state.furnitureId,
+        ownerId: state.ownerId,
+        sessionId: state.sessionId,
+        selectedPattern: null,
+        selectedArea: null,
+        isGenerating: false,
+        hasPatternChanged: false,
+        hasAreaChanged: false,
+      ),
+    );
   }
 
   void _checkAndGenerate() {
@@ -243,6 +245,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
   Future<void> saveToDatabase({
     required String imgPath,
     Map<String, dynamic>? laminate,
+    String? customSessionId,
   }) async {
     if (state.furnitureId == null) return;
 
@@ -264,20 +267,24 @@ class ImageEditCubit extends Cubit<ImageEditState> {
       }
 
       final editData = EditHistoryData(
-        id: const Uuid().v4(),
+        id: customSessionId ?? const Uuid().v4(),
         furnitureId: state.furnitureId!,
-        sessionId: state.sessionId ?? "default_session",
+        sessionId: customSessionId ?? state.sessionId ?? "default_session",
         originalImagePath: state.originalImage!,
         editedImagePath: imgPath,
         editedAt: DateTime.now(),
-        ownerId: state.ownerId ?? "anisasru1@gmail.com",
-        usedLaminates: sessionLaminates.isNotEmpty ? jsonEncode(sessionLaminates) : null,
+        ownerId: state.ownerId ?? "anisasru2@gmail.com",
+        usedLaminates: sessionLaminates.isNotEmpty
+            ? jsonEncode(sessionLaminates)
+            : null,
         laminateName: laminate?['name']?.toString(),
         laminateSku: laminate?['sku']?.toString(),
       );
 
       await EditHistoryRepository.saveEdit(editData);
-      debugPrint('✅ Edit saved to SQLite with laminates count: ${sessionLaminates.length}');
+      debugPrint(
+        '✅ Edit saved to SQLite with laminates count: ${sessionLaminates.length}',
+      );
     } catch (e) {
       debugPrint('❌ Error saving to SQLite: $e');
     }

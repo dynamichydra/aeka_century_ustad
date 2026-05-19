@@ -125,37 +125,47 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     try {
       final path = await _getLocalImagePath();
       if (path != null) {
-        // Open native directory picker dialogue
-        final String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+        setState(() => _isProcessing = true);
         
-        if (selectedDirectory != null) {
-          setState(() => _isProcessing = true);
-          
-          final String newFileName = 'century_decor_studio_design_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          final File sourceFile = File(path);
-          final String destinationPath = p.join(selectedDirectory, newFileName);
-          
-          await sourceFile.copy(destinationPath);
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Image saved successfully to selected folder!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+        final File sourceFile = File(path);
+        final bytes = await sourceFile.readAsBytes();
+        final String newFileName = 'century_decor_studio_design_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        
+        // Open native save file dialogue
+        final String? savedFilePath = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Design',
+          fileName: newFileName,
+          bytes: bytes,
+        );
+        
+        if (savedFilePath != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Image saved successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to prepare image for saving')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to prepare image for saving')),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Save to files error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving image to files: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving image to files: $e')),
+        );
+      }
     } finally {
-      setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 
@@ -300,41 +310,9 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 20),
-            onPressed: () => context.pop(),
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
-            child: Image.asset(
-              'assets/icons/century_logo.png', // Assuming logo is available
-              height: 36,
-              errorBuilder: (context, error, stackTrace) => const SizedBox(),
-            ),
-          )
-        ],
-      ),
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
+      body: SafeArea(
+        child: Stack(
+          children: [
           Column(
             children: [
               Expanded(
@@ -347,15 +325,15 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                       
                       // Content Below Image
                       Padding(
-                        padding: const EdgeInsets.all(20.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
                               "Laminates used",
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                fontWeight: FontWeight.normal,
                                 color: Colors.black87,
                               ),
                             ),
@@ -363,7 +341,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                             
                             if (widget.usedLaminates.isNotEmpty)
                               SizedBox(
-                                height: 130,
+                                height: 105,
                                 child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: widget.usedLaminates.length,
@@ -377,12 +355,12 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                             else
                               const Text("No laminates applied", style: TextStyle(color: Colors.grey)),
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 10),
                             const Text(
                               "Created by",
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                fontWeight: FontWeight.normal,
                                 color: Colors.black87,
                               ),
                             ),
@@ -420,8 +398,8 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                         const Text(
                                           "Rahul Ghosh",
                                           style: TextStyle(
-                                            fontWeight: FontWeight.bold, 
-                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12.5,
                                             color: Colors.black,
                                           ),
                                         ),
@@ -440,11 +418,14 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                   ),
                                   
                                   // Divider
-                                  Container(
-                                    height: 84,
-                                    width: 1.0,
-                                    color: Colors.red.shade400,
-                                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                                    child: Container(
+                                      height: 96,
+                                      width: 1.0,
+                                      color: Colors.red.shade400,
+                                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                                    ),
                                   ),
                                   
                                   // Right side: Contact Info
@@ -455,9 +436,9 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         _buildContactRow(Icons.phone, "+91 7654321908"),
-                                        const SizedBox(height: 10),
+                                        const SizedBox(height: 15),
                                         _buildContactRow(Icons.email, "rahulG@email.com"),
-                                        const SizedBox(height: 10),
+                                        const SizedBox(height: 15),
                                         _buildContactRow(Icons.location_on, "123 Street, Kolkata, West Bengal"),
                                       ],
                                     ),
@@ -466,14 +447,14 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                               ),
                             ),
                             
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 10),
                             const Center(
                               child: Text(
                                 "Century Decor Studio",
                                 style: TextStyle(
-                                  color: Colors.red,
+                                  color: Color(0xFFFF383C),
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -526,8 +507,9 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
             ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildContactRow(IconData icon, String text) {
     return Row(
@@ -572,7 +554,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(0),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: Row(
@@ -612,13 +594,13 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     final sku = lam['sku'] ?? lam['code'] ?? '${lam['id'] ?? ''}';
 
     return SizedBox(
-      width: 80,
+      width: 75,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 76,
-            height: 76,
+            width: 65,
+            height: 65,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               color: Colors.grey.shade100,
@@ -698,10 +680,56 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       imgWidget = const Center(child: Icon(Icons.image_not_supported));
     }
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.45,
-      width: double.infinity,
-      child: imgWidget,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.40,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                Positioned.fill(child: imgWidget),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0),
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/logos/small_logo.png',
+                      height: 28,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

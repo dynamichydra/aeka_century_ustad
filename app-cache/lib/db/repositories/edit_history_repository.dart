@@ -57,6 +57,20 @@ class EditHistoryRepository {
     return result.map((map) => EditHistoryData.fromMap(map)).toList();
   }
 
+  /// Retrieve a specific edit record by its primary ID (which is the server-returned response ID)
+  static Future<EditHistoryData?> getEditById(String id) async {
+    final db = await DbCore.database;
+
+    final result = await db.query(
+      tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (result.isEmpty) return null;
+    return EditHistoryData.fromMap(result.first);
+  }
+
   /// Retrieve all edits for a specific session ID
   static Future<List<EditHistoryData>> getEditsBySessionId(String sessionId) async {
     final db = await DbCore.database;
@@ -98,6 +112,18 @@ class EditHistoryRepository {
     await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
 
     print('Edit record deleted successfully');
+  }
+
+  /// Update the session ID for a specific edited image path
+  static Future<void> updateSessionIdByImagePath(String imagePath, String responseId) async {
+    final db = await DbCore.database;
+    await db.update(
+      tableName,
+      {'session_id': responseId},
+      where: 'edited_image_path = ?',
+      whereArgs: [imagePath],
+    );
+    print('Updated session ID to $responseId for image: $imagePath');
   }
 
   /// Clear all edit history

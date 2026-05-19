@@ -74,11 +74,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
   bool _compareExpanded = false;
   bool _editExpanded = true;
   bool _hasAppliedOnce = false;
+  bool _hasNewUnappliedEdit = false; // Tracks if a new AI generation is available but not yet finalized
   final ValueNotifier<List<int>> _selectedIndicesNotifier = ValueNotifier([]);
   double _sliderPosition = 0.5;
 
   final UserEditsService _userEditsService = UserEditsService();
-  final String _ownerEmail = "anisasru1@gmail.com";
+  final String _ownerEmail = "anisasru2@gmail.com";
   List<EditRecord> _userEdits = [];
   bool _isLoadingEdits = false;
 
@@ -246,11 +247,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
         widget.image_id!,
       );
 
-      // 3. Convert local to EditRecord
+      // 3. Convert local to EditRecord (Use SQLite's session_id as the primary identifier if synchronized, fallback to local UUID)
       final convertedLocal = localEdits
           .map(
             (e) => EditRecord(
-              id: e.id,
+              id: (e.sessionId.isNotEmpty && e.sessionId != 'default_session') ? e.sessionId : e.id,
               originalImageUrl: e.originalImagePath,
               editedImageUrl: e.editedImagePath,
               ownerId: e.ownerId,
@@ -262,26 +263,91 @@ class _ImageEditPageState extends State<ImageEditPage> {
           )
           .toList();
 
-      // 4. Merge and De-duplicate using Filename
+      // 4. Merge and De-duplicate using record ID, Filename, and Laminate/Timestamp correlation
       final Map<String, EditRecord> uniqueMap = {};
       String getFileName(String path) => path.split('/').last.split('?').first;
 
-      // Add Local
-      for (var record in convertedLocal) {
-        uniqueMap[getFileName(record.editedImageUrl)] = record;
+      // Add Network records first (as the source of truth for remote URLs)
+      for (var net in filteredNetwork) {
+        if (net.id.isNotEmpty) {
+          uniqueMap[net.id] = net;
+        } else {
+          final fallbackKey = getFileName(net.editedImageUrl);
+          uniqueMap[fallbackKey] = net;
+        }
       }
 
-      // Add Network
-      for (var net in filteredNetwork) {
-        final key = getFileName(net.editedImageUrl);
-        if (!uniqueMap.containsKey(key)) {
-          uniqueMap[key] = net;
+      // Add Local records only if they aren't already represented in uniqueMap by ID, Filename, or closely-matching metadata
+      for (var record in convertedLocal) {
+        final key = record.id;
+        final fallbackKey = getFileName(record.editedImageUrl);
+
+        // Check if this local record matches any already added network record by ID
+        if (uniqueMap.containsKey(key)) {
+          final existingNet = uniqueMap[key]!;
+          if (existingNet.usedLaminatesJson == null || existingNet.usedLaminatesJson!.isEmpty) {
+            uniqueMap[key] = EditRecord(
+              id: existingNet.id,
+              originalImageUrl: existingNet.originalImageUrl,
+              editedImageUrl: existingNet.editedImageUrl,
+              ownerId: existingNet.ownerId,
+              furnitureId: existingNet.furnitureId,
+              createdAt: existingNet.createdAt,
+              laminateName: record.laminateName,
+              usedLaminatesJson: record.usedLaminatesJson,
+            );
+          }
+          continue;
+        }
+
+        // Check if this local record matches any already added network record by Filename
+        if (uniqueMap.containsKey(fallbackKey)) {
+          final existingNet = uniqueMap[fallbackKey]!;
+          if (existingNet.usedLaminatesJson == null || existingNet.usedLaminatesJson!.isEmpty) {
+            uniqueMap[fallbackKey] = EditRecord(
+              id: existingNet.id,
+              originalImageUrl: existingNet.originalImageUrl,
+              editedImageUrl: existingNet.editedImageUrl,
+              ownerId: existingNet.ownerId,
+              furnitureId: existingNet.furnitureId,
+              createdAt: existingNet.createdAt,
+              laminateName: record.laminateName,
+              usedLaminatesJson: record.usedLaminatesJson,
+            );
+          }
+          continue;
+        }
+
+        // Deep/intelligent check to see if this local record represents the same edit as an existing network record (within 5 minutes)
+        bool isDuplicate = false;
+        for (var existingNet in uniqueMap.values) {
+          final diffSeconds = record.createdAt.difference(existingNet.createdAt).inSeconds.abs();
+          if (diffSeconds < 300) {
+            final netKey = existingNet.id.isNotEmpty ? existingNet.id : getFileName(existingNet.editedImageUrl);
+            if (existingNet.usedLaminatesJson == null || existingNet.usedLaminatesJson!.isEmpty) {
+              uniqueMap[netKey] = EditRecord(
+                id: existingNet.id,
+                originalImageUrl: existingNet.originalImageUrl,
+                editedImageUrl: existingNet.editedImageUrl,
+                ownerId: existingNet.ownerId,
+                furnitureId: existingNet.furnitureId,
+                createdAt: existingNet.createdAt,
+                laminateName: record.laminateName,
+                usedLaminatesJson: record.usedLaminatesJson,
+              );
+            }
+            isDuplicate = true;
+            break;
+          }
+        }
+
+        if (!isDuplicate) {
+          uniqueMap[key] = record;
         }
       }
 
       if (mounted) {
         setState(() {
-
           _userEdits = uniqueMap.values.toList();
           // Sort by creation time descending (latest first)
           _userEdits.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -530,6 +596,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             _selectedTexture = null;
             _tapPosForDot = null;
             _lastTapCoordinate = null;
+            _hasNewUnappliedEdit = true; // Mark that a new generated design is available to apply
           });
           context.read<ImageEditCubit>().clearSelection();
 
@@ -891,20 +958,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
             right: 16,
             child: _buildCircleButton(
               icon: "edit.png",
-              onTap: () async {
+              onTap: () {
                 final newPath = _userEdits.isNotEmpty
                     ? _userEdits[selectedIndices[0]].editedImageUrl
                     : widget.imageFile.path;
-                // SAVE TO DATABASE BEFORE STARTING NEW SESSION
-                final cubit = context.read<ImageEditCubit>();
-                final historyItem = cubit.state.generatedHistory.firstWhere(
-                  (h) => h['generated'] == newPath,
-                  orElse: () => {},
-                );
-                await cubit.saveToDatabase(
-                  imgPath: newPath,
-                  laminate: historyItem['laminate'] as Map<String, dynamic>?,
-                );
 
                 setState(() {
                   _sessionId = const Uuid().v4(); // START NEW SESSION
@@ -1001,39 +1058,17 @@ class _ImageEditPageState extends State<ImageEditPage> {
           isNetwork: imgPath.startsWith('http'),
           onRemove: () => _toggleSelection(index),
           onSelect: () async {
-            // 1. SAVE TO LOCAL DATABASE
             final cubit = context.read<ImageEditCubit>();
-            final historyItem = cubit.state.generatedHistory.firstWhere(
-              (h) => h['generated'] == imgPath,
-              orElse: () => {},
-            );
-            await cubit.saveToDatabase(
-              imgPath: imgPath,
-              laminate: historyItem['laminate'] as Map<String, dynamic>?,
-            );
-
-            // 2. POST TO SERVER (THIS IS THE FINAL SELECTION)
-            if (widget.image_id != null) {
-              try {
-                await _userEditsService.postEdit(
-                  editedFile: File(imgPath),
-                  furnitureId: widget.image_id!,
-                  email: _ownerEmail,
-                );
-                debugPrint("✅ Final image posted to server on selection");
-              } catch (e) {
-                debugPrint("❌ Failed to post final image to server: $e");
-              }
-            }
-
-            // Extract session laminates precisely for this specific imgPath
             final List<Map<String, dynamic>> usedLaminates = [];
-            
+
+            // 1. Extract session laminates precisely for this specific imgPath
             // Check in current session generatedHistory first
             for (var item in cubit.state.generatedHistory) {
               if (item['laminate'] != null) {
                 final lam = item['laminate'] as Map<String, dynamic>;
-                if (!usedLaminates.any((element) => element['id'] == lam['id'])) {
+                if (!usedLaminates.any(
+                  (element) => element['id'] == lam['id'],
+                )) {
                   usedLaminates.add(lam);
                 }
               }
@@ -1042,7 +1077,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
               }
             }
 
-            // If not found in current session history (meaning it's from a past session loaded from local DB/server)
+            // 2. If not found in current session history (meaning it's from a past session loaded from local DB/server)
             if (usedLaminates.isEmpty) {
               final record = _userEdits.firstWhere(
                 (e) => e.editedImageUrl == imgPath,
@@ -1051,30 +1086,28 @@ class _ImageEditPageState extends State<ImageEditPage> {
               usedLaminates.addAll(record.usedLaminatesList);
             }
 
+            // 3. Fallback to current selected pattern/laminate if list is still empty
+            final historyItem = cubit.state.generatedHistory.firstWhere(
+              (h) => h['generated'] == imgPath,
+              orElse: () => {},
+            );
             if (usedLaminates.isEmpty && historyItem['laminate'] != null) {
-              usedLaminates.add(historyItem['laminate'] as Map<String, dynamic>);
+              usedLaminates.add(
+                historyItem['laminate'] as Map<String, dynamic>,
+              );
             }
             if (usedLaminates.isEmpty && _selectedTexture != null) {
               usedLaminates.add(_selectedTexture!);
             }
 
-            context.push(
-              AppRoutes.imageFinalize,
-              extra: {'editedImage': imgPath, 'usedLaminates': usedLaminates},
-            );
+            if (context.mounted) {
+              context.push(
+                AppRoutes.imageFinalize,
+                extra: {'editedImage': imgPath, 'usedLaminates': usedLaminates},
+              );
+            }
           },
-          onEdit: () async {
-            // SAVE TO DATABASE BEFORE STARTING NEW SESSION
-            final cubit = context.read<ImageEditCubit>();
-            final historyItem = cubit.state.generatedHistory.firstWhere(
-              (h) => h['generated'] == imgPath,
-              orElse: () => {},
-            );
-            await cubit.saveToDatabase(
-              imgPath: imgPath,
-              laminate: historyItem['laminate'] as Map<String, dynamic>?,
-            );
-
+          onEdit: () {
             setState(() {
               _sessionId = const Uuid().v4(); // START NEW SESSION
               _baseImage = imgPath; // UPDATE BASE IMAGE
@@ -2102,59 +2135,142 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   Future<void> _finalizeEdit() async {
     final state = context.read<ImageEditCubit>().state;
+    if (state.currentGeneratedImage == null) return;
+    if (_isUploading) return;
+    setState(() => _isUploading = true);
 
-    // Trigger comparison details API call
-    if (state.selectedPattern != null) {
-      final pattern = state.selectedPattern!;
-      final model = ProductImageModel(
-        id: pattern['id']?.toString() ?? '0',
-        name: pattern['name']?.toString() ?? 'AI Design',
-        image: pattern['coverImage']?.toString() ?? '',
-        isTrending: false,
-        category: _selectedCategory,
-        subcategory: _selectedSubCategory,
-      );
-      context.read<ImageEditCubit>().compareImageSelected(model);
-    }
-
-    // ONLY SAVE TO LOCAL SQLITE WITH LAMINATES (NO SERVER POST YET)
-    if (widget.image_id != null && state.currentGeneratedImage != null) {
-      try {
-        final cubit = context.read<ImageEditCubit>();
-        await cubit.saveToDatabase(
-          imgPath: state.currentGeneratedImage!,
-          laminate: state.selectedPattern,
+    try {
+      // Trigger comparison details API call
+      if (state.selectedPattern != null) {
+        final pattern = state.selectedPattern!;
+        final model = ProductImageModel(
+          id: pattern['id']?.toString() ?? '0',
+          name: pattern['name']?.toString() ?? 'AI Design',
+          image: pattern['coverImage']?.toString() ?? '',
+          isTrending: false,
+          category: _selectedCategory,
+          subcategory: _selectedSubCategory,
         );
-        _fetchUserEditHistory(); // ⚡ Run in background, do not block UI!
-      } catch (e) {
-        debugPrint("❌ Error saving local edit: $e");
+        context.read<ImageEditCubit>().compareImageSelected(model);
+      }
+
+      // 1. POST TO SERVER (THE FINAL STACKED IMAGE ON TOP)
+      String? responseId;
+      if (widget.image_id != null) {
+        try {
+          debugPrint(
+            '\n================== API TRACE: APPLY / FINALIZE ==================',
+          );
+          debugPrint(
+            '📡 API_LOG: Hit /me/edits to save top final stacked image to backend.',
+          );
+          debugPrint(
+            '=========================================================\n',
+          );
+          final EditRecord? record = await _userEditsService.postEdit(
+            editedFile: File(state.currentGeneratedImage!),
+            furnitureId: widget.image_id!,
+            email: _ownerEmail,
+          );
+          if (record != null && record.id.isNotEmpty) {
+            responseId = record.id;
+            debugPrint("✅ Applied design successfully posted to server. Record ID: $responseId");
+          }
+        } catch (e) {
+          debugPrint("❌ Failed to post applied design to server: $e");
+        }
+      }
+
+      // 2. SAVE TO LOCAL DATABASE WITH RESPONSE ID AS THE SESSION ID
+      if (widget.image_id != null) {
+        try {
+          final cubit = context.read<ImageEditCubit>();
+          await cubit.saveToDatabase(
+            imgPath: state.currentGeneratedImage!,
+            laminate: state.selectedPattern,
+            customSessionId: responseId,
+          );
+        } catch (e) {
+          debugPrint("❌ Error saving local edit: $e");
+        }
+      }
+      final String finalizedImage = state.currentGeneratedImage!;
+      if (mounted) {
+        setState(() {
+          _baseImage = finalizedImage; // Set the base to the newly finalized stacked image
+          _currentAssetPreview = null; // Clear the preview overlay since it is now the base
+          _compareExpanded = true;
+          _editExpanded = false;
+          _hasAppliedOnce = true;
+          _hasNewUnappliedEdit = false; // Reset since the current edit has been successfully finalized
+
+          // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY ON NEXT EDIT
+          _selectedTexture = null;
+          _selectedColor = null;
+          _selectedSubCategory = null;
+          _tapPosForDot = null;
+          _lastTapCoordinate = null;
+        });
+
+        // RE-INIT CUBIT WITH NEW SESSION STARTING FROM THE FINALIZED IMAGE BASE
+        context.read<ImageEditCubit>().initOriginalImage(
+          _baseImage,
+          furnitureId: widget.image_id,
+          ownerId: _ownerEmail,
+          sessionId: _sessionId,
+        );
+        _fetchUserEditHistory(); // REFRESH UI FOR NEW SESSION
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
       }
     }
+  }
 
-    if (mounted) {
-      setState(() {
-        _compareExpanded = true;
-        _editExpanded = false;
-        _hasAppliedOnce = true;
+  void _navigateToFinalizePage() {
+    final List<Map<String, dynamic>> usedLaminates = [];
+    String finalImage = widget.imageFile.path;
 
-        // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY ON NEXT EDIT
-        _selectedTexture = null;
-        _selectedColor = null;
-        // _selectedCategory = null; // Maybe keep category selected for convenience? But to be safe, clear texture.
-        _tapPosForDot = null;
-        _lastTapCoordinate = null;
-        
-        // This fully resets the Cubit's state memory of the laminate so it is unselected.
-        context.read<ImageEditCubit>().clearSelection();
-      });
+    final selectedIndices = _selectedIndicesNotifier.value;
+    if (selectedIndices.isNotEmpty && _userEdits.isNotEmpty) {
+      final selectedIndex = selectedIndices.first;
+      if (selectedIndex >= 0 && selectedIndex < _userEdits.length) {
+        final selectedRecord = _userEdits[selectedIndex];
+        finalImage = selectedRecord.editedImageUrl;
+        usedLaminates.addAll(selectedRecord.usedLaminatesList);
+      }
+    } else if (_userEdits.isNotEmpty) {
+      final latestRecord = _userEdits.first;
+      finalImage = latestRecord.editedImageUrl;
+      usedLaminates.addAll(latestRecord.usedLaminatesList);
+    } else {
+      final state = context.read<ImageEditCubit>().state;
+      final cubit = context.read<ImageEditCubit>();
+      for (var item in cubit.state.generatedHistory) {
+        if (item['laminate'] != null) {
+          final lam = item['laminate'] as Map<String, dynamic>;
+          if (!usedLaminates.any((element) => element['id'] == lam['id'])) {
+            usedLaminates.add(lam);
+          }
+        }
+        if (item['generated'] == state.currentGeneratedImage) {
+          break;
+        }
+      }
+      if (usedLaminates.isEmpty && _selectedTexture != null) {
+        usedLaminates.add(_selectedTexture!);
+      }
+      finalImage = state.currentGeneratedImage ?? widget.imageFile.path;
     }
 
-    debugPrint("\n================== API TRACE: APPLY LAMINATE ==================");
-    debugPrint("✅ 1. AI Generation hits /try-on (This happens inside the Cubit)");
-    debugPrint("✅ 2. Local Database Save hits EditHistoryRepository.saveEdit (SQLite)");
-    debugPrint("✅ 3. UI Refreshes and hits GET /me/edits (via _userEditsService.getEdits)");
-    debugPrint("❌ NOTE: POST /me/edits is NOT called here. It will only be called when you confirm the final image.");
-    debugPrint("===============================================================\n");
+    context.push(
+      AppRoutes.imageFinalize,
+      extra: {
+        'editedImage': finalImage,
+        'usedLaminates': usedLaminates,
+      },
+    );
   }
 
   bool get _isApplied => _hasAppliedOnce;
@@ -2205,9 +2321,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         maintainAnimation: true,
                         maintainState: true,
                         child: GestureDetector(
-                          onTap: () {
-                            debugPrint("arrow touched");
-                          },
+                          onTap: _navigateToFinalizePage,
                           child: Container(
                             width: 40,
                             height: 40,
@@ -2239,7 +2353,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   builder: (context, state) {
                     final bool isGenerating = state.isGenerating;
                     final bool isLoading = isGenerating || _isUploading;
-                    final bool hasResult = state.currentGeneratedImage != null;
+                    final bool hasResult = state.currentGeneratedImage != null && _hasNewUnappliedEdit;
 
                     return ElevatedButton(
                       onPressed: (isLoading || !hasResult)
@@ -2316,55 +2430,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     maintainAnimation: true,
                     maintainState: true,
                     child: GestureDetector(
-                      onTap: () {
-                        final cubit = context.read<ImageEditCubit>();
-                        final List<Map<String, dynamic>> usedLaminates = [];
-                        for (var item in cubit.state.generatedHistory) {
-                          if (item['laminate'] != null) {
-                            final lam =
-                                item['laminate'] as Map<String, dynamic>;
-                            if (!usedLaminates.any(
-                              (element) => element['id'] == lam['id'],
-                            )) {
-                              usedLaminates.add(lam);
-                            }
-                          }
-                          if (item['generated'] == state.currentGeneratedImage) {
-                            break;
-                          }
-                        }
-                        if (usedLaminates.isEmpty && _selectedTexture != null) {
-                          usedLaminates.add(_selectedTexture!);
-                        }
-
-                        final String finalImageToPost = state.currentGeneratedImage ?? widget.imageFile.path;
-
-                        // 🔴 ONLY POST TO /me/edits HERE (FINAL VERSION)
-                        if (widget.image_id != null && finalImageToPost != widget.imageFile.path) {
-                          try {
-                            debugPrint('\n================== API TRACE: FINALIZE ==================');
-                            debugPrint('📡 API_LOG: Hit /me/edits to save FINAL version to the backend.');
-                            debugPrint('=========================================================\n');
-                            _userEditsService.postEdit(
-                              editedFile: File(finalImageToPost),
-                              furnitureId: widget.image_id!,
-                              email: _ownerEmail,
-                            );
-                          } catch (e) {
-                            debugPrint("Error posting final edit: $e");
-                          }
-                        }
-
-                        context.push(
-                          AppRoutes.imageFinalize,
-                          extra: {
-                            'editedImage':
-                                state.currentGeneratedImage ??
-                                widget.imageFile.path,
-                            'usedLaminates': usedLaminates,
-                          },
-                        );
-                      },
+                      onTap: _navigateToFinalizePage,
                       child: Container(
                         width: 40,
                         height: 40,
