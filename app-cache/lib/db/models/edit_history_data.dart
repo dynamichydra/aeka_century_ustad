@@ -9,6 +9,9 @@ class EditHistoryData {
   final String? usedLaminates; // JSON string of used laminates
   final String? laminateName;
   final String? laminateSku;
+  /// ID of the edit_history row this edit was built on top of.
+  /// Null for first-generation edits (directly from the original image).
+  final String? parentEditId;
 
   EditHistoryData({
     required this.id,
@@ -21,6 +24,7 @@ class EditHistoryData {
     this.usedLaminates,
     this.laminateName,
     this.laminateSku,
+    this.parentEditId,
   });
 
   Map<String, dynamic> toMap() {
@@ -35,6 +39,7 @@ class EditHistoryData {
       'used_laminates': usedLaminates,
       'laminate_name': laminateName,
       'laminate_sku': laminateSku,
+      'parent_edit_id': parentEditId,
     };
   }
 
@@ -50,6 +55,7 @@ class EditHistoryData {
       usedLaminates: map['used_laminates'],
       laminateName: map['laminate_name'],
       laminateSku: map['laminate_sku'],
+      parentEditId: map['parent_edit_id'],
     );
   }
 }

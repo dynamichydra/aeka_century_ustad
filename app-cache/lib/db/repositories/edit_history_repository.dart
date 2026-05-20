@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:century_ai/db/db_core.dart';
 import 'package:century_ai/db/models/edit_history_data.dart';
@@ -17,7 +19,8 @@ class EditHistoryRepository {
       owner_id TEXT NOT NULL,
       used_laminates TEXT,
       laminate_name TEXT,
-      laminate_sku TEXT
+      laminate_sku TEXT,
+      parent_edit_id TEXT
     )
   ''';
 
@@ -29,8 +32,8 @@ class EditHistoryRepository {
   /// Save an edit record to the database
   static Future<void> saveEdit(EditHistoryData editData) async {
     final db = await DbCore.database;
-    
-    print('Saving edit record for furniture ID: ${editData.furnitureId}');
+
+    debugPrint('Saving edit record for furniture ID: ${editData.furnitureId}, parentEditId: ${editData.parentEditId}');
 
     await db.insert(
       tableName,
@@ -38,7 +41,7 @@ class EditHistoryRepository {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
-    print('Edit record saved successfully');
+    debugPrint('Edit record saved successfully');
   }
 
   /// Retrieve all edits for a specific furniture ID
@@ -52,12 +55,12 @@ class EditHistoryRepository {
       orderBy: 'edited_at DESC',
     );
 
-    print('Retrieved ${result.length} edits for furniture ID: $furnitureId');
+    debugPrint('Retrieved ${result.length} edits for furniture ID: $furnitureId');
 
     return result.map((map) => EditHistoryData.fromMap(map)).toList();
   }
 
-  /// Retrieve a specific edit record by its primary ID (which is the server-returned response ID)
+  /// Retrieve a specific edit record by its primary ID
   static Future<EditHistoryData?> getEditById(String id) async {
     final db = await DbCore.database;
 
@@ -71,6 +74,52 @@ class EditHistoryRepository {
     return EditHistoryData.fromMap(result.first);
   }
 
+  /// Walk the parent chain starting from [editId] and return ALL laminates
+  /// from this edit and every ancestor, deduplicated by laminate 'id'.
+  ///
+  /// Example chain:  C (parent=B) → B (parent=A) → A (parent=null)
+  /// Returns: C's laminates + B's laminates + A's laminates  (deduped)
+  static Future<List<Map<String, dynamic>>> getCumulativeLaminates(
+    String editId,
+  ) async {
+    final List<Map<String, dynamic>> allLaminates = [];
+    final Set<dynamic> seenIds = {};
+    String? currentId = editId;
+
+    while (currentId != null) {
+      final record = await getEditById(currentId);
+      if (record == null) break;
+
+      // Parse and merge this record's laminates
+      if (record.usedLaminates != null && record.usedLaminates!.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(record.usedLaminates!);
+          if (decoded is List) {
+            for (final lam in decoded) {
+              if (lam is Map<String, dynamic>) {
+                final lamId = lam['id'];
+                if (!seenIds.contains(lamId)) {
+                  seenIds.add(lamId);
+                  allLaminates.add(lam);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('⚠️ Error parsing laminates for edit $currentId: $e');
+        }
+      }
+
+      // Walk up to parent
+      currentId = record.parentEditId;
+    }
+
+    debugPrint(
+      '🔗 getCumulativeLaminates("$editId") → ${allLaminates.length} total laminates',
+    );
+    return allLaminates;
+  }
+
   /// Retrieve all edits for a specific session ID
   static Future<List<EditHistoryData>> getEditsBySessionId(String sessionId) async {
     final db = await DbCore.database;
@@ -82,7 +131,7 @@ class EditHistoryRepository {
       orderBy: 'edited_at DESC',
     );
 
-    print('Retrieved ${result.length} edits for session ID: $sessionId');
+    debugPrint('Retrieved ${result.length} edits for session ID: $sessionId');
 
     return result.map((map) => EditHistoryData.fromMap(map)).toList();
   }
@@ -98,7 +147,7 @@ class EditHistoryRepository {
       orderBy: 'edited_at DESC',
     );
 
-    print('Retrieved ${result.length} edits for owner: $ownerId');
+    debugPrint('Retrieved ${result.length} edits for owner: $ownerId');
 
     return result.map((map) => EditHistoryData.fromMap(map)).toList();
   }
@@ -107,15 +156,18 @@ class EditHistoryRepository {
   static Future<void> deleteEdit(String id) async {
     final db = await DbCore.database;
 
-    print('Deleting edit record with ID: $id');
+    debugPrint('Deleting edit record with ID: $id');
 
     await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
 
-    print('Edit record deleted successfully');
+    debugPrint('Edit record deleted successfully');
   }
 
   /// Update the session ID for a specific edited image path
-  static Future<void> updateSessionIdByImagePath(String imagePath, String responseId) async {
+  static Future<void> updateSessionIdByImagePath(
+    String imagePath,
+    String responseId,
+  ) async {
     final db = await DbCore.database;
     await db.update(
       tableName,
@@ -123,17 +175,17 @@ class EditHistoryRepository {
       where: 'edited_image_path = ?',
       whereArgs: [imagePath],
     );
-    print('Updated session ID to $responseId for image: $imagePath');
+    debugPrint('Updated session ID to $responseId for image: $imagePath');
   }
 
   /// Clear all edit history
   static Future<void> clearAllHistory() async {
     final db = await DbCore.database;
 
-    print('Clearing all edit history...');
+    debugPrint('Clearing all edit history...');
 
     await db.delete(tableName);
 
-    print('All edit history cleared');
+    debugPrint('All edit history cleared');
   }
 }

@@ -9,6 +9,7 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ImageFinalizePage extends StatefulWidget {
   final dynamic editedImage;
@@ -131,88 +132,100 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     }
   }
 
+  static const String _defaultFolder = '/storage/emulated/0/Century Decor Studio';
 
-  Future<Directory> _resolveDirectory(String folderLocation) async {
-    String cleanPath = folderLocation.trim();
-    if (cleanPath.startsWith("Device Storage/")) {
-      final subPath = cleanPath.substring("Device Storage/".length);
-      final baseDir = await getApplicationDocumentsDirectory();
-      final targetDir = Directory(p.join(baseDir.path, subPath));
-      if (!await targetDir.exists()) {
-        await targetDir.create(recursive: true);
-      }
-      return targetDir;
+  /// Returns true if the app has the storage permission needed to write
+  /// directly to /storage/emulated/0/… on the running Android version.
+  Future<bool> _ensureStoragePermission() async {
+    // Android 11+ (API 30+) needs MANAGE_EXTERNAL_STORAGE
+    if (await Permission.manageExternalStorage.isGranted) return true;
+
+    // Try requesting it — on Android 11+ this opens a system dialog/settings
+    final statusManage = await Permission.manageExternalStorage.request();
+    if (statusManage.isGranted) return true;
+
+    // Fallback: also try legacy WRITE_EXTERNAL_STORAGE (Android ≤10)
+    final statusWrite = await Permission.storage.request();
+    if (statusWrite.isGranted) return true;
+
+    // Permanently denied — send user to app settings
+    if (statusManage.isPermanentlyDenied || statusWrite.isPermanentlyDenied) {
+      await openAppSettings();
     }
-    if (cleanPath == "Device Storage") {
-      return await getApplicationDocumentsDirectory();
-    }
-    if (cleanPath.startsWith('/') || cleanPath.contains(':\\') || cleanPath.contains('storage/emulated')) {
-      final targetDir = Directory(cleanPath);
-      if (!await targetDir.exists()) {
-        await targetDir.create(recursive: true);
-      }
-      return targetDir;
-    }
-    final baseDir = await getApplicationDocumentsDirectory();
-    final targetDir = Directory(p.join(baseDir.path, cleanPath));
-    if (!await targetDir.exists()) {
-      await targetDir.create(recursive: true);
-    }
-    return targetDir;
+    return false;
   }
 
-  Future<void> _saveWithDetails({
+  Future<void> _saveToPath({
     required String imageName,
-    required String folderLocation,
+    required String folderPath,
   }) async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      final path = await _getLocalImagePath();
-      if (path != null) {
-        final File sourceFile = File(path);
-        final bytes = await sourceFile.readAsBytes();
-        final Directory targetDir = await _resolveDirectory(folderLocation);
-        String finalName = imageName.trim();
-        if (finalName.isEmpty) {
-          finalName = 'century_design_${DateTime.now().millisecondsSinceEpoch}';
-        }
-        if (!finalName.toLowerCase().endsWith('.jpg') && 
-            !finalName.toLowerCase().endsWith('.jpeg') && 
-            !finalName.toLowerCase().endsWith('.png')) {
-          finalName = '$finalName.jpg';
-        }
-        final String targetFilePath = p.join(targetDir.path, finalName);
-        final File targetFile = File(targetFilePath);
-        await targetFile.writeAsBytes(bytes, flush: true);
-        
+      // 1. Ensure we have permission to write outside the app sandbox
+      final hasPermission = await _ensureStoragePermission();
+      if (!hasPermission) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Image saved successfully to: $targetFilePath'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 4),
+            const SnackBar(
+              content: Text('Storage permission denied — cannot save file'),
+              backgroundColor: Colors.red,
             ),
           );
         }
-      } else {
+        return;
+      }
+
+      final String? sourcePath = await _getLocalImagePath();
+      if (sourcePath == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to prepare image for saving')),
+            const SnackBar(content: Text('Could not locate the image')),
           );
         }
+        return;
+      }
+
+      // Build final file name
+      String name = imageName.trim();
+      if (name.isEmpty) {
+        name = 'century_design_${DateTime.now().millisecondsSinceEpoch}';
+      }
+      if (!name.toLowerCase().endsWith('.jpg') &&
+          !name.toLowerCase().endsWith('.jpeg') &&
+          !name.toLowerCase().endsWith('.png')) {
+        name = '$name.jpg';
+      }
+
+      // Create the target directory if it doesn't exist
+      final dir = Directory(folderPath);
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+
+      // Write the file directly
+      final bytes = await File(sourcePath).readAsBytes();
+      final targetFile = File(p.join(folderPath, name));
+      await targetFile.writeAsBytes(bytes, flush: true);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Image Saved'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Save error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving image: $e')),
+          SnackBar(content: Text('Error saving: $e')),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-      }
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -220,228 +233,300 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     final TextEditingController nameController = TextEditingController(
       text: 'century_design_${DateTime.now().millisecondsSinceEpoch}',
     );
-    String locationText = 'Device Storage/Decor Studio/';
+    // Reset to default every time dialog opens
+    String folderDisplayName = 'Century Decor Studio';
+    String folderPath = _defaultFolder;
 
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (ctx, setDialogState) {
             return Dialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(5),
               ),
               clipBehavior: Clip.antiAlias,
               elevation: 12,
               backgroundColor: Colors.white,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 340),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 26.0,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ── Header ──────────────────────────────────────────
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Choose where to Save',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(dialogContext),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.close,
-                                size: 16,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ),
-                        ],
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.maxFinite,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 26.0,
                       ),
-                      const SizedBox(height: 20),
-
-                      // ── File Name Row ─────────────────────────────────────
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: Colors.grey.shade200,
-                              width: 1,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Title
+                          const Padding(
+                            padding: EdgeInsets.only(right: 28),
+                            child: Center(
+                              child: Text(
+                                'Choose where to Save',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.insert_drive_file_outlined,
-                              size: 20,
-                              color: Colors.black87,
+                          const SizedBox(height: 20),
+
+                          // ── File name row (TOP) ────────────────────────────
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextField(
-                                controller: nameController,
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w500,
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.insert_drive_file_outlined,
+                                  size: 20,
                                   color: Colors.black87,
                                 ),
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  focusedErrorBorder: InputBorder.none,
-                                  disabledBorder: InputBorder.none,
-                                  hintText: 'File name',
-                                  contentPadding: EdgeInsets.zero,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextField(
+                                    controller: nameController,
+                                    style: const TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w500,
+                                      // color: Colors.black87,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      errorBorder: InputBorder.none,
+                                      focusedErrorBorder: InputBorder.none,
+                                      disabledBorder: InputBorder.none,
+                                      hintText: 'File name',
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // ── Folder picker row (BOTTOM) ─────────────────────
+                          GestureDetector(
+                            onTap: () async {
+                              final String? picked =
+                                  await FilePicker.platform.getDirectoryPath(
+                                dialogTitle: 'Select Save Folder',
+                              );
+                              if (picked != null && picked.isNotEmpty) {
+                                String resolvedPath = picked;
+                                String displayName;
+
+                                if (picked.startsWith('content://')) {
+                                  // Decode content URI to a real path:
+                                  // e.g. content://...primary%3APictures → /storage/emulated/0/Pictures
+                                  try {
+                                    final decoded = Uri.decodeComponent(picked);
+                                    final colon = decoded.lastIndexOf(':');
+                                    final slash = decoded.lastIndexOf('/');
+                                    final cut = colon > slash ? colon : slash;
+                                    if (cut >= 0 && cut < decoded.length - 1) {
+                                      final sub = decoded.substring(cut + 1);
+                                      resolvedPath = '/storage/emulated/0/$sub';
+                                      displayName = sub.split('/').last;
+                                    } else {
+                                      displayName = picked;
+                                    }
+                                  } catch (_) {
+                                    displayName = picked;
+                                  }
+                                } else {
+                                  displayName = picked.split('/').last;
+                                  if (displayName.isEmpty) displayName = picked;
+                                }
+
+                                setDialogState(() {
+                                  folderPath = resolvedPath;
+                                  folderDisplayName = displayName;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade200,
+                                    width: 1,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // ── Save Location Row ──────────────────────────────────
-                      GestureDetector(
-                        onTap: () async {
-                          final String? selectedDirectory =
-                              await FilePicker.platform.getDirectoryPath(
-                            dialogTitle: 'Select Save Folder',
-                          );
-                          if (selectedDirectory != null) {
-                            setDialogState(() {
-                              locationText = selectedDirectory;
-                            });
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.grey.shade200,
-                                width: 1,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.folder_rounded,
+                                    size: 20,
+                                    color: Colors.black87,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      folderDisplayName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    size: 18,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          child: Row(
+
+                          const SizedBox(height: 28),
+
+                          // ── Actions ────────────────────────────────────────
+                          Row(
                             children: [
-                              Icon(
-                                Icons.folder_rounded,
-                                size: 20,
-                                color: Colors.black87,
+                              Expanded(
+                                child: TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(dialogContext),
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text(
-                                  locationText,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black87,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    final String name =
+                                        nameController.text.trim();
+                                    final String savePath = folderPath;
+                                    Navigator.pop(dialogContext);
+                                    _saveToPath(
+                                      imageName: name,
+                                      folderPath: savePath,
+                                    );
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(
+                                        color: Colors.grey.shade100,
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.25),
+                                          blurRadius: 3,
+                                          spreadRadius: 1,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                          'assets/icons/app_icons/save.png',
+                                          width: 18,
+                                          height: 18,
+                                          color: Colors.black,
+                                          errorBuilder: (c, e, s) =>
+                                              const Icon(
+                                            Icons.download_rounded,
+                                            size: 18,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Download',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      // ── Actions ───────────────────────────────────────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed: () => Navigator.pop(dialogContext),
-                              style: TextButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text(
-                                'Cancel',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                final String name =
-                                    nameController.text.trim();
-                                Navigator.pop(dialogContext);
-                                _saveWithDetails(
-                                  imageName: name,
-                                  folderLocation: locationText,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey.shade100,
-                                foregroundColor: Colors.black87,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.download_rounded,
-                                size: 18,
-                              ),
-                              label: const Text(
-                                'Download',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+
+                    // ── Close button — top-right ───────────────────────────
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(dialogContext),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -450,8 +535,6 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       },
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {

@@ -246,6 +246,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     required String imgPath,
     Map<String, dynamic>? laminate,
     String? customSessionId,
+    String? parentEditId,
   }) async {
     if (state.furnitureId == null) return;
 
@@ -279,11 +280,12 @@ class ImageEditCubit extends Cubit<ImageEditState> {
             : null,
         laminateName: laminate?['name']?.toString(),
         laminateSku: laminate?['sku']?.toString(),
+        parentEditId: parentEditId,
       );
 
       await EditHistoryRepository.saveEdit(editData);
       debugPrint(
-        '✅ Edit saved to SQLite with laminates count: ${sessionLaminates.length}',
+        '✅ Edit saved to SQLite | laminates: ${sessionLaminates.length} | parentEditId: $parentEditId',
       );
     } catch (e) {
       debugPrint('❌ Error saving to SQLite: $e');

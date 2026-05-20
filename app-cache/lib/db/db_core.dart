@@ -56,9 +56,22 @@ class DbCore {
 
       _database = await openDatabase(
         path,
-        version: 1,
+        version: 2,
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 2) {
+            try {
+              await db.execute(
+                'ALTER TABLE edit_history ADD COLUMN parent_edit_id TEXT',
+              );
+              print('✅ [DbCore] Migration v2: Added parent_edit_id column');
+            } catch (e) {
+              // Column may already exist if DB was freshly created with the new schema
+              print('⚠️ [DbCore] Migration v2 note: $e');
+            }
+          }
+        },
         onOpen: (db) {
-          print("🔓 [DbCore] Database connection opened");
+          print('🔓 [DbCore] Database connection opened');
         },
       );
 

@@ -82,6 +82,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
   final UserEditsService _userEditsService = UserEditsService();
   final String _ownerEmail = "anisasru2@gmail.com";
   List<EditRecord> _userEdits = [];
+  /// ID of the edit_history row that the current session is built upon.
+  /// Null for the first edit on an original image.
+  String? _parentEditId;
   bool _isLoadingEdits = false;
 
   // Dummy versions fallback if no network edits yet
@@ -1054,11 +1057,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
               'usedLaminates': <Map<String, dynamic>>[],
             },
           );
+          // Original image has no laminates — nothing to fetch
         },
         onEdit: () {
           setState(() {
             _sessionId = const Uuid().v4(); // START NEW SESSION
             _baseImage = widget.imageFile.path; // RESET TO ORIGINAL
+            _parentEditId = null; // editing from original — no parent
             _currentAssetPreview = null;
             _selectedIndicesNotifier.value =
                 []; // CLEAR SELECTIONS FOR NEW SESSION
@@ -1097,46 +1102,35 @@ class _ImageEditPageState extends State<ImageEditPage> {
           isNetwork: imgPath.startsWith('http'),
           onRemove: () => _toggleSelection(index),
           onSelect: () async {
-            final cubit = context.read<ImageEditCubit>();
-            final List<Map<String, dynamic>> usedLaminates = [];
-
-            // 1. Extract session laminates precisely for this specific imgPath
-            // Check in current session generatedHistory first
-            for (var item in cubit.state.generatedHistory) {
-              if (item['laminate'] != null) {
-                final lam = item['laminate'] as Map<String, dynamic>;
-                if (!usedLaminates.any(
-                  (element) => element['id'] == lam['id'],
-                )) {
-                  usedLaminates.add(lam);
-                }
-              }
-              if (item['generated'] == imgPath) {
-                break;
-              }
+            final record = _userEdits[index];
+            // Walk the full parent chain in SQLite for cumulative laminates
+            List<Map<String, dynamic>> usedLaminates = [];
+            try {
+              usedLaminates = await EditHistoryRepository.getCumulativeLaminates(
+                record.id,
+              );
+            } catch (e) {
+              debugPrint('getCumulativeLaminates error: $e');
             }
 
-            // 2. If not found in current session history (meaning it's from a past session loaded from local DB/server)
+            // Fallback: current session history → record list → selected texture
             if (usedLaminates.isEmpty) {
-              final record = _userEdits.firstWhere(
-                (e) => e.editedImageUrl == imgPath,
-                orElse: () => _userEdits[index],
-              );
-              usedLaminates.addAll(record.usedLaminatesList);
-            }
-
-            // 3. Fallback to current selected pattern/laminate if list is still empty
-            final historyItem = cubit.state.generatedHistory.firstWhere(
-              (h) => h['generated'] == imgPath,
-              orElse: () => {},
-            );
-            if (usedLaminates.isEmpty && historyItem['laminate'] != null) {
-              usedLaminates.add(
-                historyItem['laminate'] as Map<String, dynamic>,
-              );
-            }
-            if (usedLaminates.isEmpty && _selectedTexture != null) {
-              usedLaminates.add(_selectedTexture!);
+              final cubit = context.read<ImageEditCubit>();
+              for (var item in cubit.state.generatedHistory) {
+                if (item['laminate'] != null) {
+                  final lam = item['laminate'] as Map<String, dynamic>;
+                  if (!usedLaminates.any((e) => e['id'] == lam['id'])) {
+                    usedLaminates.add(lam);
+                  }
+                }
+                if (item['generated'] == imgPath) break;
+              }
+              if (usedLaminates.isEmpty) {
+                usedLaminates.addAll(record.usedLaminatesList);
+              }
+              if (usedLaminates.isEmpty && _selectedTexture != null) {
+                usedLaminates.add(_selectedTexture!);
+              }
             }
 
             if (context.mounted) {
@@ -1147,9 +1141,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
             }
           },
           onEdit: () {
+            final editRecord = _userEdits[index];
             setState(() {
               _sessionId = const Uuid().v4(); // START NEW SESSION
               _baseImage = imgPath; // UPDATE BASE IMAGE
+              _parentEditId = editRecord.id; // track ancestry chain
               _currentAssetPreview =
                   null; // Clear overlay since it's now the base
               _selectedIndicesNotifier.value =
@@ -1297,6 +1293,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             bottom: 8,
             isGrid: true,
             showRemove: !isOriginal,
+            showSelect: !isOriginal,
             onRemove: onRemove,
             onSelect: onSelect,
             onEdit: onEdit,
@@ -1310,6 +1307,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     required double bottom,
     required bool isGrid,
     bool showRemove = false,
+    bool showSelect = true,
     VoidCallback? onRemove,
     VoidCallback? onEdit,
     VoidCallback? onSelect,
@@ -1336,13 +1334,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
             size: iconSize,
             padding: padding,
           ),
-          const SizedBox(width: 8),
-          _buildCircleButton(
-            icon: "tick.png",
-            onTap: onSelect ?? () {},
-            size: iconSize,
-            padding: padding,
-          ),
+          if (showSelect) ...[
+            const SizedBox(width: 8),
+            _buildCircleButton(
+              icon: "tick.png",
+              onTap: onSelect ?? () {},
+              size: iconSize,
+              padding: padding,
+            ),
+          ],
           if (showRemove) ...[
             const SizedBox(width: 8),
             _buildCircleButton(
@@ -2255,14 +2255,20 @@ class _ImageEditPageState extends State<ImageEditPage> {
       }
 
       // 2. SAVE TO LOCAL DATABASE WITH RESPONSE ID AS THE SESSION ID
+      // Generate the final record ID upfront so we can track it as the
+      // parent for any subsequent editing session.
+      final String newEditId = responseId ?? const Uuid().v4();
       if (widget.image_id != null) {
         try {
           final cubit = context.read<ImageEditCubit>();
           await cubit.saveToDatabase(
             imgPath: state.currentGeneratedImage!,
             laminate: state.selectedPattern,
-            customSessionId: responseId,
+            customSessionId: newEditId,
+            parentEditId: _parentEditId, // link to ancestor
           );
+          // This finalized edit now becomes the parent for the next session
+          _parentEditId = newEditId;
         } catch (e) {
           debugPrint("❌ Error saving local edit: $e");
         }
@@ -2301,8 +2307,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
     }
   }
 
-  void _navigateToFinalizePage() {
-    final List<Map<String, dynamic>> usedLaminates = [];
+  Future<void> _navigateToFinalizePage() async {
+    List<Map<String, dynamic>> usedLaminates = [];
     String finalImage = widget.imageFile.path;
 
     final selectedIndices = _selectedIndicesNotifier.value;
@@ -2311,13 +2317,29 @@ class _ImageEditPageState extends State<ImageEditPage> {
       if (selectedIndex >= 0 && selectedIndex < _userEdits.length) {
         final selectedRecord = _userEdits[selectedIndex];
         finalImage = selectedRecord.editedImageUrl;
-        usedLaminates.addAll(selectedRecord.usedLaminatesList);
+        // Walk the full parent chain for cumulative laminates
+        try {
+          usedLaminates = await EditHistoryRepository.getCumulativeLaminates(
+            selectedRecord.id,
+          );
+        } catch (e) {
+          debugPrint('getCumulativeLaminates error: $e');
+          usedLaminates = List.from(selectedRecord.usedLaminatesList);
+        }
       }
     } else if (_userEdits.isNotEmpty) {
       final latestRecord = _userEdits.first;
       finalImage = latestRecord.editedImageUrl;
-      usedLaminates.addAll(latestRecord.usedLaminatesList);
+      try {
+        usedLaminates = await EditHistoryRepository.getCumulativeLaminates(
+          latestRecord.id,
+        );
+      } catch (e) {
+        debugPrint('getCumulativeLaminates error: $e');
+        usedLaminates = List.from(latestRecord.usedLaminatesList);
+      }
     } else {
+      // Fallback: pull from in-memory cubit history (no DB record yet)
       final state = context.read<ImageEditCubit>().state;
       final cubit = context.read<ImageEditCubit>();
       for (var item in cubit.state.generatedHistory) {
@@ -2327,9 +2349,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             usedLaminates.add(lam);
           }
         }
-        if (item['generated'] == state.currentGeneratedImage) {
-          break;
-        }
+        if (item['generated'] == state.currentGeneratedImage) break;
       }
       if (usedLaminates.isEmpty && _selectedTexture != null) {
         usedLaminates.add(_selectedTexture!);
@@ -2337,13 +2357,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
       finalImage = state.currentGeneratedImage ?? widget.imageFile.path;
     }
 
-    context.push(
-      AppRoutes.imageFinalize,
-      extra: {
-        'editedImage': finalImage,
-        'usedLaminates': usedLaminates,
-      },
-    );
+    if (mounted) {
+      context.push(
+        AppRoutes.imageFinalize,
+        extra: {
+          'editedImage': finalImage,
+          'usedLaminates': usedLaminates,
+        },
+      );
+    }
   }
 
   bool get _isApplied => _hasAppliedOnce;
