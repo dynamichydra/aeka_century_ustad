@@ -225,16 +225,7 @@ class _CompareImagePageState extends State<CompareImagePage> {
                                     ),
                                   ),
 
-                                  // Optional Heart/Favorite Icon
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: Icon(
-                                      Icons.favorite_border,
-                                      size: 18,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
+
                                 ],
                               ),
                             );

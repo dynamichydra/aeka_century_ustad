@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:ui' as ui;
+import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/db/db_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -237,7 +238,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     setState(() => _isLoadingEdits = true);
     try {
       // 1. Fetch from Network
-      final allEdits = await _userEditsService.getEdits(_ownerEmail);
+      final allEdits = await _userEditsService.getEdits(_ownerEmail, furnitureId: widget.image_id);
       final filteredNetwork = allEdits
           .where((e) => e.furnitureId == widget.image_id)
           .toList();
@@ -628,68 +629,106 @@ class _ImageEditPageState extends State<ImageEditPage> {
         drawer: const HomeDrawer(),
         backgroundColor: const Color(0xFFF8F8F8),
         body: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              // Top Image Preview Area (Fixed Height)
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.40,
-                child: ValueListenableBuilder<List<int>>(
-                  valueListenable: _selectedIndicesNotifier,
-                  builder: (context, selectedIndices, child) {
-                    return BlocBuilder<ImageEditCubit, ImageEditState>(
-                      builder: (context, state) {
-                        if (state.isApplyLoading || _isPrecaching) {
-                          return _buildGeneratingBlock();
-                        }
-                        return _compareExpanded
-                            ? _buildTopComparisonSection(selectedIndices)
-                            : RepaintBoundary(
-                                child: _buildImageOverlaySection(),
-                              );
+              Column(
+                children: [
+                  // Top Image Preview Area (Fixed Height)
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.40,
+                    child: ValueListenableBuilder<List<int>>(
+                      valueListenable: _selectedIndicesNotifier,
+                      builder: (context, selectedIndices, child) {
+                        return BlocBuilder<ImageEditCubit, ImageEditState>(
+                          builder: (context, state) {
+                            if (state.isApplyLoading || _isPrecaching) {
+                              return _buildGeneratingBlock();
+                            }
+                            return _compareExpanded
+                                ? _buildTopComparisonSection(selectedIndices)
+                                : RepaintBoundary(
+                                    child: _buildImageOverlaySection(),
+                                  );
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
+                    ),
+                  ),
+
+                  // Collapsible Headers & Content (Accordion Style)
+                  Expanded(
+                    child: Container(
+                      color: Colors.white,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 0),
+                              child: _buildCollapsibleHeaders(),
+                            ),
+                          ),
+                          // Fixed Bottom Bar Area (Edit Mode)
+                          if (_editExpanded)
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: _buildBottomBarFixed(),
+                            ),
+                          // Fixed Bottom Bar Area (Compare Mode)
+                          if (_compareExpanded)
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: _buildBottomBarFixed2(),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
-              // Collapsible Headers & Content (Accordion Style)
-              Expanded(
-                child: Container(
-                  color: Colors.white,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 0),
-                          child: _buildCollapsibleHeaders(),
-                        ),
+              // ── Full-screen upload overlay ─────────────────────────────
+              if (_isUploading)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.45),
+                    child: const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 52,
+                            height: 52,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3.5,
+                              color: TColors.primary,
+                            ),
+                          ),
+                          SizedBox(height: 18),
+                          // Text(
+                          //   'Applying design…',
+                          //   style: TextStyle(
+                          //     color: Colors.white,
+                          //     fontSize: 14,
+                          //     fontWeight: FontWeight.w600,
+                          //     decoration: TextDecoration.none,
+                          //   ),
+                          // ),
+                        ],
                       ),
-                      // Fixed Bottom Bar Area (Edit Mode)
-                      if (_editExpanded)
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: _buildBottomBarFixed(),
-                        ),
-                      // Fixed Bottom Bar Area (Compare Mode)
-                      if (_compareExpanded)
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: _buildBottomBarFixed2(),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildCollapsibleHeaders() {
     return Column(
@@ -1997,6 +2036,40 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         Container(color: Colors.grey[300]),
                   )
                 : Container(color: Colors.grey[300]),
+          ),
+          Positioned(
+            top: 6,
+            right: 6,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                _showTextureDetailPopup(
+                  context,
+                  Map<String, dynamic>.from(texture as Map),
+                );
+              },
+              child: ClipOval(
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.25),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.visibility_outlined,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

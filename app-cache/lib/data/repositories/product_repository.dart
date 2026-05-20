@@ -32,7 +32,15 @@ class ProductRepository {
       itemId: json['itemId']?.toString(),
       name: json['product'] ?? json['furnitureCategory'] ?? 'Unknown',
       image: json['imageUrl'] ?? '',
-      isTrending: false,
+      isTrending: json['isTrending'] == true ||
+          json['isTrending']?.toString().toLowerCase() == 'true' ||
+          json['isTrending'] == 1 ||
+          json['is_trending'] == true ||
+          json['is_trending']?.toString().toLowerCase() == 'true' ||
+          json['is_trending'] == 1 ||
+          json['trending'] == true ||
+          json['trending']?.toString().toLowerCase() == 'true' ||
+          json['trending'] == 1,
       isNetwork: true,
       category: json['furnitureCategory'],
       subcategory: (json['subCategory'] as List?)?.join(', '),
@@ -184,8 +192,10 @@ class ProductRepository {
         limit: limit,
         offset: offset,
       );
-      final products =
-          data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
+      final products = data.map((item) {
+        final model = _mapToModel(item.cast<String, dynamic>());
+        return model.copyWith(isTrending: true);
+      }).toList();
       debugPrint(
         '📦 REPO_LOG: Fetched ${products.length} trending products for owner: $ownerId (Offset: $offset, Limit: $limit)',
       );

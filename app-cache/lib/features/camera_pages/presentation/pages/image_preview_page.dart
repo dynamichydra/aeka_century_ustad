@@ -86,7 +86,11 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     if (!mounted) return;
     final id = _currentSelection?.id ?? widget.image_id;
     if (id == null || id.trim().isEmpty) return;
-    context.read<ProductsCubit>().fetchSimilarProducts(id, limit: 12);
+    context.read<ProductsCubit>().fetchSimilarProducts(
+          id,
+          ownerId: "anisasru2@gmail.com",
+          limit: 12,
+        );
   }
 
   Future<void> _hydrateCurrentSelectionFromDb() async {
@@ -301,40 +305,40 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                     children: [
                       AspectRatio(aspectRatio: 1, child: _buildPreviewImage()),
                       if (!_isLoading && !_isImageLoading) ...[
-                        Positioned(
-                          bottom: 40,
-                          left: 0,
-                          right: 0,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.touch_app_outlined,
-                                color: Colors.white,
-                                size: 40,
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'Tap on the object to apply laminates',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        // Positioned(
+                        //   bottom: 40,
+                        //   left: 0,
+                        //   right: 0,
+                        //   child: Column(
+                        //     mainAxisSize: MainAxisSize.min,
+                        //     children: [
+                        //       const Icon(
+                        //         Icons.touch_app_outlined,
+                        //         color: Colors.white,
+                        //         size: 40,
+                        //       ),
+                        //       const SizedBox(height: 8),
+                        //       Container(
+                        //         padding: const EdgeInsets.symmetric(
+                        //           horizontal: 12,
+                        //           vertical: 4,
+                        //         ),
+                        //         decoration: BoxDecoration(
+                        //           color: Colors.black.withOpacity(0.3),
+                        //           borderRadius: BorderRadius.circular(4),
+                        //         ),
+                        //         child: const Text(
+                        //           'Tap on the object to apply laminates',
+                        //           style: TextStyle(
+                        //             color: Colors.white,
+                        //             fontSize: 14,
+                        //             fontWeight: FontWeight.w400,
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
                       ],
                     ],
                   ),
@@ -448,15 +452,16 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                                           size: 16,
                                         ),
                                       ),
-                                    const Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: Icon(
-                                        Icons.favorite_border,
-                                        color: Colors.white70,
-                                        size: 16,
+                                    if (product.isFavorite)
+                                      const Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: Icon(
+                                          Icons.favorite,
+                                          color: Colors.red,
+                                          size: 16,
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               );

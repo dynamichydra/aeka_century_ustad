@@ -1,12 +1,13 @@
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'dart:io';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:gal/gal.dart';
 import 'package:file_picker/file_picker.dart';
 
 class ImageFinalizePage extends StatefulWidget {
@@ -25,6 +26,7 @@ class ImageFinalizePage extends StatefulWidget {
 
 class _ImageFinalizePageState extends State<ImageFinalizePage> {
   bool _isProcessing = false;
+  final GlobalKey _shareKey = GlobalKey();
 
   Future<String?> _getLocalImagePath() async {
     final image = widget.editedImage;
@@ -61,92 +63,137 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     setState(() => _isProcessing = true);
     
     try {
-      final path = await _getLocalImagePath();
-      if (path != null) {
-        final RenderBox? box = context.findRenderObject() as RenderBox?;
-        final Rect? rect = box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
-
-        await Share.shareXFiles(
-          [XFile(path)],
-          text: 'Check out my design from Century Decor Studio!',
-          sharePositionOrigin: rect,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to prepare image for sharing')),
-        );
-      }
-    } finally {
-      setState(() => _isProcessing = false);
-    }
-  }
-
-  Future<void> _saveToGallery() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-    
-    try {
-      // Check and request permission if needed
-      final hasAccess = await Gal.hasAccess();
-      if (!hasAccess) {
-        final granted = await Gal.requestAccess();
-        if (!granted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Storage permission is required to save images.')),
+      final RenderRepaintBoundary? boundary = 
+          _shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      
+      if (boundary != null) {
+        // Capture screenshot of the whole page inside RepaintBoundary
+        final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+        final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        
+        if (byteData != null) {
+          final Uint8List pngBytes = byteData.buffer.asUint8List();
+          final tempDir = await getTemporaryDirectory();
+          final sharePath = p.join(
+            tempDir.path,
+            'century_decor_studio_design_${DateTime.now().millisecondsSinceEpoch}.png',
           );
-          return;
+          
+          final File shareFile = File(sharePath);
+          await shareFile.writeAsBytes(pngBytes, flush: true);
+          
+          final RenderBox? box = context.findRenderObject() as RenderBox?;
+          final Rect? rect = box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
+ 
+          await Share.shareXFiles(
+            [XFile(sharePath)],
+            text: 'Check out my design from Century Decor Studio!',
+            sharePositionOrigin: rect,
+          );
+        } else {
+          throw Exception("Failed to convert captured page to bytes");
         }
-      }
-
-      final path = await _getLocalImagePath();
-      if (path != null) {
-        await Gal.putImage(path, album: 'Century Deco Studio');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image saved to gallery in "Century Deco Studio" album!')),
-        );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to prepare image for saving')),
-        );
+        throw Exception("Failed to locate page render object");
       }
     } catch (e) {
-      debugPrint('Save error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving image to gallery: $e')),
-      );
+      debugPrint("Error capturing page, falling back to raw image: $e");
+      // Fallback: Share only the edited image if the repaint boundary screenshot fails
+      try {
+        final path = await _getLocalImagePath();
+        if (path != null) {
+          final RenderBox? box = context.findRenderObject() as RenderBox?;
+          final Rect? rect = box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
+ 
+          await Share.shareXFiles(
+            [XFile(path)],
+            text: 'Check out my design from Century Decor Studio!',
+            sharePositionOrigin: rect,
+          );
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to prepare image for sharing')),
+            );
+          }
+        }
+      } catch (fallbackError) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error sharing design: $fallbackError')),
+          );
+        }
+      }
     } finally {
-      setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 
-  Future<void> _saveToFiles(BuildContext context) async {
+
+  Future<Directory> _resolveDirectory(String folderLocation) async {
+    String cleanPath = folderLocation.trim();
+    if (cleanPath.startsWith("Device Storage/")) {
+      final subPath = cleanPath.substring("Device Storage/".length);
+      final baseDir = await getApplicationDocumentsDirectory();
+      final targetDir = Directory(p.join(baseDir.path, subPath));
+      if (!await targetDir.exists()) {
+        await targetDir.create(recursive: true);
+      }
+      return targetDir;
+    }
+    if (cleanPath == "Device Storage") {
+      return await getApplicationDocumentsDirectory();
+    }
+    if (cleanPath.startsWith('/') || cleanPath.contains(':\\') || cleanPath.contains('storage/emulated')) {
+      final targetDir = Directory(cleanPath);
+      if (!await targetDir.exists()) {
+        await targetDir.create(recursive: true);
+      }
+      return targetDir;
+    }
+    final baseDir = await getApplicationDocumentsDirectory();
+    final targetDir = Directory(p.join(baseDir.path, cleanPath));
+    if (!await targetDir.exists()) {
+      await targetDir.create(recursive: true);
+    }
+    return targetDir;
+  }
+
+  Future<void> _saveWithDetails({
+    required String imageName,
+    required String folderLocation,
+  }) async {
     if (_isProcessing) return;
-    
+    setState(() => _isProcessing = true);
     try {
       final path = await _getLocalImagePath();
       if (path != null) {
-        setState(() => _isProcessing = true);
-        
         final File sourceFile = File(path);
         final bytes = await sourceFile.readAsBytes();
-        final String newFileName = 'century_decor_studio_design_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final Directory targetDir = await _resolveDirectory(folderLocation);
+        String finalName = imageName.trim();
+        if (finalName.isEmpty) {
+          finalName = 'century_design_${DateTime.now().millisecondsSinceEpoch}';
+        }
+        if (!finalName.toLowerCase().endsWith('.jpg') && 
+            !finalName.toLowerCase().endsWith('.jpeg') && 
+            !finalName.toLowerCase().endsWith('.png')) {
+          finalName = '$finalName.jpg';
+        }
+        final String targetFilePath = p.join(targetDir.path, finalName);
+        final File targetFile = File(targetFilePath);
+        await targetFile.writeAsBytes(bytes, flush: true);
         
-        // Open native save file dialogue
-        final String? savedFilePath = await FilePicker.platform.saveFile(
-          dialogTitle: 'Save Design',
-          fileName: newFileName,
-          bytes: bytes,
-        );
-        
-        if (savedFilePath != null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Image saved successfully!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Image saved successfully to: $targetFilePath'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 4),
+            ),
+          );
         }
       } else {
         if (mounted) {
@@ -156,10 +203,10 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
         }
       }
     } catch (e) {
-      debugPrint('Save to files error: $e');
+      debugPrint('Save error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving image to files: $e')),
+          SnackBar(content: Text('Error saving image: $e')),
         );
       }
     } finally {
@@ -169,142 +216,242 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     }
   }
 
-  void _showSaveOptionsBottomSheet(BuildContext context) {
-    showModalBottomSheet(
+  void _showSaveDialog(BuildContext context) {
+    final TextEditingController nameController = TextEditingController(
+      text: 'century_design_${DateTime.now().millisecondsSinceEpoch}',
+    );
+    String locationText = 'Device Storage/Decor Studio/';
+
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext sheetContext) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
-            ),
-          ),
-          padding: const EdgeInsets.only(left: 24, right: 24, top: 16, bottom: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Pull Bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              clipBehavior: Clip.antiAlias,
+              elevation: 12,
+              backgroundColor: Colors.white,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 340),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 26.0,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // ── Header ──────────────────────────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Choose where to Save',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(dialogContext),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── File Name Row ─────────────────────────────────────
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey.shade200,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.insert_drive_file_outlined,
+                              size: 20,
+                              color: Colors.black87,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: nameController,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
+                                ),
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  hintText: 'File name',
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // ── Save Location Row ──────────────────────────────────
+                      GestureDetector(
+                        onTap: () async {
+                          final String? selectedDirectory =
+                              await FilePicker.platform.getDirectoryPath(
+                            dialogTitle: 'Select Save Folder',
+                          );
+                          if (selectedDirectory != null) {
+                            setDialogState(() {
+                              locationText = selectedDirectory;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.grey.shade200,
+                                width: 1,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.folder_rounded,
+                                size: 20,
+                                color: Colors.black87,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  locationText,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // ── Actions ───────────────────────────────────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              style: TextButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                final String name =
+                                    nameController.text.trim();
+                                Navigator.pop(dialogContext);
+                                _saveWithDetails(
+                                  imageName: name,
+                                  folderLocation: locationText,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey.shade100,
+                                foregroundColor: Colors.black87,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.download_rounded,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Download',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
-                "Save Options",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Choose where you want to save your design.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 24),
-              _buildSaveOptionCard(
-                icon: Icons.photo_library_outlined,
-                title: "Save to Photo Gallery",
-                description: "Instantly add the image to your system's Photos app.",
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _saveToGallery();
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildSaveOptionCard(
-                icon: Icons.folder_open_outlined,
-                title: "Save to Device Files",
-                description: "Save to Downloads, local folders, or cloud storage.",
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _saveToFiles(context);
-                },
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildSaveOptionCard({
-    required IconData icon,
-    required String title,
-    required String description,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200, width: 1),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: Colors.red, size: 24),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right, color: Colors.grey.shade400),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -317,151 +464,157 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top Image
-                      _buildFinalImage(context),
-                      
-                      // Content Below Image
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Laminates used",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.normal,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            
-                            if (widget.usedLaminates.isNotEmpty)
-                              SizedBox(
-                                height: 105,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: widget.usedLaminates.length,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                                  itemBuilder: (context, index) {
-                                    final lam = widget.usedLaminates[index];
-                                    return _buildLaminateItem(lam);
-                                  },
+                  child: RepaintBoundary(
+                    key: _shareKey,
+                    child: Container(
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Top Image
+                          _buildFinalImage(context),
+                          
+                          // Content Below Image
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Laminates used",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.normal,
+                                    color: Color(0xFF5D5D5D),
+                                  ),
                                 ),
-                              )
-                            else
-                              const Text("No laminates applied", style: TextStyle(color: Colors.grey)),
+                                const SizedBox(height: 12),
+                                
+                                if (widget.usedLaminates.isNotEmpty)
+                                  SizedBox(
+                                    height: 105,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: widget.usedLaminates.length,
+                                      separatorBuilder: (context, index) => const SizedBox(width: 12),
+                                      itemBuilder: (context, index) {
+                                        final lam = widget.usedLaminates[index];
+                                        return _buildLaminateItem(lam);
+                                      },
+                                    ),
+                                  )
+                                else
+                                  const Text("No laminates applied", style: TextStyle(color: Colors.grey)),
 
-                            const SizedBox(height: 10),
-                            const Text(
-                              "Created by",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.normal,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            
-                            // User Card
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade200),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.14),
-                                    blurRadius: 3,
-                                    offset: const Offset(2, 2),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  "Created by",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.normal,
+                                    color: Color(0xFF5D5D5D),
                                   ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  // Left side: User Info
-                                  Expanded(
-                                    flex: 4,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const CircleAvatar(
-                                          radius: 28,
-                                          backgroundColor: Colors.grey,
-                                          backgroundImage: AssetImage(TImages.user), // placeholder
-                                        ),
-                                        const SizedBox(height: 8),
-                                        const Text(
-                                          "Rahul Ghosh",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 12.5,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        const Text(
-                                          "Contractor",
-                                          style: TextStyle(color: Colors.grey, fontSize: 10.5),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        const Text(
-                                          "User Id:1234",
-                                          style: TextStyle(color: Colors.grey, fontSize: 10.5),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  
-                                  // Divider
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-                                    child: Container(
-                                      height: 96,
-                                      width: 1.0,
-                                      color: Colors.red.shade400,
-                                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                                    ),
-                                  ),
-                                  
-                                  // Right side: Contact Info
-                                  Expanded(
-                                    flex: 6,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        _buildContactRow(Icons.phone, "+91 7654321908"),
-                                        const SizedBox(height: 15),
-                                        _buildContactRow(Icons.email, "rahulG@email.com"),
-                                        const SizedBox(height: 15),
-                                        _buildContactRow(Icons.location_on, "123 Street, Kolkata, West Bengal"),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 10),
-                            const Center(
-                              child: Text(
-                                "Century Decor Studio",
-                                style: TextStyle(
-                                  color: Color(0xFFFF383C),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
                                 ),
-                              ),
+                                const SizedBox(height: 12),
+                                
+                                // User Card
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Color(0xFFD9D9D9), width: 1),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.14),
+                                        blurRadius: 3,
+                                        offset: const Offset(3, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // Left side: User Info
+                                      Expanded(
+                                        flex: 4,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const CircleAvatar(
+                                              radius: 28,
+                                              backgroundColor: Colors.grey,
+                                              backgroundImage: AssetImage(TImages.user), // placeholder
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Text(
+                                              "Rahul Ghosh",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 12.5,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            const Text(
+                                              "Contractor",
+                                              style: TextStyle(color: Color(0xFF5D5D5D), fontSize: 10.5),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            const Text(
+                                              "User Id:1234",
+                                              style: TextStyle(color: Color(0xFF5D5D5D), fontSize: 10.5),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      
+                                      // Divider
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                                        child: Container(
+                                          height: 96,
+                                          width: 1.0,
+                                          color: Colors.red.shade400,
+                                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                                        ),
+                                      ),
+                                      
+                                      // Right side: Contact Info
+                                      Expanded(
+                                        flex: 6,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _buildContactRow(Icons.phone, "+91 7654321908"),
+                                            const SizedBox(height: 15),
+                                            _buildContactRow(Icons.email, "rahulG@email.com"),
+                                            const SizedBox(height: 15),
+                                            _buildContactRow(Icons.location_on, "123 Street, Kolkata, West Bengal"),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                
+                                const SizedBox(height: 10),
+                                const Center(
+                                  child: Text(
+                                    "Century Decor Studio",
+                                    style: TextStyle(
+                                      color: Color(0xFFFF383C),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -488,7 +641,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                         child: _buildActionButton(
                           iconPath: 'assets/icons/app_icons/save.png',
                           label: "Save",
-                          onTap: () => _showSaveOptionsBottomSheet(context),
+                          onTap: () => _showSaveDialog(context),
                         ),
                       ),
                     ],

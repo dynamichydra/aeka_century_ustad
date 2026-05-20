@@ -21,12 +21,16 @@ class UserEditsService {
     );
   }
 
-  /// Fetch all edits for a specific owner
-  Future<List<EditRecord>> getEdits(String email) async {
+  /// Fetch all edits for a specific owner, optionally filtered by furnitureId
+  Future<List<EditRecord>> getEdits(String email, {String? furnitureId}) async {
     try {
+      final queryParams = <String, dynamic>{'owner': email};
+      if (furnitureId != null) {
+        queryParams['furnitureId'] = furnitureId;
+      }
       final response = await _dio.get(
         '/me/edits',
-        queryParameters: {'owner': email},
+        queryParameters: queryParams,
       );
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;

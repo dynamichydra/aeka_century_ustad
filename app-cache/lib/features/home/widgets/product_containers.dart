@@ -52,10 +52,12 @@ class ProductContainers extends StatelessWidget {
                 Positioned(
                   top: 13,
                   left: 12,
-                  child: Image.asset(
-                    "assets/icons/app_icons/trending.png",
-                    width: 20,
-                    height: 20,
+                  child: IgnorePointer(
+                    child: Image.asset(
+                      "assets/icons/app_icons/trending.png",
+                      width: 20,
+                      height: 20,
+                    ),
                   ),
                 ),
   
