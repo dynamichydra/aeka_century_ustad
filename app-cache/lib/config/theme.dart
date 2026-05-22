@@ -7,7 +7,7 @@ class AppTheme {
       primarySwatch: Colors.blue,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       scaffoldBackgroundColor: Colors.white,
-      fontFamily: 'Roboto', // Assuming default, can be changed
+      fontFamily: 'Gilroy', // Assuming default, can be changed
       appBarTheme: const AppBarTheme(
         elevation: 0,
         backgroundColor: Colors.white,

@@ -9,7 +9,7 @@ class TChipTheme {
     selectedColor: TColors.dangerRed,
     disabledColor: TColors.lightGray.withOpacity(0.4),
     padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
-    labelStyle: const TextStyle(color: TColors.nearBlack, fontFamily: 'Urbanist'),
+    labelStyle: const TextStyle(color: TColors.nearBlack, fontFamily: 'Gilroy'),
   );
 
   static ChipThemeData darkChipTheme = const ChipThemeData(
@@ -17,6 +17,6 @@ class TChipTheme {
     selectedColor: TColors.dangerRed,
     disabledColor: TColors.darkGray,
     padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
-    labelStyle: TextStyle(color: TColors.pureWhite, fontFamily: 'Urbanist'),
+    labelStyle: TextStyle(color: TColors.pureWhite, fontFamily: 'Gilroy'),
   );
 }

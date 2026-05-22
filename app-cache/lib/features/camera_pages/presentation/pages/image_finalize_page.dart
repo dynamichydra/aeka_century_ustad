@@ -625,7 +625,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                           children: [
                                             const CircleAvatar(
                                               radius: 28,
-                                              backgroundColor: Colors.grey,
+                                              backgroundColor: Colors.transparent,
                                               backgroundImage: AssetImage(TImages.user), // placeholder
                                             ),
                                             const SizedBox(height: 8),

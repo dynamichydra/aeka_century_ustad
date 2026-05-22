@@ -13,7 +13,7 @@ class TAppBarTheme{
     surfaceTintColor: Colors.white,
     iconTheme: IconThemeData(color: TColors.coolGray, size: TSizes.iconMd),
     actionsIconTheme: IconThemeData(color: TColors.coolGray, size: TSizes.iconMd),
-    titleTextStyle: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600, color: TColors.nearBlack, fontFamily: 'Helvetica'),
+    titleTextStyle: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600, color: TColors.nearBlack, fontFamily: 'Gilroy'),
   );
   static const darkAppBarTheme = AppBarTheme(
     elevation: 0,
@@ -23,6 +23,6 @@ class TAppBarTheme{
     surfaceTintColor: TColors.pureBlack,
     iconTheme: IconThemeData(color: TColors.nearBlack, size: TSizes.iconMd),
     actionsIconTheme: IconThemeData(color: TColors.pureWhite, size: TSizes.iconMd),
-    titleTextStyle: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600, color: TColors.pureWhite, fontFamily: 'Helvetica'),
+    titleTextStyle: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600, color: TColors.pureWhite, fontFamily: 'Gilroy'),
   );
 }

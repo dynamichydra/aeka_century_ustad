@@ -15,7 +15,7 @@ class TAppTheme {
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Gilroy',
     disabledColor: TColors.lightGray,
     brightness: Brightness.light,
     primaryColor: TColors.primary,
@@ -42,7 +42,7 @@ class TAppTheme {
 
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Gilroy',
     disabledColor: TColors.lightGray,
     brightness: Brightness.dark,
     primaryColor: TColors.primary,

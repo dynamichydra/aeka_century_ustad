@@ -132,6 +132,9 @@ flutter:
 
   #--------------- LOCAL FONTS ------------------#
   fonts:
+    - family: Gilroy
+      fonts:
+        - asset: assets/fonts/gilroy-medium/Gilroy-Medium.ttf
     - family: Urbanist
       fonts:
         - asset: assets/fonts/urbanist/Urbanist-Light.ttf
