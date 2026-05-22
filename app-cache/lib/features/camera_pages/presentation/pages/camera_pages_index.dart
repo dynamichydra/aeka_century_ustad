@@ -3,16 +3,12 @@ import 'package:camera/camera.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:century_ai/core/constants/sizes.dart';
-import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/db/models/selected_image_data.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -32,6 +28,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   final double _bottomBarHeight = 140;
 
   bool _isImageTaken = false;
+  File? _capturedFile;
 
   @override
   void initState() {
@@ -66,6 +63,11 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     final XFile file = await _controller!.takePicture();
     final File imageFile = File(file.path);
 
+    setState(() {
+      _isImageTaken = true;
+      _capturedFile = imageFile;
+    });
+
     if (!mounted) return;
 
     // Show loading dialog
@@ -85,6 +87,10 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
 
       if (newProduct == null) {
+        setState(() {
+          _isImageTaken = false;
+          _capturedFile = null;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to upload image to server.")),
         );
@@ -122,6 +128,10 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isImageTaken = false;
+          _capturedFile = null;
+        });
         Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error processing image: $e")),
@@ -215,8 +225,14 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // 📷 Camera Preview (full screen)
-          Positioned.fill(child: RepaintBoundary(child: CameraPreview(_controller!))),
+          // 📷 Camera Preview or Static Captured Image (full screen)
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: _isImageTaken && _capturedFile != null
+                  ? Image.file(_capturedFile!, fit: BoxFit.cover)
+                  : CameraPreview(_controller!),
+            ),
+          ),
 
           // 🟦 Capture Area Overlay (stays above camera)
           const _CaptureOverlay(),

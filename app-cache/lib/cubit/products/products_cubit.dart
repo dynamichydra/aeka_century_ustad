@@ -4,6 +4,7 @@ import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/data/repositories/product_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image/image.dart' as img;
 
 class ProductsCubit extends Cubit<ProductsState> {
   final ProductRepository _productRepository;
@@ -368,7 +369,8 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearSimilarImageId: true,
     ));
     try {
-      final products = await _productRepository.searchProductsByImage(file);
+      final normalizedFile = await _normalizeImageOrientation(file);
+      final products = await _productRepository.searchProductsByImage(normalizedFile);
       emit(state.copyWith(isLoading: false, products: products, hasMore: false));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
@@ -378,7 +380,8 @@ class ProductsCubit extends Cubit<ProductsState> {
   Future<ProductImageModel?> uploadProductImageNew(File file) async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
-      final newProduct = await _productRepository.uploadProductImage(file);
+      final normalizedFile = await _normalizeImageOrientation(file);
+      final newProduct = await _productRepository.uploadProductImage(normalizedFile);
       if (newProduct != null) {
         final updatedProducts = List<ProductImageModel>.from(state.products)..insert(0, newProduct);
         emit(state.copyWith(isLoading: false, products: updatedProducts));
@@ -463,4 +466,24 @@ class ProductsCubit extends Cubit<ProductsState> {
       emit(state.copyWith(isLoadingMore: false, errorMessage: e.toString(), hasMore: false));
     }
   }
+}
+
+/// Helper function to bake orientation in a separate isolate (background thread)
+Uint8List _performBakeOrientation(Uint8List bytes) {
+  final image = img.decodeImage(bytes);
+  if (image == null) return bytes;
+  final baked = img.bakeOrientation(image);
+  return img.encodeJpg(baked, quality: 90);
+}
+
+/// Normalizes the orientation of the image in-place
+Future<File> _normalizeImageOrientation(File file) async {
+  try {
+    final bytes = await file.readAsBytes();
+    final bakedBytes = await compute(_performBakeOrientation, bytes);
+    await file.writeAsBytes(bakedBytes);
+  } catch (e) {
+    debugPrint("Error normalizing image orientation: $e");
+  }
+  return file;
 }
