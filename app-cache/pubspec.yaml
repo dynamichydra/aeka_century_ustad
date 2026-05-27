@@ -95,10 +95,6 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/logos/
-    - assets/room_image.jpg
-    - assets/tryon-resposne.json
-    - assets/mask_1.png
-    - assets/warped_1.png
 
     - assets/transaparent/Bed_room/
     - assets/transaparent/Bed_room/Sub_categories/

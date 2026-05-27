@@ -2,15 +2,12 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:century_ai/core/constants/colors.dart';
-import 'package:century_ai/db/db_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/features/camera_pages/presentation/widgets/image_compare_slider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
-import 'package:century_ai/features/camera_pages/data/dummy_data.dart';
 import 'package:century_ai/core/network/apis/laminate_api.dart'; // Added API Import
 import 'package:century_ai/core/network/cache/laminate_cache_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -57,7 +54,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
   Map<String, dynamic>? _selectedColor;
   String? _selectedCategory;
   String? _selectedSubCategory;
-  List<Map<String, dynamic>> _lamCategories = [];
   Map<String, dynamic>? _selectedTexture;
   String? _currentAssetPreview; // Track the design selected from comparison
   String _sessionId = ""; // Unique ID for this editing session
@@ -506,80 +502,93 @@ class _ImageEditPageState extends State<ImageEditPage> {
     }
   }
 
+  static const Map<String, List<String>> _laminateCategoriesMap = {
+    "Abstract Patterns": [
+      "All",
+      "Glitters",
+      "Exclusives",
+      "Wallpaper",
+      "Noir Collection",
+      "Patterns",
+      "Textile",
+      "Cane",
+      "Fabric",
+      "High Gloss",
+      "Adaluxe",
+      "Urban Leather",
+      "Linen",
+      "Tessuto",
+      "Iyo Petal",
+      "Lusio",
+    ],
+    "Woodgrains": [
+      "All",
+      "Woodgrains",
+      "Synchro Series",
+      "Evoke Oak",
+      "Willow Wood",
+      "Exotic Woodgrains",
+      "Pinkora",
+      "Vava Oxford",
+      "Crasse",
+      "Natural Horizontal",
+      "Horizontal",
+      "White Woods",
+      "Acacia",
+      "Ash",
+      "Hickory, Elm & Chestnut",
+      "Maple",
+      "Pine",
+      "Beech & Anegre",
+      "Cherry & Pear",
+      "Sapeli, Mahogany & Rosewood",
+      "Teak",
+      "Walnut",
+      "Oak",
+      "Wenge",
+      "Dyed Wood",
+    ],
+    "Stones": [
+      "All",
+      "Stones",
+      "Archi Concrete",
+      "Slate",
+      "Kering Matne",
+      "Black",
+      "White",
+    ],
+    "Solid": [
+      "All",
+      "Yellow & Orange",
+      "Green",
+      "Grey",
+      "Voilet",
+      "Blue",
+      "Red",
+      "Pink",
+      "Brown & Beige",
+    ],
+  };
+
   List<String> categoriesRow1 = [""];
   List<String> categoriesRow2 = [""];
 
   Future<void> getLamCategory() async {
-    try {
-      final db = await DbCore.database;
-      final result = await db.query("lam_category");
-
-      if (result.isNotEmpty && mounted) {
-        setState(() {
-          _lamCategories = result;
-          categoriesRow1 = result.map((e) => e["name"].toString()).toList();
-          if (_selectedCategory == null && categoriesRow1.isNotEmpty) {
-            _selectedCategory = categoriesRow1.first;
-            _selectedSubCategory = "All";
-          }
-        });
-
-        if (_selectedCategory != null) {
-          await _fetchSubCategoriesFor(_selectedCategory!);
-          await _fetchTextures();
+    if (mounted) {
+      setState(() {
+        categoriesRow1 = _laminateCategoriesMap.keys.toList();
+        if (_selectedCategory == null && categoriesRow1.isNotEmpty) {
+          _selectedCategory = categoriesRow1.first;
+          _selectedSubCategory = "All";
         }
+        if (_selectedCategory != null) {
+          categoriesRow2 = _laminateCategoriesMap[_selectedCategory!] ?? [];
+        }
+      });
+
+      if (_selectedCategory != null) {
+        await _fetchTextures();
       }
-    } catch (e) {
-      debugPrint("Error fetching lam_category: $e");
-    }
-  }
-
-  Future<void> _fetchSubCategoriesFor(String categoryName) async {
-    // Find matching category map
-    final match = _lamCategories.firstWhere(
-      (e) => e["name"].toString() == categoryName,
-      orElse: () => {},
-    );
-
-    final catId = match["id"];
-
-    if (catId != null) {
-      await getLamSubCategory(catId);
-    } else {
-      await getLamSubCategory(); // Fallback incase id is completely missing
-    }
-  }
-
-  Future<void> getLamSubCategory([dynamic catId]) async {
-    try {
-      final db = await DbCore.database;
-      List<Map<String, dynamic>> result;
-
-      if (catId != null) {
-        result = await db.query(
-          "lam_sub_category",
-          where: "cat_id = ?",
-          whereArgs: [catId],
-        );
-      } else {
-        result = await db.query("lam_sub_category");
-      }
-
-      if (mounted) {
-        setState(() {
-          if (result.isNotEmpty) {
-            categoriesRow2 = [
-              "All",
-              ...result.map((e) => e["name"].toString()),
-            ];
-          } else {
-            categoriesRow2 = [];
-            _selectedSubCategory = null;
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint("Error fetching lam_sub_category: $e");
     }
   }
 
@@ -1818,24 +1827,24 @@ class _ImageEditPageState extends State<ImageEditPage> {
       children: [
         const SizedBox(height: 4),
         _buildChipRow(categoriesRow1, _selectedCategory, (val) {
-          setState(() {
-            if (_selectedCategory != val) {
+          if (_selectedCategory != val) {
+            setState(() {
               _selectedCategory = val;
               _selectedSubCategory = "All";
-              _fetchSubCategoriesFor(val);
-              _fetchTextures();
-            }
-          });
+              categoriesRow2 = _laminateCategoriesMap[val] ?? [];
+            });
+            _fetchTextures();
+          }
         }),
         if (_selectedCategory != null && categoriesRow2.isNotEmpty) ...[
           const SizedBox(height: 12),
           _buildSubCategoryMenu(categoriesRow2, _selectedSubCategory, (val) {
-            setState(() {
-              if (_selectedSubCategory != val) {
+            if (_selectedSubCategory != val) {
+              setState(() {
                 _selectedSubCategory = val;
-                _fetchTextures();
-              }
-            });
+              });
+              _fetchTextures();
+            }
           }),
         ],
       ],

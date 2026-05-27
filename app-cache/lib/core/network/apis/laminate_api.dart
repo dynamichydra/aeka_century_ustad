@@ -26,7 +26,7 @@ class LaminateService {
   /// Fetch By Hex Code
   Future<dynamic> fetchByHex({
     required List<String> hexCodes,
-    String itemType = "Exteria",
+    String itemType = "Laminates",
     int limit = 5,
   }) async {
 
@@ -34,8 +34,8 @@ class LaminateService {
       "/find-nearest-laminates",
       {
         "hexcode": hexCodes.join(","),
-        "itemType": "Exteria",
-        "limit_results": 10,
+        "itemType": itemType,
+        "limit_results": limit,
       },
     );
 
@@ -49,13 +49,18 @@ class LaminateService {
     String itemType = "Laminates",
   }) async {
 
+    final Map<String, dynamic> body = {
+      "category": category,
+      "itemType": itemType,
+    };
+
+    if (subcategory.isNotEmpty && subcategory != "All") {
+      body["subcategory"] = subcategory;
+    }
+
     var res = await api.post(
       "/findByCategory",
-      {
-        "category": category,
-        "subcategory": subcategory,
-        "itemType": itemType,
-      },
+      body,
     );
 
     return res;
