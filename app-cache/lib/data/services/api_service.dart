@@ -328,6 +328,51 @@ class ApiService {
     return response.data as List<int>;
   }
 
+  Future<Map<String, dynamic>> tryOnFurnitureV2({
+    required File roomImage,
+    required File patternImage,
+    required int x,
+    required int y,
+  }) async {
+    if (!await roomImage.exists()) {
+      throw Exception('Room image file does not exist at path: ${roomImage.path}');
+    }
+    if (!await patternImage.exists()) {
+      throw Exception('Pattern image file does not exist at path: ${patternImage.path}');
+    }
+
+    String roomFileName = roomImage.path.split('/').last;
+    String patternFileName = patternImage.path.split('/').last;
+
+    FormData formData = FormData.fromMap({
+      "room_image": await MultipartFile.fromFile(
+        roomImage.path,
+        filename: roomFileName,
+      ),
+      "pattern_image": await MultipartFile.fromFile(
+        patternImage.path,
+        filename: patternFileName,
+      ),
+      "x": x.toString(),
+      "y": y.toString(),
+    });
+
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.tryOnV2} | POST Try-On V2 (Room: $roomFileName, Pattern: $patternFileName, X: $x, Y: $y)');
+
+    final response = await _dio.post(
+      TApiConstants.tryOnV2,
+      data: formData,
+      options: Options(
+        responseType: ResponseType.json,
+        contentType: 'multipart/form-data',
+      ),
+    );
+
+    debugPrint('✅ API_LOG: Response Status: ${response.statusCode}');
+
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<List<dynamic>> getMyUploads({
     int limit = 20,
     int offset = 0,

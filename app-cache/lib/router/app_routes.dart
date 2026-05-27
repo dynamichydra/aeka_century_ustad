@@ -12,6 +12,7 @@ abstract final class AppRoutes {
   static const imageEditScroll = '/image_edit_scroll_page';
   static const imageColorPicker = '/image_color_picker';
   static const imageFinalize = '/image_finalize';
+  static const imageEdit2 = '/image_edit_page_2';
 
   static const compare = '/compare';
 }

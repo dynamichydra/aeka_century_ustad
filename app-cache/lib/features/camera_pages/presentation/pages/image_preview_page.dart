@@ -250,6 +250,8 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     await _handleEditRoute(AppRoutes.imageEditScroll);
   }
 
+
+
   Future<void> _handleEditRoute(String route) async {
     File? fileToEdit = _currentFile;
 
@@ -495,11 +497,8 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 130,
+                  child:  SizedBox(
+                        width: 120,
                         height: 44,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -533,8 +532,6 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                           ),
                         ),
                       ),
-                    ],
-                  ),
                 ),
               ),
             ),

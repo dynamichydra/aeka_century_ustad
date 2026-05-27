@@ -11,6 +11,8 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
 import 'package:century_ai/db/models/edit_history_data.dart';
+import 'dart:typed_data';
+import 'package:century_ai/core/services/image_composite_service.dart';
 
 class ImageEditCubit extends Cubit<ImageEditState> {
   final ImageEditService _imageEditService = ImageEditService();
@@ -31,6 +33,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         furnitureId: furnitureId,
         ownerId: ownerId,
         sessionId: sessionId,
+        appliedLayers: const [],
       ),
     );
   }
@@ -59,6 +62,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         isGenerating: false,
         hasPatternChanged: false,
         hasAreaChanged: false,
+        appliedLayers: state.appliedLayers, // Retain applied layers, just clear the pending selection
       ),
     );
   }
@@ -93,8 +97,8 @@ class ImageEditCubit extends Cubit<ImageEditState> {
 
     try {
       File roomFile;
-      final String baseImageToUse =
-          state.currentGeneratedImage ?? state.originalImage!;
+      // Option A: Always send the completely original, unedited image to the API
+      final String baseImageToUse = state.originalImage!;
       if (baseImageToUse.startsWith('http')) {
         // DOWNLOAD NETWORK IMAGE TO TEMP FILE
         final dio = Dio();
@@ -113,25 +117,44 @@ class ImageEditCubit extends Cubit<ImageEditState> {
       final textureUrl = state.selectedPattern!["coverImage"]?.toString() ?? "";
       final coordinate = state.selectedArea!;
 
-      debugPrint('🎨 AI_GEN: Starting generation');
+      debugPrint('🎨 AI_GEN: Starting generation via V2');
 
       // Download pattern
       final tempDir = await Directory.systemTemp.createTemp();
       final patternFile = File('${tempDir.path}/pattern_image.png');
       await Dio().download(textureUrl, patternFile.path);
 
-      // AI Service
-      final resultFile = await _imageEditService.tryOnFurniture(
+      // AI Service (V2)
+      final responseJson = await _imageEditService.tryOnFurnitureV2(
         roomImage: roomFile,
         patternImage: patternFile,
         x: (coordinate['x'] as num).toInt(),
         y: (coordinate['y'] as num).toInt(),
       );
 
-      final newGeneratedImage = resultFile.path;
+      final maskBase64 = responseJson['mask'] as String;
+      final warpedPatternBase64 = responseJson['warped_pattern'] as String;
 
-      // PERSISTENT STORAGE: Copy from temp to documents directory
-      String persistentPath = newGeneratedImage;
+      final maskBytes = base64Decode(maskBase64);
+      final warpedPatternBytes = base64Decode(warpedPatternBase64);
+
+      // Stack the layers locally
+      final newLayer = LayerPair(
+        maskBytes: maskBytes,
+        warpedPatternBytes: warpedPatternBytes,
+      );
+
+      final updatedLayers = List<LayerPair>.from(state.appliedLayers)..add(newLayer);
+
+      // Composite locally
+      final Uint8List roomBytes = await roomFile.readAsBytes();
+      final Uint8List compositedBytes = await ImageCompositeService.compositeImages(
+        baseImageBytes: roomBytes,
+        layers: updatedLayers,
+      );
+
+      // PERSISTENT STORAGE: Save the composited result
+      String persistentPath = "";
       try {
         final appDocDir = await getApplicationDocumentsDirectory();
         final editDir = Directory(p.join(appDocDir.path, 'edits'));
@@ -140,13 +163,15 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         }
 
         final fileName = 'edit_${DateTime.now().millisecondsSinceEpoch}.png';
-        final savedFile = await resultFile.copy(p.join(editDir.path, fileName));
-        persistentPath = savedFile.path;
+        final resultFile = File(p.join(editDir.path, fileName));
+        await resultFile.writeAsBytes(compositedBytes);
+        persistentPath = resultFile.path;
         debugPrint(
-          '💾 Saved edited image to permanent storage: $persistentPath',
+          '💾 Saved composited image to permanent storage: $persistentPath',
         );
       } catch (e) {
-        debugPrint('❌ Failed to save to permanent storage, using temp: $e');
+        debugPrint('❌ Failed to save to permanent storage: $e');
+        throw Exception("Failed to save composited image.");
       }
 
       final updatedHistory = List<Map<String, dynamic>>.from(
@@ -164,10 +189,11 @@ class ImageEditCubit extends Cubit<ImageEditState> {
           isApplyLoading: false,
           currentGeneratedImage: persistentPath,
           editedImageFile: persistentPath, // Keep for backward compatibility
-          originalImage: persistentPath, // UPDATE BASE FOR STACKING
+          // DO NOT UPDATE originalImage TO persistentPath! Keep the original for stacking!
           generatedHistory: updatedHistory,
           hasPatternChanged: false,
           hasAreaChanged: false,
+          appliedLayers: updatedLayers,
           successMessage: "AI design applied successfully.",
         ),
       );

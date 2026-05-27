@@ -587,7 +587,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontWeight: FontWeight.w400,
-                              fontSize: 16,
+                              fontSize: 12,
                               color: Color(0xFF5D5D5D),
                             ),
                           ),

@@ -93,4 +93,18 @@ class ImageEditService {
     await file.writeAsBytes(bytes);
     return file;
   }
+
+  Future<Map<String, dynamic>> tryOnFurnitureV2({
+    required File roomImage,
+    required File patternImage,
+    required int x,
+    required int y,
+  }) async {
+    return await _apiService.tryOnFurnitureV2(
+      roomImage: roomImage,
+      patternImage: patternImage,
+      x: x,
+      y: y,
+    );
+  }
 }

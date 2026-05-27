@@ -1,3 +1,4 @@
+import 'package:century_ai/core/services/image_composite_service.dart';
 import 'package:equatable/equatable.dart';
 
 class ImageEditState extends Equatable {
@@ -19,6 +20,7 @@ class ImageEditState extends Equatable {
   final String? furnitureId;
   final String? ownerId;
   final String? sessionId;
+  final List<LayerPair> appliedLayers; // Accumulated mask and warped patterns
 
   const ImageEditState({
     this.isCompareLoading = false,
@@ -37,6 +39,7 @@ class ImageEditState extends Equatable {
     this.furnitureId,
     this.ownerId,
     this.sessionId,
+    this.appliedLayers = const [],
   });
 
   ImageEditState copyWith({
@@ -56,6 +59,7 @@ class ImageEditState extends Equatable {
     String? furnitureId,
     String? ownerId,
     String? sessionId,
+    List<LayerPair>? appliedLayers,
     bool clearError = false,
     bool clearSuccess = false,
   }) {
@@ -79,6 +83,7 @@ class ImageEditState extends Equatable {
       furnitureId: furnitureId ?? this.furnitureId,
       ownerId: ownerId ?? this.ownerId,
       sessionId: sessionId ?? this.sessionId,
+      appliedLayers: appliedLayers ?? this.appliedLayers,
     );
   }
 
@@ -100,5 +105,6 @@ class ImageEditState extends Equatable {
     furnitureId,
     ownerId,
     sessionId,
+    appliedLayers,
   ];
 }
