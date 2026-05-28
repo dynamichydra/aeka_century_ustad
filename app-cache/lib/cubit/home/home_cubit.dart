@@ -1,5 +1,4 @@
 import 'package:century_ai/features/home/services/home_service.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'home_state.dart';
 
@@ -13,9 +12,18 @@ class HomeCubit extends Cubit<HomeState> {
     
     // Update state so the rest of the app knows the current query
     if (query != null && query != state.searchQuery) {
-      emit(state.copyWith(searchQuery: query, isLoading: true));
+      emit(state.copyWith(
+        searchQuery: query, 
+        isLoading: true,
+        isTrendingShowing: false,
+        isLikedShowing: false,
+      ));
     } else {
-      emit(state.copyWith(isLoading: true));
+      emit(state.copyWith(
+        isLoading: true,
+        isTrendingShowing: false,
+        isLikedShowing: false,
+      ));
     }
 
     // Simulate API delay
@@ -33,7 +41,11 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void setExterior(bool value) {
-    emit(state.copyWith(isExterior: value));
+    emit(state.copyWith(
+      isExterior: value,
+      isTrendingShowing: false,
+      isLikedShowing: false,
+    ));
     logState();
   }
 
@@ -67,17 +79,29 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void setSelectedIndex(int index) {
-    emit(state.copyWith(selectedIndex: index));
+    emit(state.copyWith(
+      selectedIndex: index,
+      isTrendingShowing: false,
+      isLikedShowing: false,
+    ));
     logState();
   }
 
   void setSearchQuery(String query) {
-    emit(state.copyWith(searchQuery: query));
+    emit(state.copyWith(
+      searchQuery: query,
+      isTrendingShowing: false,
+      isLikedShowing: false,
+    ));
     logState();
   }
 
   void clearSearch() {
-    emit(state.copyWith(searchQuery: ''));
+    emit(state.copyWith(
+      searchQuery: '',
+      isTrendingShowing: false,
+      isLikedShowing: false,
+    ));
     logState();
   }
 

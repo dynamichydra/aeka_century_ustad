@@ -139,6 +139,8 @@ class ProductImageModel {
   final String? nestedSubcategory;
   final bool isNetwork;
   final bool isFavorite;
+  /// "INTERIOR" or "EXTERIOR" — from the API's applicationType field
+  final String? applicationType;
 
   ProductImageModel({
     required this.id,
@@ -152,9 +154,13 @@ class ProductImageModel {
     this.nestedSubcategory,
     this.isNetwork = false,
     this.isFavorite = false,
+    this.applicationType,
   });
 
   bool get isNetworkImage => image.startsWith('http') || isNetwork;
+
+  /// Returns true if this product/image is for exterior use.
+  bool get isExterior => applicationType?.toUpperCase() == 'EXTERIOR';
 
   ProductImageModel copyWith({
     String? id,
@@ -168,6 +174,7 @@ class ProductImageModel {
     String? nestedSubcategory,
     bool? isNetwork,
     bool? isFavorite,
+    String? applicationType,
   }) {
     return ProductImageModel(
       id: id ?? this.id,
@@ -181,6 +188,7 @@ class ProductImageModel {
       nestedSubcategory: nestedSubcategory ?? this.nestedSubcategory,
       isNetwork: isNetwork ?? this.isNetwork,
       isFavorite: isFavorite ?? this.isFavorite,
+      applicationType: applicationType ?? this.applicationType,
     );
   }
 }

@@ -22,6 +22,8 @@ class ImagePreviewPage extends StatefulWidget {
   final String image_category;
   final String? sub_category;
   final String? image_id;
+  /// "INTERIOR" or "EXTERIOR" — from the API response applicationType field
+  final String? applicationType;
 
   const ImagePreviewPage({
     super.key,
@@ -29,6 +31,7 @@ class ImagePreviewPage extends StatefulWidget {
     required this.image_category,
     this.sub_category,
     this.image_id,
+    this.applicationType,
   });
 
   @override
@@ -42,6 +45,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   List<SelectedImageData> _exploreImages = [];
   bool _isImageLoading = false;
   bool _isLoading = false;
+  /// Tracks the applicationType of whichever image is currently displayed.
+  /// Initialised from the route extra; updated when user picks from "More Products".
+  String? _currentApplicationType;
   final PreviewService _previewService = PreviewService();
   final ScrollController _scrollController = ScrollController();
 
@@ -50,6 +56,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _currentFile = widget.imageFile;
+    _currentApplicationType = widget.applicationType;
     _currentSelection = SelectedImageData(
       id: widget.image_id ?? _buildImageIdFromPath(widget.imageFile.path),
       imageData: const <int>[],
@@ -57,6 +64,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
       category: widget.image_category,
       subcategory: widget.sub_category,
       selectedAt: DateTime.now(),
+      applicationType: widget.applicationType,
     );
     _initializePreview();
   }
@@ -103,6 +111,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
       setState(() {
         _currentSelection = selectedImage;
+        _currentApplicationType = selectedImage.applicationType;
       });
     } catch (e) {
       debugPrint('Error hydrating current image from SQLite: $e');
@@ -137,6 +146,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
       if (mounted) {
         setState(() {
           _currentSelection = image;
+          _currentApplicationType = image.applicationType;
           _currentFile = resolved.file;
           _currentAsset = resolved.assetPath;
           _isImageLoading = false;
@@ -166,6 +176,12 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
       final imageId = product.itemId ?? product.furnitureId ?? product.id;
       final existing = await SelectedImagesRepository.getImage(imageId);
       if (existing != null) {
+        // Update applicationType from the live product data (DB may not have it)
+        if (mounted) {
+          setState(() {
+            _currentApplicationType = product.applicationType ?? existing.applicationType;
+          });
+        }
         await _selectExploreImage(existing);
         return;
       }
@@ -182,6 +198,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         category: product.category ?? widget.image_category,
         subcategory: product.subcategory ?? widget.sub_category,
         selectedAt: DateTime.now(),
+        applicationType: product.applicationType,
       );
 
       await SelectedImagesRepository.saveImage(imageData);
@@ -189,6 +206,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
       // 4. Update UI
       if (mounted) {
         setState(() {
+          _currentApplicationType = product.applicationType;
           _currentSelection = imageData;
           _currentFile = file;
           _currentAsset = null;
@@ -282,6 +300,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         extra: {
           'imageFile': fileToEdit,
           'image_id': _currentSelection?.id ?? widget.image_id,
+          'applicationType': _currentApplicationType
+              ?? _currentSelection?.applicationType
+              ?? widget.applicationType,
         },
       );
     }

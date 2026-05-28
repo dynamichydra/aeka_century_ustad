@@ -2,12 +2,15 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:century_ai/core/constants/colors.dart';
+import 'package:century_ai/db/db_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/features/camera_pages/presentation/widgets/image_compare_slider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
+import 'package:century_ai/features/camera_pages/data/dummy_data.dart';
 import 'package:century_ai/core/network/apis/laminate_api.dart'; // Added API Import
 import 'package:century_ai/core/network/cache/laminate_cache_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -25,6 +28,7 @@ class ImageEditPage extends StatefulWidget {
   final File imageFile;
   final Color? pickedColor;
   final String? image_id;
+  final bool isExterior;
 
   final bool scrollableEditSection;
   final bool showTextureDetailOnTap;
@@ -37,6 +41,7 @@ class ImageEditPage extends StatefulWidget {
     required this.imageFile,
     this.pickedColor,
     this.image_id,
+    this.isExterior = false,
     this.scrollableEditSection = false,
     this.showTextureDetailOnTap = true,
     this.textureListHeight = 120,
@@ -71,13 +76,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
   bool _compareExpanded = false;
   bool _editExpanded = true;
   bool _hasAppliedOnce = false;
-  bool _hasNewUnappliedEdit = false; // Tracks if a new AI generation is available but not yet finalized
+  bool _hasNewUnappliedEdit =
+      false; // Tracks if a new AI generation is available but not yet finalized
   final ValueNotifier<List<int>> _selectedIndicesNotifier = ValueNotifier([]);
   double _sliderPosition = 0.5;
 
   final UserEditsService _userEditsService = UserEditsService();
   final String _ownerEmail = "anisasru2@gmail.com";
   List<EditRecord> _userEdits = [];
+
   /// ID of the edit_history row that the current session is built upon.
   /// Null for the first edit on an original image.
   String? _parentEditId;
@@ -237,7 +244,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
     setState(() => _isLoadingEdits = true);
     try {
       // 1. Fetch from Network
-      final allEdits = await _userEditsService.getEdits(_ownerEmail, furnitureId: widget.image_id);
+      final allEdits = await _userEditsService.getEdits(
+        _ownerEmail,
+        furnitureId: widget.image_id,
+      );
       final filteredNetwork = allEdits
           .where((e) => e.furnitureId == widget.image_id)
           .toList();
@@ -251,7 +261,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
       final convertedLocal = localEdits
           .map(
             (e) => EditRecord(
-              id: (e.sessionId.isNotEmpty && e.sessionId != 'default_session') ? e.sessionId : e.id,
+              id: (e.sessionId.isNotEmpty && e.sessionId != 'default_session')
+                  ? e.sessionId
+                  : e.id,
               originalImageUrl: e.originalImagePath,
               editedImageUrl: e.editedImagePath,
               ownerId: e.ownerId,
@@ -285,7 +297,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
         // Check if this local record matches any already added network record by ID
         if (uniqueMap.containsKey(key)) {
           final existingNet = uniqueMap[key]!;
-          if (existingNet.usedLaminatesJson == null || existingNet.usedLaminatesJson!.isEmpty) {
+          if (existingNet.usedLaminatesJson == null ||
+              existingNet.usedLaminatesJson!.isEmpty) {
             uniqueMap[key] = EditRecord(
               id: existingNet.id,
               originalImageUrl: existingNet.originalImageUrl,
@@ -303,7 +316,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
         // Check if this local record matches any already added network record by Filename
         if (uniqueMap.containsKey(fallbackKey)) {
           final existingNet = uniqueMap[fallbackKey]!;
-          if (existingNet.usedLaminatesJson == null || existingNet.usedLaminatesJson!.isEmpty) {
+          if (existingNet.usedLaminatesJson == null ||
+              existingNet.usedLaminatesJson!.isEmpty) {
             uniqueMap[fallbackKey] = EditRecord(
               id: existingNet.id,
               originalImageUrl: existingNet.originalImageUrl,
@@ -321,10 +335,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
         // Deep/intelligent check to see if this local record represents the same edit as an existing network record (within 5 minutes)
         bool isDuplicate = false;
         for (var existingNet in uniqueMap.values) {
-          final diffSeconds = record.createdAt.difference(existingNet.createdAt).inSeconds.abs();
+          final diffSeconds = record.createdAt
+              .difference(existingNet.createdAt)
+              .inSeconds
+              .abs();
           if (diffSeconds < 300) {
-            final netKey = existingNet.id.isNotEmpty ? existingNet.id : getFileName(existingNet.editedImageUrl);
-            if (existingNet.usedLaminatesJson == null || existingNet.usedLaminatesJson!.isEmpty) {
+            final netKey = existingNet.id.isNotEmpty
+                ? existingNet.id
+                : getFileName(existingNet.editedImageUrl);
+            if (existingNet.usedLaminatesJson == null ||
+                existingNet.usedLaminatesJson!.isEmpty) {
               uniqueMap[netKey] = EditRecord(
                 id: existingNet.id,
                 originalImageUrl: existingNet.originalImageUrl,
@@ -377,6 +397,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     final cached = _cacheService.getCategoryTextures(
       _selectedCategory!,
       subCat,
+      itemType: widget.isExterior ? "Exteria" : "Laminates",
     );
     if (cached != null && cached.isNotEmpty) {
       debugPrint("✅ Using cached textures for $_selectedCategory - $subCat");
@@ -401,7 +422,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
       final response = await _laminateApi.fetchByCategory(
         category: _selectedCategory!,
         subcategory: subCat,
-        itemType: "Laminates",
+        itemType: widget.isExterior ? "Exteria" : "Laminates",
       );
 
       if (mounted) {
@@ -416,6 +437,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
               _selectedCategory!,
               subCat,
               _apiTextures,
+              itemType: widget.isExterior ? "Exteria" : "Laminates",
             );
 
             // Removed auto-selection of first texture
@@ -442,7 +464,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
     final hex = _selectedColor!["hex"];
 
     // 1. Try cache first BEFORE showing loading state
-    final cached = _cacheService.getHexTextures(hex);
+    final cached = _cacheService.getHexTextures(
+      hex,
+      itemType: widget.isExterior ? "Exteria" : "Laminates",
+    );
     if (cached != null && cached.isNotEmpty) {
       debugPrint("✅ Using cached textures for hex: $hex");
       if (mounted) {
@@ -463,7 +488,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     try {
       final response = await _laminateApi.fetchByHex(
         hexCodes: [hex],
-        itemType: "Laminates",
+        itemType: widget.isExterior ? "Exteria" : "Laminates",
       );
 
       if (mounted) {
@@ -483,7 +508,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
             // Save to cache
             if (_apiTextures.isNotEmpty) {
-              _cacheService.saveHexTextures(hex, _apiTextures);
+              _cacheService.saveHexTextures(
+                hex,
+                _apiTextures,
+                itemType: widget.isExterior ? "Exteria" : "Laminates",
+              );
             }
           } else {
             _apiTextures = [];
@@ -570,25 +599,65 @@ class _ImageEditPageState extends State<ImageEditPage> {
     ],
   };
 
+  /// Category/subcategory map for Exteria (exterior laminates)
+  static const Map<String, List<String>> _exteriaCategoriesMap = {
+    "Abstract Patterns": [
+      "All",
+      "Cement",
+      "Grunge & Rustic",
+      "Others",
+    ],
+    "Woodgrains": [
+      "All",
+      "Dark",
+      "Medium",
+      "Light",
+    ],
+    "Stones": [
+      "All",
+      "Marble",
+      "Travertine",
+      "Ivory",
+    ],
+    "Solid": [
+      "All",
+      "Green",
+      "White",
+      "Blue",
+      "Yellow",
+      "Grey",
+      "Other",
+    ],
+  };
+
+  Map<String, List<String>> get _activeCategoriesMap =>
+      widget.isExterior ? _exteriaCategoriesMap : _laminateCategoriesMap;
+
   List<String> categoriesRow1 = [""];
   List<String> categoriesRow2 = [""];
 
   Future<void> getLamCategory() async {
     if (mounted) {
       setState(() {
-        categoriesRow1 = _laminateCategoriesMap.keys.toList();
+        categoriesRow1 = _activeCategoriesMap.keys.toList();
         if (_selectedCategory == null && categoriesRow1.isNotEmpty) {
           _selectedCategory = categoriesRow1.first;
           _selectedSubCategory = "All";
         }
-        if (_selectedCategory != null) {
-          categoriesRow2 = _laminateCategoriesMap[_selectedCategory!] ?? [];
-        }
       });
 
       if (_selectedCategory != null) {
+        _fetchSubCategoriesFor(_selectedCategory!);
         await _fetchTextures();
       }
+    }
+  }
+
+  void _fetchSubCategoriesFor(String categoryName) {
+    if (mounted) {
+      setState(() {
+        categoriesRow2 = _activeCategoriesMap[categoryName] ?? [];
+      });
     }
   }
 
@@ -609,7 +678,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
             _selectedTexture = null;
             _tapPosForDot = null;
             _lastTapCoordinate = null;
-            _hasNewUnappliedEdit = true; // Mark that a new generated design is available to apply
+            _hasNewUnappliedEdit =
+                true; // Mark that a new generated design is available to apply
           });
           context.read<ImageEditCubit>().clearSelection();
 
@@ -740,7 +810,6 @@ class _ImageEditPageState extends State<ImageEditPage> {
       ),
     );
   }
-
 
   Widget _buildCollapsibleHeaders() {
     return Column(
@@ -1115,9 +1184,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
             // Walk the full parent chain in SQLite for cumulative laminates
             List<Map<String, dynamic>> usedLaminates = [];
             try {
-              usedLaminates = await EditHistoryRepository.getCumulativeLaminates(
-                record.id,
-              );
+              usedLaminates =
+                  await EditHistoryRepository.getCumulativeLaminates(record.id);
             } catch (e) {
               debugPrint('getCumulativeLaminates error: $e');
             }
@@ -1827,24 +1895,24 @@ class _ImageEditPageState extends State<ImageEditPage> {
       children: [
         const SizedBox(height: 4),
         _buildChipRow(categoriesRow1, _selectedCategory, (val) {
-          if (_selectedCategory != val) {
-            setState(() {
+          setState(() {
+            if (_selectedCategory != val) {
               _selectedCategory = val;
               _selectedSubCategory = "All";
-              categoriesRow2 = _laminateCategoriesMap[val] ?? [];
-            });
-            _fetchTextures();
-          }
+              _fetchSubCategoriesFor(val);
+              _fetchTextures();
+            }
+          });
         }),
         if (_selectedCategory != null && categoriesRow2.isNotEmpty) ...[
           const SizedBox(height: 12),
           _buildSubCategoryMenu(categoriesRow2, _selectedSubCategory, (val) {
-            if (_selectedSubCategory != val) {
-              setState(() {
+            setState(() {
+              if (_selectedSubCategory != val) {
                 _selectedSubCategory = val;
-              });
-              _fetchTextures();
-            }
+                _fetchTextures();
+              }
+            });
           }),
         ],
       ],
@@ -2256,7 +2324,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
           );
           if (record != null && record.id.isNotEmpty) {
             responseId = record.id;
-            debugPrint("✅ Applied design successfully posted to server. Record ID: $responseId");
+            debugPrint(
+              "✅ Applied design successfully posted to server. Record ID: $responseId",
+            );
           }
         } catch (e) {
           debugPrint("❌ Failed to post applied design to server: $e");
@@ -2285,12 +2355,15 @@ class _ImageEditPageState extends State<ImageEditPage> {
       final String finalizedImage = state.currentGeneratedImage!;
       if (mounted) {
         setState(() {
-          _baseImage = finalizedImage; // Set the base to the newly finalized stacked image
-          _currentAssetPreview = null; // Clear the preview overlay since it is now the base
+          _baseImage =
+              finalizedImage; // Set the base to the newly finalized stacked image
+          _currentAssetPreview =
+              null; // Clear the preview overlay since it is now the base
           _compareExpanded = true;
           _editExpanded = false;
           _hasAppliedOnce = true;
-          _hasNewUnappliedEdit = false; // Reset since the current edit has been successfully finalized
+          _hasNewUnappliedEdit =
+              false; // Reset since the current edit has been successfully finalized
 
           // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY ON NEXT EDIT
           _selectedTexture = null;
@@ -2369,10 +2442,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
     if (mounted) {
       context.push(
         AppRoutes.imageFinalize,
-        extra: {
-          'editedImage': finalImage,
-          'usedLaminates': usedLaminates,
-        },
+        extra: {'editedImage': finalImage, 'usedLaminates': usedLaminates},
       );
     }
   }
@@ -2457,7 +2527,9 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   builder: (context, state) {
                     final bool isGenerating = state.isGenerating;
                     final bool isLoading = isGenerating || _isUploading;
-                    final bool hasResult = state.currentGeneratedImage != null && _hasNewUnappliedEdit;
+                    final bool hasResult =
+                        state.currentGeneratedImage != null &&
+                        _hasNewUnappliedEdit;
 
                     return ElevatedButton(
                       onPressed: (isLoading || !hasResult)

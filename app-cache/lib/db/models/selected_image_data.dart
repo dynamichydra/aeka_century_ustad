@@ -6,6 +6,8 @@ class SelectedImageData {
   final String? category;
   final String? subcategory;
   final DateTime selectedAt;
+  /// "INTERIOR" or "EXTERIOR" — from the API's applicationType field
+  final String? applicationType;
 
   SelectedImageData({
     required this.id,
@@ -14,6 +16,7 @@ class SelectedImageData {
     this.category,
     this.subcategory,
     required this.selectedAt,
+    this.applicationType,
   });
 
   /// Convert model to database map
@@ -25,6 +28,7 @@ class SelectedImageData {
       'category': category,
       'subcategory': subcategory,
       'selected_at': selectedAt.toIso8601String(),
+      'application_type': applicationType,
     };
   }
 
@@ -37,6 +41,7 @@ class SelectedImageData {
       category: map['category'],
       subcategory: map['subcategory'],
       selectedAt: DateTime.parse(map['selected_at']),
+      applicationType: map['application_type'],
     );
   }
 }

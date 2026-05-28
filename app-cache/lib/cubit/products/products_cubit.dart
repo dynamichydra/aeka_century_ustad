@@ -332,9 +332,10 @@ class ProductsCubit extends Cubit<ProductsState> {
     emit(state.copyWith(products: rolledBackProducts));
   }
 
-  Future<void> searchProducts(String query, {int limit = 12}) async {
+  Future<void> searchProducts(String query, {String? ownerId, int limit = 12}) async {
+    final activeOwnerId = ownerId ?? state.currentOwnerId ?? "anisasru2@gmail.com";
     if (query.trim().isEmpty) {
-      return fetchFeaturedProducts(limit: limit, isExterior: state.isInterior == false);
+      return fetchFeaturedProducts(ownerId: activeOwnerId, limit: limit, isExterior: state.isInterior == false);
     }
     emit(state.copyWith(
       isLoading: true,
@@ -348,9 +349,10 @@ class ProductsCubit extends Cubit<ProductsState> {
       clearProduct: true,
       clearSimilarImageId: true,
       isTrending: false,
+      currentOwnerId: activeOwnerId,
     ));
     try {
-      final products = await _productRepository.searchProducts(query, limit: limit, offset: 0);
+      final products = await _productRepository.searchProducts(query, ownerId: activeOwnerId, limit: limit, offset: 0);
       emit(state.copyWith(
         isLoading: false,
         products: products,
@@ -420,7 +422,12 @@ class ProductsCubit extends Cubit<ProductsState> {
         );
       } else if (state.currentQuery != null) {
         debugPrint('🔍 CUBIT_LOG: Loading more for search query: ${state.currentQuery}');
-        newProducts = await _productRepository.searchProducts(state.currentQuery!, limit: state.limit, offset: state.offset);
+        newProducts = await _productRepository.searchProducts(
+          state.currentQuery!,
+          ownerId: state.currentOwnerId,
+          limit: state.limit,
+          offset: state.offset,
+        );
       } else if (state.currentProduct != null) {
         debugPrint('📦 CUBIT_LOG: Loading more for product: ${state.currentProduct}, subFilter: ${state.currentSubFilter}');
         if (state.currentProduct == "Exterior") {

@@ -236,6 +236,7 @@ class ApiService {
     String? interiorCategory,
     String? subCategory,
     String? applicationType,
+    String? ownerId,
     int limit = 20,
     int offset = 0,
   }) async {
@@ -245,6 +246,7 @@ class ApiService {
     if (interiorCategory != null) queryParams['interiorCategory'] = interiorCategory;
     if (subCategory != null) queryParams['subCategory'] = subCategory;
     if (applicationType != null) queryParams['applicationType'] = applicationType;
+    if (ownerId != null) queryParams['ownerId'] = ownerId;
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.searchText} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.searchText,

@@ -594,6 +594,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           "image_id": imageId,
           "image_category": "Uploaded Image",
           "sub_category": "User Upload",
+          "applicationType": context.read<HomeCubit>().state.isExterior ? "EXTERIOR" : "INTERIOR",
         },
       );
     } catch (e) {
@@ -643,6 +644,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             "image_id": prepared.imageId,
             "image_category": prepared.category,
             "sub_category": prepared.subcategory,
+            "applicationType": product.applicationType ?? (context.read<HomeCubit>().state.isExterior ? "EXTERIOR" : "INTERIOR"),
           },
         );
       }
@@ -773,6 +775,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             });
                           },
                           onSearchStarted: (query) {
+                            context.read<HomeCubit>().resetFilters();
                             setState(() {
                               // Find matching category in the current tab
                               final currentTabData =

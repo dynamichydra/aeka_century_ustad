@@ -15,13 +15,21 @@ class SelectedImagesRepository {
       image_path TEXT NOT NULL,
       category TEXT,
       subcategory TEXT,
-      selected_at TEXT NOT NULL
+      selected_at TEXT NOT NULL,
+      application_type TEXT
     )
   ''';
 
   /// Initialize the selected_images table
   static Future<void> initializeTable() async {
     await DbCore.ensureTablesExist({tableName: _createTableScript});
+    try {
+      final db = await DbCore.database;
+      await db.execute('ALTER TABLE $tableName ADD COLUMN application_type TEXT');
+      print('Added column application_type to $tableName');
+    } catch (_) {
+      // Column already exists or table didn't need alter
+    }
   }
 
   /// Save selected image to database once.

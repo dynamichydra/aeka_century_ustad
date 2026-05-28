@@ -6,28 +6,28 @@ class LaminateCacheService {
   static const String _keyPrefix = "laminate_cache_";
   static const int _cacheDurationDays = 14;
 
-  String _generateCategoryKey(String category, String subcategory) {
-    return "${_keyPrefix}cat_${category}_${subcategory}";
+  String _generateCategoryKey(String category, String subcategory, String itemType) {
+    return "${_keyPrefix}cat_${itemType}_${category}_${subcategory}";
   }
 
-  String _generateHexKey(String hex) {
-    return "${_keyPrefix}hex_${hex.replaceAll('#', '')}";
+  String _generateHexKey(String hex, String itemType) {
+    return "${_keyPrefix}hex_${itemType}_${hex.replaceAll('#', '')}";
   }
 
-  void saveCategoryTextures(String category, String subcategory, List<dynamic> textures) {
-    _save(_generateCategoryKey(category, subcategory), textures);
+  void saveCategoryTextures(String category, String subcategory, List<dynamic> textures, {String itemType = "Laminates"}) {
+    _save(_generateCategoryKey(category, subcategory, itemType), textures);
   }
 
-  List<dynamic>? getCategoryTextures(String category, String subcategory) {
-    return _get(_generateCategoryKey(category, subcategory));
+  List<dynamic>? getCategoryTextures(String category, String subcategory, {String itemType = "Laminates"}) {
+    return _get(_generateCategoryKey(category, subcategory, itemType));
   }
 
-  void saveHexTextures(String hex, List<dynamic> textures) {
-    _save(_generateHexKey(hex), textures);
+  void saveHexTextures(String hex, List<dynamic> textures, {String itemType = "Laminates"}) {
+    _save(_generateHexKey(hex, itemType), textures);
   }
 
-  List<dynamic>? getHexTextures(String hex) {
-    return _get(_generateHexKey(hex));
+  List<dynamic>? getHexTextures(String hex, {String itemType = "Laminates"}) {
+    return _get(_generateHexKey(hex, itemType));
   }
 
   void _save(String key, List<dynamic> textures) {

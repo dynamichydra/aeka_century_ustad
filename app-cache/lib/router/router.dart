@@ -79,6 +79,7 @@ final GoRouter router = GoRouter(
         String imageCategory = "";
         String? subCategory;
         String? image_id;
+        String? applicationType;
 
         if (state.extra is File) {
           imageFile = state.extra as File;
@@ -88,6 +89,9 @@ final GoRouter router = GoRouter(
           imageCategory = data["image_category"] as String? ?? "";
           subCategory = data["sub_category"] as String?;
           image_id = data["image_id"] as String?;
+          // Support both new applicationType string and legacy isExterior bool
+          applicationType = data["applicationType"] as String?
+              ?? ((data["isExterior"] as bool? ?? false) ? "EXTERIOR" : "INTERIOR");
         }
 
         if (imageFile == null) {
@@ -101,6 +105,7 @@ final GoRouter router = GoRouter(
             image_category: imageCategory,
             sub_category: subCategory,
             image_id: image_id,
+            applicationType: applicationType,
           ),
         );
       },
@@ -112,6 +117,7 @@ final GoRouter router = GoRouter(
         File? imageFile;
         Color? pickedColor;
         String? image_id;
+        bool isExterior = false;
 
         if (state.extra is File) {
           imageFile = state.extra as File;
@@ -120,6 +126,11 @@ final GoRouter router = GoRouter(
           imageFile = data['imageFile'] as File?;
           pickedColor = data['pickedColor'] as Color?;
           image_id = data['image_id'] as String?;
+          // Support both new applicationType string and legacy isExterior bool
+          final appType = data['applicationType'] as String?;
+          isExterior = appType != null
+              ? appType.toUpperCase() == 'EXTERIOR'
+              : (data['isExterior'] as bool? ?? false);
         }
 
         if (imageFile == null) {
@@ -132,6 +143,7 @@ final GoRouter router = GoRouter(
             imageFile: imageFile,
             pickedColor: pickedColor,
             image_id: image_id,
+            isExterior: isExterior,
           ),
         );
       },
@@ -143,6 +155,7 @@ final GoRouter router = GoRouter(
         File? imageFile;
         Color? pickedColor;
         String? image_id;
+        bool isExterior = false;
 
         if (state.extra is File) {
           imageFile = state.extra as File;
@@ -151,6 +164,11 @@ final GoRouter router = GoRouter(
           imageFile = data['imageFile'] as File?;
           pickedColor = data['pickedColor'] as Color?;
           image_id = data['image_id'] as String?;
+          // Support both new applicationType string and legacy isExterior bool
+          final appType = data['applicationType'] as String?;
+          isExterior = appType != null
+              ? appType.toUpperCase() == 'EXTERIOR'
+              : (data['isExterior'] as bool? ?? false);
         }
 
         if (imageFile == null) {
@@ -163,6 +181,7 @@ final GoRouter router = GoRouter(
             imageFile: imageFile,
             pickedColor: pickedColor,
             image_id: image_id,
+            isExterior: isExterior,
           ),
         );
       },

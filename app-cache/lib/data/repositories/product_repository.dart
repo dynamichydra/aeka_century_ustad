@@ -48,6 +48,7 @@ class ProductRepository {
           json['isFavorite'] == true ||
           json['isFavourited']?.toString().toLowerCase() == 'true' ||
           json['isFavorite']?.toString().toLowerCase() == 'true',
+      applicationType: json['applicationType']?.toString(),
     );
   }
 
@@ -132,9 +133,9 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> searchProducts(String query, {int limit = 20, int offset = 0}) async {
+  Future<List<ProductImageModel>> searchProducts(String query, {String? ownerId, int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.searchFurnitureByText(query, limit: limit, offset: offset);
+      final data = await _apiService.searchFurnitureByText(query, ownerId: ownerId, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
       debugPrint('🔍 SEARCH_LOG: Text search "$query" found ${products.length} results (Offset: $offset, Limit: $limit)');
       return products;

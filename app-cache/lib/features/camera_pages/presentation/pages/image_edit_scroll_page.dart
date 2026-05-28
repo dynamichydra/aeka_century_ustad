@@ -7,12 +7,14 @@ class ImageEditScrollPage extends StatelessWidget {
   final File imageFile;
   final Color? pickedColor;
   final String? image_id;
+  final bool isExterior;
 
   const ImageEditScrollPage({
     super.key,
     required this.imageFile,
     this.pickedColor,
     this.image_id,
+    this.isExterior = false,
   });
 
   @override
@@ -21,6 +23,7 @@ class ImageEditScrollPage extends StatelessWidget {
       imageFile: imageFile,
       pickedColor: pickedColor,
       image_id: image_id,
+      isExterior: isExterior,
       scrollableEditSection: true,
       showTextureDetailOnTap: true,
       textureListHeight: 110,
