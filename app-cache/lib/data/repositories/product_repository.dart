@@ -184,12 +184,14 @@ class ProductRepository {
 
   Future<List<ProductImageModel>> getTrendingProducts({
     required String ownerId,
+    String? applicationType,
     int limit = 20,
     int offset = 0,
   }) async {
     try {
       final data = await _apiService.getTrendingProducts(
         ownerId: ownerId,
+        applicationType: applicationType,
         limit: limit,
         offset: offset,
       );

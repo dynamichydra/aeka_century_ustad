@@ -150,6 +150,7 @@ class ApiService {
   
   Future<List<dynamic>> getTrendingProducts({
     String? ownerId,
+    String? applicationType,
     int limit = 20,
     int offset = 0,
   }) async {
@@ -158,6 +159,7 @@ class ApiService {
       'offset': offset,
     };
     if (ownerId != null) queryParams['ownerId'] = ownerId;
+    if (applicationType != null) queryParams['applicationType'] = applicationType;
     debugPrint('🛒 FETCH_TRENDING: ${TApiConstants.baseUrl}${TApiConstants.trendingProducts} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.trendingProducts,
@@ -286,8 +288,10 @@ class ApiService {
   Future<List<int>> tryOnFurniture({
     required File roomImage,
     required File patternImage,
-    required int x,
-    required int y,
+    required int left,
+    required int top,
+    required int right,
+    required int bottom,
   }) async {
     // Ensure files exist before proceeding
     if (!await roomImage.exists()) {
@@ -309,11 +313,13 @@ class ApiService {
         patternImage.path,
         filename: patternFileName,
       ),
-      "x": x.toString(),
-      "y": y.toString(),
+      "left": left.toString(),
+      "top": top.toString(),
+      "right": right.toString(),
+      "bottom": bottom.toString(),
     });
 
-    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.tryOn} | POST Try-On (Room: $roomFileName, Pattern: $patternFileName, X: $x, Y: $y)');
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.tryOn} | POST Try-On (Room: $roomFileName, Pattern: $patternFileName, Left: $left, Top: $top, Right: $right, Bottom: $bottom)');
 
     final response = await _dio.post(
       TApiConstants.tryOn,
@@ -333,8 +339,10 @@ class ApiService {
   Future<Map<String, dynamic>> tryOnFurnitureV2({
     required File roomImage,
     required File patternImage,
-    required int x,
-    required int y,
+    required int left,
+    required int top,
+    required int right,
+    required int bottom,
   }) async {
     if (!await roomImage.exists()) {
       throw Exception('Room image file does not exist at path: ${roomImage.path}');
@@ -355,14 +363,16 @@ class ApiService {
         patternImage.path,
         filename: patternFileName,
       ),
-      "x": x.toString(),
-      "y": y.toString(),
+      "x1": left.toString(),
+      "y1": top.toString(),
+      "x2": right.toString(),
+      "y2": bottom.toString(),
     });
 
-    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.tryOnV2} | POST Try-On V2 (Room: $roomFileName, Pattern: $patternFileName, X: $x, Y: $y)');
+    debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.tryOnV3} | POST Try-On V3 (Room: $roomFileName, Pattern: $patternFileName, X1: $left, Y1: $top, X2: $right, Y2: $bottom)');
 
     final response = await _dio.post(
-      TApiConstants.tryOnV2,
+      TApiConstants.tryOnV3,
       data: formData,
       options: Options(
         responseType: ResponseType.json,

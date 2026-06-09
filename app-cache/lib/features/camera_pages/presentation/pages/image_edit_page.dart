@@ -1,16 +1,14 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:ui' as ui;
+import 'dart:math' as math;
 import 'package:century_ai/core/constants/colors.dart';
-import 'package:century_ai/db/db_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/features/camera_pages/presentation/widgets/image_compare_slider.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
-import 'package:century_ai/features/camera_pages/data/dummy_data.dart';
 import 'package:century_ai/core/network/apis/laminate_api.dart'; // Added API Import
 import 'package:century_ai/core/network/cache/laminate_cache_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -92,11 +90,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   // Dummy versions fallback if no network edits yet
 
-  // Dynamic Tap Variables
-  Map<String, dynamic>? _lastTapCoordinate;
-  Offset? _tapPosForDot;
-  bool _isShortTap = true;
-  bool _isLongTap = false;
+  // Rectangle Selection Variables
+  SelectionRect? _selection;
+  Offset? _dragStart;
+  SelectionMode _mode = SelectionMode.none;
 
   final TransformationController _transformationController =
       TransformationController();
@@ -676,8 +673,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           // Clear laminate selection and coordinate dot immediately upon successful AI Try-on
           setState(() {
             _selectedTexture = null;
-            _tapPosForDot = null;
-            _lastTapCoordinate = null;
+            _selection = null;
             _hasNewUnappliedEdit =
                 true; // Mark that a new generated design is available to apply
           });
@@ -1098,8 +1094,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   _selectedColor = null;
                   _selectedCategory = null;
                   _selectedSubCategory = null;
-                  _tapPosForDot = null;
-                  _lastTapCoordinate = null;
+                  _selection = null;
                 });
                 // RE-INIT CUBIT WITH NEW IMAGE AND SESSION
                 context.read<ImageEditCubit>().initOriginalImage(
@@ -1153,8 +1148,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
             _selectedColor = null;
             _selectedCategory = null;
             _selectedSubCategory = null;
-            _tapPosForDot = null;
-            _lastTapCoordinate = null;
+            _selection = null;
           });
           // RE-INIT CUBIT WITH NEW SESSION
           context.read<ImageEditCubit>().initOriginalImage(
@@ -1235,8 +1229,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
               _selectedColor = null;
               _selectedCategory = null;
               _selectedSubCategory = null;
-              _tapPosForDot = null;
-              _lastTapCoordinate = null;
+              _selection = null;
             });
 
             if (mounted) {
@@ -1467,6 +1460,64 @@ class _ImageEditPageState extends State<ImageEditPage> {
     );
   }
 
+  SelectionMode _hitTestHandles(Offset localPosition) {
+    if (_selection == null) return SelectionMode.none;
+
+    final double touchRadius = 24.0;
+
+    final double left = _selection!.left;
+    final double top = _selection!.top;
+    final double right = _selection!.left + _selection!.width;
+    final double bottom = _selection!.top + _selection!.height;
+
+    final Offset topLeft = Offset(left, top);
+    final Offset topRight = Offset(right, top);
+    final Offset bottomLeft = Offset(left, bottom);
+    final Offset bottomRight = Offset(right, bottom);
+
+    // 1. Check corners first
+    if ((localPosition - topLeft).distance <= touchRadius) {
+      return SelectionMode.resizeTopLeft;
+    }
+    if ((localPosition - topRight).distance <= touchRadius) {
+      return SelectionMode.resizeTopRight;
+    }
+    if ((localPosition - bottomLeft).distance <= touchRadius) {
+      return SelectionMode.resizeBottomLeft;
+    }
+    if ((localPosition - bottomRight).distance <= touchRadius) {
+      return SelectionMode.resizeBottomRight;
+    }
+
+    // Helper to calculate distance from point to vertical segment
+    double distToVert(Offset p, double targetX, double startY, double endY) {
+      final double clampedY = p.dy.clamp(startY, endY);
+      return (p - Offset(targetX, clampedY)).distance;
+    }
+
+    // Helper to calculate distance from point to horizontal segment
+    double distToHoriz(Offset p, double targetY, double startX, double endX) {
+      final double clampedX = p.dx.clamp(startX, endX);
+      return (p - Offset(clampedX, targetY)).distance;
+    }
+
+    // 2. Check edges
+    if (distToVert(localPosition, left, top, bottom) <= touchRadius) {
+      return SelectionMode.resizeLeft;
+    }
+    if (distToVert(localPosition, right, top, bottom) <= touchRadius) {
+      return SelectionMode.resizeRight;
+    }
+    if (distToHoriz(localPosition, top, left, right) <= touchRadius) {
+      return SelectionMode.resizeTop;
+    }
+    if (distToHoriz(localPosition, bottom, left, right) <= touchRadius) {
+      return SelectionMode.resizeBottom;
+    }
+
+    return SelectionMode.none;
+  }
+
   Widget _buildImageOverlaySection() {
     return Stack(
       children: [
@@ -1476,54 +1527,173 @@ class _ImageEditPageState extends State<ImageEditPage> {
             minScale: 1.0,
             maxScale: 4.0,
             boundaryMargin: const EdgeInsets.all(20),
-            child: GestureDetector(
-              onTapDown: (details) {
+            panEnabled: false,
+            scaleEnabled: false,
+            child: Listener(
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: (event) {
                 final viewSize = Size(
                   MediaQuery.of(context).size.width,
                   MediaQuery.of(context).size.height * 0.40,
                 );
-                final mappedPos = _mapLocalToOriginal(
-                  details.localPosition,
-                  viewSize,
-                );
-
-                debugPrint(
-                  '📍 Coordinate Selected (Tap): Screen(x: ${details.localPosition.dx.toStringAsFixed(1)}, y: ${details.localPosition.dy.toStringAsFixed(1)}) -> Image(x: ${mappedPos.dx.toInt()}, y: ${mappedPos.dy.toInt()})',
-                );
-
-                setState(() {
-                  _lastTapCoordinate = {"x": mappedPos.dx, "y": mappedPos.dy};
-                  _tapPosForDot = details.localPosition;
-                  _isShortTap = true;
-                  _isLongTap = false;
-                });
-
-                // Automatically trigger area selection in Cubit
-                context.read<ImageEditCubit>().selectArea(_lastTapCoordinate!);
+                final localPos = event.localPosition;
+                
+                SelectionMode detectedMode = SelectionMode.none;
+                if (_selection != null) {
+                  detectedMode = _hitTestHandles(localPos);
+                }
+                
+                if (detectedMode != SelectionMode.none) {
+                  setState(() {
+                    _mode = detectedMode;
+                  });
+                } else if (_selection != null && _selection!.rect.contains(localPos)) {
+                  setState(() {
+                    _mode = SelectionMode.moving;
+                  });
+                } else {
+                  setState(() {
+                    _dragStart = localPos;
+                    _selection = SelectionRect(
+                      left: localPos.dx.clamp(0.0, viewSize.width),
+                      top: localPos.dy.clamp(0.0, viewSize.height),
+                      width: 0,
+                      height: 0,
+                    );
+                    _mode = SelectionMode.creating;
+                  });
+                }
               },
-              onLongPressStart: (details) {
+              onPointerMove: (event) {
                 final viewSize = Size(
                   MediaQuery.of(context).size.width,
                   MediaQuery.of(context).size.height * 0.40,
                 );
-                final mappedPos = _mapLocalToOriginal(
-                  details.localPosition,
-                  viewSize,
-                );
-
-                debugPrint(
-                  '📍 Coordinate Selected (Long Press): Screen(x: ${details.localPosition.dx.toStringAsFixed(1)}, y: ${details.localPosition.dy.toStringAsFixed(1)}) -> Image(x: ${mappedPos.dx.toInt()}, y: ${mappedPos.dy.toInt()})',
-                );
-
+                final localPos = event.localPosition;
+                
+                if (_mode == SelectionMode.creating && _dragStart != null) {
+                  final double currentX = localPos.dx.clamp(0.0, viewSize.width);
+                  final double currentY = localPos.dy.clamp(0.0, viewSize.height);
+                  
+                  final double left = math.min(_dragStart!.dx, currentX);
+                  final double top = math.min(_dragStart!.dy, currentY);
+                  final double width = (currentX - _dragStart!.dx).abs();
+                  final double height = (currentY - _dragStart!.dy).abs();
+                  
+                  setState(() {
+                    _selection = SelectionRect(
+                      left: left,
+                      top: top,
+                      width: width,
+                      height: height,
+                    );
+                  });
+                } else if (_mode == SelectionMode.moving && _selection != null) {
+                  double newLeft = _selection!.left + event.delta.dx;
+                  double newTop = _selection!.top + event.delta.dy;
+                  
+                  newLeft = newLeft.clamp(0.0, viewSize.width - _selection!.width);
+                  newTop = newTop.clamp(0.0, viewSize.height - _selection!.height);
+                  
+                  setState(() {
+                    _selection!.left = newLeft;
+                    _selection!.top = newTop;
+                  });
+                } else if (_selection != null) {
+                  double left = _selection!.left;
+                  double top = _selection!.top;
+                  double right = _selection!.left + _selection!.width;
+                  double bottom = _selection!.top + _selection!.height;
+                  
+                  final double localX = localPos.dx.clamp(0.0, viewSize.width);
+                  final double localY = localPos.dy.clamp(0.0, viewSize.height);
+                  
+                  switch (_mode) {
+                    case SelectionMode.resizeTopLeft:
+                      left = localX.clamp(0.0, right - 50.0);
+                      top = localY.clamp(0.0, bottom - 50.0);
+                      break;
+                    case SelectionMode.resizeTopRight:
+                      right = localX.clamp(left + 50.0, viewSize.width);
+                      top = localY.clamp(0.0, bottom - 50.0);
+                      break;
+                    case SelectionMode.resizeBottomLeft:
+                      left = localX.clamp(0.0, right - 50.0);
+                      bottom = localY.clamp(top + 50.0, viewSize.height);
+                      break;
+                    case SelectionMode.resizeBottomRight:
+                      right = localX.clamp(left + 50.0, viewSize.width);
+                      bottom = localY.clamp(top + 50.0, viewSize.height);
+                      break;
+                    case SelectionMode.resizeLeft:
+                      left = localX.clamp(0.0, right - 50.0);
+                      break;
+                    case SelectionMode.resizeRight:
+                      right = localX.clamp(left + 50.0, viewSize.width);
+                      break;
+                    case SelectionMode.resizeTop:
+                      top = localY.clamp(0.0, bottom - 50.0);
+                      break;
+                    case SelectionMode.resizeBottom:
+                      bottom = localY.clamp(top + 50.0, viewSize.height);
+                      break;
+                    default:
+                      break;
+                  }
+                  
+                  setState(() {
+                    _selection = SelectionRect(
+                      left: left,
+                      top: top,
+                      width: right - left,
+                      height: bottom - top,
+                    );
+                  });
+                }
+              },
+              onPointerUp: (event) {
+                if (_selection != null) {
+                  if (_selection!.width < 50.0 || _selection!.height < 50.0) {
+                    setState(() {
+                      _selection = null;
+                      _mode = SelectionMode.none;
+                    });
+                    context.read<ImageEditCubit>().clearSelection();
+                    return;
+                  }
+                }
+                
                 setState(() {
-                  _lastTapCoordinate = {"x": mappedPos.dx, "y": mappedPos.dy};
-                  _tapPosForDot = details.localPosition;
-                  _isShortTap = false;
-                  _isLongTap = true;
+                  _mode = SelectionMode.none;
                 });
-
-                // Automatically trigger area selection in Cubit
-                context.read<ImageEditCubit>().selectArea(_lastTapCoordinate!);
+                
+                if (_selection != null) {
+                  final viewSize = Size(
+                    MediaQuery.of(context).size.width,
+                    MediaQuery.of(context).size.height * 0.40,
+                  );
+                  
+                  final Offset localTopLeft = Offset(_selection!.left, _selection!.top);
+                  final Offset localBottomRight = Offset(_selection!.left + _selection!.width, _selection!.top + _selection!.height);
+                  
+                  final Offset originalTopLeft = _mapLocalToOriginal(localTopLeft, viewSize);
+                  final Offset originalBottomRight = _mapLocalToOriginal(localBottomRight, viewSize);
+                  
+                  final int originalLeft = originalTopLeft.dx.round();
+                  final int originalTop = originalTopLeft.dy.round();
+                  final int originalRight = originalBottomRight.dx.round();
+                  final int originalBottom = originalBottomRight.dy.round();
+                  
+                  final areaData = {
+                    "left": originalLeft,
+                    "top": originalTop,
+                    "right": originalRight,
+                    "bottom": originalBottom,
+                  };
+                  
+                  debugPrint("Selected Area (Original Coordinates): $areaData");
+                  context.read<ImageEditCubit>().selectArea(areaData);
+                }
               },
               child: Stack(
                 children: [
@@ -1576,49 +1746,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
                             gaplessPlayback: true,
                           ),
 
-                  // Selected Coordinate Dot
-                  if (_tapPosForDot != null)
-                    Positioned(
-                      left: _tapPosForDot!.dx - 12,
-                      top: _tapPosForDot!.dy - 12,
-                      child: IgnorePointer(
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.5),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 4,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.black,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                  // Selected Coordinate Dot overlay removed and replaced with selection painter
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: CustomPaint(
+                        painter: SelectionPainter(
+                          selection: _selection?.rect,
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
@@ -2154,6 +2291,16 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
     return GestureDetector(
       onTap: () {
+        if (_selection == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Please select an area on the image first."),
+              backgroundColor: Colors.amber,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
         setState(() => _selectedTexture = texture);
         // Automatically trigger pattern selection in Cubit
         context.read<ImageEditCubit>().selectPattern(texture);
@@ -2369,8 +2516,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
           _selectedTexture = null;
           _selectedColor = null;
           _selectedSubCategory = null;
-          _tapPosForDot = null;
-          _lastTapCoordinate = null;
+          _selection = null;
         });
 
         // RE-INIT CUBIT WITH NEW SESSION STARTING FROM THE FINALIZED IMAGE BASE
@@ -2733,4 +2879,128 @@ class _DashedRectPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class SelectionRect {
+  double left;
+  double top;
+  double width;
+  double height;
+
+  SelectionRect({
+    required this.left,
+    required this.top,
+    required this.width,
+    required this.height,
+  });
+
+  Rect get rect => Rect.fromLTWH(left, top, width, height);
+}
+
+enum SelectionMode {
+  none,
+  creating,
+  moving,
+  resizeTopLeft,
+  resizeTopRight,
+  resizeBottomLeft,
+  resizeBottomRight,
+  resizeLeft,
+  resizeRight,
+  resizeTop,
+  resizeBottom,
+}
+
+class SelectionPainter extends CustomPainter {
+  final Rect? selection;
+
+  SelectionPainter({required this.selection});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (selection == null) return;
+
+    final double left = selection!.left;
+    final double top = selection!.top;
+    final double right = selection!.right;
+    final double bottom = selection!.bottom;
+    final double width = selection!.width;
+    final double height = selection!.height;
+
+    // 1. Draw dark background overlay outside selection
+    final Paint overlayPaint = Paint()
+      ..color = Colors.black.withOpacity(0.45)
+      ..style = PaintingStyle.fill;
+
+    final Path backgroundPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final Path selectionPath = Path()..addRect(selection!);
+    final Path overlayPath = Path.combine(
+      PathOperation.difference,
+      backgroundPath,
+      selectionPath,
+    );
+    canvas.drawPath(overlayPath, overlayPaint);
+
+    // 2. Draw Rule of Thirds grid lines inside selection
+    final Paint gridPaint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    canvas.drawLine(Offset(left + width / 3, top), Offset(left + width / 3, bottom), gridPaint);
+    canvas.drawLine(Offset(left + 2 * width / 3, top), Offset(left + 2 * width / 3, bottom), gridPaint);
+    canvas.drawLine(Offset(left, top + height / 3), Offset(right, top + height / 3), gridPaint);
+    canvas.drawLine(Offset(left, top + 2 * height / 3), Offset(right, top + 2 * height / 3), gridPaint);
+
+    // 3. Draw thin selection border
+    final Paint borderPaint = Paint()
+      ..color = Colors.white.withOpacity(0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawRect(selection!, borderPaint);
+
+    // 4. Draw thick corner crop handles (L-shape)
+    final Paint handlePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round;
+
+    final double cornerLength = 16.0;
+
+    // Top-Left
+    canvas.drawLine(Offset(left, top), Offset(left + cornerLength, top), handlePaint);
+    canvas.drawLine(Offset(left, top), Offset(left, top + cornerLength), handlePaint);
+
+    // Top-Right
+    canvas.drawLine(Offset(right, top), Offset(right - cornerLength, top), handlePaint);
+    canvas.drawLine(Offset(right, top), Offset(right, top + cornerLength), handlePaint);
+
+    // Bottom-Left
+    canvas.drawLine(Offset(left, bottom), Offset(left + cornerLength, bottom), handlePaint);
+    canvas.drawLine(Offset(left, bottom), Offset(left, bottom - cornerLength), handlePaint);
+
+    // Bottom-Right
+    canvas.drawLine(Offset(right, bottom), Offset(right - cornerLength, bottom), handlePaint);
+    canvas.drawLine(Offset(right, bottom), Offset(right, bottom - cornerLength), handlePaint);
+
+    // 5. Draw thick edge middle handles (horizontal / vertical bars)
+    final double midX = (left + right) / 2;
+    final double midY = (top + bottom) / 2;
+    final double edgeLength = 12.0;
+
+    // Left Edge Middle
+    canvas.drawLine(Offset(left, midY - edgeLength), Offset(left, midY + edgeLength), handlePaint);
+    // Right Edge Middle
+    canvas.drawLine(Offset(right, midY - edgeLength), Offset(right, midY + edgeLength), handlePaint);
+    // Top Edge Middle
+    canvas.drawLine(Offset(midX - edgeLength, top), Offset(midX + edgeLength, top), handlePaint);
+    // Bottom Edge Middle
+    canvas.drawLine(Offset(midX - edgeLength, bottom), Offset(midX + edgeLength, bottom), handlePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant SelectionPainter oldDelegate) {
+    return oldDelegate.selection != selection;
+  }
 }

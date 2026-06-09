@@ -128,8 +128,10 @@ class ImageEditCubit extends Cubit<ImageEditState> {
       final responseJson = await _imageEditService.tryOnFurnitureV2(
         roomImage: roomFile,
         patternImage: patternFile,
-        x: (coordinate['x'] as num).toInt(),
-        y: (coordinate['y'] as num).toInt(),
+        left: (coordinate['left'] as num).toInt(),
+        top: (coordinate['top'] as num).toInt(),
+        right: (coordinate['right'] as num).toInt(),
+        bottom: (coordinate['bottom'] as num).toInt(),
       );
 
       final maskBase64 = responseJson['mask'] as String;

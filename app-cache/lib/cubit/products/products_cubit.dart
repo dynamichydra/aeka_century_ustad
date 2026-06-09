@@ -211,7 +211,8 @@ class ProductsCubit extends Cubit<ProductsState> {
 
   Future<void> fetchTrendingProducts({
     required String ownerId,
-    int limit = 12,
+    String? applicationType,
+    int limit = 200,
   }) async {
     emit(state.copyWith(
       isLoading: true,
@@ -220,6 +221,7 @@ class ProductsCubit extends Cubit<ProductsState> {
       limit: limit,
       isTrending: true,
       currentOwnerId: ownerId,
+      currentApplicationType: applicationType,
       clearQuery: true,
       clearCategory: true,
       clearRoom: true,
@@ -230,6 +232,7 @@ class ProductsCubit extends Cubit<ProductsState> {
     try {
       final products = await _productRepository.getTrendingProducts(
         ownerId: ownerId,
+        applicationType: applicationType,
         limit: limit,
         offset: 0,
       );
@@ -410,6 +413,7 @@ class ProductsCubit extends Cubit<ProductsState> {
         debugPrint('📈 CUBIT_LOG: Loading more trending products for owner: ${state.currentOwnerId}');
         newProducts = await _productRepository.getTrendingProducts(
           ownerId: state.currentOwnerId!,
+          applicationType: state.currentApplicationType,
           limit: state.limit,
           offset: state.offset,
         );

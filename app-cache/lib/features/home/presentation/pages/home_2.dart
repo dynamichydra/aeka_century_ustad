@@ -935,6 +935,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                                 .fetchTrendingProducts(
                                                   ownerId:
                                                       "anisasru2@gmail.com",
+                                                  applicationType: homeState.isExterior
+                                                      ? "EXTERIOR"
+                                                      : "INTERIOR",
                                                 );
                                           } else {
                                             context

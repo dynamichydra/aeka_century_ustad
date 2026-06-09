@@ -77,14 +77,18 @@ class ImageEditService {
   Future<File> tryOnFurniture({
     required File roomImage,
     required File patternImage,
-    required int x,
-    required int y,
+    required int left,
+    required int top,
+    required int right,
+    required int bottom,
   }) async {
     final bytes = await _apiService.tryOnFurniture(
       roomImage: roomImage,
       patternImage: patternImage,
-      x: x,
-      y: y,
+      left: left,
+      top: top,
+      right: right,
+      bottom: bottom,
     );
 
     // Save bytes to a temporary file
@@ -97,14 +101,18 @@ class ImageEditService {
   Future<Map<String, dynamic>> tryOnFurnitureV2({
     required File roomImage,
     required File patternImage,
-    required int x,
-    required int y,
+    required int left,
+    required int top,
+    required int right,
+    required int bottom,
   }) async {
     return await _apiService.tryOnFurnitureV2(
       roomImage: roomImage,
       patternImage: patternImage,
-      x: x,
-      y: y,
+      left: left,
+      top: top,
+      right: right,
+      bottom: bottom,
     );
   }
 }
