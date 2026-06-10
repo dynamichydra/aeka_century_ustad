@@ -22,6 +22,7 @@ class ImagePreviewPage extends StatefulWidget {
   final String image_category;
   final String? sub_category;
   final String? image_id;
+
   /// "INTERIOR" or "EXTERIOR" — from the API response applicationType field
   final String? applicationType;
 
@@ -45,6 +46,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   List<SelectedImageData> _exploreImages = [];
   bool _isImageLoading = false;
   bool _isLoading = false;
+
   /// Tracks the applicationType of whichever image is currently displayed.
   /// Initialised from the route extra; updated when user picks from "More Products".
   String? _currentApplicationType;
@@ -95,10 +97,10 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     final id = _currentSelection?.id ?? widget.image_id;
     if (id == null || id.trim().isEmpty) return;
     context.read<ProductsCubit>().fetchSimilarProducts(
-          id,
-          ownerId: "anisasru2@gmail.com",
-          limit: 12,
-        );
+      id,
+      ownerId: "user13@gmail.com",
+      limit: 12,
+    );
   }
 
   Future<void> _hydrateCurrentSelectionFromDb() async {
@@ -179,7 +181,8 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         // Update applicationType from the live product data (DB may not have it)
         if (mounted) {
           setState(() {
-            _currentApplicationType = product.applicationType ?? existing.applicationType;
+            _currentApplicationType =
+                product.applicationType ?? existing.applicationType;
           });
         }
         await _selectExploreImage(existing);
@@ -188,7 +191,10 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
       // 2. Use Cache Manager to get/download the file
       final file = await DefaultCacheManager().getSingleFile(product.image);
-      final Uint8List imageBytes = await compute((File f) => f.readAsBytesSync(), file);
+      final Uint8List imageBytes = await compute(
+        (File f) => f.readAsBytesSync(),
+        file,
+      );
 
       // 3. Save to SQLite
       final imageData = SelectedImageData(
@@ -268,8 +274,6 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     await _handleEditRoute(AppRoutes.imageEditScroll);
   }
 
-
-
   Future<void> _handleEditRoute(String route) async {
     File? fileToEdit = _currentFile;
 
@@ -300,9 +304,10 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         extra: {
           'imageFile': fileToEdit,
           'image_id': _currentSelection?.id ?? widget.image_id,
-          'applicationType': _currentApplicationType
-              ?? _currentSelection?.applicationType
-              ?? widget.applicationType,
+          'applicationType':
+              _currentApplicationType ??
+              _currentSelection?.applicationType ??
+              widget.applicationType,
         },
       );
     }
@@ -450,19 +455,21 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                                         height: double.infinity,
                                         width: double.infinity,
                                         memCacheWidth: 300,
-                                        placeholder: (context, url) => Shimmer.fromColors(
-                                          baseColor: Colors.grey[300]!,
-                                          highlightColor: Colors.grey[100]!,
-                                          child: Container(
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        errorWidget: (context, url, error) => Container(
-                                          color: Colors.grey[300],
-                                          child: const Icon(
-                                            Icons.error_outline,
-                                          ),
-                                        ),
+                                        placeholder: (context, url) =>
+                                            Shimmer.fromColors(
+                                              baseColor: Colors.grey[300]!,
+                                              highlightColor: Colors.grey[100]!,
+                                              child: Container(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                        errorWidget: (context, url, error) =>
+                                            Container(
+                                              color: Colors.grey[300],
+                                              child: const Icon(
+                                                Icons.error_outline,
+                                              ),
+                                            ),
                                       ),
                                     ),
                                     if (product.isTrending)
@@ -518,41 +525,41 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                       ),
                     ],
                   ),
-                  child:  SizedBox(
-                        width: 120,
-                        height: 44,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            padding: EdgeInsets.zero,
-                            elevation: 0,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: _handleScrollEdit,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            spacing: 8,
-                            children: [
-                              Image.asset(
-                                'assets/icons/app_icons/edit.png',
-                                height: 14,
-                              ),
-                              const Text(
-                                'Edit',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
+                  child: SizedBox(
+                    width: 120,
+                    height: 44,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.zero,
+                        elevation: 0,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
+                      onPressed: _handleScrollEdit,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 8,
+                        children: [
+                          Image.asset(
+                            'assets/icons/app_icons/edit.png',
+                            height: 14,
+                          ),
+                          const Text(
+                            'Edit',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

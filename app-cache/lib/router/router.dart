@@ -90,12 +90,17 @@ final GoRouter router = GoRouter(
           subCategory = data["sub_category"] as String?;
           image_id = data["image_id"] as String?;
           // Support both new applicationType string and legacy isExterior bool
-          applicationType = data["applicationType"] as String?
-              ?? ((data["isExterior"] as bool? ?? false) ? "EXTERIOR" : "INTERIOR");
+          applicationType =
+              data["applicationType"] as String? ??
+              ((data["isExterior"] as bool? ?? false)
+                  ? "EXTERIOR"
+                  : "INTERIOR");
         }
 
         if (imageFile == null) {
-          return Scaffold(body: Center(child: Text("Error: No image provided")));
+          return Scaffold(
+            body: Center(child: Text("Error: No image provided")),
+          );
         }
 
         return BlocProvider(
@@ -134,7 +139,9 @@ final GoRouter router = GoRouter(
         }
 
         if (imageFile == null) {
-          return Scaffold(body: Center(child: Text("Error: No image for editing")));
+          return Scaffold(
+            body: Center(child: Text("Error: No image for editing")),
+          );
         }
 
         return BlocProvider(
@@ -172,7 +179,9 @@ final GoRouter router = GoRouter(
         }
 
         if (imageFile == null) {
-          return Scaffold(body: Center(child: Text("Error: No image for editing")));
+          return Scaffold(
+            body: Center(child: Text("Error: No image for editing")),
+          );
         }
 
         return BlocProvider(
@@ -202,7 +211,9 @@ final GoRouter router = GoRouter(
         }
 
         if (imageFile == null) {
-          return Scaffold(body: Center(child: Text("Error: No image for color picking")));
+          return Scaffold(
+            body: Center(child: Text("Error: No image for color picking")),
+          );
         }
 
         return ImageColorPickerPage(
@@ -216,12 +227,15 @@ final GoRouter router = GoRouter(
       name: "Image Finalize",
       builder: (context, state) {
         if (state.extra is! Map<String, dynamic>) {
-          return const Scaffold(body: Center(child: Text("Error: Missing data for finalization")));
+          return const Scaffold(
+            body: Center(child: Text("Error: Missing data for finalization")),
+          );
         }
         final data = state.extra as Map<String, dynamic>;
         return ImageFinalizePage(
           editedImage: data['editedImage'],
-          usedLaminates: data['usedLaminates'] as List<Map<String, dynamic>>? ?? [],
+          usedLaminates:
+              data['usedLaminates'] as List<Map<String, dynamic>>? ?? [],
         );
       },
     ),
@@ -243,7 +257,9 @@ final GoRouter router = GoRouter(
         }
 
         if (originalImage == null) {
-          return Scaffold(body: Center(child: Text("Error: No image for comparison")));
+          return Scaffold(
+            body: Center(child: Text("Error: No image for comparison")),
+          );
         }
 
         return CompareImagePage(

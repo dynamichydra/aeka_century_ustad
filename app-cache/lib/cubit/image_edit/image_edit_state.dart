@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:century_ai/core/services/image_composite_service.dart';
 import 'package:equatable/equatable.dart';
 
@@ -22,6 +23,20 @@ class ImageEditState extends Equatable {
   final String? sessionId;
   final List<LayerPair> appliedLayers; // Accumulated mask and warped patterns
 
+  // Preview / approval flow (transient — never persisted)
+  /// True while the user is reviewing a pending laminate application.
+  final bool showSelectionPreview;
+
+  /// Raw mask PNG bytes returned by the API (used to draw the selection outline).
+  final Uint8List? pendingMaskBytes;
+
+  /// Raw warped-pattern PNG bytes returned by the API.
+  final Uint8List? pendingWarpedBytes;
+
+  /// Path to the temporary composited PNG written during preview.
+  /// Copied to /edits/ on Accept; deleted on Cancel.
+  final String? tempCompositedImagePath;
+
   const ImageEditState({
     this.isCompareLoading = false,
     this.isApplyLoading = false,
@@ -40,6 +55,11 @@ class ImageEditState extends Equatable {
     this.ownerId,
     this.sessionId,
     this.appliedLayers = const [],
+    // Preview fields
+    this.showSelectionPreview = false,
+    this.pendingMaskBytes,
+    this.pendingWarpedBytes,
+    this.tempCompositedImagePath,
   });
 
   ImageEditState copyWith({
@@ -60,16 +80,23 @@ class ImageEditState extends Equatable {
     String? ownerId,
     String? sessionId,
     List<LayerPair>? appliedLayers,
+    // Preview fields
+    bool? showSelectionPreview,
+    Uint8List? pendingMaskBytes,
+    Uint8List? pendingWarpedBytes,
+    String? tempCompositedImagePath,
+    // Convenience flags
     bool clearError = false,
     bool clearSuccess = false,
+    /// When true, nullifies all four transient preview fields at once.
+    bool clearPendingPreview = false,
   }) {
     return ImageEditState(
       isCompareLoading: isCompareLoading ?? this.isCompareLoading,
       isApplyLoading: isApplyLoading ?? this.isApplyLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      successMessage: clearSuccess
-          ? null
-          : (successMessage ?? this.successMessage),
+      successMessage:
+          clearSuccess ? null : (successMessage ?? this.successMessage),
       editedImageFile: editedImageFile ?? this.editedImageFile,
       originalImage: originalImage ?? this.originalImage,
       currentGeneratedImage:
@@ -84,6 +111,18 @@ class ImageEditState extends Equatable {
       ownerId: ownerId ?? this.ownerId,
       sessionId: sessionId ?? this.sessionId,
       appliedLayers: appliedLayers ?? this.appliedLayers,
+      // Preview — cleared wholesale with clearPendingPreview
+      showSelectionPreview: clearPendingPreview
+          ? false
+          : (showSelectionPreview ?? this.showSelectionPreview),
+      pendingMaskBytes:
+          clearPendingPreview ? null : (pendingMaskBytes ?? this.pendingMaskBytes),
+      pendingWarpedBytes: clearPendingPreview
+          ? null
+          : (pendingWarpedBytes ?? this.pendingWarpedBytes),
+      tempCompositedImagePath: clearPendingPreview
+          ? null
+          : (tempCompositedImagePath ?? this.tempCompositedImagePath),
     );
   }
 
@@ -106,5 +145,9 @@ class ImageEditState extends Equatable {
     ownerId,
     sessionId,
     appliedLayers,
+    showSelectionPreview,
+    pendingMaskBytes,
+    pendingWarpedBytes,
+    tempCompositedImagePath,
   ];
 }

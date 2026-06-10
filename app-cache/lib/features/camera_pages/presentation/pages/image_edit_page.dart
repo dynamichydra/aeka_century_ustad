@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:century_ai/core/constants/colors.dart';
@@ -51,7 +52,8 @@ class ImageEditPage extends StatefulWidget {
   State<ImageEditPage> createState() => _ImageEditPageState();
 }
 
-class _ImageEditPageState extends State<ImageEditPage> {
+class _ImageEditPageState extends State<ImageEditPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
 
   Map<String, dynamic>? _selectedColor;
@@ -80,7 +82,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
   double _sliderPosition = 0.5;
 
   final UserEditsService _userEditsService = UserEditsService();
-  final String _ownerEmail = "anisasru2@gmail.com";
+  final String _ownerEmail = "user13@gmail.com";
   List<EditRecord> _userEdits = [];
 
   /// ID of the edit_history row that the current session is built upon.
@@ -88,12 +90,23 @@ class _ImageEditPageState extends State<ImageEditPage> {
   String? _parentEditId;
   bool _isLoadingEdits = false;
 
+  // ── Marching ants animation (preview mode) ────────────────────────────────
+  late final AnimationController _marchingAntsController;
+  ui.Image? _decodedMaskImage; // decoded mask for the preview painter
+  Path? _maskFillPath; // path for reverse selection overlay hole
+  Path? _maskEdgePath; // path for marching ants outline
+
   // Dummy versions fallback if no network edits yet
 
   // Rectangle Selection Variables
   SelectionRect? _selection;
+  SelectionRect? _backupSelection;
   Offset? _dragStart;
   SelectionMode _mode = SelectionMode.none;
+  final Map<int, Offset> _activePointers = {};
+  bool _isPanning = false;
+  double _initialPointerDistance = 1.0;
+  double _initialScale = 1.0;
 
   final TransformationController _transformationController =
       TransformationController();
@@ -202,6 +215,8 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   @override
   void dispose() {
+    _marchingAntsController.dispose();
+    _decodedMaskImage?.dispose();
     _transformationController.dispose();
     _searchController.dispose();
     _selectedIndicesNotifier.dispose();
@@ -223,6 +238,12 @@ class _ImageEditPageState extends State<ImageEditPage> {
       _fetchTexturesByColor();
     }
     _fetchUserEditHistory();
+
+    // Initialize marching ants animation controller
+    _marchingAntsController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat();
 
     // Initialize Cubit with original image
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -598,33 +619,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
 
   /// Category/subcategory map for Exteria (exterior laminates)
   static const Map<String, List<String>> _exteriaCategoriesMap = {
-    "Abstract Patterns": [
-      "All",
-      "Cement",
-      "Grunge & Rustic",
-      "Others",
-    ],
-    "Woodgrains": [
-      "All",
-      "Dark",
-      "Medium",
-      "Light",
-    ],
-    "Stones": [
-      "All",
-      "Marble",
-      "Travertine",
-      "Ivory",
-    ],
-    "Solid": [
-      "All",
-      "Green",
-      "White",
-      "Blue",
-      "Yellow",
-      "Grey",
-      "Other",
-    ],
+    "Abstract Patterns": ["All", "Cement", "Grunge & Rustic", "Others"],
+    "Woodgrains": ["All", "Dark", "Medium", "Light"],
+    "Stones": ["All", "Marble", "Travertine", "Ivory"],
+    "Solid": ["All", "Green", "White", "Blue", "Yellow", "Grey", "Other"],
   };
 
   Map<String, List<String>> get _activeCategoriesMap =>
@@ -658,6 +656,96 @@ class _ImageEditPageState extends State<ImageEditPage> {
     }
   }
 
+  // ── Mask decoding for preview painter ──────────────────────────────────────
+  Future<void> _decodeMaskImage(Uint8List bytes) async {
+    try {
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
+
+      final byteData = await image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      );
+      final Path fillPath = Path();
+      final Path edgePath = Path();
+
+      if (byteData != null) {
+        int whiteCount = 0;
+        int blackCount = 0;
+        final int width = image.width;
+        final int height = image.height;
+
+        bool isWhite(int x, int y) {
+          if (x < 0 || x >= width || y < 0 || y >= height) return false;
+          final int offset = (y * width + x) * 4;
+          final int r = byteData.getUint8(offset);
+          final int g = byteData.getUint8(offset + 1);
+          final int b = byteData.getUint8(offset + 2);
+          return r > 200 && g > 200 && b > 200; // luminance threshold
+        }
+
+        for (int y = 0; y < height; y++) {
+          int startX = -1;
+          for (int x = 0; x < width; x++) {
+            final white = isWhite(x, y);
+            if (white) {
+              whiteCount++;
+              if (startX == -1) startX = x;
+
+              // Check if edge
+              if (!isWhite(x - 1, y) ||
+                  !isWhite(x + 1, y) ||
+                  !isWhite(x, y - 1) ||
+                  !isWhite(x, y + 1)) {
+                edgePath.addRect(
+                  Rect.fromLTWH(x.toDouble() - 1, y.toDouble() - 1, 3.0, 3.0),
+                );
+              }
+            } else {
+              blackCount++;
+              if (startX != -1) {
+                fillPath.addRect(
+                  Rect.fromLTRB(
+                    startX.toDouble(),
+                    y.toDouble(),
+                    x.toDouble(),
+                    (y + 1).toDouble(),
+                  ),
+                );
+                startX = -1;
+              }
+            }
+          }
+          if (startX != -1) {
+            fillPath.addRect(
+              Rect.fromLTRB(
+                startX.toDouble(),
+                y.toDouble(),
+                width.toDouble(),
+                (y + 1).toDouble(),
+              ),
+            );
+          }
+        }
+
+        debugPrint('--- Mask Pixel Stats ---');
+        debugPrint('Mask Width: $width | Height: $height');
+        debugPrint('White Pixels: $whiteCount | Black Pixels: $blackCount');
+      }
+
+      if (mounted) {
+        setState(() {
+          _decodedMaskImage?.dispose();
+          _decodedMaskImage = image;
+          _maskFillPath = fillPath;
+          _maskEdgePath = edgePath;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ _decodeMaskImage error: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<ImageEditCubit, ImageEditState>(
@@ -669,17 +757,38 @@ class _ImageEditPageState extends State<ImageEditPage> {
               backgroundColor: Colors.red,
             ),
           );
-        } else if (state.successMessage != null) {
-          // Clear laminate selection and coordinate dot immediately upon successful AI Try-on
-          setState(() {
-            _selectedTexture = null;
-            _selection = null;
-            _hasNewUnappliedEdit =
-                true; // Mark that a new generated design is available to apply
-          });
-          context.read<ImageEditCubit>().clearSelection();
+        }
 
-          if (state.editedImageFile != null) {
+        // ── Preview entering: decode mask once
+        if (state.showSelectionPreview &&
+            state.pendingMaskBytes != null &&
+            _decodedMaskImage == null) {
+          _decodeMaskImage(state.pendingMaskBytes!);
+        }
+
+        // ── Preview leaving (Accept OR Cancel):
+        // Always clear mask + selection in ONE atomic setState whenever
+        // showSelectionPreview transitions to false while we hold a decoded mask.
+        if (!state.showSelectionPreview && _decodedMaskImage != null) {
+          final bool wasAccepted =
+              state.currentGeneratedImage != null &&
+              state.currentGeneratedImage != _baseImage;
+
+          setState(() {
+            _decodedMaskImage?.dispose();
+            _decodedMaskImage = null;
+            _maskFillPath = null;
+            _maskEdgePath = null;
+            _selection = null;
+            _selectedTexture = null;
+
+            if (wasAccepted) {
+              _baseImage = state.currentGeneratedImage!;
+              _hasNewUnappliedEdit = true;
+            }
+          });
+
+          if (wasAccepted && state.editedImageFile != null) {
             setState(() {
               _isPrecaching = true;
               _currentAssetPreview = state.editedImageFile;
@@ -687,18 +796,10 @@ class _ImageEditPageState extends State<ImageEditPage> {
             final imageProvider = FileImage(File(state.editedImageFile!));
             precacheImage(imageProvider, context)
                 .then((_) {
-                  if (mounted) {
-                    setState(() {
-                      _isPrecaching = false;
-                    });
-                  }
+                  if (mounted) setState(() => _isPrecaching = false);
                 })
                 .catchError((e) {
-                  if (mounted) {
-                    setState(() {
-                      _isPrecaching = false;
-                    });
-                  }
+                  if (mounted) setState(() => _isPrecaching = false);
                 });
           }
         }
@@ -709,7 +810,11 @@ class _ImageEditPageState extends State<ImageEditPage> {
         body: SafeArea(
           child: BlocBuilder<ImageEditCubit, ImageEditState>(
             builder: (context, state) {
-              final isApplying = state.isApplyLoading || _isPrecaching || _isUploading;
+              final bool inPreview = state.showSelectionPreview;
+              final isApplying =
+                  (state.isApplyLoading && !inPreview) ||
+                  _isPrecaching ||
+                  _isUploading;
               return AbsorbPointer(
                 absorbing: isApplying,
                 child: Stack(
@@ -722,13 +827,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
                           child: ValueListenableBuilder<List<int>>(
                             valueListenable: _selectedIndicesNotifier,
                             builder: (context, selectedIndices, child) {
-                              if (state.isApplyLoading || _isPrecaching) {
+                              if ((state.isApplyLoading && !inPreview) ||
+                                  _isPrecaching) {
                                 return _buildGeneratingBlock();
                               }
                               return _compareExpanded
                                   ? _buildTopComparisonSection(selectedIndices)
                                   : RepaintBoundary(
-                                      child: _buildImageOverlaySection(),
+                                      child: _buildImageOverlaySection(state),
                                     );
                             },
                           ),
@@ -746,8 +852,13 @@ class _ImageEditPageState extends State<ImageEditPage> {
                                     child: _buildCollapsibleHeaders(),
                                   ),
                                 ),
+                                // Preview approval bar — replaces all normal bottom bars
+                                if (inPreview)
+                                  Positioned.fill(
+                                    child: _buildPreviewApprovalBar(state),
+                                  ),
                                 // Fixed Bottom Bar Area (Edit Mode)
-                                if (_editExpanded)
+                                if (!inPreview && _editExpanded)
                                   Positioned(
                                     bottom: 0,
                                     left: 0,
@@ -755,7 +866,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                                     child: _buildBottomBarFixed(),
                                   ),
                                 // Fixed Bottom Bar Area (Compare Mode)
-                                if (_compareExpanded)
+                                if (!inPreview && _compareExpanded)
                                   Positioned(
                                     bottom: 0,
                                     left: 0,
@@ -898,7 +1009,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // const SizedBox(height: 4),
-          _buildSearchBar(),
+          // _buildSearchBar(),
           const SizedBox(height: 8),
           const Text(
             "Select Color",
@@ -1513,7 +1624,77 @@ class _ImageEditPageState extends State<ImageEditPage> {
     return SelectionMode.none;
   }
 
-  Widget _buildImageOverlaySection() {
+  Widget _buildImageOverlaySection(ImageEditState state) {
+    final bool inPreview = state.showSelectionPreview;
+
+    if (inPreview) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          // Show the original base image (compositing is not shown in preview)
+          _baseImage.startsWith('http')
+              ? Image.network(
+                  _baseImage,
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height * 0.40,
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true,
+                  cacheWidth: 800,
+                )
+              : Image.file(
+                  File(_baseImage),
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height * 0.40,
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true,
+                  cacheWidth: 800,
+                ),
+
+          if (_decodedMaskImage != null)
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _marchingAntsController,
+                builder: (_, __) => CustomPaint(
+                  painter: MarchingAntsMaskPainter(
+                    maskImage: _decodedMaskImage!,
+                    progress: _marchingAntsController.value,
+                    fillPath: _maskFillPath,
+                    edgePath: _maskEdgePath,
+                  ),
+                ),
+              ),
+            ),
+
+          Positioned(
+            top: 12,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.55),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '✦  Review before applying',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Stack(
       children: [
         ClipRect(
@@ -1527,22 +1708,51 @@ class _ImageEditPageState extends State<ImageEditPage> {
             child: Listener(
               behavior: HitTestBehavior.opaque,
               onPointerDown: (event) {
+                _activePointers[event.pointer] = event.position;
+
+                if (_activePointers.length == 1) {
+                  _backupSelection = _selection;
+                }
+
+                if (_activePointers.length >= 2) {
+                  setState(() {
+                    _selection = _backupSelection;
+                    _mode = SelectionMode.none;
+                    _isPanning = true;
+
+                    // Initialize pinch baseline
+                    final keys = _activePointers.keys.toList();
+                    final p1 = _activePointers[keys[0]]!;
+                    final p2 = _activePointers[keys[1]]!;
+                    _initialPointerDistance = (p1 - p2).distance;
+                    if (_initialPointerDistance < 1.0) {
+                      _initialPointerDistance = 1.0;
+                    }
+                    _initialScale = _transformationController.value
+                        .getMaxScaleOnAxis();
+                  });
+                  return;
+                }
+
+                if (_isPanning) return;
+
                 final viewSize = Size(
                   MediaQuery.of(context).size.width,
                   MediaQuery.of(context).size.height * 0.40,
                 );
                 final localPos = event.localPosition;
-                
+
                 SelectionMode detectedMode = SelectionMode.none;
                 if (_selection != null) {
                   detectedMode = _hitTestHandles(localPos);
                 }
-                
+
                 if (detectedMode != SelectionMode.none) {
                   setState(() {
                     _mode = detectedMode;
                   });
-                } else if (_selection != null && _selection!.rect.contains(localPos)) {
+                } else if (_selection != null &&
+                    _selection!.rect.contains(localPos)) {
                   setState(() {
                     _mode = SelectionMode.moving;
                   });
@@ -1560,21 +1770,98 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 }
               },
               onPointerMove: (event) {
+                if (_activePointers.length >= 2 || _isPanning) {
+                  final Offset? oldPos = _activePointers[event.pointer];
+                  _activePointers[event.pointer] = event.position;
+
+                  if (oldPos != null && oldPos != event.position) {
+                    final Matrix4 matrix = _transformationController.value
+                        .clone();
+                    final double oldScale = matrix.getMaxScaleOnAxis();
+                    final viewSize = Size(
+                      MediaQuery.of(context).size.width,
+                      MediaQuery.of(context).size.height * 0.40,
+                    );
+
+                    double targetScale = oldScale;
+                    double scaleRatio = 1.0;
+
+                    if (_activePointers.length >= 2) {
+                      final keys = _activePointers.keys.toList();
+                      final p1 = _activePointers[keys[0]]!;
+                      final p2 = _activePointers[keys[1]]!;
+                      final double currentDistance = (p1 - p2).distance;
+
+                      if (_initialPointerDistance > 1.0) {
+                        final double scaleFactor =
+                            currentDistance / _initialPointerDistance;
+                        targetScale = (_initialScale * scaleFactor).clamp(
+                          1.0,
+                          4.0,
+                        );
+                        scaleRatio = targetScale / oldScale;
+                      }
+                    }
+
+                    Offset sumNew = Offset.zero;
+                    for (final pos in _activePointers.values) {
+                      sumNew += pos;
+                    }
+                    final Offset newCentroid =
+                        sumNew / _activePointers.length.toDouble();
+
+                    final Offset sumOld = sumNew - event.position + oldPos;
+                    final Offset oldCentroid =
+                        sumOld / _activePointers.length.toDouble();
+
+                    final double oldTx = matrix.storage[12];
+                    final double oldTy = matrix.storage[13];
+
+                    double newTx =
+                        newCentroid.dx - (oldCentroid.dx - oldTx) * scaleRatio;
+                    double newTy =
+                        newCentroid.dy - (oldCentroid.dy - oldTy) * scaleRatio;
+
+                    final double margin = 20.0;
+                    final double minTx =
+                        viewSize.width * (1.0 - targetScale) - margin;
+                    final double maxTx = margin;
+
+                    final double minTy =
+                        viewSize.height * (1.0 - targetScale) - margin;
+                    final double maxTy = margin;
+
+                    newTx = newTx.clamp(minTx, maxTx);
+                    newTy = newTy.clamp(minTy, maxTy);
+
+                    _transformationController.value = Matrix4.identity()
+                      ..translate(newTx, newTy)
+                      ..scale(targetScale);
+                  }
+                  return;
+                }
+
                 final viewSize = Size(
                   MediaQuery.of(context).size.width,
                   MediaQuery.of(context).size.height * 0.40,
                 );
                 final localPos = event.localPosition;
-                
+
                 if (_mode == SelectionMode.creating && _dragStart != null) {
-                  final double currentX = localPos.dx.clamp(0.0, viewSize.width);
-                  final double currentY = localPos.dy.clamp(0.0, viewSize.height);
-                  
+                  final double currentX = localPos.dx.clamp(
+                    0.0,
+                    viewSize.width,
+                  );
+                  final double currentY = localPos.dy.clamp(
+                    0.0,
+                    viewSize.height,
+                  );
+
                   final double left = math.min(_dragStart!.dx, currentX);
                   final double top = math.min(_dragStart!.dy, currentY);
                   final double width = (currentX - _dragStart!.dx).abs();
                   final double height = (currentY - _dragStart!.dy).abs();
-                  
+
                   setState(() {
                     _selection = SelectionRect(
                       left: left,
@@ -1583,26 +1870,33 @@ class _ImageEditPageState extends State<ImageEditPage> {
                       height: height,
                     );
                   });
-                } else if (_mode == SelectionMode.moving && _selection != null) {
+                } else if (_mode == SelectionMode.moving &&
+                    _selection != null) {
                   double newLeft = _selection!.left + event.delta.dx;
                   double newTop = _selection!.top + event.delta.dy;
-                  
-                  newLeft = newLeft.clamp(0.0, viewSize.width - _selection!.width);
-                  newTop = newTop.clamp(0.0, viewSize.height - _selection!.height);
-                  
+
+                  newLeft = newLeft.clamp(
+                    0.0,
+                    viewSize.width - _selection!.width,
+                  );
+                  newTop = newTop.clamp(
+                    0.0,
+                    viewSize.height - _selection!.height,
+                  );
+
                   setState(() {
                     _selection!.left = newLeft;
                     _selection!.top = newTop;
                   });
-                } else if (_selection != null) {
+                } else if (_selection != null && _mode != SelectionMode.none) {
                   double left = _selection!.left;
                   double top = _selection!.top;
                   double right = _selection!.left + _selection!.width;
                   double bottom = _selection!.top + _selection!.height;
-                  
+
                   final double localX = localPos.dx.clamp(0.0, viewSize.width);
                   final double localY = localPos.dy.clamp(0.0, viewSize.height);
-                  
+
                   switch (_mode) {
                     case SelectionMode.resizeTopLeft:
                       left = localX.clamp(0.0, right - 10.0);
@@ -1635,7 +1929,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     default:
                       break;
                   }
-                  
+
                   setState(() {
                     _selection = SelectionRect(
                       left: left,
@@ -1647,6 +1941,21 @@ class _ImageEditPageState extends State<ImageEditPage> {
                 }
               },
               onPointerUp: (event) {
+                _activePointers.remove(event.pointer);
+
+                if (_activePointers.isEmpty) {
+                  _backupSelection = null;
+                }
+
+                if (_isPanning) {
+                  if (_activePointers.isEmpty) {
+                    setState(() {
+                      _isPanning = false;
+                    });
+                  }
+                  return;
+                }
+
                 if (_selection != null) {
                   if (_selection!.width < 10.0 || _selection!.height < 10.0) {
                     setState(() {
@@ -1657,37 +1966,59 @@ class _ImageEditPageState extends State<ImageEditPage> {
                     return;
                   }
                 }
-                
+
                 setState(() {
                   _mode = SelectionMode.none;
                 });
-                
+
                 if (_selection != null) {
                   final viewSize = Size(
                     MediaQuery.of(context).size.width,
                     MediaQuery.of(context).size.height * 0.40,
                   );
-                  
-                  final Offset localTopLeft = Offset(_selection!.left, _selection!.top);
-                  final Offset localBottomRight = Offset(_selection!.left + _selection!.width, _selection!.top + _selection!.height);
-                  
-                  final Offset originalTopLeft = _mapLocalToOriginal(localTopLeft, viewSize);
-                  final Offset originalBottomRight = _mapLocalToOriginal(localBottomRight, viewSize);
-                  
+
+                  final Offset localTopLeft = Offset(
+                    _selection!.left,
+                    _selection!.top,
+                  );
+                  final Offset localBottomRight = Offset(
+                    _selection!.left + _selection!.width,
+                    _selection!.top + _selection!.height,
+                  );
+
+                  final Offset originalTopLeft = _mapLocalToOriginal(
+                    localTopLeft,
+                    viewSize,
+                  );
+                  final Offset originalBottomRight = _mapLocalToOriginal(
+                    localBottomRight,
+                    viewSize,
+                  );
+
                   final int originalLeft = originalTopLeft.dx.round();
                   final int originalTop = originalTopLeft.dy.round();
                   final int originalRight = originalBottomRight.dx.round();
                   final int originalBottom = originalBottomRight.dy.round();
-                  
+
                   final areaData = {
                     "left": originalLeft,
                     "top": originalTop,
                     "right": originalRight,
                     "bottom": originalBottom,
                   };
-                  
+
                   debugPrint("Selected Area (Original Coordinates): $areaData");
                   context.read<ImageEditCubit>().selectArea(areaData);
+                }
+              },
+              onPointerCancel: (event) {
+                _activePointers.remove(event.pointer);
+                if (_activePointers.isEmpty) {
+                  setState(() {
+                    _isPanning = false;
+                    _mode = SelectionMode.none;
+                    _backupSelection = null;
+                  });
                 }
               },
               child: Stack(
@@ -1745,9 +2076,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   Positioned.fill(
                     child: RepaintBoundary(
                       child: CustomPaint(
-                        painter: SelectionPainter(
-                          selection: _selection?.rect,
-                        ),
+                        painter: SelectionPainter(selection: _selection?.rect),
                       ),
                     ),
                   ),
@@ -2932,7 +3261,8 @@ class SelectionPainter extends CustomPainter {
       ..color = Colors.black.withOpacity(0.45)
       ..style = PaintingStyle.fill;
 
-    final Path backgroundPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final Path backgroundPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
     final Path selectionPath = Path()..addRect(selection!);
     final Path overlayPath = Path.combine(
       PathOperation.difference,
@@ -2947,10 +3277,26 @@ class SelectionPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
-    canvas.drawLine(Offset(left + width / 3, top), Offset(left + width / 3, bottom), gridPaint);
-    canvas.drawLine(Offset(left + 2 * width / 3, top), Offset(left + 2 * width / 3, bottom), gridPaint);
-    canvas.drawLine(Offset(left, top + height / 3), Offset(right, top + height / 3), gridPaint);
-    canvas.drawLine(Offset(left, top + 2 * height / 3), Offset(right, top + 2 * height / 3), gridPaint);
+    canvas.drawLine(
+      Offset(left + width / 3, top),
+      Offset(left + width / 3, bottom),
+      gridPaint,
+    );
+    canvas.drawLine(
+      Offset(left + 2 * width / 3, top),
+      Offset(left + 2 * width / 3, bottom),
+      gridPaint,
+    );
+    canvas.drawLine(
+      Offset(left, top + height / 3),
+      Offset(right, top + height / 3),
+      gridPaint,
+    );
+    canvas.drawLine(
+      Offset(left, top + 2 * height / 3),
+      Offset(right, top + 2 * height / 3),
+      gridPaint,
+    );
 
     // 3. Draw thin selection border
     final Paint borderPaint = Paint()
@@ -2969,20 +3315,52 @@ class SelectionPainter extends CustomPainter {
     final double cornerLength = 16.0;
 
     // Top-Left
-    canvas.drawLine(Offset(left, top), Offset(left + cornerLength, top), handlePaint);
-    canvas.drawLine(Offset(left, top), Offset(left, top + cornerLength), handlePaint);
+    canvas.drawLine(
+      Offset(left, top),
+      Offset(left + cornerLength, top),
+      handlePaint,
+    );
+    canvas.drawLine(
+      Offset(left, top),
+      Offset(left, top + cornerLength),
+      handlePaint,
+    );
 
     // Top-Right
-    canvas.drawLine(Offset(right, top), Offset(right - cornerLength, top), handlePaint);
-    canvas.drawLine(Offset(right, top), Offset(right, top + cornerLength), handlePaint);
+    canvas.drawLine(
+      Offset(right, top),
+      Offset(right - cornerLength, top),
+      handlePaint,
+    );
+    canvas.drawLine(
+      Offset(right, top),
+      Offset(right, top + cornerLength),
+      handlePaint,
+    );
 
     // Bottom-Left
-    canvas.drawLine(Offset(left, bottom), Offset(left + cornerLength, bottom), handlePaint);
-    canvas.drawLine(Offset(left, bottom), Offset(left, bottom - cornerLength), handlePaint);
+    canvas.drawLine(
+      Offset(left, bottom),
+      Offset(left + cornerLength, bottom),
+      handlePaint,
+    );
+    canvas.drawLine(
+      Offset(left, bottom),
+      Offset(left, bottom - cornerLength),
+      handlePaint,
+    );
 
     // Bottom-Right
-    canvas.drawLine(Offset(right, bottom), Offset(right - cornerLength, bottom), handlePaint);
-    canvas.drawLine(Offset(right, bottom), Offset(right, bottom - cornerLength), handlePaint);
+    canvas.drawLine(
+      Offset(right, bottom),
+      Offset(right - cornerLength, bottom),
+      handlePaint,
+    );
+    canvas.drawLine(
+      Offset(right, bottom),
+      Offset(right, bottom - cornerLength),
+      handlePaint,
+    );
 
     // 5. Draw thick edge middle handles (horizontal / vertical bars)
     final double midX = (left + right) / 2;
@@ -2990,17 +3368,222 @@ class SelectionPainter extends CustomPainter {
     final double edgeLength = 12.0;
 
     // Left Edge Middle
-    canvas.drawLine(Offset(left, midY - edgeLength), Offset(left, midY + edgeLength), handlePaint);
+    canvas.drawLine(
+      Offset(left, midY - edgeLength),
+      Offset(left, midY + edgeLength),
+      handlePaint,
+    );
     // Right Edge Middle
-    canvas.drawLine(Offset(right, midY - edgeLength), Offset(right, midY + edgeLength), handlePaint);
+    canvas.drawLine(
+      Offset(right, midY - edgeLength),
+      Offset(right, midY + edgeLength),
+      handlePaint,
+    );
     // Top Edge Middle
-    canvas.drawLine(Offset(midX - edgeLength, top), Offset(midX + edgeLength, top), handlePaint);
+    canvas.drawLine(
+      Offset(midX - edgeLength, top),
+      Offset(midX + edgeLength, top),
+      handlePaint,
+    );
     // Bottom Edge Middle
-    canvas.drawLine(Offset(midX - edgeLength, bottom), Offset(midX + edgeLength, bottom), handlePaint);
+    canvas.drawLine(
+      Offset(midX - edgeLength, bottom),
+      Offset(midX + edgeLength, bottom),
+      handlePaint,
+    );
   }
 
   @override
   bool shouldRepaint(covariant SelectionPainter oldDelegate) {
     return oldDelegate.selection != selection;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Marching Ants Selection Painter
+// ─────────────────────────────────────────────────────────────────────────────
+class MarchingAntsMaskPainter extends CustomPainter {
+  final ui.Image maskImage;
+  final double progress; // 0.0 to 1.0 from AnimationController
+  final Path? fillPath;
+  final Path? edgePath;
+
+  MarchingAntsMaskPainter({
+    required this.maskImage,
+    required this.progress,
+    this.fillPath,
+    this.edgePath,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+
+    // ── Compute BoxFit.cover transform ─────────────────────────────────────
+    final double imgW = maskImage.width.toDouble();
+    final double imgH = maskImage.height.toDouble();
+
+    // Uniform scale factor (cover = take the LARGER of the two ratios)
+    final double scale =
+        (size.width / imgW).clamp(0.0, double.infinity) >
+            (size.height / imgH).clamp(0.0, double.infinity)
+        ? size.width / imgW
+        : size.height / imgH;
+
+    final double dx = (size.width - imgW * scale) / 2.0;
+    final double dy = (size.height - imgH * scale) / 2.0;
+
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    canvas.translate(dx, dy);
+    canvas.scale(scale, scale);
+
+    if (fillPath != null) {
+      // 1. Darkened reverse-selection overlay
+      final Path maskRect = Path()..addRect(Rect.fromLTWH(0, 0, imgW, imgH));
+      final Path outsidePath = Path.combine(
+        PathOperation.difference,
+        maskRect,
+        fillPath!,
+      );
+
+      canvas.drawPath(
+        outsidePath,
+        Paint()
+          ..color = Colors.black.withValues(alpha: 0.55)
+          ..style = PaintingStyle.fill,
+      );
+    } else {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, imgW, imgH),
+        Paint()..color = Colors.black.withValues(alpha: 0.30),
+      );
+    }
+
+    if (edgePath != null) {
+      // 2. Marching ants — animated diagonal stripe shader
+      final double shiftAmt = progress * 40;
+      final Paint antPaint = Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(0, 0),
+          const Offset(20, 20),
+          [Colors.white, Colors.white, Colors.black, Colors.black],
+          [0.0, 0.5, 0.5, 1.0],
+          TileMode.repeated,
+          Float64List.fromList([
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            shiftAmt,
+            shiftAmt,
+            0,
+            1,
+          ]),
+        )
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(edgePath!, antPaint);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant MarchingAntsMaskPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.maskImage != maskImage ||
+        oldDelegate.fillPath != fillPath ||
+        oldDelegate.edgePath != edgePath;
+  }
+}
+
+extension on _ImageEditPageState {
+  Widget _buildPreviewApprovalBar(ImageEditState state) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Does this look right?",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "The laminate will be applied to the highlighted area.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Cancel Button
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    context.read<ImageEditCubit>().rejectPendingDesign();
+                  },
+                  icon: const Icon(Icons.close, size: 18, color: Colors.red),
+                  label: const Text(
+                    "Cancel",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Accept Button
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    context.read<ImageEditCubit>().acceptPendingDesign(
+                      parentEditId: _parentEditId,
+                    );
+                  },
+                  icon: const Icon(Icons.check, size: 18, color: Colors.white),
+                  label: const Text(
+                    "Accept",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: TColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
