@@ -13,7 +13,7 @@
 //   foreground = bitwise_and(relighted,  relighted,  mask=mask)
 //   composite  = add(background, foreground)
 
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
 /// Holds one (mask, warpedPattern) pair — matches one Python layer_pair entry.
@@ -47,68 +47,10 @@ class ImageCompositeService {
     required Uint8List baseImageBytes,
     required List<LayerPair> layers,
   }) async {
-    // ── Step 1: Decode base image ────────────────────────────────────────────
-    final img.Image? rawImage = img.decodeImage(baseImageBytes);
-    if (rawImage == null) throw Exception('ImageCompositeService: Failed to decode base image');
-
-    // ── Step 2: Extract lighting map ONCE from the original image ────────────
-    // Python: gray_original = cv2.cvtColor(raw_image, cv2.COLOR_BGR2GRAY)
-    //         lighting_map  = np.clip(gray_original / 255.0 * 1.2, 0, 1)
-    final Float64List lightingMap = _extractLightingMap(rawImage);
-
-    // ── Step 3: Start compositing canvas = copy of original ──────────────────
-    img.Image composite = img.Image.from(rawImage);
-
-    // ── Step 4: Sequential per-layer compositing loop ────────────────────────
-    for (int i = 0; i < layers.length; i++) {
-      final LayerPair layer = layers[i];
-
-      final img.Image? maskImage   = img.decodeImage(layer.maskBytes);
-      final img.Image? warpedImage = img.decodeImage(layer.warpedPatternBytes);
-
-      if (maskImage == null || warpedImage == null) {
-        print('ImageCompositeService: Pass ${i + 1} skipped (decode failed)');
-        continue;
-      }
-
-      // Resize mask if needed — mask MUST match base dimensions.
-      final img.Image mask =
-          (maskImage.width == rawImage.width && maskImage.height == rawImage.height)
-              ? maskImage
-              : img.copyResize(
-                  maskImage,
-                  width: rawImage.width,
-                  height: rawImage.height,
-                  interpolation: img.Interpolation.linear,
-                );
-
-      // ONLY resize warped texture if dimensions differ.
-      // Unnecessary resizing destroys perspective alignment and sharpness.
-      final img.Image warpedTexture =
-          (warpedImage.width == rawImage.width && warpedImage.height == rawImage.height)
-              ? warpedImage
-              : img.copyResize(
-                  warpedImage,
-                  width: rawImage.width,
-                  height: rawImage.height,
-                  interpolation: img.Interpolation.linear,
-                );
-
-      // Step 4a: Multiply-relight the warped texture.
-      // Python: relighted_i = (warped_i.astype(float32) * lighting_3d).astype(uint8)
-      final img.Image relighted = _multiplyLighting(warpedTexture, lightingMap);
-
-      // Step 4b: Inverse-mask composite.
-      // Python: background = bitwise_and(composite, composite, mask=inv_mask)
-      //         foreground = bitwise_and(relighted, relighted, mask=mask)
-      //         composite  = cv2.add(background, foreground)
-      composite = _bitwiseMaskComposite(composite, relighted, mask);
-
-      print('ImageCompositeService: Pass ${i + 1} applied');
-    }
-
-    // ── Step 5: Encode result as PNG (lossless — no JPEG edge softening) ─────
-    return Uint8List.fromList(img.encodePng(composite));
+    return compute(
+      _compositeIsolate,
+      _CompositeParams(baseImageBytes: baseImageBytes, layers: layers),
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -221,4 +163,56 @@ class ImageCompositeService {
 
     return result;
   }
+}
+
+class _CompositeParams {
+  final Uint8List baseImageBytes;
+  final List<LayerPair> layers;
+
+  _CompositeParams({required this.baseImageBytes, required this.layers});
+}
+
+Uint8List _compositeIsolate(_CompositeParams params) {
+  final img.Image? rawImage = img.decodeImage(params.baseImageBytes);
+  if (rawImage == null) {
+    throw Exception('ImageCompositeService: Failed to decode base image');
+  }
+
+  final Float64List lightingMap = ImageCompositeService._extractLightingMap(rawImage);
+  img.Image composite = img.Image.from(rawImage);
+
+  for (int i = 0; i < params.layers.length; i++) {
+    final layer = params.layers[i];
+    final img.Image? maskImage = img.decodeImage(layer.maskBytes);
+    final img.Image? warpedImage = img.decodeImage(layer.warpedPatternBytes);
+
+    if (maskImage == null || warpedImage == null) {
+      continue;
+    }
+
+    final img.Image mask =
+        (maskImage.width == rawImage.width && maskImage.height == rawImage.height)
+            ? maskImage
+            : img.copyResize(
+                maskImage,
+                width: rawImage.width,
+                height: rawImage.height,
+                interpolation: img.Interpolation.linear,
+              );
+
+    final img.Image warpedTexture =
+        (warpedImage.width == rawImage.width && warpedImage.height == rawImage.height)
+            ? warpedImage
+            : img.copyResize(
+                warpedImage,
+                width: rawImage.width,
+                height: rawImage.height,
+                interpolation: img.Interpolation.linear,
+              );
+
+    final img.Image relighted = ImageCompositeService._multiplyLighting(warpedTexture, lightingMap);
+    composite = ImageCompositeService._bitwiseMaskComposite(composite, relighted, mask);
+  }
+
+  return Uint8List.fromList(img.encodePng(composite));
 }

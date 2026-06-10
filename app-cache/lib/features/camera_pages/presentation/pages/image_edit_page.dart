@@ -707,100 +707,95 @@ class _ImageEditPageState extends State<ImageEditPage> {
         drawer: const HomeDrawer(),
         backgroundColor: const Color(0xFFF8F8F8),
         body: SafeArea(
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  // Top Image Preview Area (Fixed Height)
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.40,
-                    child: ValueListenableBuilder<List<int>>(
-                      valueListenable: _selectedIndicesNotifier,
-                      builder: (context, selectedIndices, child) {
-                        return BlocBuilder<ImageEditCubit, ImageEditState>(
-                          builder: (context, state) {
-                            if (state.isApplyLoading || _isPrecaching) {
-                              return _buildGeneratingBlock();
-                            }
-                            return _compareExpanded
-                                ? _buildTopComparisonSection(selectedIndices)
-                                : RepaintBoundary(
-                                    child: _buildImageOverlaySection(),
-                                  );
-                          },
-                        );
-                      },
-                    ),
-                  ),
+          child: BlocBuilder<ImageEditCubit, ImageEditState>(
+            builder: (context, state) {
+              final isApplying = state.isApplyLoading || _isPrecaching || _isUploading;
+              return AbsorbPointer(
+                absorbing: isApplying,
+                child: Stack(
+                  children: [
+                    Column(
+                      children: [
+                        // Top Image Preview Area (Fixed Height)
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.40,
+                          child: ValueListenableBuilder<List<int>>(
+                            valueListenable: _selectedIndicesNotifier,
+                            builder: (context, selectedIndices, child) {
+                              if (state.isApplyLoading || _isPrecaching) {
+                                return _buildGeneratingBlock();
+                              }
+                              return _compareExpanded
+                                  ? _buildTopComparisonSection(selectedIndices)
+                                  : RepaintBoundary(
+                                      child: _buildImageOverlaySection(),
+                                    );
+                            },
+                          ),
+                        ),
 
-                  // Collapsible Headers & Content (Accordion Style)
-                  Expanded(
-                    child: Container(
-                      color: Colors.white,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 0),
-                              child: _buildCollapsibleHeaders(),
+                        // Collapsible Headers & Content (Accordion Style)
+                        Expanded(
+                          child: Container(
+                            color: Colors.white,
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 0),
+                                    child: _buildCollapsibleHeaders(),
+                                  ),
+                                ),
+                                // Fixed Bottom Bar Area (Edit Mode)
+                                if (_editExpanded)
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: _buildBottomBarFixed(),
+                                  ),
+                                // Fixed Bottom Bar Area (Compare Mode)
+                                if (_compareExpanded)
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: _buildBottomBarFixed2(),
+                                  ),
+                              ],
                             ),
                           ),
-                          // Fixed Bottom Bar Area (Edit Mode)
-                          if (_editExpanded)
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: _buildBottomBarFixed(),
-                            ),
-                          // Fixed Bottom Bar Area (Compare Mode)
-                          if (_compareExpanded)
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: _buildBottomBarFixed2(),
-                            ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
 
-              // ── Full-screen upload overlay ─────────────────────────────
-              if (_isUploading)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.45),
-                    child: const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 52,
-                            height: 52,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 3.5,
-                              color: TColors.primary,
+                    // ── Full-screen upload overlay ─────────────────────────────
+                    if (_isUploading)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.45),
+                          child: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 52,
+                                  height: 52,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3.5,
+                                    color: TColors.primary,
+                                  ),
+                                ),
+                                SizedBox(height: 18),
+                              ],
                             ),
                           ),
-                          SizedBox(height: 18),
-                          // Text(
-                          //   'Applying design…',
-                          //   style: TextStyle(
-                          //     color: Colors.white,
-                          //     fontSize: 14,
-                          //     fontWeight: FontWeight.w600,
-                          //     decoration: TextDecoration.none,
-                          //   ),
-                          // ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                  ],
                 ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -1610,32 +1605,32 @@ class _ImageEditPageState extends State<ImageEditPage> {
                   
                   switch (_mode) {
                     case SelectionMode.resizeTopLeft:
-                      left = localX.clamp(0.0, right - 50.0);
-                      top = localY.clamp(0.0, bottom - 50.0);
+                      left = localX.clamp(0.0, right - 10.0);
+                      top = localY.clamp(0.0, bottom - 10.0);
                       break;
                     case SelectionMode.resizeTopRight:
-                      right = localX.clamp(left + 50.0, viewSize.width);
-                      top = localY.clamp(0.0, bottom - 50.0);
+                      right = localX.clamp(left + 10.0, viewSize.width);
+                      top = localY.clamp(0.0, bottom - 10.0);
                       break;
                     case SelectionMode.resizeBottomLeft:
-                      left = localX.clamp(0.0, right - 50.0);
-                      bottom = localY.clamp(top + 50.0, viewSize.height);
+                      left = localX.clamp(0.0, right - 10.0);
+                      bottom = localY.clamp(top + 10.0, viewSize.height);
                       break;
                     case SelectionMode.resizeBottomRight:
-                      right = localX.clamp(left + 50.0, viewSize.width);
-                      bottom = localY.clamp(top + 50.0, viewSize.height);
+                      right = localX.clamp(left + 10.0, viewSize.width);
+                      bottom = localY.clamp(top + 10.0, viewSize.height);
                       break;
                     case SelectionMode.resizeLeft:
-                      left = localX.clamp(0.0, right - 50.0);
+                      left = localX.clamp(0.0, right - 10.0);
                       break;
                     case SelectionMode.resizeRight:
-                      right = localX.clamp(left + 50.0, viewSize.width);
+                      right = localX.clamp(left + 10.0, viewSize.width);
                       break;
                     case SelectionMode.resizeTop:
-                      top = localY.clamp(0.0, bottom - 50.0);
+                      top = localY.clamp(0.0, bottom - 10.0);
                       break;
                     case SelectionMode.resizeBottom:
-                      bottom = localY.clamp(top + 50.0, viewSize.height);
+                      bottom = localY.clamp(top + 10.0, viewSize.height);
                       break;
                     default:
                       break;
@@ -1653,7 +1648,7 @@ class _ImageEditPageState extends State<ImageEditPage> {
               },
               onPointerUp: (event) {
                 if (_selection != null) {
-                  if (_selection!.width < 50.0 || _selection!.height < 50.0) {
+                  if (_selection!.width < 10.0 || _selection!.height < 10.0) {
                     setState(() {
                       _selection = null;
                       _mode = SelectionMode.none;
@@ -2222,21 +2217,14 @@ class _ImageEditPageState extends State<ImageEditPage> {
     final imageUrl = texture["coverImage"] ?? "";
     final label = texture["sku"] ?? texture["name"] ?? "";
 
-    final imageWidget = Container(
-      padding: EdgeInsets.zero,
-      decoration: BoxDecoration(
+    final imageWidget = Padding(
+      padding: const EdgeInsets.all(5),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isSelected ? const Color(0xFFD9D9D9) : Colors.transparent,
-          width: 5,
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: imageUrl.isNotEmpty
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            imageUrl.isNotEmpty
                 ? CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
@@ -2250,42 +2238,54 @@ class _ImageEditPageState extends State<ImageEditPage> {
                         Container(color: Colors.grey[300]),
                   )
                 : Container(color: Colors.grey[300]),
-          ),
-          Positioned(
-            top: 6,
-            right: 6,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                _showTextureDetailPopup(
-                  context,
-                  Map<String, dynamic>.from(texture as Map),
-                );
-              },
-              child: ClipOval(
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.25),
-                        width: 0.8,
-                      ),
+            if (isSelected)
+              IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFD9D9D9),
+                      width: 5,
                     ),
-                    child: const Icon(
-                      Icons.visibility_outlined,
-                      color: Colors.white,
-                      size: 12,
+                  ),
+                ),
+              ),
+            Positioned(
+              top: 6,
+              right: 6,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  _showTextureDetailPopup(
+                    context,
+                    Map<String, dynamic>.from(texture as Map),
+                  );
+                },
+                child: ClipOval(
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.25),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.visibility_outlined,
+                        color: Colors.white,
+                        size: 12,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 
