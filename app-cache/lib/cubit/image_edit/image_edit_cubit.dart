@@ -354,12 +354,92 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     await generateAIImage();
   }
 
+  Future<void> undoLastLayer() async {
+    if (state.appliedLayers.isEmpty) return;
+
+    emit(state.copyWith(isApplyLoading: true, clearError: true));
+
+    try {
+      final updatedLayers = List<LayerPair>.from(state.appliedLayers)..removeLast();
+      final updatedHistory = List<Map<String, dynamic>>.from(state.generatedHistory)..removeLast();
+
+      String? newImagePath;
+      if (updatedLayers.isEmpty) {
+        newImagePath = state.originalImage;
+      } else {
+        File roomFile;
+        final String baseImageToUse = state.originalImage!;
+        if (baseImageToUse.startsWith('http')) {
+          final dio = Dio();
+          final tempDir = await getTemporaryDirectory();
+          final tempPath = p.join(
+            tempDir.path,
+            "temp_edit_${DateTime.now().millisecondsSinceEpoch}.png",
+          );
+          await dio.download(baseImageToUse, tempPath);
+          roomFile = File(tempPath);
+        } else {
+          roomFile = File(baseImageToUse);
+        }
+
+        final Uint8List roomBytes = await roomFile.readAsBytes();
+        final Uint8List recompositedBytes = await ImageCompositeService.compositeImages(
+          baseImageBytes: roomBytes,
+          layers: updatedLayers,
+        );
+
+        final sysTemp = await getTemporaryDirectory();
+        final undoFile = File(
+          p.join(
+            sysTemp.path,
+            'undo_${DateTime.now().millisecondsSinceEpoch}.png',
+          ),
+        );
+        await undoFile.writeAsBytes(recompositedBytes);
+        newImagePath = undoFile.path;
+      }
+
+      emit(
+        ImageEditState(
+          originalImage: state.originalImage,
+          currentGeneratedImage: newImagePath,
+          editedImageFile: newImagePath,
+          generatedHistory: updatedHistory,
+          furnitureId: state.furnitureId,
+          ownerId: state.ownerId,
+          sessionId: state.sessionId,
+          selectedPattern: null,
+          selectedArea: null,
+          isGenerating: false,
+          hasPatternChanged: false,
+          hasAreaChanged: false,
+          appliedLayers: updatedLayers,
+          showSelectionPreview: false,
+          pendingMaskBytes: null,
+          pendingWarpedBytes: null,
+          tempCompositedImagePath: null,
+        ),
+      );
+      debugPrint('↩️ Undo successful! Remaining layers: ${updatedLayers.length}');
+    } catch (e) {
+      debugPrint('❌ Undo last layer error: $e');
+      emit(
+        state.copyWith(
+          isApplyLoading: false,
+          errorMessage: 'Failed to undo last layer: $e',
+        ),
+      );
+    }
+  }
+
   /// Save a specific generated edit to SQLite
   Future<void> saveToDatabase({
     required String imgPath,
     Map<String, dynamic>? laminate,
     String? customSessionId,
     String? parentEditId,
+    double? systemArea,
+    double? userArea,
   }) async {
     if (state.furnitureId == null) return;
 
@@ -394,11 +474,13 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         laminateName: laminate?['name']?.toString(),
         laminateSku: laminate?['sku']?.toString(),
         parentEditId: parentEditId,
+        systemArea: systemArea,
+        userArea: userArea,
       );
 
       await EditHistoryRepository.saveEdit(editData);
       debugPrint(
-        '✅ Edit saved to SQLite | laminates: ${sessionLaminates.length} | parentEditId: $parentEditId',
+        '✅ Edit saved to SQLite | laminates: ${sessionLaminates.length} | parentEditId: $parentEditId | systemArea: $systemArea | userArea: $userArea',
       );
     } catch (e) {
       debugPrint('❌ Error saving to SQLite: $e');

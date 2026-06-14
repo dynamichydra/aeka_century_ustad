@@ -56,7 +56,7 @@ class DbCore {
 
       _database = await openDatabase(
         path,
-        version: 2,
+        version: 3,
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
             try {
@@ -67,6 +67,19 @@ class DbCore {
             } catch (e) {
               // Column may already exist if DB was freshly created with the new schema
               print('⚠️ [DbCore] Migration v2 note: $e');
+            }
+          }
+          if (oldVersion < 3) {
+            try {
+              await db.execute(
+                'ALTER TABLE edit_history ADD COLUMN system_area REAL',
+              );
+              await db.execute(
+                'ALTER TABLE edit_history ADD COLUMN user_area REAL',
+              );
+              print('✅ [DbCore] Migration v3: Added system_area and user_area columns');
+            } catch (e) {
+              print('⚠️ [DbCore] Migration v3 note: $e');
             }
           }
         },

@@ -22,6 +22,7 @@ import 'package:century_ai/features/camera_pages/data/services/user_edits_servic
 import 'package:lottie/lottie.dart';
 import 'package:uuid/uuid.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
@@ -55,6 +56,14 @@ class ImageEditPage extends StatefulWidget {
 class _ImageEditPageState extends State<ImageEditPage>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _areaController = TextEditingController();
+  final TextEditingController _widthEditController = TextEditingController();
+  final TextEditingController _heightEditController = TextEditingController();
+  double? _systemArea;
+  double _customWidthInches = 24.0;
+  double _customHeightInches = 30.0;
+  bool _editingWidth = false;
+  bool _editingHeight = false;
 
   Map<String, dynamic>? _selectedColor;
   String? _selectedCategory;
@@ -108,6 +117,10 @@ class _ImageEditPageState extends State<ImageEditPage>
   double _initialPointerDistance = 1.0;
   double _initialScale = 1.0;
 
+  /// Minimum allowed zoom scale — set to the initial viewport-fit scale so
+  /// users can never zoom out far enough to reveal blank canvas.
+  double _minScale = 1.0;
+
   final TransformationController _transformationController =
       TransformationController();
 
@@ -129,12 +142,28 @@ class _ImageEditPageState extends State<ImageEditPage>
       );
       final ui.Image image = await completer.future;
       if (mounted) {
+        final double imgW = image.width.toDouble();
+        final double imgH = image.height.toDouble();
+
+        // Viewport size for the top image area
+        final double vpW = MediaQuery.of(context).size.width;
+        final double vpH = MediaQuery.of(context).size.height * 0.40;
+
+        // fitScale = scale at which the image exactly fills the viewport
+        // (identical to BoxFit.cover math). Used for OverflowBox sizing.
+        final double fitScale = math.max(vpW / imgW, vpH / imgH);
+
         setState(() {
-          _originalImageWidth = image.width.toDouble();
-          _originalImageHeight = image.height.toDouble();
+          _originalImageWidth = imgW;
+          _originalImageHeight = imgH;
+          // _minScale stores the cover scale for OverflowBox sizing.
+          // TransformationController stays at identity — OverflowBox
+          // centres the image in the Stack, matching BoxFit.cover visually.
+          _minScale = fitScale;
+          // _initialScale stays 1.0 (the TC baseline for pinch gestures).
         });
         debugPrint(
-          '📸 Original Image Size: ${_originalImageWidth}x${_originalImageHeight}',
+          '📸 Image: ${imgW}x${imgH} | VP: ${vpW}x${vpH} | fitScale: $fitScale',
         );
       }
     } catch (e) {
@@ -172,17 +201,76 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   void _zoomIn() {
-    final double currentScale = _transformationController.value
-        .getMaxScaleOnAxis();
+    final double vpW = MediaQuery.of(context).size.width;
+    final double vpH = MediaQuery.of(context).size.height * 0.40;
+    final double currentScale =
+        _transformationController.value.getMaxScaleOnAxis();
     final double newScale = (currentScale + 0.5).clamp(1.0, 4.0);
-    _transformationController.value = Matrix4.identity()..scale(newScale);
+
+    // Pan bounds for OverflowBox-rendered image at newScale
+    final double imgDisplayW =
+        _originalImageWidth != null ? _originalImageWidth! * _minScale : vpW;
+    final double imgDisplayH =
+        _originalImageHeight != null ? _originalImageHeight! * _minScale : vpH;
+    final double imgLeft = (vpW - imgDisplayW) / 2.0;
+    final double imgTop = (vpH - imgDisplayH) / 2.0;
+
+    // Scale around viewport centre
+    final double currentTx = _transformationController.value.storage[12];
+    final double currentTy = _transformationController.value.storage[13];
+    final double ratio = newScale / currentScale;
+    double newTx = (vpW / 2.0) - (vpW / 2.0 - currentTx) * ratio;
+    double newTy = (vpH / 2.0) - (vpH / 2.0 - currentTy) * ratio;
+
+    newTx = newTx.clamp(
+      vpW - newScale * (imgLeft + imgDisplayW),
+      -newScale * imgLeft,
+    );
+    newTy = newTy.clamp(
+      vpH - newScale * (imgTop + imgDisplayH),
+      -newScale * imgTop,
+    );
+
+    _transformationController.value =
+        Matrix4.identity()
+          ..translate(newTx, newTy)
+          ..scale(newScale);
   }
 
   void _zoomOut() {
-    final double currentScale = _transformationController.value
-        .getMaxScaleOnAxis();
+    final double vpW = MediaQuery.of(context).size.width;
+    final double vpH = MediaQuery.of(context).size.height * 0.40;
+    final double currentScale =
+        _transformationController.value.getMaxScaleOnAxis();
     final double newScale = (currentScale - 0.5).clamp(1.0, 4.0);
-    _transformationController.value = Matrix4.identity()..scale(newScale);
+
+    // Pan bounds for OverflowBox-rendered image at newScale
+    final double imgDisplayW =
+        _originalImageWidth != null ? _originalImageWidth! * _minScale : vpW;
+    final double imgDisplayH =
+        _originalImageHeight != null ? _originalImageHeight! * _minScale : vpH;
+    final double imgLeft = (vpW - imgDisplayW) / 2.0;
+    final double imgTop = (vpH - imgDisplayH) / 2.0;
+
+    final double currentTx = _transformationController.value.storage[12];
+    final double currentTy = _transformationController.value.storage[13];
+    final double ratio = newScale / currentScale;
+    double newTx = (vpW / 2.0) - (vpW / 2.0 - currentTx) * ratio;
+    double newTy = (vpH / 2.0) - (vpH / 2.0 - currentTy) * ratio;
+
+    newTx = newTx.clamp(
+      vpW - newScale * (imgLeft + imgDisplayW),
+      -newScale * imgLeft,
+    );
+    newTy = newTy.clamp(
+      vpH - newScale * (imgTop + imgDisplayH),
+      -newScale * imgTop,
+    );
+
+    _transformationController.value =
+        Matrix4.identity()
+          ..translate(newTx, newTy)
+          ..scale(newScale);
   }
 
   void _toggleSelection(int index) {
@@ -219,6 +307,9 @@ class _ImageEditPageState extends State<ImageEditPage>
     _decodedMaskImage?.dispose();
     _transformationController.dispose();
     _searchController.dispose();
+    _areaController.dispose();
+    _widthEditController.dispose();
+    _heightEditController.dispose();
     _selectedIndicesNotifier.dispose();
     super.dispose();
   }
@@ -289,6 +380,8 @@ class _ImageEditPageState extends State<ImageEditPage>
               createdAt: e.editedAt,
               laminateName: e.laminateName,
               usedLaminatesJson: e.usedLaminates,
+              systemArea: e.systemArea,
+              userArea: e.userArea,
             ),
           )
           .toList();
@@ -943,16 +1036,59 @@ class _ImageEditPageState extends State<ImageEditPage>
 
         // Edit & Design Header (Hidden if Compare is expanded)
         if (!_compareExpanded)
-          _buildHeaderTile(
-            title: "Edit & Design",
-            iconImg: "edit.png",
-            isActive: _editExpanded,
-            showArrow: _hasAppliedOnce,
-            onTap: () {
-              setState(() {
-                _editExpanded = !_editExpanded;
-                if (_editExpanded) _compareExpanded = false;
-              });
+          BlocBuilder<ImageEditCubit, ImageEditState>(
+            builder: (context, state) {
+              final bool canUndo = state.appliedLayers.isNotEmpty || (_parentEditId != null);
+              return _buildHeaderTile(
+                title: "Edit & Design",
+                iconImg: "edit.png",
+                isActive: _editExpanded,
+                showArrow: _hasAppliedOnce,
+                onTap: _hasAppliedOnce
+                    ? () {
+                        setState(() {
+                          _editExpanded = !_editExpanded;
+                          if (_editExpanded) _compareExpanded = false;
+                        });
+                      }
+                    : () {},
+                trailing: Opacity(
+                  opacity: canUndo ? 1.0 : 0.4,
+                  child: GestureDetector(
+                    onTap: canUndo ? () => _handleUndo(state) : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Symbols.undo, // Curved arrow pointing left
+                            color: Colors.black.withOpacity(0.7),
+                            size: 12,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Undo",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
             },
           ),
         if (_editExpanded && !_compareExpanded)
@@ -967,6 +1103,7 @@ class _ImageEditPageState extends State<ImageEditPage>
     required bool isActive,
     required VoidCallback onTap,
     bool showArrow = true,
+    Widget? trailing,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -987,7 +1124,9 @@ class _ImageEditPageState extends State<ImageEditPage>
               ),
             ),
             const Spacer(),
-            if (showArrow)
+            if (trailing != null)
+              trailing
+            else if (showArrow)
               Icon(
                 isActive
                     ? Icons.keyboard_arrow_down
@@ -1032,7 +1171,116 @@ class _ImageEditPageState extends State<ImageEditPage>
           _buildCategorySelection(),
           const SizedBox(height: 12),
           RepaintBoundary(child: _buildTextureSelection()),
+          if (_selection != null) ...[
+            const SizedBox(height: 8),
+            _buildAreaInputSection(),
+          ],
           const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAreaInputSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.square_foot, color: TColors.primary, size: 16),
+              const SizedBox(width: 6),
+              const Text(
+                "Laminate Area Required",
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "System Prediction",
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _systemArea != null ? "$_systemArea sq. ft." : "--",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "User Override",
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      height: 36,
+                      child: TextField(
+                        controller: _areaController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                          suffixText: "sq. ft.",
+                          suffixStyle: const TextStyle(fontSize: 9, color: Colors.black45),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Colors.black12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: TColors.primary),
+                          ),
+                        ),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1624,74 +1872,126 @@ class _ImageEditPageState extends State<ImageEditPage>
     return SelectionMode.none;
   }
 
+  bool _isPointInHorizontalOverlay(Offset localPos) {
+    if (_selection == null) return false;
+    final double left = _selection!.left + (_selection!.width - 150) / 2;
+    final double top = _selection!.top + _selection!.height + 22;
+    final double right = left + 150;
+    final double bottom = top + 50;
+    return localPos.dx >= left && localPos.dx <= right && localPos.dy >= top && localPos.dy <= bottom;
+  }
+
+  bool _isPointInVerticalOverlay(Offset localPos) {
+    if (_selection == null) return false;
+    final double left = _selection!.left + _selection!.width + 22;
+    final double top = _selection!.top + (_selection!.height - 40) / 2;
+    final double right = left + 120;
+    final double bottom = top + 40;
+    return localPos.dx >= left && localPos.dx <= right && localPos.dy >= top && localPos.dy <= bottom;
+  }
+
   Widget _buildImageOverlaySection(ImageEditState state) {
     final bool inPreview = state.showSelectionPreview;
 
     if (inPreview) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          // Show the original base image (compositing is not shown in preview)
-          _baseImage.startsWith('http')
-              ? Image.network(
-                  _baseImage,
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.height * 0.40,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  cacheWidth: 800,
-                )
-              : Image.file(
-                  File(_baseImage),
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.height * 0.40,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  cacheWidth: 800,
-                ),
+      return ClipRect(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Show the full image using the same OverflowBox approach as edit
+            // mode — no cropping, full image visible, landscape/portrait
+            // overflow accessible. MarchingAntsMaskPainter (Positioned.fill)
+            // self-computes its own BoxFit.cover transform so it aligns
+            // correctly with the full viewport.
+            if (_originalImageWidth != null)
+              OverflowBox(
+                alignment: Alignment.center,
+                maxWidth: double.infinity,
+                maxHeight: double.infinity,
+                child: _baseImage.startsWith('http')
+                    ? Image.network(
+                        _baseImage,
+                        width: _originalImageWidth! * _minScale,
+                        height: _originalImageHeight! * _minScale,
+                        fit: BoxFit.fill,
+                        gaplessPlayback: true,
+                        cacheWidth: 800,
+                      )
+                    : Image.file(
+                        File(_baseImage),
+                        width: _originalImageWidth! * _minScale,
+                        height: _originalImageHeight! * _minScale,
+                        fit: BoxFit.fill,
+                        gaplessPlayback: true,
+                        cacheWidth: 800,
+                      ),
+              )
+            else
+              // Fallback before dimensions load
+              _baseImage.startsWith('http')
+                  ? Image.network(
+                      _baseImage,
+                      width: double.infinity,
+                      height: MediaQuery.of(context).size.height * 0.40,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      cacheWidth: 800,
+                    )
+                  : Image.file(
+                      File(_baseImage),
+                      width: double.infinity,
+                      height: MediaQuery.of(context).size.height * 0.40,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      cacheWidth: 800,
+                    ),
 
-          if (_decodedMaskImage != null)
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _marchingAntsController,
-                builder: (_, __) => CustomPaint(
-                  painter: MarchingAntsMaskPainter(
-                    maskImage: _decodedMaskImage!,
-                    progress: _marchingAntsController.value,
-                    fillPath: _maskFillPath,
-                    edgePath: _maskEdgePath,
+            // Mask overlay — Positioned.fill spans the full viewport;
+            // MarchingAntsMaskPainter internally applies BoxFit.cover math
+            // so the mask region correctly overlays the displayed image area.
+            if (_decodedMaskImage != null)
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _marchingAntsController,
+                  builder: (_, __) => CustomPaint(
+                    painter: MarchingAntsMaskPainter(
+                      maskImage: _decodedMaskImage!,
+                      progress: _marchingAntsController.value,
+                      fillPath: _maskFillPath,
+                      edgePath: _maskEdgePath,
+                    ),
+                  ),
+                ),
+              ),
+
+            Positioned(
+              top: 12,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.55),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    '✦  Review before applying',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ),
             ),
-
-          Positioned(
-            top: 12,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.55),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  '✦  Review before applying',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
@@ -1702,7 +2002,7 @@ class _ImageEditPageState extends State<ImageEditPage>
             transformationController: _transformationController,
             minScale: 1.0,
             maxScale: 4.0,
-            boundaryMargin: const EdgeInsets.all(20),
+            boundaryMargin: EdgeInsets.zero,
             panEnabled: false,
             scaleEnabled: false,
             child: Listener(
@@ -1742,6 +2042,12 @@ class _ImageEditPageState extends State<ImageEditPage>
                 );
                 final localPos = event.localPosition;
 
+                if (_selection != null &&
+                    (_isPointInHorizontalOverlay(localPos) ||
+                     _isPointInVerticalOverlay(localPos))) {
+                  return;
+                }
+
                 SelectionMode detectedMode = SelectionMode.none;
                 if (_selection != null) {
                   detectedMode = _hitTestHandles(localPos);
@@ -1766,6 +2072,8 @@ class _ImageEditPageState extends State<ImageEditPage>
                       height: 0,
                     );
                     _mode = SelectionMode.creating;
+                    _editingWidth = false;
+                    _editingHeight = false;
                   });
                 }
               },
@@ -1795,6 +2103,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                       if (_initialPointerDistance > 1.0) {
                         final double scaleFactor =
                             currentDistance / _initialPointerDistance;
+                        // Clamp at 1.0: never zoom out below the cover-fill level
                         targetScale = (_initialScale * scaleFactor).clamp(
                           1.0,
                           4.0,
@@ -1822,14 +2131,29 @@ class _ImageEditPageState extends State<ImageEditPage>
                     double newTy =
                         newCentroid.dy - (oldCentroid.dy - oldTy) * scaleRatio;
 
-                    final double margin = 20.0;
-                    final double minTx =
-                        viewSize.width * (1.0 - targetScale) - margin;
-                    final double maxTx = margin;
+                    // Pan bounds: image (rendered via OverflowBox at _minScale)
+                    // must always cover the entire viewport — no blank canvas.
+                    final double imgDisplayW = _originalImageWidth != null
+                        ? _originalImageWidth! * _minScale
+                        : viewSize.width;
+                    final double imgDisplayH = _originalImageHeight != null
+                        ? _originalImageHeight! * _minScale
+                        : viewSize.height;
+                    // OverflowBox centres image in Stack → left edge in Stack coords:
+                    final double imgLeft =
+                        (viewSize.width - imgDisplayW) / 2.0;
+                    final double imgTop =
+                        (viewSize.height - imgDisplayH) / 2.0;
 
+                    // At TransformationController scale=targetScale:
+                    //   image left viewport position = targetScale*imgLeft + newTx
+                    // Constraint: left ≤ 0 and right ≥ vpW, top ≤ 0 and bottom ≥ vpH
+                    final double minTx =
+                        viewSize.width - targetScale * (imgLeft + imgDisplayW);
+                    final double maxTx = -targetScale * imgLeft;
                     final double minTy =
-                        viewSize.height * (1.0 - targetScale) - margin;
-                    final double maxTy = margin;
+                        viewSize.height - targetScale * (imgTop + imgDisplayH);
+                    final double maxTy = -targetScale * imgTop;
 
                     newTx = newTx.clamp(minTx, maxTx);
                     newTy = newTy.clamp(minTy, maxTy);
@@ -1961,6 +2285,8 @@ class _ImageEditPageState extends State<ImageEditPage>
                     setState(() {
                       _selection = null;
                       _mode = SelectionMode.none;
+                      _editingWidth = false;
+                      _editingHeight = false;
                     });
                     context.read<ImageEditCubit>().clearSelection();
                     return;
@@ -1972,6 +2298,19 @@ class _ImageEditPageState extends State<ImageEditPage>
                 });
 
                 if (_selection != null) {
+                  final double calculatedW = (_selection!.width / 10.0).roundToDouble();
+                  final double calculatedH = (_selection!.height / 10.0).roundToDouble();
+                  final double calculatedArea = (calculatedW * calculatedH) / 144.0;
+                  final double systemVal = double.parse(calculatedArea.toStringAsFixed(1));
+                  setState(() {
+                    _customWidthInches = calculatedW;
+                    _customHeightInches = calculatedH;
+                    _systemArea = systemVal;
+                    _areaController.text = systemVal.toString();
+                    _editingWidth = false;
+                    _editingHeight = false;
+                  });
+
                   final viewSize = Size(
                     MediaQuery.of(context).size.width,
                     MediaQuery.of(context).size.height * 0.40,
@@ -2007,7 +2346,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                     "bottom": originalBottom,
                   };
 
-                  debugPrint("Selected Area (Original Coordinates): $areaData");
+                  debugPrint("Selected Area (Original Coordinates): $areaData | System Area prediction: $systemVal");
                   context.read<ImageEditCubit>().selectArea(areaData);
                 }
               },
@@ -2023,54 +2362,125 @@ class _ImageEditPageState extends State<ImageEditPage>
               },
               child: Stack(
                 children: [
-                  // Base Image (Dynamic)
-                  _baseImage.startsWith('http')
-                      ? Image.network(
-                          _baseImage,
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.40,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                          cacheWidth: 800,
-                        )
-                      : Image.file(
-                          File(_baseImage),
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.40,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                          cacheWidth: 800,
-                        ),
+                  // Base Image — rendered via OverflowBox so the full
+                  // BoxFit.cover-equivalent display size overflows the Stack
+                  // bounds. ClipRect (outermost) clips to the viewport.
+                  // This lets users pan to reveal landscape/portrait overflow
+                  // WITHOUT changing the coordinate system: OverflowBox centres
+                  // the child at (vpW/2, vpH/2) in Stack space — identical to
+                  // where BoxFit.cover would render it — so _mapLocalToOriginal
+                  // with viewSize=(vpW, vpH) stays mathematically correct.
+                  if (_originalImageWidth != null)
+                    OverflowBox(
+                      alignment: Alignment.center,
+                      maxWidth: double.infinity,
+                      maxHeight: double.infinity,
+                      child: _baseImage.startsWith('http')
+                          ? Image.network(
+                              _baseImage,
+                              width: _originalImageWidth! * _minScale,
+                              height: _originalImageHeight! * _minScale,
+                              fit: BoxFit.fill,
+                              gaplessPlayback: true,
+                              cacheWidth: 800,
+                            )
+                          : Image.file(
+                              File(_baseImage),
+                              width: _originalImageWidth! * _minScale,
+                              height: _originalImageHeight! * _minScale,
+                              fit: BoxFit.fill,
+                              gaplessPlayback: true,
+                              cacheWidth: 800,
+                            ),
+                    )
+                  else
+                    // Fallback before dimensions load: BoxFit.cover fills viewport
+                    _baseImage.startsWith('http')
+                        ? Image.network(
+                            _baseImage,
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: 800,
+                          )
+                        : Image.file(
+                            File(_baseImage),
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: 800,
+                          ),
 
-                  // Applied Design Layer
+                  // Applied Design Layer — same OverflowBox treatment
                   if (_currentAssetPreview != null &&
                       _currentAssetPreview!.isNotEmpty)
-                    _currentAssetPreview!.startsWith('http')
-                        ? Image.network(
-                            _currentAssetPreview!,
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            cacheWidth: 800,
-                          )
-                        : (_currentAssetPreview!.startsWith('/') ||
-                              _currentAssetPreview!.contains('tryon_result'))
-                        ? Image.file(
-                            File(_currentAssetPreview!),
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            cacheWidth: 800,
-                          )
-                        : Image.asset(
-                            _currentAssetPreview!,
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                          ),
+                    if (_originalImageWidth != null)
+                      OverflowBox(
+                        alignment: Alignment.center,
+                        maxWidth: double.infinity,
+                        maxHeight: double.infinity,
+                        child: _currentAssetPreview!.startsWith('http')
+                            ? Image.network(
+                                _currentAssetPreview!,
+                                width: _originalImageWidth! * _minScale,
+                                height: _originalImageHeight! * _minScale,
+                                fit: BoxFit.fill,
+                                gaplessPlayback: true,
+                                cacheWidth: 800,
+                              )
+                            : (_currentAssetPreview!.startsWith('/') ||
+                                  _currentAssetPreview!.contains(
+                                    'tryon_result',
+                                  ))
+                            ? Image.file(
+                                File(_currentAssetPreview!),
+                                width: _originalImageWidth! * _minScale,
+                                height: _originalImageHeight! * _minScale,
+                                fit: BoxFit.fill,
+                                gaplessPlayback: true,
+                                cacheWidth: 800,
+                              )
+                            : Image.asset(
+                                _currentAssetPreview!,
+                                width: _originalImageWidth! * _minScale,
+                                height: _originalImageHeight! * _minScale,
+                                fit: BoxFit.fill,
+                                gaplessPlayback: true,
+                              ),
+                      )
+                    else
+                      // Fallback before dimensions load
+                      _currentAssetPreview!.startsWith('http')
+                          ? Image.network(
+                              _currentAssetPreview!,
+                              width: double.infinity,
+                              height:
+                                  MediaQuery.of(context).size.height * 0.40,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              cacheWidth: 800,
+                            )
+                          : (_currentAssetPreview!.startsWith('/') ||
+                                _currentAssetPreview!.contains('tryon_result'))
+                          ? Image.file(
+                              File(_currentAssetPreview!),
+                              width: double.infinity,
+                              height:
+                                  MediaQuery.of(context).size.height * 0.40,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              cacheWidth: 800,
+                            )
+                          : Image.asset(
+                              _currentAssetPreview!,
+                              width: double.infinity,
+                              height:
+                                  MediaQuery.of(context).size.height * 0.40,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                            ),
 
                   // Selected Coordinate Dot overlay removed and replaced with selection painter
                   Positioned.fill(
@@ -2080,6 +2490,85 @@ class _ImageEditPageState extends State<ImageEditPage>
                       ),
                     ),
                   ),
+                  if (_selection != null) ...[
+                    // Horizontal bottom double arrow line
+                    Positioned(
+                      left: _selection!.left,
+                      top: _selection!.top + _selection!.height + 8,
+                      width: _selection!.width,
+                      height: 10,
+                      child: CustomPaint(
+                        painter: DashedLinePainter(axis: Axis.horizontal),
+                      ),
+                    ),
+                    // Vertical right double arrow line
+                    Positioned(
+                      left: _selection!.left + _selection!.width + 8,
+                      top: _selection!.top,
+                      width: 10,
+                      height: _selection!.height,
+                      child: CustomPaint(
+                        painter: DashedLinePainter(axis: Axis.vertical),
+                      ),
+                    ),
+                    // Horizontal dimension label / inline editor
+                    Positioned(
+                      left: _selection!.left + (_selection!.width - 150) / 2,
+                      top: _selection!.top + _selection!.height + 22,
+                      width: 150,
+                      child: Center(
+                        child: _editingWidth
+                            ? _buildInlineEditor(
+                                controller: _widthEditController,
+                                onSave: () {
+                                  setState(() {
+                                    _customWidthInches =
+                                        double.tryParse(_widthEditController.text) ?? _customWidthInches;
+                                    _editingWidth = false;
+                                    _recalculateArea();
+                                  });
+                                },
+                              )
+                            : _buildDisplayLabel(
+                                value: _customWidthInches,
+                                onTap: () {
+                                  setState(() {
+                                    _widthEditController.text = _customWidthInches.round().toString();
+                                    _editingWidth = true;
+                                  });
+                                },
+                              ),
+                      ),
+                    ),
+                    // Vertical dimension label / inline editor
+                    Positioned(
+                      left: _selection!.left + _selection!.width + 22,
+                      top: _selection!.top + (_selection!.height - 40) / 2,
+                      child: Center(
+                        child: _editingHeight
+                            ? _buildInlineEditor(
+                                controller: _heightEditController,
+                                onSave: () {
+                                  setState(() {
+                                    _customHeightInches =
+                                        double.tryParse(_heightEditController.text) ?? _customHeightInches;
+                                    _editingHeight = false;
+                                    _recalculateArea();
+                                  });
+                                },
+                              )
+                            : _buildDisplayLabel(
+                                value: _customHeightInches,
+                                onTap: () {
+                                  setState(() {
+                                    _heightEditController.text = _customHeightInches.round().toString();
+                                    _editingHeight = true;
+                                  });
+                                },
+                              ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -2100,6 +2589,202 @@ class _ImageEditPageState extends State<ImageEditPage>
         // Redundant overlay removed as it's now handled by _buildGeneratingBlock in the main stack
         const SizedBox.shrink(),
       ],
+    );
+  }
+
+  Future<void> _handleUndo(ImageEditState state) async {
+    if (state.appliedLayers.isNotEmpty) {
+      await context.read<ImageEditCubit>().undoLastLayer();
+      setState(() {
+        _currentAssetPreview = context.read<ImageEditCubit>().state.editedImageFile;
+        if (context.read<ImageEditCubit>().state.appliedLayers.isEmpty) {
+          _hasNewUnappliedEdit = false;
+        }
+      });
+    } else if (_parentEditId != null) {
+      setState(() => _isLoadingEdits = true);
+      try {
+        final parentRecord = await EditHistoryRepository.getEditById(_parentEditId!);
+        if (parentRecord != null) {
+          await EditHistoryRepository.deleteEdit(_parentEditId!);
+
+          setState(() {
+            _parentEditId = parentRecord.parentEditId;
+            _baseImage = parentRecord.originalImagePath;
+            _currentAssetPreview = null;
+            _selection = null;
+            _systemArea = null;
+            _areaController.clear();
+            _hasNewUnappliedEdit = false;
+          });
+
+          context.read<ImageEditCubit>().initOriginalImage(
+            _baseImage,
+            furnitureId: widget.image_id,
+            ownerId: _ownerEmail,
+            sessionId: _sessionId,
+          );
+          await _fetchUserEditHistory();
+        } else {
+          await EditHistoryRepository.deleteEdit(_parentEditId!);
+          setState(() {
+            _parentEditId = null;
+            _baseImage = widget.imageFile.path;
+            _currentAssetPreview = null;
+            _selection = null;
+            _systemArea = null;
+            _areaController.clear();
+            _hasAppliedOnce = false;
+            _compareExpanded = false;
+            _editExpanded = true;
+            _hasNewUnappliedEdit = false;
+          });
+          context.read<ImageEditCubit>().initOriginalImage(
+            _baseImage,
+            furnitureId: widget.image_id,
+            ownerId: _ownerEmail,
+            sessionId: _sessionId,
+          );
+          await _fetchUserEditHistory();
+        }
+      } catch (e) {
+        debugPrint("❌ Error performing database undo: $e");
+      } finally {
+        setState(() => _isLoadingEdits = false);
+      }
+    }
+  }
+
+  void _recalculateArea() {
+    final double calculatedArea = (_customWidthInches * _customHeightInches) / 144.0;
+    final double val = double.parse(calculatedArea.toStringAsFixed(1));
+    setState(() {
+      _systemArea = val;
+      _areaController.text = val.toString();
+    });
+  }
+
+  Widget _buildDisplayLabel({
+    required double value,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: const BoxDecoration(
+          color: Colors.transparent,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "${value.round()} in",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withOpacity(0.7),
+                    offset: const Offset(0, 1),
+                    blurRadius: 3,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.edit,
+              color: Colors.white,
+              size: 11,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.7),
+                  offset: const Offset(0, 1),
+                  blurRadius: 3,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInlineEditor({
+    required TextEditingController controller,
+    required VoidCallback onSave,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 36,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.grey.shade300, width: 0.8),
+            ),
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+              decoration: const InputDecoration(
+                contentPadding: EdgeInsets.zero,
+                isDense: true,
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Text(
+            "in",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onSave,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE53935), // Century Ply brand red checkmark button
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2810,19 +3495,19 @@ class _ImageEditPageState extends State<ImageEditPage>
       }
 
       // 2. SAVE TO LOCAL DATABASE WITH RESPONSE ID AS THE SESSION ID
-      // Generate the final record ID upfront so we can track it as the
-      // parent for any subsequent editing session.
       final String newEditId = responseId ?? const Uuid().v4();
       if (widget.image_id != null) {
         try {
           final cubit = context.read<ImageEditCubit>();
+          final double? userVal = double.tryParse(_areaController.text);
           await cubit.saveToDatabase(
             imgPath: state.currentGeneratedImage!,
             laminate: state.selectedPattern,
             customSessionId: newEditId,
             parentEditId: _parentEditId, // link to ancestor
+            systemArea: _systemArea,
+            userArea: userVal ?? _systemArea,
           );
-          // This finalized edit now becomes the parent for the next session
           _parentEditId = newEditId;
         } catch (e) {
           debugPrint("❌ Error saving local edit: $e");
@@ -2831,21 +3516,20 @@ class _ImageEditPageState extends State<ImageEditPage>
       final String finalizedImage = state.currentGeneratedImage!;
       if (mounted) {
         setState(() {
-          _baseImage =
-              finalizedImage; // Set the base to the newly finalized stacked image
-          _currentAssetPreview =
-              null; // Clear the preview overlay since it is now the base
+          _baseImage = finalizedImage; 
+          _currentAssetPreview = null; 
           _compareExpanded = true;
           _editExpanded = false;
           _hasAppliedOnce = true;
-          _hasNewUnappliedEdit =
-              false; // Reset since the current edit has been successfully finalized
+          _hasNewUnappliedEdit = false; 
 
-          // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY ON NEXT EDIT
+          // CLEAR PREVIOUS STATE
           _selectedTexture = null;
           _selectedColor = null;
           _selectedSubCategory = null;
           _selection = null;
+          _systemArea = null;
+          _areaController.clear();
         });
 
         // RE-INIT CUBIT WITH NEW SESSION STARTING FROM THE FINALIZED IMAGE BASE
@@ -2895,13 +3579,23 @@ class _ImageEditPageState extends State<ImageEditPage>
         debugPrint('getCumulativeLaminates error: $e');
         usedLaminates = List.from(latestRecord.usedLaminatesList);
       }
+      final double area = latestRecord.userArea ?? latestRecord.systemArea ?? 5.0;
+      final int est = (area * 2.0).round();
+      usedLaminates = usedLaminates.map((e) {
+        final m = Map<String, dynamic>.from(e);
+        m['estimatedSheets'] = m['estimatedSheets'] ?? est;
+        return m;
+      }).toList();
     } else {
       // Fallback: pull from in-memory cubit history (no DB record yet)
       final state = context.read<ImageEditCubit>().state;
       final cubit = context.read<ImageEditCubit>();
+      final double currentArea = double.tryParse(_areaController.text) ?? _systemArea ?? 5.0;
+      final int currentEst = (currentArea * 2.0).round();
       for (var item in cubit.state.generatedHistory) {
         if (item['laminate'] != null) {
-          final lam = item['laminate'] as Map<String, dynamic>;
+          final lam = Map<String, dynamic>.from(item['laminate'] as Map);
+          lam['estimatedSheets'] = lam['estimatedSheets'] ?? currentEst;
           if (!usedLaminates.any((element) => element['id'] == lam['id'])) {
             usedLaminates.add(lam);
           }
@@ -2909,7 +3603,9 @@ class _ImageEditPageState extends State<ImageEditPage>
         if (item['generated'] == state.currentGeneratedImage) break;
       }
       if (usedLaminates.isEmpty && _selectedTexture != null) {
-        usedLaminates.add(_selectedTexture!);
+        final lam = Map<String, dynamic>.from(_selectedTexture!);
+        lam['estimatedSheets'] = lam['estimatedSheets'] ?? currentEst;
+        usedLaminates.add(lam);
       }
       finalImage = state.currentGeneratedImage ?? widget.imageFile.path;
     }
@@ -3391,6 +4087,7 @@ class SelectionPainter extends CustomPainter {
       Offset(midX + edgeLength, bottom),
       handlePaint,
     );
+
   }
 
   @override
@@ -3586,4 +4283,59 @@ extension on _ImageEditPageState {
       ),
     );
   }
+}
+
+class DashedLinePainter extends CustomPainter {
+  final Axis axis;
+  DashedLinePainter({required this.axis});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final double dashWidth = 4.0;
+    final double dashSpace = 4.0;
+
+    final path = Path();
+    if (axis == Axis.horizontal) {
+      // Draw left arrowhead
+      path.moveTo(6, size.height / 2 - 4);
+      path.lineTo(0, size.height / 2);
+      path.lineTo(6, size.height / 2 + 4);
+      
+      // Draw right arrowhead
+      path.moveTo(size.width - 6, size.height / 2 - 4);
+      path.lineTo(size.width, size.height / 2);
+      path.lineTo(size.width - 6, size.height / 2 + 4);
+
+      // Draw dashed line
+      for (double i = 6; i < size.width - 6; i += dashWidth + dashSpace) {
+        path.moveTo(i, size.height / 2);
+        path.lineTo(i + dashWidth > size.width - 6 ? size.width - 6 : i + dashWidth, size.height / 2);
+      }
+    } else {
+      // Draw top arrowhead
+      path.moveTo(size.width / 2 - 4, 6);
+      path.lineTo(size.width / 2, 0);
+      path.lineTo(size.width / 2 + 4, 6);
+
+      // Draw bottom arrowhead
+      path.moveTo(size.width / 2 - 4, size.height - 6);
+      path.lineTo(size.width / 2, size.height);
+      path.lineTo(size.width / 2 + 4, size.height - 6);
+
+      // Draw dashed line
+      for (double i = 6; i < size.height - 6; i += dashWidth + dashSpace) {
+        path.moveTo(size.width / 2, i);
+        path.lineTo(size.width / 2, i + dashWidth > size.height - 6 ? size.height - 6 : i + dashWidth);
+      }
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant DashedLinePainter oldDelegate) => false;
 }

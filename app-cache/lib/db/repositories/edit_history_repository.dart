@@ -20,7 +20,9 @@ class EditHistoryRepository {
       used_laminates TEXT,
       laminate_name TEXT,
       laminate_sku TEXT,
-      parent_edit_id TEXT
+      parent_edit_id TEXT,
+      system_area REAL,
+      user_area REAL
     )
   ''';
 

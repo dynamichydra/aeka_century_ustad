@@ -575,7 +575,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                 
                                 if (widget.usedLaminates.isNotEmpty)
                                   SizedBox(
-                                    height: 105,
+                                    height: 125,
                                     child: ListView.separated(
                                       scrollDirection: Axis.horizontal,
                                       itemCount: widget.usedLaminates.length,
@@ -828,9 +828,10 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     final imagePath = lam['coverImage'] ?? lam['imageUrl'] ?? lam['image'] ?? lam['cover_image'] ?? '';
     final name = lam['name'] ?? 'Texture';
     final sku = lam['sku'] ?? lam['code'] ?? '${lam['id'] ?? ''}';
+    final int estSheets = lam['estimatedSheets'] ?? (4 + (sku.hashCode.abs() % 9));
 
     return SizedBox(
-      width: 75,
+      width: 85,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -872,6 +873,14 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            "Est. sheets: $estSheets",
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 9, color: Colors.black54, fontWeight: FontWeight.w500),
           ),
         ],
       ),

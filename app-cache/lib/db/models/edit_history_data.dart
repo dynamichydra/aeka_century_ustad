@@ -12,6 +12,8 @@ class EditHistoryData {
   /// ID of the edit_history row this edit was built on top of.
   /// Null for first-generation edits (directly from the original image).
   final String? parentEditId;
+  final double? systemArea;
+  final double? userArea;
 
   EditHistoryData({
     required this.id,
@@ -25,6 +27,8 @@ class EditHistoryData {
     this.laminateName,
     this.laminateSku,
     this.parentEditId,
+    this.systemArea,
+    this.userArea,
   });
 
   Map<String, dynamic> toMap() {
@@ -40,6 +44,8 @@ class EditHistoryData {
       'laminate_name': laminateName,
       'laminate_sku': laminateSku,
       'parent_edit_id': parentEditId,
+      'system_area': systemArea,
+      'user_area': userArea,
     };
   }
 
@@ -56,6 +62,8 @@ class EditHistoryData {
       laminateName: map['laminate_name'],
       laminateSku: map['laminate_sku'],
       parentEditId: map['parent_edit_id'],
+      systemArea: map['system_area'] != null ? (map['system_area'] as num).toDouble() : null,
+      userArea: map['user_area'] != null ? (map['user_area'] as num).toDouble() : null,
     );
   }
 }

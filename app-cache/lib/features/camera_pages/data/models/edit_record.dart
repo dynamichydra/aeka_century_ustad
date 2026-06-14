@@ -9,6 +9,8 @@ class EditRecord {
   final DateTime createdAt;
   final String? laminateName;
   final String? usedLaminatesJson; // JSON string of used laminates
+  final double? systemArea;
+  final double? userArea;
 
   EditRecord({
     required this.id,
@@ -19,6 +21,8 @@ class EditRecord {
     required this.createdAt,
     this.laminateName,
     this.usedLaminatesJson,
+    this.systemArea,
+    this.userArea,
   });
 
   List<Map<String, dynamic>> get usedLaminatesList {
@@ -47,6 +51,8 @@ class EditRecord {
           ? DateTime.parse(json['createdAt']) 
           : DateTime.now(),
       usedLaminatesJson: json['usedLaminates'] != null ? jsonEncode(json['usedLaminates']) : null,
+      systemArea: json['systemArea'] != null ? (json['systemArea'] as num).toDouble() : null,
+      userArea: json['userArea'] != null ? (json['userArea'] as num).toDouble() : null,
     );
   }
 
@@ -58,6 +64,8 @@ class EditRecord {
       'ownerId': ownerId,
       'furnitureId': furnitureId,
       'createdAt': createdAt.toIso8601String(),
+      'systemArea': systemArea,
+      'userArea': userArea,
     };
   }
 }
