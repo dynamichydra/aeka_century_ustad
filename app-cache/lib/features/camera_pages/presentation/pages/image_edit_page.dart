@@ -81,6 +81,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   bool _isPrecaching = false;
   bool _isUploading = false;
   List<dynamic> _apiTextures = [];
+  bool _isSearching = false;
 
   bool _compareExpanded = false;
   bool _editExpanded = true;
@@ -115,12 +116,15 @@ class _ImageEditPageState extends State<ImageEditPage>
   final Map<int, Offset> _activePointers = {};
   bool _isPanning = false;
   double _initialPointerDistance = 1.0;
+  double _containScale = 1.0;
+  double _minScale = 1.0;
+  double _minZoomLimit = 1.0;
   double _initialScale = 1.0;
 
-  /// Minimum allowed zoom scale — set to the initial viewport-fit scale so
-  /// users can never zoom out far enough to reveal blank canvas.
-  double _minScale = 1.0;
-
+  // Track the most recent edit session info.
+  // When an edit completes, we store its database ID so further edits
+  // can link back to it via parent_edit_id.
+  
   final TransformationController _transformationController =
       TransformationController();
 
@@ -149,26 +153,66 @@ class _ImageEditPageState extends State<ImageEditPage>
         final double vpW = MediaQuery.of(context).size.width;
         final double vpH = MediaQuery.of(context).size.height * 0.40;
 
-        // fitScale = scale at which the image exactly fills the viewport
-        // (identical to BoxFit.cover math). Used for OverflowBox sizing.
-        final double fitScale = math.max(vpW / imgW, vpH / imgH);
+        // coverScale = scale at which the image exactly fills the viewport (BoxFit.cover math)
+        final double coverScale = math.max(vpW / imgW, vpH / imgH);
+        // containScale = scale at which the entire image fits inside the viewport (BoxFit.contain math)
+        final double containScale = math.min(vpW / imgW, vpH / imgH);
+        final double minZoom = containScale / coverScale;
 
         setState(() {
           _originalImageWidth = imgW;
           _originalImageHeight = imgH;
           // _minScale stores the cover scale for OverflowBox sizing.
           // TransformationController stays at identity — OverflowBox
-          // centres the image in the Stack, matching BoxFit.cover visually.
-          _minScale = fitScale;
+          // centres the image in the Stack, matching BoxFit.cover visually at scale 1.0.
+          _minScale = coverScale;
+          _containScale = containScale;
+          _minZoomLimit = minZoom;
           // _initialScale stays 1.0 (the TC baseline for pinch gestures).
         });
         debugPrint(
-          '📸 Image: ${imgW}x${imgH} | VP: ${vpW}x${vpH} | fitScale: $fitScale',
+          '📸 Image: ${imgW}x${imgH} | VP: ${vpW}x${vpH} | containScale: $containScale',
         );
       }
     } catch (e) {
       debugPrint('❌ Error getting image dimensions: $e');
     }
+  }
+
+  double get _currentDisplayScale {
+    final bool inPreview = context.read<ImageEditCubit>().state.showSelectionPreview;
+    if (_hasAppliedOnce || inPreview) {
+      return _containScale;
+    }
+    return _minScale;
+  }
+
+  double get _currentMinZoomLimit {
+    final bool inPreview = context.read<ImageEditCubit>().state.showSelectionPreview;
+    if (_hasAppliedOnce || inPreview) {
+      return 1.0;
+    }
+    return _minZoomLimit;
+  }
+
+  Size _getViewSize(BuildContext context) {
+    return Size(
+      MediaQuery.of(context).size.width,
+      MediaQuery.of(context).size.height * 0.40,
+    );
+  }
+
+  Rect _getImageRect(BuildContext context) {
+    final viewSize = _getViewSize(context);
+    final double imgW = _originalImageWidth != null
+        ? _originalImageWidth! * _currentDisplayScale
+        : viewSize.width;
+    final double imgH = _originalImageHeight != null
+        ? _originalImageHeight! * _currentDisplayScale
+        : viewSize.height;
+    final double imgL = (viewSize.width - imgW) / 2.0;
+    final double imgT = (viewSize.height - imgH) / 2.0;
+    return Rect.fromLTWH(imgL, imgT, imgW, imgH);
   }
 
   Offset _mapLocalToOriginal(Offset localPos, Size viewSize) {
@@ -181,10 +225,8 @@ class _ImageEditPageState extends State<ImageEditPage>
     final double viewWidth = viewSize.width;
     final double viewHeight = viewSize.height;
 
-    // BoxFit.cover logic: it scales the image to the smallest scale that covers the view
-    final double scale = (viewWidth / imageWidth > viewHeight / imageHeight)
-        ? viewWidth / imageWidth
-        : viewHeight / imageHeight;
+    // Use the actual contain/min scale
+    final double scale = _currentDisplayScale;
 
     final double scaledWidth = imageWidth * scale;
     final double scaledHeight = imageHeight * scale;
@@ -203,15 +245,17 @@ class _ImageEditPageState extends State<ImageEditPage>
   void _zoomIn() {
     final double vpW = MediaQuery.of(context).size.width;
     final double vpH = MediaQuery.of(context).size.height * 0.40;
-    final double currentScale =
-        _transformationController.value.getMaxScaleOnAxis();
-    final double newScale = (currentScale + 0.5).clamp(1.0, 4.0);
+    final double currentScale = _transformationController.value
+        .getMaxScaleOnAxis();
+    final double newScale = (currentScale + 0.5).clamp(_currentMinZoomLimit, 4.0);
 
     // Pan bounds for OverflowBox-rendered image at newScale
-    final double imgDisplayW =
-        _originalImageWidth != null ? _originalImageWidth! * _minScale : vpW;
-    final double imgDisplayH =
-        _originalImageHeight != null ? _originalImageHeight! * _minScale : vpH;
+    final double imgDisplayW = _originalImageWidth != null
+        ? _originalImageWidth! * _currentDisplayScale
+        : vpW;
+    final double imgDisplayH = _originalImageHeight != null
+        ? _originalImageHeight! * _currentDisplayScale
+        : vpH;
     final double imgLeft = (vpW - imgDisplayW) / 2.0;
     final double imgTop = (vpH - imgDisplayH) / 2.0;
 
@@ -222,33 +266,39 @@ class _ImageEditPageState extends State<ImageEditPage>
     double newTx = (vpW / 2.0) - (vpW / 2.0 - currentTx) * ratio;
     double newTy = (vpH / 2.0) - (vpH / 2.0 - currentTy) * ratio;
 
-    newTx = newTx.clamp(
-      vpW - newScale * (imgLeft + imgDisplayW),
-      -newScale * imgLeft,
-    );
-    newTy = newTy.clamp(
-      vpH - newScale * (imgTop + imgDisplayH),
-      -newScale * imgTop,
-    );
+    final double minTx = vpW - newScale * (imgLeft + imgDisplayW);
+    final double maxTx = -newScale * imgLeft;
+    final double minBoundX = minTx.compareTo(maxTx) > 0 ? maxTx : minTx;
+    final double maxBoundX = minTx.compareTo(maxTx) > 0 ? minTx : maxTx;
+    newTx = newTx.clamp(minBoundX, maxBoundX);
 
-    _transformationController.value =
-        Matrix4.identity()
-          ..translate(newTx, newTy)
-          ..scale(newScale);
+    final double minTy = vpH - newScale * (imgTop + imgDisplayH);
+    final double maxTy = -newScale * imgTop;
+    final double minBoundY = minTy.compareTo(maxTy) > 0 ? maxTy : minTy;
+    final double maxBoundY = minTy.compareTo(maxTy) > 0 ? minTy : maxTy;
+    newTy = newTy.clamp(minBoundY, maxBoundY);
+
+    setState(() {
+      _transformationController.value = Matrix4.identity()
+        ..translate(newTx, newTy)
+        ..scale(newScale);
+    });
   }
 
   void _zoomOut() {
     final double vpW = MediaQuery.of(context).size.width;
     final double vpH = MediaQuery.of(context).size.height * 0.40;
-    final double currentScale =
-        _transformationController.value.getMaxScaleOnAxis();
-    final double newScale = (currentScale - 0.5).clamp(1.0, 4.0);
+    final double currentScale = _transformationController.value
+        .getMaxScaleOnAxis();
+    final double newScale = (currentScale - 0.5).clamp(_currentMinZoomLimit, 4.0);
 
     // Pan bounds for OverflowBox-rendered image at newScale
-    final double imgDisplayW =
-        _originalImageWidth != null ? _originalImageWidth! * _minScale : vpW;
-    final double imgDisplayH =
-        _originalImageHeight != null ? _originalImageHeight! * _minScale : vpH;
+    final double imgDisplayW = _originalImageWidth != null
+        ? _originalImageWidth! * _currentDisplayScale
+        : vpW;
+    final double imgDisplayH = _originalImageHeight != null
+        ? _originalImageHeight! * _currentDisplayScale
+        : vpH;
     final double imgLeft = (vpW - imgDisplayW) / 2.0;
     final double imgTop = (vpH - imgDisplayH) / 2.0;
 
@@ -258,19 +308,23 @@ class _ImageEditPageState extends State<ImageEditPage>
     double newTx = (vpW / 2.0) - (vpW / 2.0 - currentTx) * ratio;
     double newTy = (vpH / 2.0) - (vpH / 2.0 - currentTy) * ratio;
 
-    newTx = newTx.clamp(
-      vpW - newScale * (imgLeft + imgDisplayW),
-      -newScale * imgLeft,
-    );
-    newTy = newTy.clamp(
-      vpH - newScale * (imgTop + imgDisplayH),
-      -newScale * imgTop,
-    );
+    final double minTx = vpW - newScale * (imgLeft + imgDisplayW);
+    final double maxTx = -newScale * imgLeft;
+    final double minBoundX = minTx.compareTo(maxTx) > 0 ? maxTx : minTx;
+    final double maxBoundX = minTx.compareTo(maxTx) > 0 ? minTx : maxTx;
+    newTx = newTx.clamp(minBoundX, maxBoundX);
 
-    _transformationController.value =
-        Matrix4.identity()
-          ..translate(newTx, newTy)
-          ..scale(newScale);
+    final double minTy = vpH - newScale * (imgTop + imgDisplayH);
+    final double maxTy = -newScale * imgTop;
+    final double minBoundY = minTy.compareTo(maxTy) > 0 ? maxTy : minTy;
+    final double maxBoundY = minTy.compareTo(maxTy) > 0 ? minTy : maxTy;
+    newTy = newTy.clamp(minBoundY, maxBoundY);
+
+    setState(() {
+      _transformationController.value = Matrix4.identity()
+        ..translate(newTx, newTy)
+        ..scale(newScale);
+    });
   }
 
   void _toggleSelection(int index) {
@@ -493,6 +547,70 @@ class _ImageEditPageState extends State<ImageEditPage>
     } catch (e) {
       debugPrint("Error fetching user edits: $e");
       if (mounted) setState(() => _isLoadingEdits = false);
+    }
+  }
+
+  Future<void> _fetchTexturesBySku(String skuId) async {
+    if (skuId.trim().isEmpty) return;
+
+    setState(() {
+      _apiTextures = [];
+      _isLoadingTextures = true;
+      _isSearching = true;
+    });
+
+    try {
+      final response = await _laminateApi.fetchBySku(
+        skuId: skuId.trim(),
+        laminateType: widget.isExterior ? "Exteria" : "Laminates",
+      );
+
+      if (mounted) {
+        setState(() {
+          if (response != null && response is Map) {
+            if (response['data'] != null) {
+              final data = response['data'];
+              if (data is List) {
+                _apiTextures = data;
+              } else if (data is Map) {
+                _apiTextures = [data];
+              } else {
+                _apiTextures = [];
+              }
+            } else if (response['laminates'] != null) {
+              _apiTextures = response['laminates'] as List<dynamic>;
+            } else {
+              _apiTextures = [];
+            }
+          } else {
+            _apiTextures = [];
+          }
+          _isLoadingTextures = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error searching textures by SKU: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingTextures = false;
+          _apiTextures = [];
+        });
+      }
+    }
+  }
+
+  void _clearSearchAndRestore() {
+    setState(() {
+      _searchController.clear();
+      _isSearching = false;
+      _apiTextures = [];
+    });
+    if (_selectedColor != null) {
+      _fetchTexturesByColor();
+    } else if (_selectedCategory != null) {
+      _fetchTextures();
+    } else {
+      getLamCategory();
     }
   }
 
@@ -914,7 +1032,6 @@ class _ImageEditPageState extends State<ImageEditPage>
                   children: [
                     Column(
                       children: [
-                        // Top Image Preview Area (Fixed Height)
                         SizedBox(
                           height: MediaQuery.of(context).size.height * 0.40,
                           child: ValueListenableBuilder<List<int>>(
@@ -1038,7 +1155,8 @@ class _ImageEditPageState extends State<ImageEditPage>
         if (!_compareExpanded)
           BlocBuilder<ImageEditCubit, ImageEditState>(
             builder: (context, state) {
-              final bool canUndo = state.appliedLayers.isNotEmpty || (_parentEditId != null);
+              final bool canUndo =
+                  state.appliedLayers.isNotEmpty || (_parentEditId != null);
               return _buildHeaderTile(
                 title: "Edit & Design",
                 iconImg: "edit.png",
@@ -1057,7 +1175,10 @@ class _ImageEditPageState extends State<ImageEditPage>
                   child: GestureDetector(
                     onTap: canUndo ? () => _handleUndo(state) : null,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -1147,29 +1268,24 @@ class _ImageEditPageState extends State<ImageEditPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // const SizedBox(height: 4),
-          // _buildSearchBar(),
-          const SizedBox(height: 8),
-          const Text(
-            "Select Color",
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-          ),
           const SizedBox(height: 4),
-          _buildColorSelection(),
-          // const SizedBox(height: 4),
-          // const Text(
-          //   "Select Categories",
-          //   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-          // ),
-          // const SizedBox(height: 4),
-          // const SizedBox(height: 6),
-          const Text(
-            "Select Textures & Patterns",
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 6),
-          _buildCategorySelection(),
-          const SizedBox(height: 12),
+          _buildSearchBar(),
+          const SizedBox(height: 8),
+          if (!_isSearching) ...[
+            const Text(
+              "Select Color",
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 4),
+            _buildColorSelection(),
+            const Text(
+              "Select Textures & Patterns",
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 6),
+            _buildCategorySelection(),
+            const SizedBox(height: 12),
+          ],
           RepaintBoundary(child: _buildTextureSelection()),
           if (_selection != null) ...[
             const SizedBox(height: 8),
@@ -1259,21 +1375,34 @@ class _ImageEditPageState extends State<ImageEditPage>
                       height: 36,
                       child: TextField(
                         controller: _areaController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 0,
+                          ),
                           suffixText: "sq. ft.",
-                          suffixStyle: const TextStyle(fontSize: 9, color: Colors.black45),
+                          suffixStyle: const TextStyle(
+                            fontSize: 9,
+                            color: Colors.black45,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
                             borderSide: const BorderSide(color: Colors.black12),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: TColors.primary),
+                            borderSide: const BorderSide(
+                              color: TColors.primary,
+                            ),
                           ),
                         ),
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -1817,7 +1946,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   SelectionMode _hitTestHandles(Offset localPosition) {
     if (_selection == null) return SelectionMode.none;
 
-    final double touchRadius = 24.0;
+    final double touchRadius = 40.0;
 
     final double left = _selection!.left;
     final double top = _selection!.top;
@@ -1878,7 +2007,10 @@ class _ImageEditPageState extends State<ImageEditPage>
     final double top = _selection!.top + _selection!.height + 22;
     final double right = left + 150;
     final double bottom = top + 50;
-    return localPos.dx >= left && localPos.dx <= right && localPos.dy >= top && localPos.dy <= bottom;
+    return localPos.dx >= left &&
+        localPos.dx <= right &&
+        localPos.dy >= top &&
+        localPos.dy <= bottom;
   }
 
   bool _isPointInVerticalOverlay(Offset localPos) {
@@ -1887,578 +2019,584 @@ class _ImageEditPageState extends State<ImageEditPage>
     final double top = _selection!.top + (_selection!.height - 40) / 2;
     final double right = left + 120;
     final double bottom = top + 40;
-    return localPos.dx >= left && localPos.dx <= right && localPos.dy >= top && localPos.dy <= bottom;
+    return localPos.dx >= left &&
+        localPos.dx <= right &&
+        localPos.dy >= top &&
+        localPos.dy <= bottom;
   }
 
   Widget _buildImageOverlaySection(ImageEditState state) {
     final bool inPreview = state.showSelectionPreview;
 
     if (inPreview) {
-      return ClipRect(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Show the full image using the same OverflowBox approach as edit
-            // mode — no cropping, full image visible, landscape/portrait
-            // overflow accessible. MarchingAntsMaskPainter (Positioned.fill)
-            // self-computes its own BoxFit.cover transform so it aligns
-            // correctly with the full viewport.
-            if (_originalImageWidth != null)
-              OverflowBox(
-                alignment: Alignment.center,
-                maxWidth: double.infinity,
-                maxHeight: double.infinity,
-                child: _baseImage.startsWith('http')
-                    ? Image.network(
-                        _baseImage,
-                        width: _originalImageWidth! * _minScale,
-                        height: _originalImageHeight! * _minScale,
+      return Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.none,
+        children: [
+          // Show the full image containing the laminate (tempCompositedImagePath)
+          // fully contained inside the preview section without stretching.
+          if (_originalImageWidth != null)
+            Center(
+              child: SizedBox(
+                width: _originalImageWidth! * _containScale,
+                height: _originalImageHeight! * _containScale,
+                child: state.tempCompositedImagePath != null
+                    ? Image.file(
+                        File(state.tempCompositedImagePath!),
                         fit: BoxFit.fill,
                         gaplessPlayback: true,
                         cacheWidth: 800,
                       )
-                    : Image.file(
-                        File(_baseImage),
-                        width: _originalImageWidth! * _minScale,
-                        height: _originalImageHeight! * _minScale,
-                        fit: BoxFit.fill,
-                        gaplessPlayback: true,
-                        cacheWidth: 800,
-                      ),
-              )
-            else
-              // Fallback before dimensions load
-              _baseImage.startsWith('http')
-                  ? Image.network(
-                      _baseImage,
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.40,
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                      cacheWidth: 800,
-                    )
-                  : Image.file(
-                      File(_baseImage),
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.40,
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                      cacheWidth: 800,
-                    ),
-
-            // Mask overlay — Positioned.fill spans the full viewport;
-            // MarchingAntsMaskPainter internally applies BoxFit.cover math
-            // so the mask region correctly overlays the displayed image area.
-            if (_decodedMaskImage != null)
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _marchingAntsController,
-                  builder: (_, __) => CustomPaint(
-                    painter: MarchingAntsMaskPainter(
-                      maskImage: _decodedMaskImage!,
-                      progress: _marchingAntsController.value,
-                      fillPath: _maskFillPath,
-                      edgePath: _maskEdgePath,
-                    ),
-                  ),
-                ),
-              ),
-
-            Positioned(
-              top: 12,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.55),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    '✦  Review before applying',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Stack(
-      children: [
-        ClipRect(
-          child: InteractiveViewer(
-            transformationController: _transformationController,
-            minScale: 1.0,
-            maxScale: 4.0,
-            boundaryMargin: EdgeInsets.zero,
-            panEnabled: false,
-            scaleEnabled: false,
-            child: Listener(
-              behavior: HitTestBehavior.opaque,
-              onPointerDown: (event) {
-                _activePointers[event.pointer] = event.position;
-
-                if (_activePointers.length == 1) {
-                  _backupSelection = _selection;
-                }
-
-                if (_activePointers.length >= 2) {
-                  setState(() {
-                    _selection = _backupSelection;
-                    _mode = SelectionMode.none;
-                    _isPanning = true;
-
-                    // Initialize pinch baseline
-                    final keys = _activePointers.keys.toList();
-                    final p1 = _activePointers[keys[0]]!;
-                    final p2 = _activePointers[keys[1]]!;
-                    _initialPointerDistance = (p1 - p2).distance;
-                    if (_initialPointerDistance < 1.0) {
-                      _initialPointerDistance = 1.0;
-                    }
-                    _initialScale = _transformationController.value
-                        .getMaxScaleOnAxis();
-                  });
-                  return;
-                }
-
-                if (_isPanning) return;
-
-                final viewSize = Size(
-                  MediaQuery.of(context).size.width,
-                  MediaQuery.of(context).size.height * 0.40,
-                );
-                final localPos = event.localPosition;
-
-                if (_selection != null &&
-                    (_isPointInHorizontalOverlay(localPos) ||
-                     _isPointInVerticalOverlay(localPos))) {
-                  return;
-                }
-
-                SelectionMode detectedMode = SelectionMode.none;
-                if (_selection != null) {
-                  detectedMode = _hitTestHandles(localPos);
-                }
-
-                if (detectedMode != SelectionMode.none) {
-                  setState(() {
-                    _mode = detectedMode;
-                  });
-                } else if (_selection != null &&
-                    _selection!.rect.contains(localPos)) {
-                  setState(() {
-                    _mode = SelectionMode.moving;
-                  });
-                } else {
-                  setState(() {
-                    _dragStart = localPos;
-                    _selection = SelectionRect(
-                      left: localPos.dx.clamp(0.0, viewSize.width),
-                      top: localPos.dy.clamp(0.0, viewSize.height),
-                      width: 0,
-                      height: 0,
-                    );
-                    _mode = SelectionMode.creating;
-                    _editingWidth = false;
-                    _editingHeight = false;
-                  });
-                }
-              },
-              onPointerMove: (event) {
-                if (_activePointers.length >= 2 || _isPanning) {
-                  final Offset? oldPos = _activePointers[event.pointer];
-                  _activePointers[event.pointer] = event.position;
-
-                  if (oldPos != null && oldPos != event.position) {
-                    final Matrix4 matrix = _transformationController.value
-                        .clone();
-                    final double oldScale = matrix.getMaxScaleOnAxis();
-                    final viewSize = Size(
-                      MediaQuery.of(context).size.width,
-                      MediaQuery.of(context).size.height * 0.40,
-                    );
-
-                    double targetScale = oldScale;
-                    double scaleRatio = 1.0;
-
-                    if (_activePointers.length >= 2) {
-                      final keys = _activePointers.keys.toList();
-                      final p1 = _activePointers[keys[0]]!;
-                      final p2 = _activePointers[keys[1]]!;
-                      final double currentDistance = (p1 - p2).distance;
-
-                      if (_initialPointerDistance > 1.0) {
-                        final double scaleFactor =
-                            currentDistance / _initialPointerDistance;
-                        // Clamp at 1.0: never zoom out below the cover-fill level
-                        targetScale = (_initialScale * scaleFactor).clamp(
-                          1.0,
-                          4.0,
-                        );
-                        scaleRatio = targetScale / oldScale;
-                      }
-                    }
-
-                    Offset sumNew = Offset.zero;
-                    for (final pos in _activePointers.values) {
-                      sumNew += pos;
-                    }
-                    final Offset newCentroid =
-                        sumNew / _activePointers.length.toDouble();
-
-                    final Offset sumOld = sumNew - event.position + oldPos;
-                    final Offset oldCentroid =
-                        sumOld / _activePointers.length.toDouble();
-
-                    final double oldTx = matrix.storage[12];
-                    final double oldTy = matrix.storage[13];
-
-                    double newTx =
-                        newCentroid.dx - (oldCentroid.dx - oldTx) * scaleRatio;
-                    double newTy =
-                        newCentroid.dy - (oldCentroid.dy - oldTy) * scaleRatio;
-
-                    // Pan bounds: image (rendered via OverflowBox at _minScale)
-                    // must always cover the entire viewport — no blank canvas.
-                    final double imgDisplayW = _originalImageWidth != null
-                        ? _originalImageWidth! * _minScale
-                        : viewSize.width;
-                    final double imgDisplayH = _originalImageHeight != null
-                        ? _originalImageHeight! * _minScale
-                        : viewSize.height;
-                    // OverflowBox centres image in Stack → left edge in Stack coords:
-                    final double imgLeft =
-                        (viewSize.width - imgDisplayW) / 2.0;
-                    final double imgTop =
-                        (viewSize.height - imgDisplayH) / 2.0;
-
-                    // At TransformationController scale=targetScale:
-                    //   image left viewport position = targetScale*imgLeft + newTx
-                    // Constraint: left ≤ 0 and right ≥ vpW, top ≤ 0 and bottom ≥ vpH
-                    final double minTx =
-                        viewSize.width - targetScale * (imgLeft + imgDisplayW);
-                    final double maxTx = -targetScale * imgLeft;
-                    final double minTy =
-                        viewSize.height - targetScale * (imgTop + imgDisplayH);
-                    final double maxTy = -targetScale * imgTop;
-
-                    newTx = newTx.clamp(minTx, maxTx);
-                    newTy = newTy.clamp(minTy, maxTy);
-
-                    _transformationController.value = Matrix4.identity()
-                      ..translate(newTx, newTy)
-                      ..scale(targetScale);
-                  }
-                  return;
-                }
-
-                final viewSize = Size(
-                  MediaQuery.of(context).size.width,
-                  MediaQuery.of(context).size.height * 0.40,
-                );
-                final localPos = event.localPosition;
-
-                if (_mode == SelectionMode.creating && _dragStart != null) {
-                  final double currentX = localPos.dx.clamp(
-                    0.0,
-                    viewSize.width,
-                  );
-                  final double currentY = localPos.dy.clamp(
-                    0.0,
-                    viewSize.height,
-                  );
-
-                  final double left = math.min(_dragStart!.dx, currentX);
-                  final double top = math.min(_dragStart!.dy, currentY);
-                  final double width = (currentX - _dragStart!.dx).abs();
-                  final double height = (currentY - _dragStart!.dy).abs();
-
-                  setState(() {
-                    _selection = SelectionRect(
-                      left: left,
-                      top: top,
-                      width: width,
-                      height: height,
-                    );
-                  });
-                } else if (_mode == SelectionMode.moving &&
-                    _selection != null) {
-                  double newLeft = _selection!.left + event.delta.dx;
-                  double newTop = _selection!.top + event.delta.dy;
-
-                  newLeft = newLeft.clamp(
-                    0.0,
-                    viewSize.width - _selection!.width,
-                  );
-                  newTop = newTop.clamp(
-                    0.0,
-                    viewSize.height - _selection!.height,
-                  );
-
-                  setState(() {
-                    _selection!.left = newLeft;
-                    _selection!.top = newTop;
-                  });
-                } else if (_selection != null && _mode != SelectionMode.none) {
-                  double left = _selection!.left;
-                  double top = _selection!.top;
-                  double right = _selection!.left + _selection!.width;
-                  double bottom = _selection!.top + _selection!.height;
-
-                  final double localX = localPos.dx.clamp(0.0, viewSize.width);
-                  final double localY = localPos.dy.clamp(0.0, viewSize.height);
-
-                  switch (_mode) {
-                    case SelectionMode.resizeTopLeft:
-                      left = localX.clamp(0.0, right - 10.0);
-                      top = localY.clamp(0.0, bottom - 10.0);
-                      break;
-                    case SelectionMode.resizeTopRight:
-                      right = localX.clamp(left + 10.0, viewSize.width);
-                      top = localY.clamp(0.0, bottom - 10.0);
-                      break;
-                    case SelectionMode.resizeBottomLeft:
-                      left = localX.clamp(0.0, right - 10.0);
-                      bottom = localY.clamp(top + 10.0, viewSize.height);
-                      break;
-                    case SelectionMode.resizeBottomRight:
-                      right = localX.clamp(left + 10.0, viewSize.width);
-                      bottom = localY.clamp(top + 10.0, viewSize.height);
-                      break;
-                    case SelectionMode.resizeLeft:
-                      left = localX.clamp(0.0, right - 10.0);
-                      break;
-                    case SelectionMode.resizeRight:
-                      right = localX.clamp(left + 10.0, viewSize.width);
-                      break;
-                    case SelectionMode.resizeTop:
-                      top = localY.clamp(0.0, bottom - 10.0);
-                      break;
-                    case SelectionMode.resizeBottom:
-                      bottom = localY.clamp(top + 10.0, viewSize.height);
-                      break;
-                    default:
-                      break;
-                  }
-
-                  setState(() {
-                    _selection = SelectionRect(
-                      left: left,
-                      top: top,
-                      width: right - left,
-                      height: bottom - top,
-                    );
-                  });
-                }
-              },
-              onPointerUp: (event) {
-                _activePointers.remove(event.pointer);
-
-                if (_activePointers.isEmpty) {
-                  _backupSelection = null;
-                }
-
-                if (_isPanning) {
-                  if (_activePointers.isEmpty) {
-                    setState(() {
-                      _isPanning = false;
-                    });
-                  }
-                  return;
-                }
-
-                if (_selection != null) {
-                  if (_selection!.width < 10.0 || _selection!.height < 10.0) {
-                    setState(() {
-                      _selection = null;
-                      _mode = SelectionMode.none;
-                      _editingWidth = false;
-                      _editingHeight = false;
-                    });
-                    context.read<ImageEditCubit>().clearSelection();
-                    return;
-                  }
-                }
-
-                setState(() {
-                  _mode = SelectionMode.none;
-                });
-
-                if (_selection != null) {
-                  final double calculatedW = (_selection!.width / 10.0).roundToDouble();
-                  final double calculatedH = (_selection!.height / 10.0).roundToDouble();
-                  final double calculatedArea = (calculatedW * calculatedH) / 144.0;
-                  final double systemVal = double.parse(calculatedArea.toStringAsFixed(1));
-                  setState(() {
-                    _customWidthInches = calculatedW;
-                    _customHeightInches = calculatedH;
-                    _systemArea = systemVal;
-                    _areaController.text = systemVal.toString();
-                    _editingWidth = false;
-                    _editingHeight = false;
-                  });
-
-                  final viewSize = Size(
-                    MediaQuery.of(context).size.width,
-                    MediaQuery.of(context).size.height * 0.40,
-                  );
-
-                  final Offset localTopLeft = Offset(
-                    _selection!.left,
-                    _selection!.top,
-                  );
-                  final Offset localBottomRight = Offset(
-                    _selection!.left + _selection!.width,
-                    _selection!.top + _selection!.height,
-                  );
-
-                  final Offset originalTopLeft = _mapLocalToOriginal(
-                    localTopLeft,
-                    viewSize,
-                  );
-                  final Offset originalBottomRight = _mapLocalToOriginal(
-                    localBottomRight,
-                    viewSize,
-                  );
-
-                  final int originalLeft = originalTopLeft.dx.round();
-                  final int originalTop = originalTopLeft.dy.round();
-                  final int originalRight = originalBottomRight.dx.round();
-                  final int originalBottom = originalBottomRight.dy.round();
-
-                  final areaData = {
-                    "left": originalLeft,
-                    "top": originalTop,
-                    "right": originalRight,
-                    "bottom": originalBottom,
-                  };
-
-                  debugPrint("Selected Area (Original Coordinates): $areaData | System Area prediction: $systemVal");
-                  context.read<ImageEditCubit>().selectArea(areaData);
-                }
-              },
-              onPointerCancel: (event) {
-                _activePointers.remove(event.pointer);
-                if (_activePointers.isEmpty) {
-                  setState(() {
-                    _isPanning = false;
-                    _mode = SelectionMode.none;
-                    _backupSelection = null;
-                  });
-                }
-              },
-              child: Stack(
-                children: [
-                  // Base Image — rendered via OverflowBox so the full
-                  // BoxFit.cover-equivalent display size overflows the Stack
-                  // bounds. ClipRect (outermost) clips to the viewport.
-                  // This lets users pan to reveal landscape/portrait overflow
-                  // WITHOUT changing the coordinate system: OverflowBox centres
-                  // the child at (vpW/2, vpH/2) in Stack space — identical to
-                  // where BoxFit.cover would render it — so _mapLocalToOriginal
-                  // with viewSize=(vpW, vpH) stays mathematically correct.
-                  if (_originalImageWidth != null)
-                    OverflowBox(
-                      alignment: Alignment.center,
-                      maxWidth: double.infinity,
-                      maxHeight: double.infinity,
-                      child: _baseImage.startsWith('http')
-                          ? Image.network(
-                              _baseImage,
-                              width: _originalImageWidth! * _minScale,
-                              height: _originalImageHeight! * _minScale,
-                              fit: BoxFit.fill,
-                              gaplessPlayback: true,
-                              cacheWidth: 800,
-                            )
-                          : Image.file(
-                              File(_baseImage),
-                              width: _originalImageWidth! * _minScale,
-                              height: _originalImageHeight! * _minScale,
-                              fit: BoxFit.fill,
-                              gaplessPlayback: true,
-                              cacheWidth: 800,
-                            ),
-                    )
-                  else
-                    // Fallback before dimensions load: BoxFit.cover fills viewport
-                    _baseImage.startsWith('http')
+                    : _baseImage.startsWith('http')
                         ? Image.network(
                             _baseImage,
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.fill,
                             gaplessPlayback: true,
                             cacheWidth: 800,
                           )
                         : Image.file(
                             File(_baseImage),
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.fill,
                             gaplessPlayback: true,
                             cacheWidth: 800,
                           ),
+              ),
+            )
+          else
+            Center(
+              child: state.tempCompositedImagePath != null
+                  ? Image.file(
+                      File(state.tempCompositedImagePath!),
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                      cacheWidth: 800,
+                    )
+                  : _baseImage.startsWith('http')
+                      ? Image.network(
+                          _baseImage,
+                          fit: BoxFit.contain,
+                          gaplessPlayback: true,
+                          cacheWidth: 800,
+                        )
+                      : Image.file(
+                          File(_baseImage),
+                          fit: BoxFit.contain,
+                          gaplessPlayback: true,
+                          cacheWidth: 800,
+                        ),
+            ),
 
-                  // Applied Design Layer — same OverflowBox treatment
-                  if (_currentAssetPreview != null &&
-                      _currentAssetPreview!.isNotEmpty)
-                    if (_originalImageWidth != null)
-                      OverflowBox(
-                        alignment: Alignment.center,
-                        maxWidth: double.infinity,
-                        maxHeight: double.infinity,
-                        child: _currentAssetPreview!.startsWith('http')
-                            ? Image.network(
-                                _currentAssetPreview!,
-                                width: _originalImageWidth! * _minScale,
-                                height: _originalImageHeight! * _minScale,
-                                fit: BoxFit.fill,
-                                gaplessPlayback: true,
-                                cacheWidth: 800,
-                              )
-                            : (_currentAssetPreview!.startsWith('/') ||
-                                  _currentAssetPreview!.contains(
-                                    'tryon_result',
-                                  ))
-                            ? Image.file(
-                                File(_currentAssetPreview!),
-                                width: _originalImageWidth! * _minScale,
-                                height: _originalImageHeight! * _minScale,
-                                fit: BoxFit.fill,
-                                gaplessPlayback: true,
-                                cacheWidth: 800,
-                              )
-                            : Image.asset(
-                                _currentAssetPreview!,
-                                width: _originalImageWidth! * _minScale,
-                                height: _originalImageHeight! * _minScale,
-                                fit: BoxFit.fill,
-                                gaplessPlayback: true,
-                              ),
-                      )
-                    else
-                      // Fallback before dimensions load
-                      _currentAssetPreview!.startsWith('http')
+          // Mask overlay — Positioned.fill spans the full viewport;
+          // MarchingAntsMaskPainter internally applies BoxFit.cover math
+          // so the mask region correctly overlays the displayed image area.
+          if (_decodedMaskImage != null)
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _marchingAntsController,
+                builder: (_, __) => CustomPaint(
+                  painter: MarchingAntsMaskPainter(
+                    maskImage: _decodedMaskImage!,
+                    progress: _marchingAntsController.value,
+                    fillPath: _maskFillPath,
+                    edgePath: _maskEdgePath,
+                  ),
+                ),
+              ),
+            ),
+
+          Positioned(
+            top: 12,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.55),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '✦  Review before applying',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Stack(
+      children: [
+        InteractiveViewer(
+          clipBehavior: Clip.none,
+          transformationController: _transformationController,
+          minScale: _currentMinZoomLimit,
+          maxScale: 4.0,
+          boundaryMargin: EdgeInsets.zero,
+          panEnabled: false,
+          scaleEnabled: false,
+          child: Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) {
+              _activePointers[event.pointer] = event.position;
+
+              if (_activePointers.length == 1) {
+                _backupSelection = _selection;
+              }
+
+              if (_activePointers.length >= 2) {
+                setState(() {
+                  _selection = _backupSelection;
+                  _mode = SelectionMode.none;
+                  _isPanning = true;
+
+                  // Initialize pinch baseline
+                  final keys = _activePointers.keys.toList();
+                  final p1 = _activePointers[keys[0]]!;
+                  final p2 = _activePointers[keys[1]]!;
+                  _initialPointerDistance = (p1 - p2).distance;
+                  if (_initialPointerDistance < 1.0) {
+                    _initialPointerDistance = 1.0;
+                  }
+                  _initialScale = _transformationController.value
+                      .getMaxScaleOnAxis();
+                });
+                return;
+              }
+
+              if (_isPanning) return;
+
+              final localPos = event.localPosition;
+              final Rect imageRect = _getImageRect(context);
+              final double imgL = imageRect.left;
+              final double imgR = imageRect.right;
+              final double imgT = imageRect.top;
+              final double imgB = imageRect.bottom;
+
+              if (_selection != null &&
+                  (_isPointInHorizontalOverlay(localPos) ||
+                      _isPointInVerticalOverlay(localPos))) {
+                return;
+              }
+
+              SelectionMode detectedMode = SelectionMode.none;
+              if (_selection != null) {
+                detectedMode = _hitTestHandles(localPos);
+              }
+
+              double snap(double val, double minBound, double maxBound) {
+                final clamped = val.clamp(minBound, maxBound);
+                if ((clamped - minBound).abs() < 36.0) return minBound;
+                if ((maxBound - clamped).abs() < 36.0) return maxBound;
+                return clamped;
+              }
+
+              if (detectedMode != SelectionMode.none) {
+                setState(() {
+                  _mode = detectedMode;
+                });
+              } else if (_selection != null &&
+                  _selection!.rect.contains(localPos)) {
+                setState(() {
+                  _mode = SelectionMode.moving;
+                });
+              } else {
+                setState(() {
+                  _dragStart = Offset(
+                    snap(localPos.dx, imgL, imgR),
+                    snap(localPos.dy, imgT, imgB),
+                  );
+                  _selection = SelectionRect(
+                    left: _dragStart!.dx,
+                    top: _dragStart!.dy,
+                    width: 0,
+                    height: 0,
+                  );
+                  _mode = SelectionMode.creating;
+                  _editingWidth = false;
+                  _editingHeight = false;
+                });
+              }
+            },
+            onPointerMove: (event) {
+              if (_activePointers.length >= 2 || _isPanning) {
+                final Offset? oldPos = _activePointers[event.pointer];
+                _activePointers[event.pointer] = event.position;
+
+                if (oldPos != null && oldPos != event.position) {
+                  final Matrix4 matrix = _transformationController.value
+                      .clone();
+                  final double oldScale = matrix.getMaxScaleOnAxis();
+                  final viewSize = Size(
+                    MediaQuery.of(context).size.width,
+                    MediaQuery.of(context).size.height * 0.40,
+                  );
+
+                  double targetScale = oldScale;
+                  double scaleRatio = 1.0;
+
+                  if (_activePointers.length >= 2) {
+                    final keys = _activePointers.keys.toList();
+                    final p1 = _activePointers[keys[0]]!;
+                    final p2 = _activePointers[keys[1]]!;
+                    final double currentDistance = (p1 - p2).distance;
+
+                    if (_initialPointerDistance > 1.0) {
+                      final double scaleFactor =
+                          currentDistance / _initialPointerDistance;
+                      // Clamp at _currentMinZoomLimit: never zoom out below containment level
+                      targetScale = (_initialScale * scaleFactor).clamp(
+                        _currentMinZoomLimit,
+                        4.0,
+                      );
+                      scaleRatio = targetScale / oldScale;
+                    }
+                  }
+
+                  Offset sumNew = Offset.zero;
+                  for (final pos in _activePointers.values) {
+                    sumNew += pos;
+                  }
+                  final Offset newCentroid =
+                      sumNew / _activePointers.length.toDouble();
+
+                  final Offset sumOld = sumNew - event.position + oldPos;
+                  final Offset oldCentroid =
+                      sumOld / _activePointers.length.toDouble();
+
+                  final double oldTx = matrix.storage[12];
+                  final double oldTy = matrix.storage[13];
+
+                  double newTx =
+                      newCentroid.dx - (oldCentroid.dx - oldTx) * scaleRatio;
+                  double newTy =
+                      newCentroid.dy - (oldCentroid.dy - oldTy) * scaleRatio;
+
+                  // Pan bounds: image (rendered via OverflowBox at _currentDisplayScale)
+                  // must always cover the entire viewport — no blank canvas.
+                  final double imgDisplayW = _originalImageWidth != null
+                      ? _originalImageWidth! * _currentDisplayScale
+                      : viewSize.width;
+                  final double imgDisplayH = _originalImageHeight != null
+                      ? _originalImageHeight! * _currentDisplayScale
+                      : viewSize.height;
+                  // OverflowBox centres image in Stack → left edge in Stack coords:
+                  final double imgLeft = (viewSize.width - imgDisplayW) / 2.0;
+                  final double imgTop = (viewSize.height - imgDisplayH) / 2.0;
+
+                  // At TransformationController scale=targetScale:
+                  //   image left viewport position = targetScale*imgLeft + newTx
+                  // Constraint: left ≤ 0 and right ≥ vpW, top ≤ 0 and bottom ≥ vpH
+                  final double minTx =
+                      viewSize.width - targetScale * (imgLeft + imgDisplayW);
+                  final double maxTx = -targetScale * imgLeft;
+                  final double minTy =
+                      viewSize.height - targetScale * (imgTop + imgDisplayH);
+                  final double maxTy = -targetScale * imgTop;
+
+                  final double minBoundX = minTx.compareTo(maxTx) > 0
+                      ? maxTx
+                      : minTx;
+                  final double maxBoundX = minTx.compareTo(maxTx) > 0
+                      ? minTx
+                      : maxTx;
+                  newTx = newTx.clamp(minBoundX, maxBoundX);
+
+                  final double minBoundY = minTy.compareTo(maxTy) > 0
+                      ? maxTy
+                      : minTy;
+                  final double maxBoundY = minTy.compareTo(maxTy) > 0
+                      ? minTy
+                      : maxTy;
+                  newTy = newTy.clamp(minBoundY, maxBoundY);
+
+                  _transformationController.value = Matrix4.identity()
+                    ..translate(newTx, newTy)
+                    ..scale(targetScale);
+                }
+                return;
+              }
+
+              final localPos = event.localPosition;
+              final Rect imageRect = _getImageRect(context);
+              final double imgL = imageRect.left;
+              final double imgR = imageRect.right;
+              final double imgT = imageRect.top;
+              final double imgB = imageRect.bottom;
+
+              double snap(double val, double minBound, double maxBound) {
+                final clamped = val.clamp(minBound, maxBound);
+                if ((clamped - minBound).abs() < 36.0) return minBound;
+                if ((maxBound - clamped).abs() < 36.0) return maxBound;
+                return clamped;
+              }
+
+              if (_mode == SelectionMode.creating && _dragStart != null) {
+                final double currentX = snap(localPos.dx, imgL, imgR);
+                final double currentY = snap(localPos.dy, imgT, imgB);
+
+                final double left = math.min(_dragStart!.dx, currentX);
+                final double top = math.min(_dragStart!.dy, currentY);
+                final double width = (currentX - _dragStart!.dx).abs();
+                final double height = (currentY - _dragStart!.dy).abs();
+
+                setState(() {
+                  _selection = SelectionRect(
+                    left: left,
+                    top: top,
+                    width: width,
+                    height: height,
+                  );
+                });
+              } else if (_mode == SelectionMode.moving && _selection != null) {
+                double newLeft = _selection!.left + event.delta.dx;
+                double newTop = _selection!.top + event.delta.dy;
+
+                newLeft = math.max(
+                  imgL,
+                  math.min(imgR - _selection!.width, newLeft),
+                );
+                newTop = math.max(
+                  imgT,
+                  math.min(imgB - _selection!.height, newTop),
+                );
+
+                setState(() {
+                  _selection!.left = newLeft;
+                  _selection!.top = newTop;
+                });
+              } else if (_selection != null && _mode != SelectionMode.none) {
+                double left = _selection!.left;
+                double top = _selection!.top;
+                double right = _selection!.left + _selection!.width;
+                double bottom = _selection!.top + _selection!.height;
+
+                final double localX = snap(localPos.dx, imgL, imgR);
+                final double localY = snap(localPos.dy, imgT, imgB);
+
+                switch (_mode) {
+                  case SelectionMode.resizeTopLeft:
+                    left = math.max(imgL, math.min(right - 10.0, localX));
+                    top = math.max(imgT, math.min(bottom - 10.0, localY));
+                    break;
+                  case SelectionMode.resizeTopRight:
+                    right = math.min(imgR, math.max(left + 10.0, localX));
+                    top = math.max(imgT, math.min(bottom - 10.0, localY));
+                    break;
+                  case SelectionMode.resizeBottomLeft:
+                    left = math.max(imgL, math.min(right - 10.0, localX));
+                    bottom = math.min(imgB, math.max(top + 10.0, localY));
+                    break;
+                  case SelectionMode.resizeBottomRight:
+                    right = math.min(imgR, math.max(left + 10.0, localX));
+                    bottom = math.min(imgB, math.max(top + 10.0, localY));
+                    break;
+                  case SelectionMode.resizeLeft:
+                    left = math.max(imgL, math.min(right - 10.0, localX));
+                    break;
+                  case SelectionMode.resizeRight:
+                    right = math.min(imgR, math.max(left + 10.0, localX));
+                    break;
+                  case SelectionMode.resizeTop:
+                    top = math.max(imgT, math.min(bottom - 10.0, localY));
+                    break;
+                  case SelectionMode.resizeBottom:
+                    bottom = math.min(imgB, math.max(top + 10.0, localY));
+                    break;
+                  default:
+                    break;
+                }
+
+                setState(() {
+                  _selection = SelectionRect(
+                    left: left,
+                    top: top,
+                    width: right - left,
+                    height: bottom - top,
+                  );
+                });
+              }
+            },
+            onPointerUp: (event) {
+              _activePointers.remove(event.pointer);
+
+              if (_activePointers.isEmpty) {
+                _backupSelection = null;
+              }
+
+              if (_isPanning) {
+                if (_activePointers.isEmpty) {
+                  setState(() {
+                    _isPanning = false;
+                  });
+                }
+                return;
+              }
+
+              if (_selection != null) {
+                if (_selection!.width < 10.0 || _selection!.height < 10.0) {
+                  setState(() {
+                    _selection = null;
+                    _mode = SelectionMode.none;
+                    _editingWidth = false;
+                    _editingHeight = false;
+                  });
+                  context.read<ImageEditCubit>().clearSelection();
+                  return;
+                }
+              }
+
+              setState(() {
+                _mode = SelectionMode.none;
+              });
+
+              if (_selection != null) {
+                final double calculatedW = (_selection!.width / 10.0)
+                    .roundToDouble();
+                final double calculatedH = (_selection!.height / 10.0)
+                    .roundToDouble();
+                final double calculatedArea =
+                    (calculatedW * calculatedH) / 144.0;
+                final double systemVal = double.parse(
+                  calculatedArea.toStringAsFixed(1),
+                );
+                setState(() {
+                  _customWidthInches = calculatedW;
+                  _customHeightInches = calculatedH;
+                  _systemArea = systemVal;
+                  _areaController.text = systemVal.toString();
+                  _editingWidth = false;
+                  _editingHeight = false;
+                });
+
+                final viewSize = Size(
+                  MediaQuery.of(context).size.width,
+                  MediaQuery.of(context).size.height * 0.40,
+                );
+
+                final Offset localTopLeft = Offset(
+                  _selection!.left,
+                  _selection!.top,
+                );
+                final Offset localBottomRight = Offset(
+                  _selection!.left + _selection!.width,
+                  _selection!.top + _selection!.height,
+                );
+
+                final Offset originalTopLeft = _mapLocalToOriginal(
+                  localTopLeft,
+                  viewSize,
+                );
+                final Offset originalBottomRight = _mapLocalToOriginal(
+                  localBottomRight,
+                  viewSize,
+                );
+
+                final int originalLeft = originalTopLeft.dx.round();
+                final int originalTop = originalTopLeft.dy.round();
+                final int originalRight = originalBottomRight.dx.round();
+                final int originalBottom = originalBottomRight.dy.round();
+
+                final areaData = {
+                  "left": originalLeft,
+                  "top": originalTop,
+                  "right": originalRight,
+                  "bottom": originalBottom,
+                };
+
+                debugPrint(
+                  "Selected Area (Original Coordinates): $areaData | System Area prediction: $systemVal",
+                );
+                context.read<ImageEditCubit>().selectArea(areaData);
+              }
+            },
+            onPointerCancel: (event) {
+              _activePointers.remove(event.pointer);
+              if (_activePointers.isEmpty) {
+                setState(() {
+                  _isPanning = false;
+                  _mode = SelectionMode.none;
+                  _backupSelection = null;
+                });
+              }
+            },
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Base Image — rendered via OverflowBox so the full
+                // BoxFit.cover-equivalent display size overflows the Stack
+                // bounds. ClipRect (outermost) clips to the viewport.
+                // This lets users pan to reveal landscape/portrait overflow
+                // WITHOUT changing the coordinate system: OverflowBox centres
+                // the child at (vpW/2, vpH/2) in Stack space — identical to
+                // where BoxFit.cover would render it — so _mapLocalToOriginal
+                // with viewSize=(vpW, vpH) stays mathematically correct.
+                if (_originalImageWidth != null)
+                  OverflowBox(
+                    alignment: Alignment.center,
+                    maxWidth: double.infinity,
+                    maxHeight: double.infinity,
+                    child: _baseImage.startsWith('http')
+                        ? Image.network(
+                            _baseImage,
+                            width: _originalImageWidth! * _currentDisplayScale,
+                            height: _originalImageHeight! * _currentDisplayScale,
+                            fit: BoxFit.fill,
+                            gaplessPlayback: true,
+                            cacheWidth: 800,
+                          )
+                        : Image.file(
+                            File(_baseImage),
+                            width: _originalImageWidth! * _currentDisplayScale,
+                            height: _originalImageHeight! * _currentDisplayScale,
+                            fit: BoxFit.fill,
+                            gaplessPlayback: true,
+                            cacheWidth: 800,
+                          ),
+                  )
+                else
+                  // Fallback before dimensions load: BoxFit.cover fills viewport
+                  _baseImage.startsWith('http')
+                      ? Image.network(
+                          _baseImage,
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.height * 0.40,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                          cacheWidth: 800,
+                        )
+                      : Image.file(
+                          File(_baseImage),
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.height * 0.40,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                          cacheWidth: 800,
+                        ),
+
+                // Applied Design Layer — same OverflowBox treatment
+                if (_currentAssetPreview != null &&
+                    _currentAssetPreview!.isNotEmpty)
+                  if (_originalImageWidth != null)
+                    OverflowBox(
+                      alignment: Alignment.center,
+                      maxWidth: double.infinity,
+                      maxHeight: double.infinity,
+                      child: _currentAssetPreview!.startsWith('http')
                           ? Image.network(
                               _currentAssetPreview!,
-                              width: double.infinity,
-                              height:
-                                  MediaQuery.of(context).size.height * 0.40,
-                              fit: BoxFit.cover,
+                              width: _originalImageWidth! * _currentDisplayScale,
+                              height: _originalImageHeight! * _currentDisplayScale,
+                              fit: BoxFit.fill,
                               gaplessPlayback: true,
                               cacheWidth: 800,
                             )
@@ -2466,111 +2604,153 @@ class _ImageEditPageState extends State<ImageEditPage>
                                 _currentAssetPreview!.contains('tryon_result'))
                           ? Image.file(
                               File(_currentAssetPreview!),
-                              width: double.infinity,
-                              height:
-                                  MediaQuery.of(context).size.height * 0.40,
-                              fit: BoxFit.cover,
+                              width: _originalImageWidth! * _currentDisplayScale,
+                              height: _originalImageHeight! * _currentDisplayScale,
+                              fit: BoxFit.fill,
                               gaplessPlayback: true,
                               cacheWidth: 800,
                             )
                           : Image.asset(
                               _currentAssetPreview!,
-                              width: double.infinity,
-                              height:
-                                  MediaQuery.of(context).size.height * 0.40,
-                              fit: BoxFit.cover,
+                              width: _originalImageWidth! * _currentDisplayScale,
+                              height: _originalImageHeight! * _currentDisplayScale,
+                              fit: BoxFit.fill,
                               gaplessPlayback: true,
                             ),
+                    )
+                  else
+                    // Fallback before dimensions load
+                    _currentAssetPreview!.startsWith('http')
+                        ? Image.network(
+                            _currentAssetPreview!,
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: 800,
+                          )
+                        : (_currentAssetPreview!.startsWith('/') ||
+                              _currentAssetPreview!.contains('tryon_result'))
+                        ? Image.file(
+                            File(_currentAssetPreview!),
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: 800,
+                          )
+                        : Image.asset(
+                            _currentAssetPreview!,
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                          ),
 
-                  // Selected Coordinate Dot overlay removed and replaced with selection painter
-                  Positioned.fill(
-                    child: RepaintBoundary(
-                      child: CustomPaint(
-                        painter: SelectionPainter(selection: _selection?.rect),
+                // Selected Coordinate Dot overlay removed and replaced with selection painter
+                Builder(
+                  builder: (context) {
+                    return Positioned.fill(
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          painter: SelectionPainter(
+                            selection: _selection?.rect,
+                            imageRect: _getImageRect(context),
+                          ),
+                        ),
                       ),
+                    );
+                  },
+                ),
+                if (_selection != null) ...[
+                  // Horizontal bottom double arrow line
+                  Positioned(
+                    left: _selection!.left,
+                    top: _selection!.top + _selection!.height + 8,
+                    width: _selection!.width,
+                    height: 10,
+                    child: CustomPaint(
+                      painter: DashedLinePainter(axis: Axis.horizontal),
                     ),
                   ),
-                  if (_selection != null) ...[
-                    // Horizontal bottom double arrow line
-                    Positioned(
-                      left: _selection!.left,
-                      top: _selection!.top + _selection!.height + 8,
-                      width: _selection!.width,
-                      height: 10,
-                      child: CustomPaint(
-                        painter: DashedLinePainter(axis: Axis.horizontal),
-                      ),
+                  // Vertical right double arrow line
+                  Positioned(
+                    left: _selection!.left + _selection!.width + 8,
+                    top: _selection!.top,
+                    width: 10,
+                    height: _selection!.height,
+                    child: CustomPaint(
+                      painter: DashedLinePainter(axis: Axis.vertical),
                     ),
-                    // Vertical right double arrow line
-                    Positioned(
-                      left: _selection!.left + _selection!.width + 8,
-                      top: _selection!.top,
-                      width: 10,
-                      height: _selection!.height,
-                      child: CustomPaint(
-                        painter: DashedLinePainter(axis: Axis.vertical),
-                      ),
+                  ),
+                  // Horizontal dimension label / inline editor
+                  Positioned(
+                    left: _selection!.left + (_selection!.width - 150) / 2,
+                    top: _selection!.top + _selection!.height + 22,
+                    width: 150,
+                    child: Center(
+                      child: _editingWidth
+                          ? _buildInlineEditor(
+                              controller: _widthEditController,
+                              onSave: () {
+                                setState(() {
+                                  _customWidthInches =
+                                      double.tryParse(
+                                        _widthEditController.text,
+                                      ) ??
+                                      _customWidthInches;
+                                  _editingWidth = false;
+                                  _recalculateArea();
+                                });
+                              },
+                            )
+                          : _buildDisplayLabel(
+                              value: _customWidthInches,
+                              onTap: () {
+                                setState(() {
+                                  _widthEditController.text = _customWidthInches
+                                      .round()
+                                      .toString();
+                                  _editingWidth = true;
+                                });
+                              },
+                            ),
                     ),
-                    // Horizontal dimension label / inline editor
-                    Positioned(
-                      left: _selection!.left + (_selection!.width - 150) / 2,
-                      top: _selection!.top + _selection!.height + 22,
-                      width: 150,
-                      child: Center(
-                        child: _editingWidth
-                            ? _buildInlineEditor(
-                                controller: _widthEditController,
-                                onSave: () {
-                                  setState(() {
-                                    _customWidthInches =
-                                        double.tryParse(_widthEditController.text) ?? _customWidthInches;
-                                    _editingWidth = false;
-                                    _recalculateArea();
-                                  });
-                                },
-                              )
-                            : _buildDisplayLabel(
-                                value: _customWidthInches,
-                                onTap: () {
-                                  setState(() {
-                                    _widthEditController.text = _customWidthInches.round().toString();
-                                    _editingWidth = true;
-                                  });
-                                },
-                              ),
-                      ),
+                  ),
+                  // Vertical dimension label / inline editor
+                  Positioned(
+                    left: _selection!.left + _selection!.width + 22,
+                    top: _selection!.top + (_selection!.height - 40) / 2,
+                    child: Center(
+                      child: _editingHeight
+                          ? _buildInlineEditor(
+                              controller: _heightEditController,
+                              onSave: () {
+                                setState(() {
+                                  _customHeightInches =
+                                      double.tryParse(
+                                        _heightEditController.text,
+                                      ) ??
+                                      _customHeightInches;
+                                  _editingHeight = false;
+                                  _recalculateArea();
+                                });
+                              },
+                            )
+                          : _buildDisplayLabel(
+                              value: _customHeightInches,
+                              onTap: () {
+                                setState(() {
+                                  _heightEditController.text =
+                                      _customHeightInches.round().toString();
+                                  _editingHeight = true;
+                                });
+                              },
+                            ),
                     ),
-                    // Vertical dimension label / inline editor
-                    Positioned(
-                      left: _selection!.left + _selection!.width + 22,
-                      top: _selection!.top + (_selection!.height - 40) / 2,
-                      child: Center(
-                        child: _editingHeight
-                            ? _buildInlineEditor(
-                                controller: _heightEditController,
-                                onSave: () {
-                                  setState(() {
-                                    _customHeightInches =
-                                        double.tryParse(_heightEditController.text) ?? _customHeightInches;
-                                    _editingHeight = false;
-                                    _recalculateArea();
-                                  });
-                                },
-                              )
-                            : _buildDisplayLabel(
-                                value: _customHeightInches,
-                                onTap: () {
-                                  setState(() {
-                                    _heightEditController.text = _customHeightInches.round().toString();
-                                    _editingHeight = true;
-                                  });
-                                },
-                              ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ),
@@ -2586,6 +2766,33 @@ class _ImageEditPageState extends State<ImageEditPage>
             ],
           ),
         ),
+        // Preview Full Image Button (Eye Button)
+        Positioned(
+          bottom: 24,
+          left: 16,
+          child: GestureDetector(
+            onTap: () => _showFullImagePopup(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.45),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 4,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.visibility,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
         // Redundant overlay removed as it's now handled by _buildGeneratingBlock in the main stack
         const SizedBox.shrink(),
       ],
@@ -2596,7 +2803,10 @@ class _ImageEditPageState extends State<ImageEditPage>
     if (state.appliedLayers.isNotEmpty) {
       await context.read<ImageEditCubit>().undoLastLayer();
       setState(() {
-        _currentAssetPreview = context.read<ImageEditCubit>().state.editedImageFile;
+        _currentAssetPreview = context
+            .read<ImageEditCubit>()
+            .state
+            .editedImageFile;
         if (context.read<ImageEditCubit>().state.appliedLayers.isEmpty) {
           _hasNewUnappliedEdit = false;
         }
@@ -2604,7 +2814,9 @@ class _ImageEditPageState extends State<ImageEditPage>
     } else if (_parentEditId != null) {
       setState(() => _isLoadingEdits = true);
       try {
-        final parentRecord = await EditHistoryRepository.getEditById(_parentEditId!);
+        final parentRecord = await EditHistoryRepository.getEditById(
+          _parentEditId!,
+        );
         if (parentRecord != null) {
           await EditHistoryRepository.deleteEdit(_parentEditId!);
 
@@ -2656,7 +2868,8 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   void _recalculateArea() {
-    final double calculatedArea = (_customWidthInches * _customHeightInches) / 144.0;
+    final double calculatedArea =
+        (_customWidthInches * _customHeightInches) / 144.0;
     final double val = double.parse(calculatedArea.toStringAsFixed(1));
     setState(() {
       _systemArea = val;
@@ -2672,9 +2885,7 @@ class _ImageEditPageState extends State<ImageEditPage>
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
-        ),
+        decoration: const BoxDecoration(color: Colors.transparent),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2773,14 +2984,12 @@ class _ImageEditPageState extends State<ImageEditPage>
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFFE53935), // Century Ply brand red checkmark button
+                color: const Color(
+                  0xFFE53935,
+                ), // Century Ply brand red checkmark button
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 14,
-              ),
+              child: const Icon(Icons.check, color: Colors.white, size: 14),
             ),
           ),
         ],
@@ -2879,41 +3088,70 @@ class _ImageEditPageState extends State<ImageEditPage>
         borderRadius: BorderRadius.circular(20),
       ),
       child: TextField(
+        controller: _searchController,
         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w100),
+        onSubmitted: (value) {
+          if (value.trim().isNotEmpty) {
+            _fetchTexturesBySku(value.trim());
+          } else {
+            _clearSearchAndRestore();
+          }
+        },
         decoration: InputDecoration(
           filled: true,
-          fillColor: Color(0xFFF7F7F7),
+          fillColor: const Color(0xFFF7F7F7),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             vertical: 10,
             horizontal: 16,
           ),
           suffixIconConstraints: const BoxConstraints(
-            maxWidth: 32,
+            maxWidth: 54,
             maxHeight: 32,
           ),
-          suffixIcon: Container(
-            margin: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 0,
-                  spreadRadius: 1,
-                  offset: Offset(0, 1),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (_isSearching || _searchController.text.isNotEmpty)
+                GestureDetector(
+                  onTap: _clearSearchAndRestore,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(Icons.close, size: 14, color: Colors.grey),
+                  ),
                 ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Image.asset(
-                "assets/icons/app_icons/ai_search.png",
-                width: 14,
-                height: 14,
+              GestureDetector(
+                onTap: () {
+                  if (_searchController.text.trim().isNotEmpty) {
+                    _fetchTexturesBySku(_searchController.text.trim());
+                  }
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(right: 5, top: 5, bottom: 5),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 0,
+                        spreadRadius: 1,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Image.asset(
+                      "assets/icons/app_icons/ai_search.png",
+                      width: 14,
+                      height: 14,
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
@@ -3185,7 +3423,9 @@ class _ImageEditPageState extends State<ImageEditPage>
         height: widget.textureListHeight,
         child: Center(
           child: Text(
-            (_selectedCategory == null && _selectedColor == null)
+            _isSearching
+                ? "No laminates found for \"${_searchController.text}\"."
+                : (_selectedCategory == null && _selectedColor == null)
                 ? "Select a color or category first."
                 : "No laminates found.",
             style: const TextStyle(fontSize: 10, color: Colors.grey),
@@ -3444,6 +3684,72 @@ class _ImageEditPageState extends State<ImageEditPage>
     );
   }
 
+  void _showFullImagePopup(BuildContext context) {
+    final String imageToShow = (_currentAssetPreview != null && _currentAssetPreview!.isNotEmpty)
+        ? _currentAssetPreview!
+        : _baseImage;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          child: Stack(
+            children: [
+              // Image Container
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    color: Colors.white,
+                    child: imageToShow.startsWith('http')
+                        ? Image.network(
+                            imageToShow,
+                            fit: BoxFit.contain,
+                            gaplessPlayback: true,
+                          )
+                        : (imageToShow.startsWith('/') || imageToShow.contains('tryon_result') || imageToShow.contains('data/user') || imageToShow.contains('emulator') || imageToShow.contains('storage/emulated'))
+                            ? Image.file(
+                                File(imageToShow),
+                                fit: BoxFit.contain,
+                                gaplessPlayback: true,
+                              )
+                            : Image.asset(
+                                imageToShow,
+                                fit: BoxFit.contain,
+                                gaplessPlayback: true,
+                              ),
+                  ),
+                ),
+              ),
+              // Close Button
+              Positioned(
+                top: 16,
+                right: 16,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.black45,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _finalizeEdit() async {
     final state = context.read<ImageEditCubit>().state;
     if (state.currentGeneratedImage == null) return;
@@ -3516,12 +3822,12 @@ class _ImageEditPageState extends State<ImageEditPage>
       final String finalizedImage = state.currentGeneratedImage!;
       if (mounted) {
         setState(() {
-          _baseImage = finalizedImage; 
-          _currentAssetPreview = null; 
+          _baseImage = finalizedImage;
+          _currentAssetPreview = null;
           _compareExpanded = true;
           _editExpanded = false;
           _hasAppliedOnce = true;
-          _hasNewUnappliedEdit = false; 
+          _hasNewUnappliedEdit = false;
 
           // CLEAR PREVIOUS STATE
           _selectedTexture = null;
@@ -3579,7 +3885,8 @@ class _ImageEditPageState extends State<ImageEditPage>
         debugPrint('getCumulativeLaminates error: $e');
         usedLaminates = List.from(latestRecord.usedLaminatesList);
       }
-      final double area = latestRecord.userArea ?? latestRecord.systemArea ?? 5.0;
+      final double area =
+          latestRecord.userArea ?? latestRecord.systemArea ?? 5.0;
       final int est = (area * 2.0).round();
       usedLaminates = usedLaminates.map((e) {
         final m = Map<String, dynamic>.from(e);
@@ -3590,7 +3897,8 @@ class _ImageEditPageState extends State<ImageEditPage>
       // Fallback: pull from in-memory cubit history (no DB record yet)
       final state = context.read<ImageEditCubit>().state;
       final cubit = context.read<ImageEditCubit>();
-      final double currentArea = double.tryParse(_areaController.text) ?? _systemArea ?? 5.0;
+      final double currentArea =
+          double.tryParse(_areaController.text) ?? _systemArea ?? 5.0;
       final int currentEst = (currentArea * 2.0).round();
       for (var item in cubit.state.generatedHistory) {
         if (item['laminate'] != null) {
@@ -3938,12 +4246,20 @@ enum SelectionMode {
 
 class SelectionPainter extends CustomPainter {
   final Rect? selection;
+  final Rect imageRect;
 
-  SelectionPainter({required this.selection});
+  SelectionPainter({required this.selection, required this.imageRect});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (selection == null) return;
+
+    // 1. Draw dark background overlay outside selection, restricted to imageRect
+    final Paint overlayPaint = Paint()
+      ..color = Colors.black.withOpacity(0.45)
+      ..style = PaintingStyle.fill;
+
+    final Path imagePath = Path()..addRect(imageRect.inflate(2.0));
 
     final double left = selection!.left;
     final double top = selection!.top;
@@ -3952,17 +4268,10 @@ class SelectionPainter extends CustomPainter {
     final double width = selection!.width;
     final double height = selection!.height;
 
-    // 1. Draw dark background overlay outside selection
-    final Paint overlayPaint = Paint()
-      ..color = Colors.black.withOpacity(0.45)
-      ..style = PaintingStyle.fill;
-
-    final Path backgroundPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
     final Path selectionPath = Path()..addRect(selection!);
     final Path overlayPath = Path.combine(
       PathOperation.difference,
-      backgroundPath,
+      imagePath,
       selectionPath,
     );
     canvas.drawPath(overlayPath, overlayPaint);
@@ -4087,7 +4396,6 @@ class SelectionPainter extends CustomPainter {
       Offset(midX + edgeLength, bottom),
       handlePaint,
     );
-
   }
 
   @override
@@ -4120,9 +4428,9 @@ class MarchingAntsMaskPainter extends CustomPainter {
     final double imgW = maskImage.width.toDouble();
     final double imgH = maskImage.height.toDouble();
 
-    // Uniform scale factor (cover = take the LARGER of the two ratios)
+    // Uniform scale factor (contain = take the SMALLER of the two ratios)
     final double scale =
-        (size.width / imgW).clamp(0.0, double.infinity) >
+        (size.width / imgW).clamp(0.0, double.infinity) <
             (size.height / imgH).clamp(0.0, double.infinity)
         ? size.width / imgW
         : size.height / imgH;
@@ -4305,7 +4613,7 @@ class DashedLinePainter extends CustomPainter {
       path.moveTo(6, size.height / 2 - 4);
       path.lineTo(0, size.height / 2);
       path.lineTo(6, size.height / 2 + 4);
-      
+
       // Draw right arrowhead
       path.moveTo(size.width - 6, size.height / 2 - 4);
       path.lineTo(size.width, size.height / 2);
@@ -4314,7 +4622,10 @@ class DashedLinePainter extends CustomPainter {
       // Draw dashed line
       for (double i = 6; i < size.width - 6; i += dashWidth + dashSpace) {
         path.moveTo(i, size.height / 2);
-        path.lineTo(i + dashWidth > size.width - 6 ? size.width - 6 : i + dashWidth, size.height / 2);
+        path.lineTo(
+          i + dashWidth > size.width - 6 ? size.width - 6 : i + dashWidth,
+          size.height / 2,
+        );
       }
     } else {
       // Draw top arrowhead
@@ -4330,7 +4641,10 @@ class DashedLinePainter extends CustomPainter {
       // Draw dashed line
       for (double i = 6; i < size.height - 6; i += dashWidth + dashSpace) {
         path.moveTo(size.width / 2, i);
-        path.lineTo(size.width / 2, i + dashWidth > size.height - 6 ? size.height - 6 : i + dashWidth);
+        path.lineTo(
+          size.width / 2,
+          i + dashWidth > size.height - 6 ? size.height - 6 : i + dashWidth,
+        );
       }
     }
     canvas.drawPath(path, paint);

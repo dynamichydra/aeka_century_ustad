@@ -48,14 +48,14 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
 
   Widget _buildImage(dynamic source, double width, double height, {bool forceNetwork = false}) {
     if (source is File) {
-      return Image.file(source, width: width, height: height, fit: BoxFit.cover, gaplessPlayback: true);
+      return Image.file(source, width: width, height: height, fit: BoxFit.contain, gaplessPlayback: true);
     } else if (source is String) {
       if (forceNetwork || source.startsWith('http')) {
         return Image.network(
           source,
           width: width,
           height: height,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           gaplessPlayback: true,
           errorBuilder: (context, error, stackTrace) => Container(
             color: Colors.grey[200],
@@ -66,9 +66,9 @@ class _ImageCompareSliderState extends State<ImageCompareSlider> {
       // Check if it is a local absolute path or if the file exists
       final file = File(source);
       if (source.startsWith('/') || source.startsWith('file:') || source.startsWith('content:') || file.existsSync()) {
-        return Image.file(file, width: width, height: height, fit: BoxFit.cover, gaplessPlayback: true);
+        return Image.file(file, width: width, height: height, fit: BoxFit.contain, gaplessPlayback: true);
       }
-      return Image.asset(source, width: width, height: height, fit: BoxFit.cover, gaplessPlayback: true);
+      return Image.asset(source, width: width, height: height, fit: BoxFit.contain, gaplessPlayback: true);
     }
     return const SizedBox();
   }

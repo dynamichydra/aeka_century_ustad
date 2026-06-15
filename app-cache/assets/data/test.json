@@ -608,6 +608,16 @@
       "parent_id": null,
       "preview_type": "normal",
       "sort_order": 12
+    },
+    {
+      "id": 135,
+      "name": "Wardrobe",
+      "image": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png",
+      "optional_all_img": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png",
+      "parent_id": null,
+      "preview_type": "normal",
+      "sort_order": 13,
+      "nested_key": "wardrobe_furniture"
     }
   ],
   "nested_subcategories": {
@@ -689,6 +699,11 @@
       "4 Seater",
       "6 Seater",
       "8 Seater"
+    ],
+    "wardrobe_furniture": [
+      "1 Door",
+      "2 Door",
+      "3 Door"
     ]
   }
 }

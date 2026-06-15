@@ -894,7 +894,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     if (image is File) {
       imgWidget = Image.file(
         image,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         width: double.infinity,
         cacheWidth: 600,
       );
@@ -902,21 +902,21 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       if (image.startsWith('http')) {
         imgWidget = Image.network(
           image,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           width: double.infinity,
           cacheWidth: 600,
         );
       } else if (image.startsWith('/') || image.contains('data/user') || image.contains('emulator') || image.contains('storage/emulated')) {
         imgWidget = Image.file(
           File(image),
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           width: double.infinity,
           cacheWidth: 600,
         );
       } else {
         imgWidget = Image.asset(
           image,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           width: double.infinity,
           cacheWidth: 600,
         );
@@ -929,6 +929,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Container(
         decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(5),
           boxShadow: [
             BoxShadow(
@@ -940,38 +941,34 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(5),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.40,
-            width: double.infinity,
-            child: Stack(
-              children: [
-                Positioned.fill(child: imgWidget),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0),
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Image.asset(
-                      'assets/logos/small_logo.png',
-                      height: 28,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const SizedBox(),
-                    ),
+          child: Stack(
+            children: [
+              imgWidget,
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0),
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/logos/small_logo.png',
+                    height: 28,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox(),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
