@@ -64,6 +64,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   double _customHeightInches = 30.0;
   bool _editingWidth = false;
   bool _editingHeight = false;
+  bool _justSaved = false;
 
   Map<String, dynamic>? _selectedColor;
   String? _selectedCategory;
@@ -124,7 +125,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   // Track the most recent edit session info.
   // When an edit completes, we store its database ID so further edits
   // can link back to it via parent_edit_id.
-  
+
   final TransformationController _transformationController =
       TransformationController();
 
@@ -180,7 +181,10 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   double get _currentDisplayScale {
-    final bool inPreview = context.read<ImageEditCubit>().state.showSelectionPreview;
+    final bool inPreview = context
+        .read<ImageEditCubit>()
+        .state
+        .showSelectionPreview;
     if (_hasAppliedOnce || inPreview) {
       return _containScale;
     }
@@ -188,7 +192,10 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   double get _currentMinZoomLimit {
-    final bool inPreview = context.read<ImageEditCubit>().state.showSelectionPreview;
+    final bool inPreview = context
+        .read<ImageEditCubit>()
+        .state
+        .showSelectionPreview;
     if (_hasAppliedOnce || inPreview) {
       return 1.0;
     }
@@ -247,7 +254,10 @@ class _ImageEditPageState extends State<ImageEditPage>
     final double vpH = MediaQuery.of(context).size.height * 0.40;
     final double currentScale = _transformationController.value
         .getMaxScaleOnAxis();
-    final double newScale = (currentScale + 0.5).clamp(_currentMinZoomLimit, 4.0);
+    final double newScale = (currentScale + 0.5).clamp(
+      _currentMinZoomLimit,
+      4.0,
+    );
 
     // Pan bounds for OverflowBox-rendered image at newScale
     final double imgDisplayW = _originalImageWidth != null
@@ -290,7 +300,10 @@ class _ImageEditPageState extends State<ImageEditPage>
     final double vpH = MediaQuery.of(context).size.height * 0.40;
     final double currentScale = _transformationController.value
         .getMaxScaleOnAxis();
-    final double newScale = (currentScale - 0.5).clamp(_currentMinZoomLimit, 4.0);
+    final double newScale = (currentScale - 0.5).clamp(
+      _currentMinZoomLimit,
+      4.0,
+    );
 
     // Pan bounds for OverflowBox-rendered image at newScale
     final double imgDisplayW = _originalImageWidth != null
@@ -561,7 +574,7 @@ class _ImageEditPageState extends State<ImageEditPage>
 
     try {
       final response = await _laminateApi.fetchBySku(
-        skuId: skuId.trim(),
+        skuId: skuId.trim().toUpperCase(),
         laminateType: widget.isExterior ? "Exteria" : "Laminates",
       );
 
@@ -1946,7 +1959,12 @@ class _ImageEditPageState extends State<ImageEditPage>
   SelectionMode _hitTestHandles(Offset localPosition) {
     if (_selection == null) return SelectionMode.none;
 
-    final double touchRadius = 40.0;
+    // Dynamically reduce touch radius if selection box is small to prevent overlapping handles
+    double touchRadius = 40.0;
+    final double boxMinDim = math.min(_selection!.width, _selection!.height);
+    if (boxMinDim < 120.0) {
+      touchRadius = math.max(12.0, boxMinDim / 3.0);
+    }
 
     final double left = _selection!.left;
     final double top = _selection!.top;
@@ -2003,10 +2021,22 @@ class _ImageEditPageState extends State<ImageEditPage>
 
   bool _isPointInHorizontalOverlay(Offset localPos) {
     if (_selection == null) return false;
-    final double left = _selection!.left + (_selection!.width - 150) / 2;
-    final double top = _selection!.top + _selection!.height + 22;
+    final Rect imageRect = _getImageRect(context);
+    final double spaceBelow =
+        imageRect.bottom - (_selection!.top + _selection!.height);
+    final double spaceAbove = _selection!.top - imageRect.top;
+    final bool showHorizontalArrowAtTop =
+        spaceBelow < 50.0 && spaceAbove > spaceBelow;
+
+    final double top = showHorizontalArrowAtTop
+        ? _selection!.top - 42
+        : _selection!.top + _selection!.height + 22;
+
+    double left = _selection!.left + (_selection!.width - 150) / 2;
+    left = left.clamp(imageRect.left + 4, imageRect.right - 154);
+
     final double right = left + 150;
-    final double bottom = top + 50;
+    final double bottom = top + 40;
     return localPos.dx >= left &&
         localPos.dx <= right &&
         localPos.dy >= top &&
@@ -2015,8 +2045,21 @@ class _ImageEditPageState extends State<ImageEditPage>
 
   bool _isPointInVerticalOverlay(Offset localPos) {
     if (_selection == null) return false;
-    final double left = _selection!.left + _selection!.width + 22;
+    final Rect imageRect = _getImageRect(context);
+    final double spaceRight =
+        imageRect.right - (_selection!.left + _selection!.width);
+    final double spaceLeft = _selection!.left - imageRect.left;
+    final bool showVerticalArrowAtLeft =
+        spaceRight < 120.0 && spaceLeft > spaceRight;
+
     final double top = _selection!.top + (_selection!.height - 40) / 2;
+
+    double left = showVerticalArrowAtLeft
+        ? _selection!.left - 70
+        : _selection!.left + _selection!.width + 22;
+
+    left = left.clamp(imageRect.left + 2, imageRect.right - 75);
+
     final double right = left + 120;
     final double bottom = top + 40;
     return localPos.dx >= left &&
@@ -2048,18 +2091,18 @@ class _ImageEditPageState extends State<ImageEditPage>
                         cacheWidth: 800,
                       )
                     : _baseImage.startsWith('http')
-                        ? Image.network(
-                            _baseImage,
-                            fit: BoxFit.fill,
-                            gaplessPlayback: true,
-                            cacheWidth: 800,
-                          )
-                        : Image.file(
-                            File(_baseImage),
-                            fit: BoxFit.fill,
-                            gaplessPlayback: true,
-                            cacheWidth: 800,
-                          ),
+                    ? Image.network(
+                        _baseImage,
+                        fit: BoxFit.fill,
+                        gaplessPlayback: true,
+                        cacheWidth: 800,
+                      )
+                    : Image.file(
+                        File(_baseImage),
+                        fit: BoxFit.fill,
+                        gaplessPlayback: true,
+                        cacheWidth: 800,
+                      ),
               ),
             )
           else
@@ -2072,18 +2115,18 @@ class _ImageEditPageState extends State<ImageEditPage>
                       cacheWidth: 800,
                     )
                   : _baseImage.startsWith('http')
-                      ? Image.network(
-                          _baseImage,
-                          fit: BoxFit.contain,
-                          gaplessPlayback: true,
-                          cacheWidth: 800,
-                        )
-                      : Image.file(
-                          File(_baseImage),
-                          fit: BoxFit.contain,
-                          gaplessPlayback: true,
-                          cacheWidth: 800,
-                        ),
+                  ? Image.network(
+                      _baseImage,
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                      cacheWidth: 800,
+                    )
+                  : Image.file(
+                      File(_baseImage),
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                      cacheWidth: 800,
+                    ),
             ),
 
           // Mask overlay — Positioned.fill spans the full viewport;
@@ -2176,6 +2219,7 @@ class _ImageEditPageState extends State<ImageEditPage>
               if (_isPanning) return;
 
               final localPos = event.localPosition;
+              _dragStart = localPos;
               final Rect imageRect = _getImageRect(context);
               final double imgL = imageRect.left;
               final double imgR = imageRect.right;
@@ -2194,18 +2238,14 @@ class _ImageEditPageState extends State<ImageEditPage>
               }
 
               double snap(double val, double minBound, double maxBound) {
-                final clamped = val.clamp(minBound, maxBound);
-                if ((clamped - minBound).abs() < 36.0) return minBound;
-                if ((maxBound - clamped).abs() < 36.0) return maxBound;
-                return clamped;
+                return val.clamp(minBound, maxBound);
               }
 
               if (detectedMode != SelectionMode.none) {
                 setState(() {
                   _mode = detectedMode;
                 });
-              } else if (_selection != null &&
-                  _selection!.rect.contains(localPos)) {
+              } else if (_selection != null) {
                 setState(() {
                   _mode = SelectionMode.moving;
                 });
@@ -2334,10 +2374,7 @@ class _ImageEditPageState extends State<ImageEditPage>
               final double imgB = imageRect.bottom;
 
               double snap(double val, double minBound, double maxBound) {
-                final clamped = val.clamp(minBound, maxBound);
-                if ((clamped - minBound).abs() < 36.0) return minBound;
-                if ((maxBound - clamped).abs() < 36.0) return maxBound;
-                return clamped;
+                return val.clamp(minBound, maxBound);
               }
 
               if (_mode == SelectionMode.creating && _dragStart != null) {
@@ -2427,6 +2464,35 @@ class _ImageEditPageState extends State<ImageEditPage>
               }
             },
             onPointerUp: (event) {
+              if (_justSaved) {
+                _justSaved = false;
+                _activePointers.remove(event.pointer);
+                if (_activePointers.isEmpty) {
+                  _backupSelection = null;
+                }
+                return;
+              }
+              final localPos = event.localPosition;
+              if (_backupSelection != null && _dragStart != null) {
+                final double dragDistance = (localPos - _dragStart!).distance;
+                if (dragDistance < 5.0 &&
+                    !_backupSelection!.rect.contains(localPos) &&
+                    !_isPointInHorizontalOverlay(localPos) &&
+                    !_isPointInVerticalOverlay(localPos)) {
+                  setState(() {
+                    _selection = null;
+                    _mode = SelectionMode.none;
+                    _editingWidth = false;
+                    _editingHeight = false;
+                  });
+                  context.read<ImageEditCubit>().clearSelection();
+                  _activePointers.remove(event.pointer);
+                  _backupSelection = null;
+                  _dragStart = null;
+                  return;
+                }
+              }
+
               _activePointers.remove(event.pointer);
 
               if (_activePointers.isEmpty) {
@@ -2549,7 +2615,8 @@ class _ImageEditPageState extends State<ImageEditPage>
                         ? Image.network(
                             _baseImage,
                             width: _originalImageWidth! * _currentDisplayScale,
-                            height: _originalImageHeight! * _currentDisplayScale,
+                            height:
+                                _originalImageHeight! * _currentDisplayScale,
                             fit: BoxFit.fill,
                             gaplessPlayback: true,
                             cacheWidth: 800,
@@ -2557,7 +2624,8 @@ class _ImageEditPageState extends State<ImageEditPage>
                         : Image.file(
                             File(_baseImage),
                             width: _originalImageWidth! * _currentDisplayScale,
-                            height: _originalImageHeight! * _currentDisplayScale,
+                            height:
+                                _originalImageHeight! * _currentDisplayScale,
                             fit: BoxFit.fill,
                             gaplessPlayback: true,
                             cacheWidth: 800,
@@ -2594,8 +2662,10 @@ class _ImageEditPageState extends State<ImageEditPage>
                       child: _currentAssetPreview!.startsWith('http')
                           ? Image.network(
                               _currentAssetPreview!,
-                              width: _originalImageWidth! * _currentDisplayScale,
-                              height: _originalImageHeight! * _currentDisplayScale,
+                              width:
+                                  _originalImageWidth! * _currentDisplayScale,
+                              height:
+                                  _originalImageHeight! * _currentDisplayScale,
                               fit: BoxFit.fill,
                               gaplessPlayback: true,
                               cacheWidth: 800,
@@ -2604,16 +2674,20 @@ class _ImageEditPageState extends State<ImageEditPage>
                                 _currentAssetPreview!.contains('tryon_result'))
                           ? Image.file(
                               File(_currentAssetPreview!),
-                              width: _originalImageWidth! * _currentDisplayScale,
-                              height: _originalImageHeight! * _currentDisplayScale,
+                              width:
+                                  _originalImageWidth! * _currentDisplayScale,
+                              height:
+                                  _originalImageHeight! * _currentDisplayScale,
                               fit: BoxFit.fill,
                               gaplessPlayback: true,
                               cacheWidth: 800,
                             )
                           : Image.asset(
                               _currentAssetPreview!,
-                              width: _originalImageWidth! * _currentDisplayScale,
-                              height: _originalImageHeight! * _currentDisplayScale,
+                              width:
+                                  _originalImageWidth! * _currentDisplayScale,
+                              height:
+                                  _originalImageHeight! * _currentDisplayScale,
                               fit: BoxFit.fill,
                               gaplessPlayback: true,
                             ),
@@ -2663,91 +2737,180 @@ class _ImageEditPageState extends State<ImageEditPage>
                   },
                 ),
                 if (_selection != null) ...[
-                  // Horizontal bottom double arrow line
-                  Positioned(
-                    left: _selection!.left,
-                    top: _selection!.top + _selection!.height + 8,
-                    width: _selection!.width,
-                    height: 10,
-                    child: CustomPaint(
-                      painter: DashedLinePainter(axis: Axis.horizontal),
-                    ),
-                  ),
-                  // Vertical right double arrow line
-                  Positioned(
-                    left: _selection!.left + _selection!.width + 8,
-                    top: _selection!.top,
-                    width: 10,
-                    height: _selection!.height,
-                    child: CustomPaint(
-                      painter: DashedLinePainter(axis: Axis.vertical),
-                    ),
-                  ),
-                  // Horizontal dimension label / inline editor
-                  Positioned(
-                    left: _selection!.left + (_selection!.width - 150) / 2,
-                    top: _selection!.top + _selection!.height + 22,
-                    width: 150,
-                    child: Center(
-                      child: _editingWidth
-                          ? _buildInlineEditor(
-                              controller: _widthEditController,
-                              onSave: () {
-                                setState(() {
-                                  _customWidthInches =
-                                      double.tryParse(
-                                        _widthEditController.text,
-                                      ) ??
-                                      _customWidthInches;
-                                  _editingWidth = false;
-                                  _recalculateArea();
-                                });
-                              },
-                            )
-                          : _buildDisplayLabel(
-                              value: _customWidthInches,
-                              onTap: () {
-                                setState(() {
-                                  _widthEditController.text = _customWidthInches
-                                      .round()
-                                      .toString();
-                                  _editingWidth = true;
-                                });
-                              },
+                  Builder(
+                    builder: (context) {
+                      final Rect imageRect = _getImageRect(context);
+
+                      // Calculate available space on each side
+                      final double spaceBelow =
+                          imageRect.bottom -
+                          (_selection!.top + _selection!.height);
+                      final double spaceAbove = _selection!.top - imageRect.top;
+                      final double spaceRight =
+                          imageRect.right -
+                          (_selection!.left + _selection!.width);
+                      final double spaceLeft =
+                          _selection!.left - imageRect.left;
+
+                      // Decide which side to display the horizontal indicator (arrow/label)
+                      // By default, we prefer the bottom (showHorizontalArrowAtTop = false)
+                      // If space below is tight (< 50) and there is more space above, we flip to top
+                      final bool showHorizontalArrowAtTop =
+                          spaceBelow < 50.0 && spaceAbove > spaceBelow;
+
+                      // Decide which side to display the vertical indicator (arrow/label)
+                      // By default, we prefer the right (showVerticalArrowAtLeft = false)
+                      // If space to the right is tight (< 80) and there is more space to the left, we flip to left
+                      final bool showVerticalArrowAtLeft =
+                          spaceRight < 120.0 && spaceLeft > spaceRight;
+
+                      final double horizontalArrowTop = showHorizontalArrowAtTop
+                          ? _selection!.top - 18
+                          : _selection!.top + _selection!.height + 8;
+
+                      final double horizontalLabelTop = showHorizontalArrowAtTop
+                          ? _selection!.top - 42
+                          : _selection!.top + _selection!.height + 22;
+
+                      double verticalArrowLeft = showVerticalArrowAtLeft
+                          ? _selection!.left - 18
+                          : _selection!.left + _selection!.width + 8;
+
+                      double verticalLabelLeft = showVerticalArrowAtLeft
+                          ? _selection!.left - 70
+                          : _selection!.left + _selection!.width + 22;
+
+                      // Clamp coordinates to prevent clipping off screen/image edges
+                      verticalArrowLeft = verticalArrowLeft.clamp(
+                        imageRect.left + 2,
+                        imageRect.right - 12,
+                      );
+                      verticalLabelLeft = verticalLabelLeft.clamp(
+                        imageRect.left + 2,
+                        imageRect.right - 75,
+                      );
+
+                      double horizontalLabelLeft =
+                          _selection!.left + (_selection!.width - 150) / 2;
+                      horizontalLabelLeft = horizontalLabelLeft.clamp(
+                        imageRect.left + 4,
+                        imageRect.right - 154,
+                      );
+
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Horizontal double arrow line
+                          Positioned(
+                            left: _selection!.left,
+                            top: horizontalArrowTop,
+                            width: _selection!.width,
+                            height: 10,
+                            child: CustomPaint(
+                              painter: DashedLinePainter(axis: Axis.horizontal),
                             ),
-                    ),
-                  ),
-                  // Vertical dimension label / inline editor
-                  Positioned(
-                    left: _selection!.left + _selection!.width + 22,
-                    top: _selection!.top + (_selection!.height - 40) / 2,
-                    child: Center(
-                      child: _editingHeight
-                          ? _buildInlineEditor(
-                              controller: _heightEditController,
-                              onSave: () {
-                                setState(() {
-                                  _customHeightInches =
-                                      double.tryParse(
-                                        _heightEditController.text,
-                                      ) ??
-                                      _customHeightInches;
-                                  _editingHeight = false;
-                                  _recalculateArea();
-                                });
-                              },
-                            )
-                          : _buildDisplayLabel(
-                              value: _customHeightInches,
-                              onTap: () {
-                                setState(() {
-                                  _heightEditController.text =
-                                      _customHeightInches.round().toString();
-                                  _editingHeight = true;
-                                });
-                              },
+                          ),
+                          // Vertical double arrow line
+                          Positioned(
+                            left: verticalArrowLeft,
+                            top: _selection!.top,
+                            width: 10,
+                            height: _selection!.height,
+                            child: CustomPaint(
+                              painter: DashedLinePainter(axis: Axis.vertical),
                             ),
-                    ),
+                          ),
+                          // Horizontal dimension label / inline editor
+                          Positioned(
+                            left: horizontalLabelLeft,
+                            top: horizontalLabelTop,
+                            width: 150,
+                            child: Center(
+                              child: _editingWidth
+                                  ? _buildInlineEditor(
+                                      controller: _widthEditController,
+                                      onSave: () {
+                                        _justSaved = true;
+                                        setState(() {
+                                          _customWidthInches =
+                                              double.tryParse(
+                                                _widthEditController.text,
+                                              ) ??
+                                              _customWidthInches;
+                                          _recalculateArea();
+                                        });
+
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                              if (mounted) {
+                                                setState(() {
+                                                  _editingWidth = false;
+                                                });
+                                              }
+                                            });
+                                      },
+                                    )
+                                  : _buildDisplayLabel(
+                                      value: _customWidthInches,
+                                      onTap: () {
+                                        setState(() {
+                                          _widthEditController.text =
+                                              _customWidthInches
+                                                  .round()
+                                                  .toString();
+                                          _editingWidth = true;
+                                        });
+                                      },
+                                    ),
+                            ),
+                          ),
+                          // Vertical dimension label / inline editor
+                          Positioned(
+                            left: verticalLabelLeft,
+                            top:
+                                _selection!.top + (_selection!.height - 40) / 2,
+                            child: Center(
+                              child: _editingHeight
+                                  ? _buildInlineEditor(
+                                      controller: _heightEditController,
+                                      onSave: () {
+                                        _justSaved = true;
+                                        setState(() {
+                                          _customHeightInches =
+                                              double.tryParse(
+                                                _heightEditController.text,
+                                              ) ??
+                                              _customHeightInches;
+                                          _recalculateArea();
+                                        });
+
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                              if (mounted) {
+                                                setState(() {
+                                                  _editingHeight = false;
+                                                });
+                                              }
+                                            });
+                                      },
+                                    )
+                                  : _buildDisplayLabel(
+                                      value: _customHeightInches,
+                                      onTap: () {
+                                        setState(() {
+                                          _heightEditController.text =
+                                              _customHeightInches
+                                                  .round()
+                                                  .toString();
+                                          _editingHeight = true;
+                                        });
+                                      },
+                                    ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ],
@@ -2875,6 +3038,40 @@ class _ImageEditPageState extends State<ImageEditPage>
       _systemArea = val;
       _areaController.text = val.toString();
     });
+  }
+
+  void _notifyCubitOfSelection() {
+    if (_selection == null) return;
+    final viewSize = Size(
+      MediaQuery.of(context).size.width,
+      MediaQuery.of(context).size.height * 0.40,
+    );
+
+    final Offset localTopLeft = Offset(_selection!.left, _selection!.top);
+    final Offset localBottomRight = Offset(
+      _selection!.left + _selection!.width,
+      _selection!.top + _selection!.height,
+    );
+
+    final Offset originalTopLeft = _mapLocalToOriginal(localTopLeft, viewSize);
+    final Offset originalBottomRight = _mapLocalToOriginal(
+      localBottomRight,
+      viewSize,
+    );
+
+    final int originalLeft = originalTopLeft.dx.round();
+    final int originalTop = originalTopLeft.dy.round();
+    final int originalRight = originalBottomRight.dx.round();
+    final int originalBottom = originalBottomRight.dy.round();
+
+    final areaData = {
+      "left": originalLeft,
+      "top": originalTop,
+      "right": originalRight,
+      "bottom": originalBottom,
+    };
+
+    context.read<ImageEditCubit>().selectArea(areaData);
   }
 
   Widget _buildDisplayLabel({
@@ -3685,7 +3882,8 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   void _showFullImagePopup(BuildContext context) {
-    final String imageToShow = (_currentAssetPreview != null && _currentAssetPreview!.isNotEmpty)
+    final String imageToShow =
+        (_currentAssetPreview != null && _currentAssetPreview!.isNotEmpty)
         ? _currentAssetPreview!
         : _baseImage;
 
@@ -3694,7 +3892,10 @@ class _ImageEditPageState extends State<ImageEditPage>
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 40,
+          ),
           child: Stack(
             children: [
               // Image Container
@@ -3709,17 +3910,21 @@ class _ImageEditPageState extends State<ImageEditPage>
                             fit: BoxFit.contain,
                             gaplessPlayback: true,
                           )
-                        : (imageToShow.startsWith('/') || imageToShow.contains('tryon_result') || imageToShow.contains('data/user') || imageToShow.contains('emulator') || imageToShow.contains('storage/emulated'))
-                            ? Image.file(
-                                File(imageToShow),
-                                fit: BoxFit.contain,
-                                gaplessPlayback: true,
-                              )
-                            : Image.asset(
-                                imageToShow,
-                                fit: BoxFit.contain,
-                                gaplessPlayback: true,
-                              ),
+                        : (imageToShow.startsWith('/') ||
+                              imageToShow.contains('tryon_result') ||
+                              imageToShow.contains('data/user') ||
+                              imageToShow.contains('emulator') ||
+                              imageToShow.contains('storage/emulated'))
+                        ? Image.file(
+                            File(imageToShow),
+                            fit: BoxFit.contain,
+                            gaplessPlayback: true,
+                          )
+                        : Image.asset(
+                            imageToShow,
+                            fit: BoxFit.contain,
+                            gaplessPlayback: true,
+                          ),
                   ),
                 ),
               ),
