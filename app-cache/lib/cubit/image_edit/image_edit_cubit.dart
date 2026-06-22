@@ -12,7 +12,6 @@ import 'package:uuid/uuid.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
 import 'package:century_ai/db/models/edit_history_data.dart';
 import 'dart:typed_data';
-import 'package:century_ai/core/services/image_composite_service.dart';
 
 class ImageEditCubit extends Cubit<ImageEditState> {
   final ImageEditService _imageEditService = ImageEditService();
@@ -33,7 +32,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         furnitureId: furnitureId,
         ownerId: ownerId,
         sessionId: sessionId,
-        appliedLayers: const [],
+        imageHistory: [imagePath],
       ),
     );
   }
@@ -62,8 +61,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         isGenerating: false,
         hasPatternChanged: false,
         hasAreaChanged: false,
-        appliedLayers: state
-            .appliedLayers, // Retain applied layers, just clear the pending selection
+        imageHistory: state.imageHistory,
       ),
     );
   }
@@ -81,8 +79,13 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     }
   }
 
+  /// The current image to use as the base for the next API call.
+  /// If we have an edited image, use that; otherwise use the original.
+  String? get _currentBaseImage =>
+      state.currentGeneratedImage ?? state.originalImage;
+
   Future<void> generateAIImage() async {
-    if (state.originalImage == null ||
+    if (_currentBaseImage == null ||
         state.selectedPattern == null ||
         state.selectedArea == null)
       return;
@@ -93,14 +96,12 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         isApplyLoading: true,
         clearError: true,
         clearSuccess: true,
-        clearPendingPreview:
-            true, // Clear any stale preview from a previous attempt
       ),
     );
 
     try {
       File roomFile;
-      final String baseImageToUse = state.originalImage!;
+      final String baseImageToUse = _currentBaseImage!;
       if (baseImageToUse.startsWith('http')) {
         final dio = Dio();
         final tempDir = await getTemporaryDirectory();
@@ -118,66 +119,46 @@ class ImageEditCubit extends Cubit<ImageEditState> {
       final textureUrl = state.selectedPattern!["coverImage"]?.toString() ?? "";
       final coordinate = state.selectedArea!;
 
-      debugPrint('🎨 AI_GEN: Starting generation via V2 (preview mode)');
+      debugPrint('🎨 AI_GEN: Starting generation via V4 (direct image)');
 
       // Download pattern
       final tempDir = await Directory.systemTemp.createTemp();
       final patternFile = File('${tempDir.path}/pattern_image.png');
       await Dio().download(textureUrl, patternFile.path);
 
-      // AI Service (V2)
-      final responseJson = await _imageEditService.tryOnFurnitureV2(
+      // Call V4 API — returns the final edited image directly
+      final resultFile = await _imageEditService.tryOnFurnitureV4(
         roomImage: roomFile,
         patternImage: patternFile,
-        left: (coordinate['left'] as num).toInt(),
-        top: (coordinate['top'] as num).toInt(),
-        right: (coordinate['right'] as num).toInt(),
-        bottom: (coordinate['bottom'] as num).toInt(),
+        x1: (coordinate['left'] as num?)?.toInt() ?? (coordinate['x'] as num?)?.toInt() ?? 0,
+        y1: (coordinate['top'] as num?)?.toInt() ?? (coordinate['y'] as num?)?.toInt() ?? 0,
+        x2: (coordinate['right'] as num?)?.toInt() ?? (coordinate['x'] as num?)?.toInt() ?? 0,
+        y2: (coordinate['bottom'] as num?)?.toInt() ?? (coordinate['y'] as num?)?.toInt() ?? 0,
       );
 
-      final maskBase64 = responseJson['mask'] as String;
-      final warpedPatternBase64 = responseJson['warped_pattern'] as String;
+      final newImagePath = resultFile.path;
+      debugPrint('✅ V4 edited image saved to: $newImagePath');
 
-      final maskBytes = base64Decode(maskBase64);
-      final warpedPatternBytes = base64Decode(warpedPatternBase64);
+      final updatedGenHistory = List<Map<String, dynamic>>.from(state.generatedHistory)..add({
+        'original': state.originalImage!,
+        'generated': newImagePath,
+        'laminate': state.selectedPattern,
+      });
 
-      // Stack the layers locally for the preview composited result
-      final newLayer = LayerPair(
-        maskBytes: maskBytes,
-        warpedPatternBytes: warpedPatternBytes,
-      );
-
-      final previewLayers = List<LayerPair>.from(state.appliedLayers)
-        ..add(newLayer);
-
-      // Composite locally
-      final Uint8List roomBytes = await roomFile.readAsBytes();
-      final Uint8List previewBytes =
-          await ImageCompositeService.compositeImages(
-            baseImageBytes: roomBytes,
-            layers: previewLayers,
-          );
-
-      // Save to temp directory only
-      final sysTemp = await getTemporaryDirectory();
-      final previewFile = File(
-        p.join(
-          sysTemp.path,
-          'preview_${DateTime.now().millisecondsSinceEpoch}.png',
-        ),
-      );
-      await previewFile.writeAsBytes(previewBytes);
-      debugPrint('👁️ Preview written to temp: ${previewFile.path}');
-
-      // Emit PREVIEW state — no composite saved permanently, no SQLite yet
       emit(
-        state.copyWith(
+        ImageEditState(
+          originalImage: state.originalImage,
+          currentGeneratedImage: newImagePath,
+          editedImageFile: newImagePath,
+          generatedHistory: updatedGenHistory,
+          redoHistory: const [],
+          furnitureId: state.furnitureId,
+          ownerId: state.ownerId,
+          sessionId: state.sessionId,
+          selectedPattern: null,
+          selectedArea: null,
+
           isGenerating: false,
-          isApplyLoading: false,
-          showSelectionPreview: true,
-          pendingMaskBytes: maskBytes,
-          pendingWarpedBytes: warpedPatternBytes,
-          tempCompositedImagePath: previewFile.path,
           hasPatternChanged: false,
           hasAreaChanged: false,
         ),
@@ -195,7 +176,6 @@ class ImageEditCubit extends Cubit<ImageEditState> {
   }
 
   Future<void> compareImageSelected(ProductImageModel image) async {
-    // ... existing implementation ...
     emit(
       state.copyWith(
         isCompareLoading: true,
@@ -233,90 +213,30 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // STEP 2A: Accept — composite permanently but do NOT write SQLite or trigger success message yet
-  // ─────────────────────────────────────────────────────────────────────────
-  Future<void> acceptPendingDesign({
-    String? customSessionId,
-    String? parentEditId,
-  }) async {
-    if (!state.showSelectionPreview ||
-        state.pendingMaskBytes == null ||
-        state.pendingWarpedBytes == null ||
-        state.originalImage == null) {
-      debugPrint('⚠️ acceptPendingDesign: no pending preview to accept');
+  /// Undo: pop the last image from history and restore the previous one.
+  void undoLastEdit() {
+    if (state.generatedHistory.isEmpty) {
+      debugPrint('↩️ Nothing to undo — already at original image');
       return;
     }
 
-    emit(state.copyWith(isApplyLoading: true, clearError: true));
+    final updatedGenHistory = List<Map<String, dynamic>>.from(state.generatedHistory);
+    final poppedItem = updatedGenHistory.removeLast();
 
-    try {
-      // ── Stack the accepted layer
-      final newLayer = LayerPair(
-        maskBytes: state.pendingMaskBytes!,
-        warpedPatternBytes: state.pendingWarpedBytes!,
-      );
-      final updatedLayers = List<LayerPair>.from(state.appliedLayers)
-        ..add(newLayer);
+    final updatedRedoHistory = List<Map<String, dynamic>>.from(state.redoHistory);
+    updatedRedoHistory.add(poppedItem);
 
-      // Promote the temp preview file as the new current image
-      final String? acceptedImagePath = state.tempCompositedImagePath;
-      debugPrint(
-        '✅ Layer accepted — stacked ${updatedLayers.length} layer(s). Preview: $acceptedImagePath',
-      );
+    final previousImage = updatedGenHistory.isEmpty 
+        ? null 
+        : updatedGenHistory.last['generated'] as String?;
 
-      final updatedHistory =
-          List<Map<String, dynamic>>.from(state.generatedHistory)..add({
-            'original': state.originalImage!,
-            'generated': acceptedImagePath,
-            'laminate': state.selectedPattern,
-          });
-
-      emit(
-        ImageEditState(
-          originalImage: state.originalImage,
-          currentGeneratedImage: acceptedImagePath,
-          editedImageFile: acceptedImagePath,
-          generatedHistory: updatedHistory,
-          furnitureId: state.furnitureId,
-          ownerId: state.ownerId,
-          sessionId: state.sessionId,
-          selectedPattern: null,
-          selectedArea: null,
-          isGenerating: false,
-          hasPatternChanged: false,
-          hasAreaChanged: false,
-          appliedLayers: updatedLayers,
-          showSelectionPreview: false,
-          pendingMaskBytes: null,
-          pendingWarpedBytes: null,
-          tempCompositedImagePath: null,
-        ),
-      );
-    } catch (e) {
-      debugPrint('❌ acceptPendingDesign error: $e');
-      emit(
-        state.copyWith(
-          isApplyLoading: false,
-          errorMessage: 'Failed to accept design: $e',
-        ),
-      );
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // STEP 2B: Cancel — discard everything, no file write, no SQLite
-  // ─────────────────────────────────────────────────────────────────────────
-  void rejectPendingDesign() {
-    final previewPath = state.tempCompositedImagePath;
-    if (previewPath != null) {
-      File(previewPath).delete().catchError((_) => File(previewPath));
-    }
     emit(
       ImageEditState(
         originalImage: state.originalImage,
-        currentGeneratedImage: state.currentGeneratedImage,
-        generatedHistory: state.generatedHistory,
+        currentGeneratedImage: previousImage,
+        editedImageFile: previousImage,
+        generatedHistory: updatedGenHistory,
+        redoHistory: updatedRedoHistory,
         furnitureId: state.furnitureId,
         ownerId: state.ownerId,
         sessionId: state.sessionId,
@@ -325,14 +245,44 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         isGenerating: false,
         hasPatternChanged: false,
         hasAreaChanged: false,
-        appliedLayers: state.appliedLayers,
-        showSelectionPreview: false,
-        pendingMaskBytes: null,
-        pendingWarpedBytes: null,
-        tempCompositedImagePath: null,
       ),
     );
-    debugPrint('🚫 Pending design rejected — nothing saved.');
+    debugPrint('↩️ Undo successful! History depth: ${updatedGenHistory.length}');
+  }
+
+  /// Redo: pop the last image from redoHistory and restore it.
+  void redoLastEdit() {
+    if (state.redoHistory.isEmpty) {
+      debugPrint('↪️ Nothing to redo');
+      return;
+    }
+
+    final updatedRedoHistory = List<Map<String, dynamic>>.from(state.redoHistory);
+    final poppedItem = updatedRedoHistory.removeLast();
+
+    final updatedGenHistory = List<Map<String, dynamic>>.from(state.generatedHistory);
+    updatedGenHistory.add(poppedItem);
+
+    final currentImage = poppedItem['generated'] as String?;
+
+    emit(
+      ImageEditState(
+        originalImage: state.originalImage,
+        currentGeneratedImage: currentImage,
+        editedImageFile: currentImage,
+        generatedHistory: updatedGenHistory,
+        redoHistory: updatedRedoHistory,
+        furnitureId: state.furnitureId,
+        ownerId: state.ownerId,
+        sessionId: state.sessionId,
+        selectedPattern: null,
+        selectedArea: null,
+        isGenerating: false,
+        hasPatternChanged: false,
+        hasAreaChanged: false,
+      ),
+    );
+    debugPrint('↪️ Redo successful! History depth: ${updatedGenHistory.length}');
   }
 
   // Deprecated in favor of selectPattern + selectArea automatic flow
@@ -352,84 +302,6 @@ class ImageEditCubit extends Cubit<ImageEditState> {
       ),
     );
     await generateAIImage();
-  }
-
-  Future<void> undoLastLayer() async {
-    if (state.appliedLayers.isEmpty) return;
-
-    emit(state.copyWith(isApplyLoading: true, clearError: true));
-
-    try {
-      final updatedLayers = List<LayerPair>.from(state.appliedLayers)..removeLast();
-      final updatedHistory = List<Map<String, dynamic>>.from(state.generatedHistory)..removeLast();
-
-      String? newImagePath;
-      if (updatedLayers.isEmpty) {
-        newImagePath = state.originalImage;
-      } else {
-        File roomFile;
-        final String baseImageToUse = state.originalImage!;
-        if (baseImageToUse.startsWith('http')) {
-          final dio = Dio();
-          final tempDir = await getTemporaryDirectory();
-          final tempPath = p.join(
-            tempDir.path,
-            "temp_edit_${DateTime.now().millisecondsSinceEpoch}.png",
-          );
-          await dio.download(baseImageToUse, tempPath);
-          roomFile = File(tempPath);
-        } else {
-          roomFile = File(baseImageToUse);
-        }
-
-        final Uint8List roomBytes = await roomFile.readAsBytes();
-        final Uint8List recompositedBytes = await ImageCompositeService.compositeImages(
-          baseImageBytes: roomBytes,
-          layers: updatedLayers,
-        );
-
-        final sysTemp = await getTemporaryDirectory();
-        final undoFile = File(
-          p.join(
-            sysTemp.path,
-            'undo_${DateTime.now().millisecondsSinceEpoch}.png',
-          ),
-        );
-        await undoFile.writeAsBytes(recompositedBytes);
-        newImagePath = undoFile.path;
-      }
-
-      emit(
-        ImageEditState(
-          originalImage: state.originalImage,
-          currentGeneratedImage: newImagePath,
-          editedImageFile: newImagePath,
-          generatedHistory: updatedHistory,
-          furnitureId: state.furnitureId,
-          ownerId: state.ownerId,
-          sessionId: state.sessionId,
-          selectedPattern: null,
-          selectedArea: null,
-          isGenerating: false,
-          hasPatternChanged: false,
-          hasAreaChanged: false,
-          appliedLayers: updatedLayers,
-          showSelectionPreview: false,
-          pendingMaskBytes: null,
-          pendingWarpedBytes: null,
-          tempCompositedImagePath: null,
-        ),
-      );
-      debugPrint('↩️ Undo successful! Remaining layers: ${updatedLayers.length}');
-    } catch (e) {
-      debugPrint('❌ Undo last layer error: $e');
-      emit(
-        state.copyWith(
-          isApplyLoading: false,
-          errorMessage: 'Failed to undo last layer: $e',
-        ),
-      );
-    }
   }
 
   /// Save a specific generated edit to SQLite

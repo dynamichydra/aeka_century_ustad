@@ -385,6 +385,70 @@ class ApiService {
     return response.data as Map<String, dynamic>;
   }
 
+
+  Future<List<int>> tryOnFurnitureV4({
+    required File roomImage,
+    required File patternImage,
+    required int left,
+    required int top,
+    required int right,
+    required int bottom,
+  }) async {
+    if (!await roomImage.exists()) {
+      throw Exception('Room image file does not exist at path: ${roomImage.path}');
+    }
+    if (!await patternImage.exists()) {
+      throw Exception('Pattern image file does not exist at path: ${patternImage.path}');
+    }
+
+    String roomFileName = roomImage.path.split('/').last;
+    String patternFileName = patternImage.path.split('/').last;
+
+    FormData formData = FormData.fromMap({
+      "image": await MultipartFile.fromFile(
+        roomImage.path,
+        filename: roomFileName,
+      ),
+      "pattern_image": await MultipartFile.fromFile(
+        patternImage.path,
+        filename: patternFileName,
+      ),
+      "x1": left.toInt().toString(),
+      "y1": top.toInt().toString(),
+      "x2": right.toInt().toString(),
+      "y2": bottom.toInt().toString(),
+    });
+
+    debugPrint('====================================================');
+    debugPrint('🚀 [API CALL] POST ${TApiConstants.tryOnV4}');
+    debugPrint('Headers: {\'Content-Type\': \'multipart/form-data\'}');
+    debugPrint('Body Fields:');
+    debugPrint('  x1: ${left.toInt()}');
+    debugPrint('  y1: ${top.toInt()}');
+    debugPrint('  x2: ${right.toInt()}');
+    debugPrint('  y2: ${bottom.toInt()}');
+    debugPrint('Files:');
+    debugPrint('  room_image: ${roomImage.path}');
+    debugPrint('  pattern_image: ${patternImage.path}');
+    debugPrint('====================================================');
+
+    final response = await _dio.post(
+      TApiConstants.tryOnV4,
+      data: formData,
+      options: Options(
+        responseType: ResponseType.bytes,
+        contentType: 'multipart/form-data',
+      ),
+    );
+
+    debugPrint('✅ API_LOG: Response Status: ${response.statusCode}');
+    debugPrint('📄 API_LOG: Response size: ${response.data.length} bytes');
+
+    return response.data as List<int>;
+  }
+
+
+
   Future<List<dynamic>> getMyUploads({
     int limit = 20,
     int offset = 0,

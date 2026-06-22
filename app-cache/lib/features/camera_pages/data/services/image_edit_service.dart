@@ -115,4 +115,28 @@ class ImageEditService {
       bottom: bottom,
     );
   }
+
+  Future<File> tryOnFurnitureV4({
+    required File roomImage,
+    required File patternImage,
+    required int x1,
+    required int y1,
+    required int x2,
+    required int y2,
+  }) async {
+    final bytes = await _apiService.tryOnFurnitureV4(
+      roomImage: roomImage,
+      patternImage: patternImage,
+      left: x1,
+      top: y1,
+      right: x2,
+      bottom: y2,
+    );
+
+    // Save bytes to a temporary file
+    final tempDir = await Directory.systemTemp.createTemp();
+    final file = File('${tempDir.path}/tryon_v4_result_${DateTime.now().millisecondsSinceEpoch}.png');
+    await file.writeAsBytes(bytes);
+    return file;
+  }
 }

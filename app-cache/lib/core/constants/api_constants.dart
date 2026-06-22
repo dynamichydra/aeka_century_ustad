@@ -18,6 +18,9 @@ class TApiConstants {
   static const String tryOn = 'https://ustad-api-507497848998.asia-south1.run.app/tryon';
   static const String tryOnV2 = 'https://ustad-api-507497848998.asia-south1.run.app/tryon-v2';
   static const String tryOnV3 = 'https://ustad-api-507497848998.asia-south1.run.app/tryon-v3';
+
+  static const String tryOnV4 = 'https://century-ustad-api-507497848998.asia-south1.run.app/tryon/generate';
+
   static const String favorites = '/me/favourites';
 
   // Dummy endpoints (legacy)

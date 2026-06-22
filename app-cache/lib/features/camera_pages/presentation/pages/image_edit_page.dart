@@ -181,24 +181,16 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   double get _currentDisplayScale {
-    final bool inPreview = context
-        .read<ImageEditCubit>()
-        .state
-        .showSelectionPreview;
-    if (_hasAppliedOnce || inPreview) {
-      return _containScale;
-    }
+    // if (_hasAppliedOnce) {
+    //   return _containScale;
+    // }
     return _minScale;
   }
 
   double get _currentMinZoomLimit {
-    final bool inPreview = context
-        .read<ImageEditCubit>()
-        .state
-        .showSelectionPreview;
-    if (_hasAppliedOnce || inPreview) {
-      return 1.0;
-    }
+    // if (_hasAppliedOnce) {
+    //   return 1.0;
+    // }
     return _minZoomLimit;
   }
 
@@ -983,48 +975,43 @@ class _ImageEditPageState extends State<ImageEditPage>
           );
         }
 
-        // ── Preview entering: decode mask once
-        if (state.showSelectionPreview &&
-            state.pendingMaskBytes != null &&
-            _decodedMaskImage == null) {
-          _decodeMaskImage(state.pendingMaskBytes!);
-        }
-
-        // ── Preview leaving (Accept OR Cancel):
-        // Always clear mask + selection in ONE atomic setState whenever
-        // showSelectionPreview transitions to false while we hold a decoded mask.
-        if (!state.showSelectionPreview && _decodedMaskImage != null) {
-          final bool wasAccepted =
-              state.currentGeneratedImage != null &&
-              state.currentGeneratedImage != _baseImage;
-
-          setState(() {
-            _decodedMaskImage?.dispose();
-            _decodedMaskImage = null;
-            _maskFillPath = null;
-            _maskEdgePath = null;
-            _selection = null;
-            _selectedTexture = null;
-
-            if (wasAccepted) {
-              _baseImage = state.currentGeneratedImage!;
-              _hasNewUnappliedEdit = true;
-            }
-          });
-
-          if (wasAccepted && state.editedImageFile != null) {
+        // V4 flow: When a new edited image arrives, directly replace the preview
+        if (state.editedImageFile != null &&
+            !state.isGenerating &&
+            !state.isApplyLoading) {
+          final newImage = state.editedImageFile!;
+          if (_currentAssetPreview != newImage) {
             setState(() {
+              _selection = null;
+              _selectedTexture = null;
+              _baseImage = newImage;
+              _hasNewUnappliedEdit = true;
               _isPrecaching = true;
-              _currentAssetPreview = state.editedImageFile;
+              _currentAssetPreview = newImage;
             });
-            final imageProvider = FileImage(File(state.editedImageFile!));
+            final imageProvider = FileImage(File(newImage));
             precacheImage(imageProvider, context)
                 .then((_) {
-                  if (mounted) setState(() => _isPrecaching = false);
+                  if (mounted) {
+                    setState(() {
+                      _isPrecaching = false;
+                    });
+                  }
                 })
                 .catchError((e) {
                   if (mounted) setState(() => _isPrecaching = false);
                 });
+          }
+        }
+
+        // When undo returns to original (editedImageFile is null), clear the preview
+        if (state.editedImageFile == null &&
+            state.currentGeneratedImage == null) {
+          if (_currentAssetPreview != null) {
+            setState(() {
+              _currentAssetPreview = null;
+              _baseImage = state.originalImage ?? widget.imageFile.path;
+            });
           }
         }
       },
@@ -1034,11 +1021,8 @@ class _ImageEditPageState extends State<ImageEditPage>
         body: SafeArea(
           child: BlocBuilder<ImageEditCubit, ImageEditState>(
             builder: (context, state) {
-              final bool inPreview = state.showSelectionPreview;
               final isApplying =
-                  (state.isApplyLoading && !inPreview) ||
-                  _isPrecaching ||
-                  _isUploading;
+                  state.isApplyLoading || _isPrecaching || _isUploading;
               return AbsorbPointer(
                 absorbing: isApplying,
                 child: Stack(
@@ -1050,8 +1034,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                           child: ValueListenableBuilder<List<int>>(
                             valueListenable: _selectedIndicesNotifier,
                             builder: (context, selectedIndices, child) {
-                              if ((state.isApplyLoading && !inPreview) ||
-                                  _isPrecaching) {
+                              if (state.isApplyLoading || _isPrecaching) {
                                 return _buildGeneratingBlock();
                               }
                               return _compareExpanded
@@ -1075,13 +1058,8 @@ class _ImageEditPageState extends State<ImageEditPage>
                                     child: _buildCollapsibleHeaders(),
                                   ),
                                 ),
-                                // Preview approval bar — replaces all normal bottom bars
-                                if (inPreview)
-                                  Positioned.fill(
-                                    child: _buildPreviewApprovalBar(state),
-                                  ),
                                 // Fixed Bottom Bar Area (Edit Mode)
-                                if (!inPreview && _editExpanded)
+                                if (_editExpanded)
                                   Positioned(
                                     bottom: 0,
                                     left: 0,
@@ -1089,7 +1067,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                                     child: _buildBottomBarFixed(),
                                   ),
                                 // Fixed Bottom Bar Area (Compare Mode)
-                                if (!inPreview && _compareExpanded)
+                                if (_compareExpanded)
                                   Positioned(
                                     bottom: 0,
                                     left: 0,
@@ -1169,7 +1147,8 @@ class _ImageEditPageState extends State<ImageEditPage>
           BlocBuilder<ImageEditCubit, ImageEditState>(
             builder: (context, state) {
               final bool canUndo =
-                  state.appliedLayers.isNotEmpty || (_parentEditId != null);
+                  state.generatedHistory.isNotEmpty || (_parentEditId != null);
+              final bool canRedo = state.redoHistory.isNotEmpty;
               return _buildHeaderTile(
                 title: "Edit & Design",
                 iconImg: "edit.png",
@@ -1183,44 +1162,89 @@ class _ImageEditPageState extends State<ImageEditPage>
                         });
                       }
                     : () {},
-                trailing: Opacity(
-                  opacity: canUndo ? 1.0 : 0.4,
-                  child: GestureDetector(
-                    onTap: canUndo ? () => _handleUndo(state) : null,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Symbols.undo, // Curved arrow pointing left
-                            color: Colors.black.withOpacity(0.7),
-                            size: 12,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Opacity(
+                      opacity: canUndo ? 1.0 : 0.4,
+                      child: GestureDetector(
+                        onTap: canUndo ? () => _handleUndo(state) : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            "Undo",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black.withOpacity(0.7),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 0.8,
                             ),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Symbols.undo, // Curved arrow pointing left
+                                color: Colors.black.withOpacity(0.7),
+                                size: 12,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Undo",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Opacity(
+                      opacity: canRedo ? 1.0 : 0.4,
+                      child: GestureDetector(
+                        onTap: canRedo ? () => _handleRedo(state) : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Symbols.redo, // Curved arrow pointing right
+                                color: Colors.black.withOpacity(0.7),
+                                size: 12,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Redo",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
@@ -1302,7 +1326,7 @@ class _ImageEditPageState extends State<ImageEditPage>
           RepaintBoundary(child: _buildTextureSelection()),
           if (_selection != null) ...[
             const SizedBox(height: 8),
-            _buildAreaInputSection(),
+            // _buildAreaInputSection(),
           ],
           const SizedBox(height: 10),
         ],
@@ -2069,114 +2093,6 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Widget _buildImageOverlaySection(ImageEditState state) {
-    final bool inPreview = state.showSelectionPreview;
-
-    if (inPreview) {
-      return Stack(
-        fit: StackFit.expand,
-        clipBehavior: Clip.none,
-        children: [
-          // Show the full image containing the laminate (tempCompositedImagePath)
-          // fully contained inside the preview section without stretching.
-          if (_originalImageWidth != null)
-            Center(
-              child: SizedBox(
-                width: _originalImageWidth! * _containScale,
-                height: _originalImageHeight! * _containScale,
-                child: state.tempCompositedImagePath != null
-                    ? Image.file(
-                        File(state.tempCompositedImagePath!),
-                        fit: BoxFit.fill,
-                        gaplessPlayback: true,
-                        cacheWidth: 800,
-                      )
-                    : _baseImage.startsWith('http')
-                    ? Image.network(
-                        _baseImage,
-                        fit: BoxFit.fill,
-                        gaplessPlayback: true,
-                        cacheWidth: 800,
-                      )
-                    : Image.file(
-                        File(_baseImage),
-                        fit: BoxFit.fill,
-                        gaplessPlayback: true,
-                        cacheWidth: 800,
-                      ),
-              ),
-            )
-          else
-            Center(
-              child: state.tempCompositedImagePath != null
-                  ? Image.file(
-                      File(state.tempCompositedImagePath!),
-                      fit: BoxFit.contain,
-                      gaplessPlayback: true,
-                      cacheWidth: 800,
-                    )
-                  : _baseImage.startsWith('http')
-                  ? Image.network(
-                      _baseImage,
-                      fit: BoxFit.contain,
-                      gaplessPlayback: true,
-                      cacheWidth: 800,
-                    )
-                  : Image.file(
-                      File(_baseImage),
-                      fit: BoxFit.contain,
-                      gaplessPlayback: true,
-                      cacheWidth: 800,
-                    ),
-            ),
-
-          // Mask overlay — Positioned.fill spans the full viewport;
-          // MarchingAntsMaskPainter internally applies BoxFit.cover math
-          // so the mask region correctly overlays the displayed image area.
-          if (_decodedMaskImage != null)
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _marchingAntsController,
-                builder: (_, __) => CustomPaint(
-                  painter: MarchingAntsMaskPainter(
-                    maskImage: _decodedMaskImage!,
-                    progress: _marchingAntsController.value,
-                    fillPath: _maskFillPath,
-                    edgePath: _maskEdgePath,
-                  ),
-                ),
-              ),
-            ),
-
-          Positioned(
-            top: 12,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.55),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  '✦  Review before applying',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
     return Stack(
       children: [
         InteractiveViewer(
@@ -2963,15 +2879,15 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Future<void> _handleUndo(ImageEditState state) async {
-    if (state.appliedLayers.isNotEmpty) {
-      await context.read<ImageEditCubit>().undoLastLayer();
+    if (state.generatedHistory.isNotEmpty) {
+      context.read<ImageEditCubit>().undoLastEdit();
+      final newState = context.read<ImageEditCubit>().state;
       setState(() {
-        _currentAssetPreview = context
-            .read<ImageEditCubit>()
-            .state
-            .editedImageFile;
-        if (context.read<ImageEditCubit>().state.appliedLayers.isEmpty) {
+        _currentAssetPreview = newState.editedImageFile;
+        _baseImage = newState.editedImageFile ?? newState.originalImage ?? widget.imageFile.path;
+        if (newState.generatedHistory.isEmpty) {
           _hasNewUnappliedEdit = false;
+          _hasAppliedOnce = false;
         }
       });
     } else if (_parentEditId != null) {
@@ -3027,6 +2943,20 @@ class _ImageEditPageState extends State<ImageEditPage>
       } finally {
         setState(() => _isLoadingEdits = false);
       }
+    }
+  }
+
+  Future<void> _handleRedo(ImageEditState state) async {
+    if (state.redoHistory.isNotEmpty) {
+      context.read<ImageEditCubit>().redoLastEdit();
+      final newState = context.read<ImageEditCubit>().state;
+      setState(() {
+        _currentAssetPreview = newState.editedImageFile;
+        _baseImage = newState.editedImageFile ?? newState.originalImage ?? widget.imageFile.path;
+        if (newState.generatedHistory.isNotEmpty) {
+          _hasNewUnappliedEdit = true;
+        }
+      });
     }
   }
 
@@ -4745,7 +4675,7 @@ extension on _ImageEditPageState {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    context.read<ImageEditCubit>().rejectPendingDesign();
+                    context.read<ImageEditCubit>().undoLastEdit();
                   },
                   icon: const Icon(Icons.close, size: 18, color: Colors.red),
                   label: const Text(
@@ -4769,9 +4699,8 @@ extension on _ImageEditPageState {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    context.read<ImageEditCubit>().acceptPendingDesign(
-                      parentEditId: _parentEditId,
-                    );
+                    // V4: image is already applied, just dismiss
+                    Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.check, size: 18, color: Colors.white),
                   label: const Text(

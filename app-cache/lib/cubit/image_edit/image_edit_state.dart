@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-import 'package:century_ai/core/services/image_composite_service.dart';
 import 'package:equatable/equatable.dart';
 
 class ImageEditState extends Equatable {
@@ -9,10 +7,11 @@ class ImageEditState extends Equatable {
   final String? successMessage;
   final String? editedImageFile;
 
-  // New fields for AI generation flow
+  // AI generation flow
   final String? originalImage;
   final String? currentGeneratedImage;
   final List<Map<String, dynamic>> generatedHistory;
+  final List<Map<String, dynamic>> redoHistory;
   final Map<String, dynamic>? selectedPattern;
   final Map<String, dynamic>? selectedArea;
   final bool isGenerating;
@@ -21,21 +20,11 @@ class ImageEditState extends Equatable {
   final String? furnitureId;
   final String? ownerId;
   final String? sessionId;
-  final List<LayerPair> appliedLayers; // Accumulated mask and warped patterns
 
-  // Preview / approval flow (transient — never persisted)
-  /// True while the user is reviewing a pending laminate application.
-  final bool showSelectionPreview;
-
-  /// Raw mask PNG bytes returned by the API (used to draw the selection outline).
-  final Uint8List? pendingMaskBytes;
-
-  /// Raw warped-pattern PNG bytes returned by the API.
-  final Uint8List? pendingWarpedBytes;
-
-  /// Path to the temporary composited PNG written during preview.
-  /// Copied to /edits/ on Accept; deleted on Cancel.
-  final String? tempCompositedImagePath;
+  /// Stack of image paths: [original, edit1, edit2, ...].
+  /// The last element is the current image displayed.
+  /// Undo pops the last element to restore the previous image.
+  final List<String> imageHistory;
 
   const ImageEditState({
     this.isCompareLoading = false,
@@ -46,6 +35,7 @@ class ImageEditState extends Equatable {
     this.originalImage,
     this.currentGeneratedImage,
     this.generatedHistory = const [],
+    this.redoHistory = const [],
     this.selectedPattern,
     this.selectedArea,
     this.isGenerating = false,
@@ -54,12 +44,7 @@ class ImageEditState extends Equatable {
     this.furnitureId,
     this.ownerId,
     this.sessionId,
-    this.appliedLayers = const [],
-    // Preview fields
-    this.showSelectionPreview = false,
-    this.pendingMaskBytes,
-    this.pendingWarpedBytes,
-    this.tempCompositedImagePath,
+    this.imageHistory = const [],
   });
 
   ImageEditState copyWith({
@@ -71,6 +56,7 @@ class ImageEditState extends Equatable {
     String? originalImage,
     String? currentGeneratedImage,
     List<Map<String, dynamic>>? generatedHistory,
+    List<Map<String, dynamic>>? redoHistory,
     Map<String, dynamic>? selectedPattern,
     Map<String, dynamic>? selectedArea,
     bool? isGenerating,
@@ -79,17 +65,9 @@ class ImageEditState extends Equatable {
     String? furnitureId,
     String? ownerId,
     String? sessionId,
-    List<LayerPair>? appliedLayers,
-    // Preview fields
-    bool? showSelectionPreview,
-    Uint8List? pendingMaskBytes,
-    Uint8List? pendingWarpedBytes,
-    String? tempCompositedImagePath,
-    // Convenience flags
+    List<String>? imageHistory,
     bool clearError = false,
     bool clearSuccess = false,
-    /// When true, nullifies all four transient preview fields at once.
-    bool clearPendingPreview = false,
   }) {
     return ImageEditState(
       isCompareLoading: isCompareLoading ?? this.isCompareLoading,
@@ -102,6 +80,7 @@ class ImageEditState extends Equatable {
       currentGeneratedImage:
           currentGeneratedImage ?? this.currentGeneratedImage,
       generatedHistory: generatedHistory ?? this.generatedHistory,
+      redoHistory: redoHistory ?? this.redoHistory,
       selectedPattern: selectedPattern ?? this.selectedPattern,
       selectedArea: selectedArea ?? this.selectedArea,
       isGenerating: isGenerating ?? this.isGenerating,
@@ -110,19 +89,7 @@ class ImageEditState extends Equatable {
       furnitureId: furnitureId ?? this.furnitureId,
       ownerId: ownerId ?? this.ownerId,
       sessionId: sessionId ?? this.sessionId,
-      appliedLayers: appliedLayers ?? this.appliedLayers,
-      // Preview — cleared wholesale with clearPendingPreview
-      showSelectionPreview: clearPendingPreview
-          ? false
-          : (showSelectionPreview ?? this.showSelectionPreview),
-      pendingMaskBytes:
-          clearPendingPreview ? null : (pendingMaskBytes ?? this.pendingMaskBytes),
-      pendingWarpedBytes: clearPendingPreview
-          ? null
-          : (pendingWarpedBytes ?? this.pendingWarpedBytes),
-      tempCompositedImagePath: clearPendingPreview
-          ? null
-          : (tempCompositedImagePath ?? this.tempCompositedImagePath),
+      imageHistory: imageHistory ?? this.imageHistory,
     );
   }
 
@@ -136,6 +103,7 @@ class ImageEditState extends Equatable {
     originalImage,
     currentGeneratedImage,
     generatedHistory,
+    redoHistory,
     selectedPattern,
     selectedArea,
     isGenerating,
@@ -144,10 +112,6 @@ class ImageEditState extends Equatable {
     furnitureId,
     ownerId,
     sessionId,
-    appliedLayers,
-    showSelectionPreview,
-    pendingMaskBytes,
-    pendingWarpedBytes,
-    tempCompositedImagePath,
+    imageHistory,
   ];
 }
