@@ -1,0 +1,156 @@
+name: century_ai
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.3.3
+  flutter_native_splash: ^2.4.7
+  smooth_page_indicator: ^2.0.1
+  connectivity_plus: ^7.0.0
+  get_storage: ^2.1.1
+  intl: ^0.20.2
+  flutter_bloc: ^9.1.1
+  cached_network_image: ^3.4.0
+  flutter_cache_manager: ^3.4.1
+  lottie: ^3.3.2
+  iconsax: ^0.0.8
+  shimmer: ^3.0.0
+  data_table_2: ^2.7.2
+  go_router: ^17.0.1
+
+  path_provider: ^2.1.2
+  path: ^1.9.0
+  image_picker: ^1.0.7
+  image: ^4.1.7
+  http: ^1.2.0
+  google_generative_ai: ^0.4.0
+  camera: ^0.11.3
+  toggle_switch: ^2.3.0
+  flutter_svg: ^2.2.3
+  flutter_portal: ^1.1.4
+  share_plus: ^7.2.1
+  flutter_launcher_icons: ^0.14.4
+  file_picker: ^10.3.8
+  dio: ^5.9.0
+  equatable: ^2.0.8
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  sqflite: ^2.4.2
+  gal: ^2.3.2
+  permission_handler: ^11.3.1
+  material_symbols_icons: ^4.2928.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^6.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/logos/small_logo.png"
+# The following section is specific to Flutter packages.
+flutter:
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/logos/
+
+    - assets/transaparent/Bed_room/
+    - assets/transaparent/Bed_room/Sub_categories/
+    - assets/transaparent/Study/
+    - assets/transaparent/Study/subcategories/
+    - assets/transaparent/Office/
+    - assets/transaparent/Office/Sub_categories/
+    - assets/transaparent/Bathroom/
+    - assets/transaparent/Bathroom/Sub_categories/
+    - assets/transaparent/Product_wise_product_category/
+    - assets/transaparent/Kids_Bed_room/
+    - assets/transaparent/Kids_Bed_room/Sub_category/
+    - assets/transaparent/Dining/
+    - assets/transaparent/Dining/Subcategories/
+    - assets/transaparent/Kitchen/
+    - assets/transaparent/Kitchen/Subcategories/
+    - assets/transaparent/Living_room/
+    - assets/transaparent/Living_room/Living_room_sub_categories/
+    - assets/transaparent/center_table/
+    - assets/db/app.db
+    - assets/images/content/
+    - assets/images/animations/
+    - assets/icons/payment_methods/
+    - assets/icons/app_icons/
+    - assets/icons/app_icons/person.svg
+    - assets/images/furniture/
+    - assets/images/lamination/
+    - assets/images/vectors/
+    - assets/DECO/0.8mm LAM/
+    - assets/DECO/NATZURA/
+    - assets/DECO/SENZURA/
+    - assets/icons/app_icons/ai_search.png
+    - assets/data/
+    
+
+  #--------------- LOCAL FONTS ------------------#
+  fonts:
+    - family: Gilroy
+      fonts:
+        - asset: assets/fonts/gilroy-medium/Gilroy-Medium.ttf
+    - family: Urbanist
+      fonts:
+        - asset: assets/fonts/urbanist/Urbanist-Light.ttf
+          weight: 300
+        - asset: assets/fonts/urbanist/Urbanist-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/urbanist/Urbanist-Italic.ttf
+          style: italic
+        - asset: assets/fonts/urbanist/Urbanist-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/urbanist/Urbanist-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/urbanist/Urbanist-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/urbanist/Urbanist-Bold.ttf
+          weight: 800
