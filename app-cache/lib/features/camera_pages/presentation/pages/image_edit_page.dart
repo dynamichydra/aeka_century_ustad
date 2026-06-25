@@ -1204,46 +1204,46 @@ class _ImageEditPageState extends State<ImageEditPage>
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Opacity(
-                      opacity: canRedo ? 1.0 : 0.4,
-                      child: GestureDetector(
-                        onTap: canRedo ? () => _handleRedo(state) : null,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.grey.shade300,
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Symbols.redo, // Curved arrow pointing right
-                                color: Colors.black.withOpacity(0.7),
-                                size: 12,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "Redo",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black.withOpacity(0.7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    // const SizedBox(width: 8),
+                    // Opacity(
+                    //   opacity: canRedo ? 1.0 : 0.4,
+                    //   child: GestureDetector(
+                    //     onTap: canRedo ? () => _handleRedo(state) : null,
+                    //     child: Container(
+                    //       padding: const EdgeInsets.symmetric(
+                    //         horizontal: 10,
+                    //         vertical: 4,
+                    //       ),
+                    //       decoration: BoxDecoration(
+                    //         color: Colors.white,
+                    //         borderRadius: BorderRadius.circular(20),
+                    //         border: Border.all(
+                    //           color: Colors.grey.shade300,
+                    //           width: 0.8,
+                    //         ),
+                    //       ),
+                    //       child: Row(
+                    //         mainAxisSize: MainAxisSize.min,
+                    //         children: [
+                    //           Icon(
+                    //             Symbols.redo, // Curved arrow pointing right
+                    //             color: Colors.black.withOpacity(0.7),
+                    //             size: 12,
+                    //           ),
+                    //           const SizedBox(width: 4),
+                    //           Text(
+                    //             "Redo",
+                    //             style: TextStyle(
+                    //               fontSize: 10,
+                    //               fontWeight: FontWeight.w500,
+                    //               color: Colors.black.withOpacity(0.7),
+                    //             ),
+                    //           ),
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               );

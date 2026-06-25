@@ -44,6 +44,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   String? _currentAsset;
   SelectedImageData? _currentSelection;
   List<SelectedImageData> _exploreImages = [];
+  final List<SelectedImageData> _history = [];
   bool _isImageLoading = false;
   bool _isLoading = false;
 
@@ -92,6 +93,45 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     }
   }
 
+  void _pushToHistory() {
+    if (_currentSelection != null) {
+      _history.add(_currentSelection!);
+    }
+  }
+
+  Future<void> _popHistory() async {
+    if (_history.isEmpty) return;
+    final previous = _history.removeLast();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final resolved = await _resolvePreviewImage(previous);
+      if (mounted) {
+        setState(() {
+          _currentSelection = previous;
+          _currentApplicationType = previous.applicationType;
+          _currentFile = resolved.file;
+          _currentAsset = resolved.assetPath;
+          _isImageLoading = false;
+          _isLoading = false;
+        });
+        _refreshSimilarProducts();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not load previous image: $e')));
+      }
+    }
+  }
+
   void _refreshSimilarProducts() {
     if (!mounted) return;
     final id = _currentSelection?.id ?? widget.image_id;
@@ -131,6 +171,10 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   }
 
   Future<void> _selectExploreImage(SelectedImageData image) async {
+    if (_currentSelection != null && _currentSelection!.id != image.id) {
+      _pushToHistory();
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -211,6 +255,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
       // 4. Update UI
       if (mounted) {
+        if (_currentSelection != null) {
+          _pushToHistory();
+        }
         setState(() {
           _currentApplicationType = product.applicationType;
           _currentSelection = imageData;
@@ -324,191 +371,245 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              controller: _scrollController,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Stack(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    AspectRatio(aspectRatio: 1, child: _buildPreviewImage()),
+                    if (!_isLoading && !_isImageLoading) ...[
+                      // Positioned(
+                      //   bottom: 40,
+                      //   left: 0,
+                      //   right: 0,
+                      //   child: Column(
+                      //     mainAxisSize: MainAxisSize.min,
+                      //     children: [
+                      //       const Icon(
+                      //         Icons.touch_app_outlined,
+                      //         color: Colors.white,
+                      //         size: 40,
+                      //       ),
+                      //       const SizedBox(height: 8),
+                      //       Container(
+                      //         padding: const EdgeInsets.symmetric(
+                      //           horizontal: 12,
+                      //           vertical: 4,
+                      //         ),
+                      //         decoration: BoxDecoration(
+                      //           color: Colors.black.withOpacity(0.3),
+                      //           borderRadius: BorderRadius.circular(4),
+                      //         ),
+                      //         child: const Text(
+                      //           'Tap on the object to apply laminates',
+                      //           style: TextStyle(
+                      //             color: Colors.white,
+                      //             fontSize: 14,
+                      //             fontWeight: FontWeight.w400,
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
+                    ],
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      AspectRatio(aspectRatio: 1, child: _buildPreviewImage()),
-                      if (!_isLoading && !_isImageLoading) ...[
-                        // Positioned(
-                        //   bottom: 40,
-                        //   left: 0,
-                        //   right: 0,
-                        //   child: Column(
-                        //     mainAxisSize: MainAxisSize.min,
-                        //     children: [
-                        //       const Icon(
-                        //         Icons.touch_app_outlined,
-                        //         color: Colors.white,
-                        //         size: 40,
-                        //       ),
-                        //       const SizedBox(height: 8),
-                        //       Container(
-                        //         padding: const EdgeInsets.symmetric(
-                        //           horizontal: 12,
-                        //           vertical: 4,
-                        //         ),
-                        //         decoration: BoxDecoration(
-                        //           color: Colors.black.withOpacity(0.3),
-                        //           borderRadius: BorderRadius.circular(4),
-                        //         ),
-                        //         child: const Text(
-                        //           'Tap on the object to apply laminates',
-                        //           style: TextStyle(
-                        //             color: Colors.white,
-                        //             fontSize: 14,
-                        //             fontWeight: FontWeight.w400,
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
-                      ],
+                      const Text(
+                        'More Products to Explore',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: _history.isNotEmpty ? _popHistory : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _history.isNotEmpty
+                                  ? const Color(0xFFE2E8F0)
+                                  : const Color(0xFFE2E8F0).withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.arrow_back_rounded,
+                                size: 14,
+                                color: _history.isNotEmpty
+                                    ? const Color(0xFF475569)
+                                    : const Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Back',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: _history.isNotEmpty
+                                      ? const Color(0xFF475569)
+                                      : const Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
-                    child: Text(
-                      'More Products to Explore',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  BlocBuilder<ProductsCubit, ProductsState>(
-                    builder: (context, state) {
-                      if (state.isLoading && state.products.isEmpty) {
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 1.0,
-                              ),
-                          itemCount: 6,
-                          itemBuilder: (context, index) => Shimmer.fromColors(
-                            baseColor: Colors.grey[300]!,
-                            highlightColor: Colors.grey[100]!,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final products = state.products;
-
-                      if (products.isEmpty && !state.isLoading) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          child: Text(
-                            'No related images to explore.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        );
-                      }
-
-                      return Column(
-                        children: [
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                  childAspectRatio: 1.0,
-                                ),
-                            itemCount: products.length,
-                            itemBuilder: (context, index) {
-                              final product = products[index];
-                              return GestureDetector(
-                                onTap: () => _selectNetworkProduct(product),
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: CachedNetworkImage(
-                                        imageUrl: product.image,
-                                        fit: BoxFit.cover,
-                                        height: double.infinity,
-                                        width: double.infinity,
-                                        memCacheWidth: 300,
-                                        placeholder: (context, url) =>
-                                            Shimmer.fromColors(
-                                              baseColor: Colors.grey[300]!,
-                                              highlightColor: Colors.grey[100]!,
-                                              child: Container(
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                        errorWidget: (context, url, error) =>
-                                            Container(
-                                              color: Colors.grey[300],
-                                              child: const Icon(
-                                                Icons.error_outline,
-                                              ),
-                                            ),
-                                      ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        BlocBuilder<ProductsCubit, ProductsState>(
+                          builder: (context, state) {
+                            if (state.isLoading && state.products.isEmpty) {
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 12,
+                                      mainAxisSpacing: 12,
+                                      childAspectRatio: 1.0,
                                     ),
-                                    if (product.isTrending)
-                                      const Positioned(
-                                        top: 8,
-                                        left: 8,
-                                        child: Icon(
-                                          Icons.local_fire_department,
-                                          color: Colors.red,
-                                          size: 16,
-                                        ),
-                                      ),
-                                    if (product.isFavorite)
-                                      const Positioned(
-                                        top: 8,
-                                        right: 8,
-                                        child: Icon(
-                                          Icons.favorite,
-                                          color: Colors.red,
-                                          size: 16,
-                                        ),
-                                      ),
-                                  ],
+                                itemCount: 6,
+                                itemBuilder: (context, index) => Shimmer.fromColors(
+                                  baseColor: Colors.grey[300]!,
+                                  highlightColor: Colors.grey[100]!,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
                                 ),
                               );
-                            },
-                          ),
-                          if (state.isLoadingMore)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                        ],
-                      );
-                    },
+                            }
+
+                            final products = state.products;
+
+                            if (products.isEmpty && !state.isLoading) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  'No related images to explore.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return Column(
+                              children: [
+                                GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 3,
+                                        crossAxisSpacing: 12,
+                                        mainAxisSpacing: 12,
+                                        childAspectRatio: 1.0,
+                                      ),
+                                  itemCount: products.length,
+                                  itemBuilder: (context, index) {
+                                    final product = products[index];
+                                    return GestureDetector(
+                                      onTap: () => _selectNetworkProduct(product),
+                                      child: Stack(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(4),
+                                            child: CachedNetworkImage(
+                                              imageUrl: product.image,
+                                              fit: BoxFit.cover,
+                                              height: double.infinity,
+                                              width: double.infinity,
+                                              memCacheWidth: 300,
+                                              placeholder: (context, url) =>
+                                                  Shimmer.fromColors(
+                                                    baseColor: Colors.grey[300]!,
+                                                    highlightColor: Colors.grey[100]!,
+                                                    child: Container(
+                                                      color: Colors.white,
+                                                      ),
+                                                    ),
+                                              errorWidget: (context, url, error) =>
+                                                  Container(
+                                                    color: Colors.grey[300],
+                                                    child: const Icon(
+                                                      Icons.error_outline,
+                                                    ),
+                                                  ),
+                                            ),
+                                          ),
+                                          if (product.isTrending)
+                                            const Positioned(
+                                              top: 8,
+                                              left: 8,
+                                              child: Icon(
+                                                Icons.local_fire_department,
+                                                color: Colors.red,
+                                                size: 16,
+                                              ),
+                                            ),
+                                          if (product.isFavorite)
+                                            const Positioned(
+                                              top: 8,
+                                              right: 8,
+                                              child: Icon(
+                                                Icons.favorite,
+                                                color: Colors.red,
+                                                size: 16,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                                if (state.isLoadingMore)
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 100),
-                ],
-              ),
+                ),
+              ],
             ),
             Positioned(
               bottom: 30,

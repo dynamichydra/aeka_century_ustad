@@ -88,6 +88,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     }
   }
 
+  void _scrollToTop() {
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0.0);
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -547,6 +553,563 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final List<ProductImageModel> displayProducts = productsState.products;
     final quickProducts = _resolveQuickProducts(homeState.selectedIndex);
 
+    final bool isCategorySelected = _selectedCategory != null;
+
+    final Widget headerWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: Text(
+            "Lets design Furniture with Century Decor",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              fontSize: 12,
+              color: Color(0xFF5D5D5D),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Center(
+          child: ExteriorInteriorSwitchSlider(
+            value: homeState.isExterior,
+            onChanged: (val) {
+              homeCubit.setExterior(val);
+              if (val) {
+                setState(() {
+                  _selectedCategory = null;
+                  _selectedSubCategory = "All";
+                  _selectedNestedSubCategory = "";
+                });
+                _scrollToTop();
+                _searchController.clear();
+                context.read<HomeCubit>().clearSearch();
+                context
+                    .read<ProductsCubit>()
+                    .fetchFeaturedProducts(
+                      ownerId: "user13@gmail.com",
+                      isExterior: true,
+                    );
+              } else {
+                homeCubit.setSelectedIndex(0);
+                setState(() {
+                  _selectedCategory = null;
+                  _selectedSubCategory = "All";
+                  _selectedNestedSubCategory = "";
+                });
+                _scrollToTop();
+                _searchController.clear();
+                context.read<HomeCubit>().clearSearch();
+                context
+                    .read<ProductsCubit>()
+                    .fetchFeaturedProducts(
+                      ownerId: "user13@gmail.com",
+                      isExterior: false,
+                    );
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 20),
+        // SearchInput(),
+        HomeSearchBar(
+          controller: _searchController,
+          onCategoryCleared: () {
+            setState(() {
+              _selectedCategory = null;
+              _selectedSubCategory = "All";
+              _selectedNestedSubCategory = "";
+            });
+            _scrollToTop();
+          },
+          onSearchStarted: (query) {
+            context.read<HomeCubit>().resetFilters();
+            setState(() {
+              // Find matching category in the current tab
+              final currentTabData =
+                  _productsByTabCategorySub[homeState.selectedIndex];
+              String? matchingCategory;
+
+              if (currentTabData != null) {
+                final queryLower = query.toLowerCase();
+                for (final categoryName in currentTabData.keys) {
+                  final categoryLower = categoryName.toLowerCase();
+                  if (categoryLower.contains(queryLower) ||
+                      queryLower.contains(categoryLower)) {
+                    matchingCategory = categoryName;
+                    break;
+                  }
+                }
+              }
+
+              if (matchingCategory != null) {
+                _selectedCategory = matchingCategory;
+                _selectedSubCategory = "All";
+                _selectedNestedSubCategory = "";
+
+                // Trigger product fetch for the matched category
+                context
+                    .read<ProductsCubit>()
+                    .fetchProductsByCategory(
+                      matchingCategory,
+                      isInterior: homeState.selectedIndex == 0,
+                      ownerId: "user13@gmail.com",
+                    );
+              } else {
+                _selectedCategory = null;
+                _selectedSubCategory = "All";
+                _selectedNestedSubCategory = "";
+
+                // Trigger search API if no category matched
+                context.read<ProductsCubit>().searchProducts(
+                  query,
+                );
+              }
+            });
+            _scrollToTop();
+          },
+        ),
+        const SizedBox(height: 16),
+        DefaultTabController(
+          length: 2,
+          initialIndex: homeState.selectedIndex,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (homeState.isExterior)
+                Container(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Color(0xFF5D5D5D),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  child: const Text(
+                    "Wall panelling",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF5D5D5D),
+                    ),
+                  ),
+                )
+              else
+                SizedBox(
+                  width: 150,
+                  height: 20,
+                  child: TabBar(
+                    isScrollable: true,
+                    padding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.only(
+                      right: 16,
+                    ),
+                    tabAlignment: TabAlignment.start,
+                    indicator: const UnderlineTabIndicator(
+                      borderSide: BorderSide(
+                        width: 1.5,
+                        color: Color(0xFF5D5D5D),
+                      ),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.label,
+                    dividerColor: Colors.transparent,
+                    labelColor: const Color(0xFF5D5D5D),
+                    unselectedLabelColor: const Color(
+                      0xFF5D5D5D,
+                    ).withOpacity(0.5),
+                    labelStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    tabs: const [
+                      Tab(text: "Interiors"),
+                      Tab(text: "Furnitures"),
+                    ],
+                    onTap: (index) {
+                      homeCubit.setSelectedIndex(index);
+                      setState(() {
+                        _selectedCategory = null;
+                        _selectedSubCategory = "All";
+                        _selectedNestedSubCategory = "";
+                      });
+                      _scrollToTop();
+                      _searchController.clear();
+                      context.read<HomeCubit>().clearSearch();
+                      context
+                          .read<ProductsCubit>()
+                          .fetchFeaturedProducts(
+                            ownerId: "user13@gmail.com",
+                            isExterior: false,
+                          );
+                    },
+                  ),
+                ),
+              Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 2,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: homeState.isTrendingShowing
+                          ? TColors.primary
+                          : Colors.transparent,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () {
+                          final wasTrending = homeState.isTrendingShowing;
+                          homeCubit.toggleTrending();
+
+                          // Use future state values because toggle happened above
+                          final isNowTrending = !wasTrending;
+
+                          if (isNowTrending) {
+                            context
+                                .read<ProductsCubit>()
+                                .fetchTrendingProducts(
+                                  ownerId: "user13@gmail.com",
+                                  applicationType: homeState.isExterior
+                                      ? "EXTERIOR"
+                                      : "INTERIOR",
+                                );
+                          } else {
+                            context
+                                .read<ProductsCubit>()
+                                .fetchFeaturedProducts(
+                                  ownerId: "user13@gmail.com",
+                                  isExterior: homeState.isExterior,
+                                );
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Image.asset(
+                            homeState.isTrendingShowing
+                                ? "assets/icons/app_icons/trendng2_white.png"
+                                : "assets/icons/app_icons/trendng2.png",
+                            width: 16,
+                            height: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 2,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: homeState.isLikedShowing
+                          ? TColors.primary
+                          : Colors.transparent,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () {
+                          final wasLiked = homeState.isLikedShowing;
+                          homeCubit.toggleLiked();
+
+                          // Use future state values
+                          final isNowLiked = !wasLiked;
+
+                          if (isNowLiked) {
+                            context
+                                .read<ProductsCubit>()
+                                .fetchFavoriteProducts(
+                                  ownerId: "user13@gmail.com",
+                                );
+                          } else {
+                            context
+                                .read<ProductsCubit>()
+                                .fetchFeaturedProducts(
+                                  ownerId: "user13@gmail.com",
+                                  isExterior: homeState.isExterior,
+                                );
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.favorite,
+                            size: 16,
+                            color: homeState.isLikedShowing
+                                ? Colors.white
+                                : const Color(0xFF898888),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  /// 🔲 Layout toggle button
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 2,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () {
+                          setState(() {
+                            _isGridView = !_isGridView;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            _isGridView ? Icons.grid_view : Icons.view_list,
+                            size: 16,
+                            color: const Color(0xFF898888),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (!homeState.isExterior) ...[
+          SizedBox(
+            height: 90,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: quickProducts.map((product) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: CircularIconItem(
+                      label: product.name,
+                      isSelected: _selectedCategory == product.name,
+                      useUnderline: false,
+                      selectedBorderColor: const Color(
+                        0xFFEEEEEE,
+                      ),
+                      onTap: () {
+                        // Tap again to deselect; tap new to select
+                        if (_selectedCategory == product.name) {
+                          setState(() {
+                            _selectedCategory = null;
+                            _selectedSubCategory = "All";
+                            _selectedNestedSubCategory = "";
+                          });
+                          _scrollToTop();
+                          // Clear search when category is deselected
+                          _searchController.clear();
+                          context.read<HomeCubit>().clearSearch();
+                          // Fetch featured products when category is deselected
+                          context
+                              .read<ProductsCubit>()
+                              .fetchFeaturedProducts(
+                                ownerId: "user13@gmail.com",
+                              );
+                        } else {
+                          setState(() {
+                            _selectedCategory = product.name;
+                            _selectedSubCategory = "All";
+                            _selectedNestedSubCategory = "";
+                          });
+                          _scrollToTop();
+                          // Clear search when category is selected
+                          _searchController.clear();
+                          context.read<HomeCubit>().clearSearch();
+                          context
+                              .read<ProductsCubit>()
+                              .fetchProductsByCategory(
+                                product.name,
+                                isInterior: homeState.selectedIndex == 0,
+                                ownerId: "user13@gmail.com",
+                              );
+                        }
+                      },
+                      child: ClipOval(
+                        child: Image.asset(
+                          product.image,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+
+    final Widget productsWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _isGridView
+            ? GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // 👈 4 images per row
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1, // square images
+                    ),
+                itemCount: productsState.isLoading
+                    ? 6
+                    : displayProducts.length,
+                itemBuilder: (context, index) {
+                  if (productsState.isLoading) {
+                    return Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: AspectRatio(
+                        aspectRatio: 1.0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(
+                              4,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  final product = displayProducts[index];
+
+                  return GestureDetector(
+                    onTap: () {
+                      _openProductForEditing(product);
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: ProductContainers(
+                        imagePath: product.image,
+                        isTrending: product.isTrending,
+                        isFavorite: product.isFavorite,
+                        isNetwork: product.isNetworkImage,
+                        id: product.id,
+                        onFavoriteToggle: () {
+                          context
+                              .read<ProductsCubit>()
+                              .toggleFavorite(
+                                itemId:
+                                    product.itemId ??
+                                    product.furnitureId ??
+                                    product.id,
+                                ownerId: "user13@gmail.com",
+                              );
+                        },
+                      ),
+                    ),
+                  );
+                },
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: productsState.isLoading
+                    ? 5
+                    : displayProducts.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  if (productsState.isLoading) {
+                    return Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(
+                              12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  final product = displayProducts[index];
+
+                  return GestureDetector(
+                    onTap: () {
+                      _openProductForEditing(product);
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: ProductContainers(
+                        imagePath: product.image,
+                        isTrending: product.isTrending,
+                        isFavorite: product.isFavorite,
+                        isNetwork: product.isNetworkImage,
+                        id: product.id,
+                        onFavoriteToggle: () {
+                          context
+                              .read<ProductsCubit>()
+                              .toggleFavorite(
+                                itemId:
+                                    product.itemId ??
+                                    product.furnitureId ??
+                                    product.id,
+                                ownerId: "user13@gmail.com",
+                              );
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+        if (productsState.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFEA202C),
+                strokeWidth: 2,
+              ),
+            ),
+          ),
+      ],
+    );
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: const HomeDrawer(),
@@ -554,603 +1117,63 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            RefreshIndicator(
-              onRefresh: () async {
-                // Clear search and categories on refresh
-                _searchController.clear();
-                setState(() {
-                  _selectedCategory = null;
-                  _selectedSubCategory = "All";
-                  _selectedNestedSubCategory = "";
-                });
-                context.read<HomeCubit>().clearSearch();
-                context.read<HomeCubit>().resetFilters();
-                return context.read<ProductsCubit>().fetchFeaturedProducts(
-                  ownerId: "user13@gmail.com",
-                  isExterior: homeState.isExterior,
-                );
-              },
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (ScrollNotification scrollInfo) {
-                  if (scrollInfo.metrics.pixels >=
-                      scrollInfo.metrics.maxScrollExtent - 200) {
-                    context.read<ProductsCubit>().loadMoreProducts();
-                  }
-                  return false;
-                },
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Text(
-                            "Lets design Furniture with Century Decor",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w400,
-                              fontSize: 12,
-                              color: Color(0xFF5D5D5D),
-                            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: headerWidget,
+                ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      // Clear search and categories on refresh
+                      _searchController.clear();
+                      setState(() {
+                        _selectedCategory = null;
+                        _selectedSubCategory = "All";
+                        _selectedNestedSubCategory = "";
+                      });
+                      context.read<HomeCubit>().clearSearch();
+                      context.read<HomeCubit>().resetFilters();
+                      return context.read<ProductsCubit>().fetchFeaturedProducts(
+                        ownerId: "user13@gmail.com",
+                        isExterior: homeState.isExterior,
+                      );
+                    },
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification scrollInfo) {
+                        if (scrollInfo.metrics.pixels >=
+                            scrollInfo.metrics.maxScrollExtent - 200) {
+                          context.read<ProductsCubit>().loadMoreProducts();
+                        }
+                        return false;
+                      },
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 0,
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: ExteriorInteriorSwitchSlider(
-                            value: homeState.isExterior,
-                            onChanged: (val) {
-                              homeCubit.setExterior(val);
-                              if (val) {
-                                setState(() {
-                                  _selectedCategory = null;
-                                  _selectedSubCategory = "All";
-                                  _selectedNestedSubCategory = "";
-                                });
-                                _searchController.clear();
-                                context.read<HomeCubit>().clearSearch();
-                                context
-                                    .read<ProductsCubit>()
-                                    .fetchFeaturedProducts(
-                                      ownerId: "user13@gmail.com",
-                                      isExterior: true,
-                                    );
-                              } else {
-                                homeCubit.setSelectedIndex(0);
-                                setState(() {
-                                  _selectedCategory = null;
-                                  _selectedSubCategory = "All";
-                                  _selectedNestedSubCategory = "";
-                                });
-                                _searchController.clear();
-                                context.read<HomeCubit>().clearSearch();
-                                context
-                                    .read<ProductsCubit>()
-                                    .fetchFeaturedProducts(
-                                      ownerId: "user13@gmail.com",
-                                      isExterior: false,
-                                    );
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // SearchInput(),
-                        HomeSearchBar(
-                          controller: _searchController,
-                          onCategoryCleared: () {
-                            setState(() {
-                              _selectedCategory = null;
-                              _selectedSubCategory = "All";
-                              _selectedNestedSubCategory = "";
-                            });
-                          },
-                          onSearchStarted: (query) {
-                            context.read<HomeCubit>().resetFilters();
-                            setState(() {
-                              // Find matching category in the current tab
-                              final currentTabData =
-                                  _productsByTabCategorySub[homeState
-                                      .selectedIndex];
-                              String? matchingCategory;
-
-                              if (currentTabData != null) {
-                                final queryLower = query.toLowerCase();
-                                for (final categoryName
-                                    in currentTabData.keys) {
-                                  final categoryLower = categoryName
-                                      .toLowerCase();
-                                  if (categoryLower.contains(queryLower) ||
-                                      queryLower.contains(categoryLower)) {
-                                    matchingCategory = categoryName;
-                                    break;
-                                  }
-                                }
-                              }
-
-                              if (matchingCategory != null) {
-                                _selectedCategory = matchingCategory;
-                                _selectedSubCategory = "All";
-                                _selectedNestedSubCategory = "";
-
-                                // Trigger product fetch for the matched category
-                                context
-                                    .read<ProductsCubit>()
-                                    .fetchProductsByCategory(
-                                      matchingCategory,
-                                      isInterior: homeState.selectedIndex == 0,
-                                      ownerId: "user13@gmail.com",
-                                    );
-                              } else {
-                                _selectedCategory = null;
-                                _selectedSubCategory = "All";
-                                _selectedNestedSubCategory = "";
-
-                                // Trigger search API if no category matched
-                                context.read<ProductsCubit>().searchProducts(
-                                  query,
-                                );
-                              }
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        DefaultTabController(
-                          length: 2,
-                          initialIndex: homeState.selectedIndex,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (homeState.isExterior)
-                                Container(
-                                  padding: const EdgeInsets.only(bottom: 2),
-                                  decoration: const BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Color(0xFF5D5D5D),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    "Wall panelling",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF5D5D5D),
-                                    ),
-                                  ),
-                                )
-                              else
-                                SizedBox(
-                                  width: 150,
-                                  height: 20,
-                                  child: TabBar(
-                                    isScrollable: true,
-                                    padding: EdgeInsets.zero,
-                                    labelPadding: const EdgeInsets.only(
-                                      right: 16,
-                                    ),
-                                    tabAlignment: TabAlignment.start,
-                                    indicator: const UnderlineTabIndicator(
-                                      borderSide: BorderSide(
-                                        width: 1.5,
-                                        color: Color(0xFF5D5D5D),
-                                      ),
-                                    ),
-                                    indicatorSize: TabBarIndicatorSize.label,
-                                    dividerColor: Colors.transparent,
-                                    labelColor: const Color(0xFF5D5D5D),
-                                    unselectedLabelColor: const Color(
-                                      0xFF5D5D5D,
-                                    ).withOpacity(0.5),
-                                    labelStyle: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    tabs: const [
-                                      Tab(text: "Interiors"),
-                                      Tab(text: "Furnitures"),
-                                    ],
-                                    onTap: (index) {
-                                      homeCubit.setSelectedIndex(index);
-                                      setState(() {
-                                        _selectedCategory = null;
-                                        _selectedSubCategory = "All";
-                                        _selectedNestedSubCategory = "";
-                                      });
-                                      _searchController.clear();
-                                      context.read<HomeCubit>().clearSearch();
-                                      context
-                                          .read<ProductsCubit>()
-                                          .fetchFeaturedProducts(
-                                            ownerId: "user13@gmail.com",
-                                            isExterior: false,
-                                          );
-                                    },
-                                  ),
-                                ),
-                              Row(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.25),
-                                          blurRadius: 2,
-                                          spreadRadius: 0,
-                                          offset: const Offset(0, 0),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Material(
-                                      color: homeState.isTrendingShowing
-                                          ? TColors.primary
-                                          : Colors.transparent,
-                                      shape: const CircleBorder(),
-                                      child: InkWell(
-                                        customBorder: const CircleBorder(),
-                                        onTap: () {
-                                          final wasTrending =
-                                              homeState.isTrendingShowing;
-                                          homeCubit.toggleTrending();
-
-                                          // Use future state values because toggle happened above
-                                          final isNowTrending = !wasTrending;
-
-                                          if (isNowTrending) {
-                                            context
-                                                .read<ProductsCubit>()
-                                                .fetchTrendingProducts(
-                                                  ownerId: "user13@gmail.com",
-                                                  applicationType:
-                                                      homeState.isExterior
-                                                      ? "EXTERIOR"
-                                                      : "INTERIOR",
-                                                );
-                                          } else {
-                                            context
-                                                .read<ProductsCubit>()
-                                                .fetchFeaturedProducts(
-                                                  ownerId: "user13@gmail.com",
-                                                  isExterior:
-                                                      homeState.isExterior,
-                                                );
-                                          }
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: Image.asset(
-                                            homeState.isTrendingShowing
-                                                ? "assets/icons/app_icons/trendng2_white.png"
-                                                : "assets/icons/app_icons/trendng2.png",
-                                            width: 16,
-                                            height: 16,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.25),
-                                          blurRadius: 2,
-                                          spreadRadius: 0,
-                                          offset: const Offset(0, 0),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Material(
-                                      color: homeState.isLikedShowing
-                                          ? TColors.primary
-                                          : Colors.transparent,
-                                      shape: const CircleBorder(),
-                                      child: InkWell(
-                                        customBorder: const CircleBorder(),
-                                        onTap: () {
-                                          final wasLiked =
-                                              homeState.isLikedShowing;
-                                          homeCubit.toggleLiked();
-
-                                          // Use future state values
-                                          final isNowLiked = !wasLiked;
-
-                                          if (isNowLiked) {
-                                            context
-                                                .read<ProductsCubit>()
-                                                .fetchFavoriteProducts(
-                                                  ownerId: "user13@gmail.com",
-                                                );
-                                          } else {
-                                            context
-                                                .read<ProductsCubit>()
-                                                .fetchFeaturedProducts(
-                                                  ownerId: "user13@gmail.com",
-                                                  isExterior:
-                                                      homeState.isExterior,
-                                                );
-                                          }
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: Icon(
-                                            Icons.favorite,
-                                            size: 16,
-                                            color: homeState.isLikedShowing
-                                                ? Colors.white
-                                                : const Color(0xFF898888),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-
-                                  /// 🔲 Layout toggle button
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.25),
-                                          blurRadius: 2,
-                                          spreadRadius: 0,
-                                          offset: const Offset(0, 0),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      shape: const CircleBorder(),
-                                      child: InkWell(
-                                        customBorder: const CircleBorder(),
-                                        onTap: () {
-                                          setState(() {
-                                            _isGridView = !_isGridView;
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: Icon(
-                                            _isGridView
-                                                ? Icons.grid_view
-                                                : Icons.view_list,
-                                            size: 16,
-                                            color: Color(0xFF898888),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              if (!homeState.isExterior) ...[
+                                _buildSubCategoryMenu(),
+                                const SizedBox(height: 10),
+                              ],
+                              productsWidget,
+                              SizedBox(height: _bottomCtaReservedSpace(context)),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        if (!homeState.isExterior) ...[
-                          SizedBox(
-                            height: 90,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: quickProducts.map((product) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 12),
-                                    child: CircularIconItem(
-                                      label: product.name,
-                                      isSelected:
-                                          _selectedCategory == product.name,
-                                      useUnderline: false,
-                                      selectedBorderColor: const Color(
-                                        0xFFEEEEEE,
-                                      ),
-                                      onTap: () {
-                                        // Tap again to deselect; tap new to select
-                                        if (_selectedCategory == product.name) {
-                                          setState(() {
-                                            _selectedCategory = null;
-                                            _selectedSubCategory = "All";
-                                            _selectedNestedSubCategory = "";
-                                          });
-                                          // Clear search when category is deselected
-                                          _searchController.clear();
-                                          context
-                                              .read<HomeCubit>()
-                                              .clearSearch();
-                                          // Fetch featured products when category is deselected
-                                          context
-                                              .read<ProductsCubit>()
-                                              .fetchFeaturedProducts(
-                                                ownerId: "user13@gmail.com",
-                                              );
-                                        } else {
-                                          setState(() {
-                                            _selectedCategory = product.name;
-                                            _selectedSubCategory = "All";
-                                            _selectedNestedSubCategory = "";
-                                          });
-                                          // Clear search when category is selected
-                                          _searchController.clear();
-                                          context
-                                              .read<HomeCubit>()
-                                              .clearSearch();
-                                          context
-                                              .read<ProductsCubit>()
-                                              .fetchProductsByCategory(
-                                                product.name,
-                                                isInterior:
-                                                    homeState.selectedIndex ==
-                                                    0,
-                                                ownerId: "user13@gmail.com",
-                                              );
-                                        }
-                                      },
-                                      child: ClipOval(
-                                        child: Image.asset(
-                                          product.image,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                          // const SizedBox(height: 2),
-                          const SizedBox(height: 10),
-                          _buildSubCategoryMenu(),
-                          const SizedBox(height: 10),
-                        ],
-                        _isGridView
-                            ? GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2, // 👈 4 images per row
-                                      crossAxisSpacing: 12,
-                                      mainAxisSpacing: 12,
-                                      childAspectRatio: 1, // square images
-                                    ),
-                                itemCount: productsState.isLoading
-                                    ? 6
-                                    : displayProducts.length,
-                                itemBuilder: (context, index) {
-                                  if (productsState.isLoading) {
-                                    return Shimmer.fromColors(
-                                      baseColor: Colors.grey[300]!,
-                                      highlightColor: Colors.grey[100]!,
-                                      child: AspectRatio(
-                                        aspectRatio: 1.0,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              4,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  final product = displayProducts[index];
-
-                                  return GestureDetector(
-                                    onTap: () {
-                                      _openProductForEditing(product);
-                                    },
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: ProductContainers(
-                                        imagePath: product.image,
-                                        isTrending: product.isTrending,
-                                        isFavorite: product.isFavorite,
-                                        isNetwork: product.isNetworkImage,
-                                        id: product.id,
-                                        onFavoriteToggle: () {
-                                          context
-                                              .read<ProductsCubit>()
-                                              .toggleFavorite(
-                                                itemId:
-                                                    product.itemId ??
-                                                    product.furnitureId ??
-                                                    product.id,
-                                                ownerId: "user13@gmail.com",
-                                              );
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: productsState.isLoading
-                                    ? 5
-                                    : displayProducts.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 16),
-                                itemBuilder: (context, index) {
-                                  if (productsState.isLoading) {
-                                    return Shimmer.fromColors(
-                                      baseColor: Colors.grey[300]!,
-                                      highlightColor: Colors.grey[100]!,
-                                      child: AspectRatio(
-                                        aspectRatio: 1,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  final product = displayProducts[index];
-
-                                  return GestureDetector(
-                                    onTap: () {
-                                      _openProductForEditing(product);
-                                    },
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: ProductContainers(
-                                        imagePath: product.image,
-                                        isTrending: product.isTrending,
-                                        isFavorite: product.isFavorite,
-                                        isNetwork: product.isNetworkImage,
-                                        id: product.id,
-                                        onFavoriteToggle: () {
-                                          context
-                                              .read<ProductsCubit>()
-                                              .toggleFavorite(
-                                                itemId:
-                                                    product.itemId ??
-                                                    product.furnitureId ??
-                                                    product.id,
-                                                ownerId: "user13@gmail.com",
-                                              );
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                        if (productsState.isLoadingMore)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: Color(0xFFEA202C),
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          ),
-                        SizedBox(height: _bottomCtaReservedSpace(context)),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
             Positioned(
               bottom: TSizes.defaultSpace,
@@ -1272,6 +1295,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             _selectedSubCategory = "All";
                             _selectedNestedSubCategory = "";
                           });
+                          _scrollToTop();
                           context.read<ProductsCubit>().fetchProductsByCategory(
                             selectedCategory,
                             isInterior: selectedIndex == 0,
@@ -1282,6 +1306,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             _selectedSubCategory = subCat;
                             _selectedNestedSubCategory = "";
                           });
+                          _scrollToTop();
                           context
                               .read<ProductsCubit>()
                               .fetchProductsBySubCategory(
@@ -1347,6 +1372,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           setState(() {
                             _selectedNestedSubCategory = "";
                           });
+                          _scrollToTop();
                           context
                               .read<ProductsCubit>()
                               .fetchProductsBySubCategory(
@@ -1359,6 +1385,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           setState(() {
                             _selectedNestedSubCategory = nSubCat;
                           });
+                          _scrollToTop();
                           context
                               .read<ProductsCubit>()
                               .fetchProductsByNestedSubCategory(
