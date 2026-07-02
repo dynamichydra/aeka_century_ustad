@@ -4,6 +4,7 @@ import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image/image.dart' as img;
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
@@ -57,6 +58,75 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     super.dispose();
   }
 
+  Future<File> _cropToOverlay(File imageFile, Size screenSize) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final filePath = imageFile.path;
+
+      final croppedBytes = await compute((Map<String, dynamic> params) {
+        final Uint8List imgBytes = params['bytes'];
+        final double screenW = params['screenW'];
+        final double screenH = params['screenH'];
+        final String path = params['path'];
+
+        final image = img.decodeImage(imgBytes);
+        if (image == null) return imgBytes;
+
+        final orientedImage = img.bakeOrientation(image);
+
+        final double imgW = orientedImage.width.toDouble();
+        final double imgH = orientedImage.height.toDouble();
+
+        // Calculate the BoxFit.cover scaling factor
+        final double scale = (imgW / screenW) > (imgH / screenH)
+            ? imgH / screenH
+            : imgW / screenW;
+
+        final double displayedW = imgW / scale;
+        final double displayedH = imgH / scale;
+
+        final double offsetX = (screenW - displayedW) / 2;
+        final double offsetY = (screenH - displayedH) / 2;
+
+        // Rectangle bounds from _OverlayPainter
+        final double rectLeft = 20.0;
+        final double rectTop = screenH * 0.22;
+        final double rectWidth = screenW - 40.0;
+        final double rectHeight = screenH * 0.45;
+
+        // Map screen rectangle coordinates to image pixel space
+        final int cropX = (((rectLeft - offsetX) * scale)).round().clamp(0, orientedImage.width - 1);
+        final int cropY = (((rectTop - offsetY) * scale)).round().clamp(0, orientedImage.height - 1);
+        final int cropW = ((rectWidth * scale)).round().clamp(1, orientedImage.width - cropX);
+        final int cropH = ((rectHeight * scale)).round().clamp(1, orientedImage.height - cropY);
+
+        final cropped = img.copyCrop(
+          orientedImage,
+          x: cropX,
+          y: cropY,
+          width: cropW,
+          height: cropH,
+        );
+
+        return Uint8List.fromList(
+          img.encodeNamedImage(path, cropped) ?? img.encodeJpg(cropped),
+        );
+      }, {
+        'bytes': bytes,
+        'screenW': screenSize.width,
+        'screenH': screenSize.height,
+        'path': filePath,
+      });
+
+      final croppedFile = File(filePath);
+      await croppedFile.writeAsBytes(croppedBytes);
+      return croppedFile;
+    } catch (e) {
+      debugPrint('Error cropping image to overlay: $e');
+      return imageFile; // Fallback to original image on error
+    }
+  }
+
   Future<void> _capture() async {
     if (!_controller!.value.isInitialized) return;
 
@@ -80,8 +150,15 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     );
 
     try {
+      final screenSize = MediaQuery.of(context).size;
+      final croppedFile = await _cropToOverlay(imageFile, screenSize);
+
+      if (!mounted) return;
+      setState(() {
+        _capturedFile = croppedFile;
+      });
       final productsCubit = context.read<ProductsCubit>();
-      final newProduct = await productsCubit.uploadProductImageNew(imageFile);
+      final newProduct = await productsCubit.uploadProductImageNew(croppedFile);
 
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
@@ -97,14 +174,14 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         return;
       }
 
-      final imageBytes = await compute((File f) => f.readAsBytesSync(), imageFile);
+      final imageBytes = await compute((File f) => f.readAsBytesSync(), croppedFile);
       final imageId = newProduct.id;
 
       await SelectedImagesRepository.saveImage(
         SelectedImageData(
           id: imageId,
           imageData: imageBytes,
-          imagePath: imageFile.path,
+          imagePath: croppedFile.path,
           category: 'Uploaded Image',
           subcategory: 'User Upload',
           selectedAt: DateTime.now(),
@@ -114,13 +191,13 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       if (!mounted) return;
       if (widget.fromColorPicker) {
         context.pushReplacement(AppRoutes.imageColorPicker, extra: {
-          'imageFile': imageFile,
+          'imageFile': croppedFile,
           'image_id': imageId,
           'originalImage': widget.originalImage,
         });
       } else {
         context.pushReplacement(AppRoutes.imagePreview, extra: {
-          'imageFile': imageFile,
+          'imageFile': croppedFile,
           'image_id': imageId,
           'image_category': "Uploaded Image",
           'sub_category': "User Upload",
@@ -230,7 +307,23 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
             child: RepaintBoundary(
               child: _isImageTaken && _capturedFile != null
                   ? Image.file(_capturedFile!, fit: BoxFit.cover)
-                  : CameraPreview(_controller!),
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final size = constraints.biggest;
+                        double scale = size.aspectRatio * _controller!.value.aspectRatio;
+                        if (scale < 1.0) {
+                          scale = 1.0 / scale;
+                        }
+                        return ClipRect(
+                          child: Transform.scale(
+                            scale: scale,
+                            child: Center(
+                              child: CameraPreview(_controller!),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ),
 

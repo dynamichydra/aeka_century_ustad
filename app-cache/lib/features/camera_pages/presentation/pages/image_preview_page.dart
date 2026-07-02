@@ -80,6 +80,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   }
 
   Future<void> _initializePreview() async {
+    try {
+      await FileImage(widget.imageFile).evict();
+    } catch (_) {}
     await _hydrateCurrentSelectionFromDb();
     await _loadExploreImages();
     _refreshSimilarProducts();

@@ -1,7 +1,8 @@
 /* -- LIST OF Constants used in APIs -- */
 
 class TApiConstants {
-  static const String baseUrl = 'https://century-ustad-api-507497848998.asia-south1.run.app';
+  static const String baseUrl =
+      'https://century-ustad-api-507497848998.asia-south1.run.app';
 
   // Furniture endpoints
   static const String featuredBrowse = '/browse/featured';
@@ -15,11 +16,15 @@ class TApiConstants {
   static const String searchSimilar = '/search/similar';
   static const String searchText = '/search/text';
   static const String trendingProducts = '/product/trending';
-  static const String tryOn = 'https://ustad-api-507497848998.asia-south1.run.app/tryon';
-  static const String tryOnV2 = 'https://ustad-api-507497848998.asia-south1.run.app/tryon-v2';
-  static const String tryOnV3 = 'https://ustad-api-507497848998.asia-south1.run.app/tryon-v3';
+  static const String tryOn =
+      'https://ustad-api-507497848998.asia-south1.run.app/tryon';
+  static const String tryOnV2 =
+      'https://ustad-api-507497848998.asia-south1.run.app/tryon-v2';
+  static const String tryOnV3 =
+      'https://ustad-api-507497848998.asia-south1.run.app/3';
 
-  static const String tryOnV4 = 'https://century-ustad-api-507497848998.asia-south1.run.app/tryon/generate';
+  static const String tryOnV4 =
+      'https://century-ustad-api-507497848998.asia-south1.run.app/tryon/generate';
 
   static const String favorites = '/me/favourites';
 

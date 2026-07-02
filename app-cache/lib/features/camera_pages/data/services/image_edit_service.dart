@@ -123,6 +123,8 @@ class ImageEditService {
     required int y1,
     required int x2,
     required int y2,
+    double? objW,
+    double? objH,
   }) async {
     final bytes = await _apiService.tryOnFurnitureV4(
       roomImage: roomImage,
@@ -131,6 +133,8 @@ class ImageEditService {
       top: y1,
       right: x2,
       bottom: y2,
+      objW: objW,
+      objH: objH,
     );
 
     // Save bytes to a temporary file

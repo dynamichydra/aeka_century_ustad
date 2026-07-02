@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:century_ai/core/constants/api_constants.dart';
 import 'package:flutter/widgets.dart';
+import '../../core/services/image_preprocessor.dart';
 
 class ApiService {
   late final Dio _dio;
@@ -219,9 +220,10 @@ class ApiService {
   }
 
   Future<dynamic> uploadFurniture(File file) async {
-    String fileName = file.path.split('/').last;
+    final processedFile = await ImagePreprocessor.preprocessImage(file);
+    String fileName = processedFile.path.split('/').last;
     FormData formData = FormData.fromMap({
-      "file": await MultipartFile.fromFile(file.path, filename: fileName),
+      "file": await MultipartFile.fromFile(processedFile.path, filename: fileName),
     });
 
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.upload} | POST multipart/form-data (File: $fileName)');
@@ -265,9 +267,10 @@ class ApiService {
     String? subCategory,
     String? applicationType,
   }) async {
-    String fileName = file.path.split('/').last;
+    final processedFile = await ImagePreprocessor.preprocessImage(file);
+    String fileName = processedFile.path.split('/').last;
     final map = <String, dynamic>{
-      "file": await MultipartFile.fromFile(file.path, filename: fileName),
+      "file": await MultipartFile.fromFile(processedFile.path, filename: fileName),
     };
     if (product != null) map['product'] = product;
     if (furnitureCategory != null) map['furnitureCategory'] = furnitureCategory;
@@ -301,16 +304,19 @@ class ApiService {
       throw Exception('Pattern image file does not exist at path: ${patternImage.path}');
     }
 
-    String roomFileName = roomImage.path.split('/').last;
-    String patternFileName = patternImage.path.split('/').last;
+    final processedRoomImage = await ImagePreprocessor.preprocessImage(roomImage);
+    final processedPatternImage = await ImagePreprocessor.preprocessImage(patternImage);
+
+    String roomFileName = processedRoomImage.path.split('/').last;
+    String patternFileName = processedPatternImage.path.split('/').last;
 
     FormData formData = FormData.fromMap({
       "room_image": await MultipartFile.fromFile(
-        roomImage.path,
+        processedRoomImage.path,
         filename: roomFileName,
       ),
       "pattern_image": await MultipartFile.fromFile(
-        patternImage.path,
+        processedPatternImage.path,
         filename: patternFileName,
       ),
       "left": left.toString(),
@@ -351,16 +357,19 @@ class ApiService {
       throw Exception('Pattern image file does not exist at path: ${patternImage.path}');
     }
 
-    String roomFileName = roomImage.path.split('/').last;
-    String patternFileName = patternImage.path.split('/').last;
+    final processedRoomImage = await ImagePreprocessor.preprocessImage(roomImage);
+    final processedPatternImage = await ImagePreprocessor.preprocessImage(patternImage);
+
+    String roomFileName = processedRoomImage.path.split('/').last;
+    String patternFileName = processedPatternImage.path.split('/').last;
 
     FormData formData = FormData.fromMap({
       "room_image": await MultipartFile.fromFile(
-        roomImage.path,
+        processedRoomImage.path,
         filename: roomFileName,
       ),
       "pattern_image": await MultipartFile.fromFile(
-        patternImage.path,
+        processedPatternImage.path,
         filename: patternFileName,
       ),
       "x1": left.toString(),
@@ -393,6 +402,8 @@ class ApiService {
     required int top,
     required int right,
     required int bottom,
+    double? objW,
+    double? objH,
   }) async {
     if (!await roomImage.exists()) {
       throw Exception('Room image file does not exist at path: ${roomImage.path}');
@@ -401,23 +412,35 @@ class ApiService {
       throw Exception('Pattern image file does not exist at path: ${patternImage.path}');
     }
 
-    String roomFileName = roomImage.path.split('/').last;
-    String patternFileName = patternImage.path.split('/').last;
+    final processedRoomImage = await ImagePreprocessor.preprocessImage(roomImage);
+    final processedPatternImage = await ImagePreprocessor.preprocessImage(patternImage);
 
-    FormData formData = FormData.fromMap({
+    String roomFileName = processedRoomImage.path.split('/').last;
+    String patternFileName = processedPatternImage.path.split('/').last;
+
+    final Map<String, dynamic> dataMap = {
       "image": await MultipartFile.fromFile(
-        roomImage.path,
+        processedRoomImage.path,
         filename: roomFileName,
       ),
       "pattern_image": await MultipartFile.fromFile(
-        patternImage.path,
+        processedPatternImage.path,
         filename: patternFileName,
       ),
       "x1": left.toInt().toString(),
       "y1": top.toInt().toString(),
       "x2": right.toInt().toString(),
       "y2": bottom.toInt().toString(),
-    });
+    };
+
+    if (objW != null) {
+      dataMap["obj_w"] = objW.toString();
+    }
+    if (objH != null) {
+      dataMap["obj_h"] = objH.toString();
+    }
+
+    FormData formData = FormData.fromMap(dataMap);
 
     debugPrint('====================================================');
     debugPrint('🚀 [API CALL] POST ${TApiConstants.tryOnV4}');
@@ -427,9 +450,11 @@ class ApiService {
     debugPrint('  y1: ${top.toInt()}');
     debugPrint('  x2: ${right.toInt()}');
     debugPrint('  y2: ${bottom.toInt()}');
+    if (objW != null) debugPrint('  obj_w: $objW');
+    if (objH != null) debugPrint('  obj_h: $objH');
     debugPrint('Files:');
-    debugPrint('  room_image: ${roomImage.path}');
-    debugPrint('  pattern_image: ${patternImage.path}');
+    debugPrint('  room_image: ${processedRoomImage.path}');
+    debugPrint('  pattern_image: ${processedPatternImage.path}');
     debugPrint('====================================================');
 
     final response = await _dio.post(

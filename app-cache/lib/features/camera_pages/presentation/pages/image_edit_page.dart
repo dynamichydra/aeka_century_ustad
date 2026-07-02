@@ -134,9 +134,13 @@ class _ImageEditPageState extends State<ImageEditPage>
 
   Future<void> _getImageDimensions() async {
     try {
+      // Evict from cache to get fresh dimensions and pixels from disk
+      await FileImage(widget.imageFile).evict();
+      await FileImage(File(_baseImage)).evict();
+
       final Completer<ui.Image> completer = Completer();
       final ImageStream stream = FileImage(
-        widget.imageFile,
+        File(_baseImage),
       ).resolve(ImageConfiguration.empty);
       stream.addListener(
         ImageStreamListener((ImageInfo info, bool _) {
@@ -1983,24 +1987,22 @@ class _ImageEditPageState extends State<ImageEditPage>
   SelectionMode _hitTestHandles(Offset localPosition) {
     if (_selection == null) return SelectionMode.none;
 
-    // Dynamically reduce touch radius if selection box is small to prevent overlapping handles
-    double touchRadius = 40.0;
-    final double boxMinDim = math.min(_selection!.width, _selection!.height);
-    if (boxMinDim < 120.0) {
-      touchRadius = math.max(12.0, boxMinDim / 3.0);
-    }
-
     final double left = _selection!.left;
     final double top = _selection!.top;
     final double right = _selection!.left + _selection!.width;
     final double bottom = _selection!.top + _selection!.height;
+    final double width = _selection!.width;
+    final double height = _selection!.height;
 
     final Offset topLeft = Offset(left, top);
     final Offset topRight = Offset(right, top);
     final Offset bottomLeft = Offset(left, bottom);
     final Offset bottomRight = Offset(right, bottom);
 
-    // 1. Check corners first
+    // Standard touch radius for handles - reduced slightly for better precision
+    const double touchRadius = 30.0;
+
+    // 1. Check corners first (high priority)
     if ((localPosition - topLeft).distance <= touchRadius) {
       return SelectionMode.resizeTopLeft;
     }
@@ -2026,7 +2028,7 @@ class _ImageEditPageState extends State<ImageEditPage>
       return (p - Offset(clampedX, targetY)).distance;
     }
 
-    // 2. Check edges
+    // 2. Check edges (next priority)
     if (distToVert(localPosition, left, top, bottom) <= touchRadius) {
       return SelectionMode.resizeLeft;
     }
@@ -2038,6 +2040,31 @@ class _ImageEditPageState extends State<ImageEditPage>
     }
     if (distToHoriz(localPosition, bottom, left, right) <= touchRadius) {
       return SelectionMode.resizeBottom;
+    }
+
+    // 3. Check middle area for moving/dragging
+    final bool isInside = localPosition.dx >= left &&
+        localPosition.dx <= right &&
+        localPosition.dy >= top &&
+        localPosition.dy <= bottom;
+
+    if (isInside) {
+      // For large boxes, moving works anywhere that is not near the edges.
+      // For small boxes, we define a small central hub of 32x32 pixels to ensure the user can still grab it.
+      final double centerX = left + width / 2;
+      final double centerY = top + height / 2;
+      
+      final bool isNearCenter = (localPosition.dx - centerX).abs() <= 16.0 &&
+                                (localPosition.dy - centerY).abs() <= 16.0;
+                                
+      final bool isFarFromEdges = (localPosition.dx - left) > touchRadius &&
+                                  (right - localPosition.dx) > touchRadius &&
+                                  (localPosition.dy - top) > touchRadius &&
+                                  (bottom - localPosition.dy) > touchRadius;
+                                  
+      if (isFarFromEdges || isNearCenter) {
+        return SelectionMode.moving;
+      }
     }
 
     return SelectionMode.none;
@@ -2161,11 +2188,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                 setState(() {
                   _mode = detectedMode;
                 });
-              } else if (_selection != null) {
-                setState(() {
-                  _mode = SelectionMode.moving;
-                });
-              } else {
+              } else if (_selection == null) {
                 setState(() {
                   _dragStart = Offset(
                     snap(localPos.dx, imgL, imgR),
@@ -2180,6 +2203,10 @@ class _ImageEditPageState extends State<ImageEditPage>
                   _mode = SelectionMode.creating;
                   _editingWidth = false;
                   _editingHeight = false;
+                });
+              } else {
+                setState(() {
+                  _mode = SelectionMode.none;
                 });
               }
             },
@@ -2437,23 +2464,39 @@ class _ImageEditPageState extends State<ImageEditPage>
                 }
               }
 
+              final SelectionMode finishedMode = _mode;
               setState(() {
                 _mode = SelectionMode.none;
               });
 
-              if (_selection != null) {
+              if (_selection != null && finishedMode != SelectionMode.none) {
                 final double calculatedW = (_selection!.width / 10.0)
                     .roundToDouble();
                 final double calculatedH = (_selection!.height / 10.0)
                     .roundToDouble();
-                final double calculatedArea =
-                    (calculatedW * calculatedH) / 144.0;
+
+                double newW = _customWidthInches;
+                double newH = _customHeightInches;
+                if (finishedMode == SelectionMode.resizeLeft ||
+                    finishedMode == SelectionMode.resizeRight) {
+                  newW = calculatedW;
+                } else if (finishedMode == SelectionMode.resizeTop ||
+                    finishedMode == SelectionMode.resizeBottom) {
+                  newH = calculatedH;
+                } else {
+                  // Corner resize, moving, or creating updates both
+                  newW = calculatedW;
+                  newH = calculatedH;
+                }
+
+                final double calculatedArea = (newW * newH) / 144.0;
                 final double systemVal = double.parse(
                   calculatedArea.toStringAsFixed(1),
                 );
+
                 setState(() {
-                  _customWidthInches = calculatedW;
-                  _customHeightInches = calculatedH;
+                  _customWidthInches = newW;
+                  _customHeightInches = newH;
                   _systemArea = systemVal;
                   _areaController.text = systemVal.toString();
                   _editingWidth = false;
@@ -2493,6 +2536,8 @@ class _ImageEditPageState extends State<ImageEditPage>
                   "top": originalTop,
                   "right": originalRight,
                   "bottom": originalBottom,
+                  "obj_w": _customWidthInches,
+                  "obj_h": _customHeightInches,
                 };
 
                 debugPrint(
@@ -2656,6 +2701,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                   Builder(
                     builder: (context) {
                       final Rect imageRect = _getImageRect(context);
+                      final Size viewSize = _getViewSize(context);
 
                       // Calculate available space on each side
                       final double spaceBelow =
@@ -2669,16 +2715,26 @@ class _ImageEditPageState extends State<ImageEditPage>
                           _selection!.left - imageRect.left;
 
                       // Decide which side to display the horizontal indicator (arrow/label)
-                      // By default, we prefer the bottom (showHorizontalArrowAtTop = false)
-                      // If space below is tight (< 50) and there is more space above, we flip to top
-                      final bool showHorizontalArrowAtTop =
-                          spaceBelow < 50.0 && spaceAbove > spaceBelow;
+                      // Height of horizontal label is ~40px. Let's flip to bottom if top space is < 45px, or flip to top if bottom space is < 45px.
+                      bool showHorizontalArrowAtTop = false;
+                      if (_selection!.top - imageRect.top < 45.0) {
+                        showHorizontalArrowAtTop = false;
+                      } else if (imageRect.bottom - (_selection!.top + _selection!.height) < 45.0) {
+                        showHorizontalArrowAtTop = true;
+                      } else {
+                        showHorizontalArrowAtTop = spaceBelow < 50.0 && spaceAbove > spaceBelow;
+                      }
 
                       // Decide which side to display the vertical indicator (arrow/label)
-                      // By default, we prefer the right (showVerticalArrowAtLeft = false)
-                      // If space to the right is tight (< 80) and there is more space to the left, we flip to left
-                      final bool showVerticalArrowAtLeft =
-                          spaceRight < 120.0 && spaceLeft > spaceRight;
+                      // Width of vertical inline editor is ~120px. We show on the right if left space is < 125px, or show on the left if right space is < 125px.
+                      bool showVerticalArrowAtLeft = false;
+                      if (_selection!.left - imageRect.left < 125.0) {
+                        showVerticalArrowAtLeft = false;
+                      } else if (imageRect.right - (_selection!.left + _selection!.width) < 125.0) {
+                        showVerticalArrowAtLeft = true;
+                      } else {
+                        showVerticalArrowAtLeft = spaceRight < 120.0 && spaceLeft > spaceRight;
+                      }
 
                       final double horizontalArrowTop = showHorizontalArrowAtTop
                           ? _selection!.top - 18
@@ -2693,25 +2749,29 @@ class _ImageEditPageState extends State<ImageEditPage>
                           : _selection!.left + _selection!.width + 8;
 
                       double verticalLabelLeft = showVerticalArrowAtLeft
-                          ? _selection!.left - 70
+                          ? _selection!.left - (_editingHeight ? 128.0 : 80.0)
                           : _selection!.left + _selection!.width + 22;
 
                       // Clamp coordinates to prevent clipping off screen/image edges
+                      final double screenW = viewSize.width;
                       verticalArrowLeft = verticalArrowLeft.clamp(
                         imageRect.left + 2,
                         imageRect.right - 12,
                       );
                       verticalLabelLeft = verticalLabelLeft.clamp(
-                        imageRect.left + 2,
-                        imageRect.right - 75,
+                        8.0,
+                        screenW - 128.0, // Prevent inline editor (width ~120px) from overflowing right screen edge
                       );
 
                       double horizontalLabelLeft =
                           _selection!.left + (_selection!.width - 150) / 2;
                       horizontalLabelLeft = horizontalLabelLeft.clamp(
-                        imageRect.left + 4,
-                        imageRect.right - 154,
+                        8.0,
+                        screenW - 158.0, // Prevent inline editor (width 150px) from overflowing right screen edge
                       );
+
+                      final double horizontalLabelTopClamped = horizontalLabelTop.clamp(8.0, viewSize.height - 48.0);
+                      final double verticalLabelTopClamped = (_selection!.top + (_selection!.height - 40) / 2).clamp(8.0, viewSize.height - 48.0);
 
                       return Stack(
                         clipBehavior: Clip.none,
@@ -2739,7 +2799,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                           // Horizontal dimension label / inline editor
                           Positioned(
                             left: horizontalLabelLeft,
-                            top: horizontalLabelTop,
+                            top: horizontalLabelTopClamped,
                             width: 150,
                             child: Center(
                               child: _editingWidth
@@ -2748,12 +2808,14 @@ class _ImageEditPageState extends State<ImageEditPage>
                                       onSave: () {
                                         _justSaved = true;
                                         setState(() {
-                                          _customWidthInches =
-                                              double.tryParse(
-                                                _widthEditController.text,
-                                              ) ??
-                                              _customWidthInches;
+                                          final parsedW = double.tryParse(
+                                            _widthEditController.text,
+                                          );
+                                          if (parsedW != null && parsedW > 0) {
+                                            _customWidthInches = parsedW;
+                                          }
                                           _recalculateArea();
+                                          _notifyCubitOfSelection();
                                         });
 
                                         WidgetsBinding.instance
@@ -2783,8 +2845,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                           // Vertical dimension label / inline editor
                           Positioned(
                             left: verticalLabelLeft,
-                            top:
-                                _selection!.top + (_selection!.height - 40) / 2,
+                            top: verticalLabelTopClamped,
                             child: Center(
                               child: _editingHeight
                                   ? _buildInlineEditor(
@@ -2792,12 +2853,14 @@ class _ImageEditPageState extends State<ImageEditPage>
                                       onSave: () {
                                         _justSaved = true;
                                         setState(() {
-                                          _customHeightInches =
-                                              double.tryParse(
-                                                _heightEditController.text,
-                                              ) ??
-                                              _customHeightInches;
+                                          final parsedH = double.tryParse(
+                                            _heightEditController.text,
+                                          );
+                                          if (parsedH != null && parsedH > 0) {
+                                            _customHeightInches = parsedH;
+                                          }
                                           _recalculateArea();
+                                          _notifyCubitOfSelection();
                                         });
 
                                         WidgetsBinding.instance
@@ -2999,6 +3062,8 @@ class _ImageEditPageState extends State<ImageEditPage>
       "top": originalTop,
       "right": originalRight,
       "bottom": originalBottom,
+      "obj_w": _customWidthInches,
+      "obj_h": _customHeightInches,
     };
 
     context.read<ImageEditCubit>().selectArea(areaData);

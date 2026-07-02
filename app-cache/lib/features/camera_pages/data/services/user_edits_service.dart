@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import '../models/edit_record.dart';
+import '../../../../core/services/image_preprocessor.dart';
 
 class UserEditsService {
   final Dio _dio = Dio(
@@ -50,10 +51,11 @@ class UserEditsService {
     required String email,
   }) async {
     try {
+      final processedFile = await ImagePreprocessor.preprocessImage(editedFile);
       final formData = FormData.fromMap({
         'edited_file': await MultipartFile.fromFile(
-          editedFile.path,
-          filename: editedFile.path.split('/').last,
+          processedFile.path,
+          filename: processedFile.path.split('/').last,
         ),
         'id': furnitureId,
         'owner': email,

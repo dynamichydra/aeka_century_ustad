@@ -134,6 +134,8 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         y1: (coordinate['top'] as num?)?.toInt() ?? (coordinate['y'] as num?)?.toInt() ?? 0,
         x2: (coordinate['right'] as num?)?.toInt() ?? (coordinate['x'] as num?)?.toInt() ?? 0,
         y2: (coordinate['bottom'] as num?)?.toInt() ?? (coordinate['y'] as num?)?.toInt() ?? 0,
+        objW: (coordinate['obj_w'] as num?)?.toDouble(),
+        objH: (coordinate['obj_h'] as num?)?.toDouble(),
       );
 
       final newImagePath = resultFile.path;
