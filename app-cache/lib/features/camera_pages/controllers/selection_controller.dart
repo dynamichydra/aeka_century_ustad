@@ -8,9 +8,14 @@ class SelectionController {
   SelectionMode hitTestHandles({
     required SelectionRect? selection,
     required Offset localPosition,
-    double touchRadius = 30.0,
+    double touchRadius = 36.0,
+    double zoomScale = 1.0,
   }) {
     if (selection == null) return SelectionMode.none;
+
+    // Scale touch radius inversely with zoom so handles stay easy to grab
+    // at any zoom level. Minimum effective radius of 20px.
+    final double effectiveRadius = math.max(20.0, touchRadius / zoomScale);
 
     final double left = selection.left;
     final double top = selection.top;
@@ -25,17 +30,38 @@ class SelectionController {
     final Offset bottomRight = Offset(right, bottom);
 
     // 1. Check corners first (high priority)
-    if ((localPosition - topLeft).distance <= touchRadius) {
+    if ((localPosition - topLeft).distance <= effectiveRadius) {
       return SelectionMode.resizeTopLeft;
     }
-    if ((localPosition - topRight).distance <= touchRadius) {
+    if ((localPosition - topRight).distance <= effectiveRadius) {
       return SelectionMode.resizeTopRight;
     }
-    if ((localPosition - bottomLeft).distance <= touchRadius) {
+    if ((localPosition - bottomLeft).distance <= effectiveRadius) {
       return SelectionMode.resizeBottomLeft;
     }
-    if ((localPosition - bottomRight).distance <= touchRadius) {
+    if ((localPosition - bottomRight).distance <= effectiveRadius) {
       return SelectionMode.resizeBottomRight;
+    }
+
+    // 2. Check middle handles (high priority)
+    final double midX = left + width / 2;
+    final double midY = top + height / 2;
+    final Offset midLeft = Offset(left, midY);
+    final Offset midRight = Offset(right, midY);
+    final Offset midTop = Offset(midX, top);
+    final Offset midBottom = Offset(midX, bottom);
+
+    if ((localPosition - midLeft).distance <= effectiveRadius) {
+      return SelectionMode.resizeLeft;
+    }
+    if ((localPosition - midRight).distance <= effectiveRadius) {
+      return SelectionMode.resizeRight;
+    }
+    if ((localPosition - midTop).distance <= effectiveRadius) {
+      return SelectionMode.resizeTop;
+    }
+    if ((localPosition - midBottom).distance <= effectiveRadius) {
+      return SelectionMode.resizeBottom;
     }
 
     // Helper to calculate distance from point to vertical segment
@@ -50,41 +76,63 @@ class SelectionController {
       return (p - Offset(clampedX, targetY)).distance;
     }
 
-    // 2. Check edges (next priority)
-    if (distToVert(localPosition, left, top, bottom) <= touchRadius) {
-      return SelectionMode.resizeLeft;
-    }
-    if (distToVert(localPosition, right, top, bottom) <= touchRadius) {
-      return SelectionMode.resizeRight;
-    }
-    if (distToHoriz(localPosition, top, left, right) <= touchRadius) {
-      return SelectionMode.resizeTop;
-    }
-    if (distToHoriz(localPosition, bottom, left, right) <= touchRadius) {
-      return SelectionMode.resizeBottom;
-    }
-
-    // 3. Check middle area for moving/dragging
+    // 3. Check if inside the selection rect first — prioritize moving
+    // over edge resize for interior taps to prevent accidental resize
     final bool isInside = localPosition.dx >= left &&
         localPosition.dx <= right &&
         localPosition.dy >= top &&
         localPosition.dy <= bottom;
 
     if (isInside) {
-      final double centerX = left + width / 2;
-      final double centerY = top + height / 2;
+      // Distance from each edge
+      final double dLeft = (localPosition.dx - left).abs();
+      final double dRight = (right - localPosition.dx).abs();
+      final double dTop = (localPosition.dy - top).abs();
+      final double dBottom = (bottom - localPosition.dy).abs();
+      final double minEdgeDist = math.min(
+        math.min(dLeft, dRight),
+        math.min(dTop, dBottom),
+      );
 
-      final bool isNearCenter = (localPosition.dx - centerX).abs() <= 16.0 &&
-                                (localPosition.dy - centerY).abs() <= 16.0;
+      // If the touch is well inside (far from all edges), always move
+      // Use a tighter threshold (40% of effectiveRadius) for edge resize
+      // inside the selection to avoid accidental resize while dragging
+      final double edgeResizeThreshold = effectiveRadius * 0.4;
 
-      final bool isFarFromEdges = (localPosition.dx - left) > touchRadius &&
-                                  (right - localPosition.dx) > touchRadius &&
-                                  (localPosition.dy - top) > touchRadius &&
-                                  (bottom - localPosition.dy) > touchRadius;
-
-      if (isFarFromEdges || isNearCenter) {
+      if (minEdgeDist > edgeResizeThreshold) {
         return SelectionMode.moving;
       }
+
+      // Close to an edge but still inside — check which edge
+      if (dLeft <= edgeResizeThreshold) {
+        return SelectionMode.resizeLeft;
+      }
+      if (dRight <= edgeResizeThreshold) {
+        return SelectionMode.resizeRight;
+      }
+      if (dTop <= edgeResizeThreshold) {
+        return SelectionMode.resizeTop;
+      }
+      if (dBottom <= edgeResizeThreshold) {
+        return SelectionMode.resizeBottom;
+      }
+
+      // Fallback: still inside, move
+      return SelectionMode.moving;
+    }
+
+    // 2. Outside the selection — check edges for resize (from outside)
+    if (distToVert(localPosition, left, top, bottom) <= effectiveRadius) {
+      return SelectionMode.resizeLeft;
+    }
+    if (distToVert(localPosition, right, top, bottom) <= effectiveRadius) {
+      return SelectionMode.resizeRight;
+    }
+    if (distToHoriz(localPosition, top, left, right) <= effectiveRadius) {
+      return SelectionMode.resizeTop;
+    }
+    if (distToHoriz(localPosition, bottom, left, right) <= effectiveRadius) {
+      return SelectionMode.resizeBottom;
     }
 
     return SelectionMode.none;
@@ -94,11 +142,17 @@ class SelectionController {
     required SelectionRect? selection,
     required Offset localPos,
     required Rect imageRect,
+    Size? viewSize,
   }) {
     if (selection == null) return false;
+
+    // Use viewport for clamping if available, otherwise fall back to imageRect
+    final double clampRight = viewSize != null ? viewSize.width : imageRect.right;
+    final double clampBottom = viewSize != null ? viewSize.height : imageRect.bottom;
+
     final double spaceBelow =
-        imageRect.bottom - (selection.top + selection.height);
-    final double spaceAbove = selection.top - imageRect.top;
+        clampBottom - (selection.top + selection.height);
+    final double spaceAbove = selection.top;
     final bool showHorizontalArrowAtTop =
         spaceBelow < 50.0 && spaceAbove > spaceBelow;
 
@@ -107,25 +161,33 @@ class SelectionController {
         : selection.top + selection.height + 22;
 
     double left = selection.left + (selection.width - 150) / 2;
-    left = left.clamp(imageRect.left + 4, imageRect.right - 154);
+    left = left.clamp(0.0, clampRight - 154);
 
-    final double right = left + 150;
-    final double bottom = top + 40;
-    return localPos.dx >= left &&
-        localPos.dx <= right &&
-        localPos.dy >= top &&
-        localPos.dy <= bottom;
+    // Expanded hit zone with 12px padding on all sides
+    final double hitLeft = left - 12;
+    final double hitRight = left + 150 + 12;
+    final double hitTop = top - 12;
+    final double hitBottom = top + 40 + 12;
+    return localPos.dx >= hitLeft &&
+        localPos.dx <= hitRight &&
+        localPos.dy >= hitTop &&
+        localPos.dy <= hitBottom;
   }
 
   bool isPointInVerticalOverlay({
     required SelectionRect? selection,
     required Offset localPos,
     required Rect imageRect,
+    Size? viewSize,
   }) {
     if (selection == null) return false;
+
+    // Use viewport for clamping if available, otherwise fall back to imageRect
+    final double clampRight = viewSize != null ? viewSize.width : imageRect.right;
+
     final double spaceRight =
-        imageRect.right - (selection.left + selection.width);
-    final double spaceLeft = selection.left - imageRect.left;
+        clampRight - (selection.left + selection.width);
+    final double spaceLeft = selection.left;
     final bool showVerticalArrowAtLeft =
         spaceRight < 120.0 && spaceLeft > spaceRight;
 
@@ -135,14 +197,17 @@ class SelectionController {
         ? selection.left - 70
         : selection.left + selection.width + 22;
 
-    left = left.clamp(imageRect.left + 2, imageRect.right - 75);
+    left = left.clamp(0.0, clampRight - 75);
 
-    final double right = left + 120;
-    final double bottom = top + 40;
-    return localPos.dx >= left &&
-        localPos.dx <= right &&
-        localPos.dy >= top &&
-        localPos.dy <= bottom;
+    // Expanded hit zone with 12px padding on all sides
+    final double hitLeft = left - 12;
+    final double hitRight = left + 120 + 12;
+    final double hitTop = top - 12;
+    final double hitBottom = top + 40 + 12;
+    return localPos.dx >= hitLeft &&
+        localPos.dx <= hitRight &&
+        localPos.dy >= hitTop &&
+        localPos.dy <= hitBottom;
   }
 
   SelectionRect createSelection({

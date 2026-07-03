@@ -126,8 +126,10 @@ class _ImageEditPageState extends State<ImageEditPage>
   SelectionRect? _backupSelection;
   Offset? _dragStart;
   SelectionMode _mode = SelectionMode.none;
+  bool _isDrawingNewSelection = false;
   final Map<int, Offset> _activePointers = {};
   bool _isPanning = false;
+  bool _interactingWithOverlay = false;
   double _initialPointerDistance = 1.0;
   double _containScale = 1.0;
   double _minScale = 1.0;
@@ -210,6 +212,112 @@ class _ImageEditPageState extends State<ImageEditPage>
     return _minZoomLimit;
   }
 
+  Offset _getWidthCardPosition({
+    required Rect vpSelection,
+    required double cardW,
+    required double cardH,
+    required double vpW,
+    required double vpH,
+    // Visible image rect in viewport coordinates. When the image has white
+    // space around it (zoomed out) labels are constrained to the image edge;
+    // when zoomed in and the image fills the screen this equals the viewport.
+    Rect? visibleImageRect,
+  }) {
+    // Effective bounds: use visible image rect when tighter than viewport
+    final double minX = visibleImageRect != null ? (visibleImageRect.left + 4) : 8.0;
+    final double maxX = visibleImageRect != null ? (visibleImageRect.right - 4) : (vpW - 8.0);
+    final double minY = visibleImageRect != null ? (visibleImageRect.top + 4) : 8.0;
+    final double maxY = visibleImageRect != null ? (visibleImageRect.bottom - 4) : (vpH - 8.0);
+
+    final candidates = [
+      // 1. Bottom Center (default)
+      Offset(vpSelection.left + (vpSelection.width - cardW) / 2, vpSelection.bottom + 22),
+      // 2. Top Center
+      Offset(vpSelection.left + (vpSelection.width - cardW) / 2, vpSelection.top - 42),
+      // 3. Bottom Left
+      Offset(vpSelection.left, vpSelection.bottom + 22),
+      // 4. Bottom Right
+      Offset(vpSelection.right - cardW, vpSelection.bottom + 22),
+      // 5. Top Left
+      Offset(vpSelection.left, vpSelection.top - 42),
+      // 6. Top Right
+      Offset(vpSelection.right - cardW, vpSelection.top - 42),
+    ];
+
+    for (final pos in candidates) {
+      if (pos.dx >= minX && pos.dx + cardW <= maxX &&
+          pos.dy >= minY && pos.dy + cardH <= maxY) {
+        return pos;
+      }
+    }
+
+    // 7. Floating (clamped inside effective bounds)
+    final double spaceBelow = maxY - vpSelection.bottom;
+    final double spaceAbove = vpSelection.top - minY;
+    double defaultY = (spaceBelow < 50.0 && spaceAbove > spaceBelow)
+        ? vpSelection.top - 42
+        : vpSelection.bottom + 22;
+
+    double x = vpSelection.left + (vpSelection.width - cardW) / 2;
+    return Offset(
+      x.clamp(minX, maxX - cardW),
+      defaultY.clamp(minY, maxY - cardH),
+    );
+  }
+
+  Offset _getHeightCardPosition({
+    required Rect vpSelection,
+    required double cardW,
+    required double cardH,
+    required double vpW,
+    required double vpH,
+    // Visible image rect in viewport coordinates. When the image has white
+    // space around it (zoomed out) labels are constrained to the image edge;
+    // when zoomed in and the image fills the screen this equals the viewport.
+    Rect? visibleImageRect,
+  }) {
+    // Effective bounds: use visible image rect when tighter than viewport
+    final double minX = visibleImageRect != null ? (visibleImageRect.left + 4) : 8.0;
+    final double maxX = visibleImageRect != null ? (visibleImageRect.right - 4) : (vpW - 8.0);
+    final double minY = visibleImageRect != null ? (visibleImageRect.top + 4) : 8.0;
+    final double maxY = visibleImageRect != null ? (visibleImageRect.bottom - 4) : (vpH - 8.0);
+
+    final candidates = [
+      // 1. Right Center (default)
+      Offset(vpSelection.right + 22, vpSelection.top + (vpSelection.height - cardH) / 2),
+      // 2. Left Center
+      Offset(vpSelection.left - 22 - cardW, vpSelection.top + (vpSelection.height - cardH) / 2),
+      // 3. Top Right
+      Offset(vpSelection.right + 22, vpSelection.top),
+      // 4. Bottom Right
+      Offset(vpSelection.right + 22, vpSelection.bottom - cardH),
+      // 5. Top Left
+      Offset(vpSelection.left - 22 - cardW, vpSelection.top),
+      // 6. Bottom Left
+      Offset(vpSelection.left - 22 - cardW, vpSelection.bottom - cardH),
+    ];
+
+    for (final pos in candidates) {
+      if (pos.dx >= minX && pos.dx + cardW <= maxX &&
+          pos.dy >= minY && pos.dy + cardH <= maxY) {
+        return pos;
+      }
+    }
+
+    // 7. Floating (clamped inside effective bounds)
+    final double spaceRight = maxX - vpSelection.right;
+    final double spaceLeft = vpSelection.left - minX;
+    double defaultX = (spaceRight < 120.0 && spaceLeft > spaceRight)
+        ? vpSelection.left - 22 - cardW
+        : vpSelection.right + 22;
+
+    double y = vpSelection.top + (vpSelection.height - cardH) / 2;
+    return Offset(
+      defaultX.clamp(minX, maxX - cardW),
+      y.clamp(minY, maxY - cardH),
+    );
+  }
+
   Size _getViewSize(BuildContext context) {
     return CoordinateMapper.getViewSize(
       MediaQuery.of(context).size.width,
@@ -224,6 +332,20 @@ class _ImageEditPageState extends State<ImageEditPage>
       originalImageHeight: _originalImageHeight,
       currentDisplayScale: _currentDisplayScale,
     );
+  }
+
+  /// Returns the visible portion of the image within the viewport,
+  /// accounting for zoom and pan transformations.
+  /// Used only for overlay positioning — NOT for coordinate mapping.
+  Rect _getVisibleImageRect(BuildContext context) {
+    final Rect baseRect = _getImageRect(context);
+    final Matrix4 matrix = _transformationController.value;
+    final Offset tl = MatrixUtils.transformPoint(matrix, baseRect.topLeft);
+    final Offset br = MatrixUtils.transformPoint(matrix, baseRect.bottomRight);
+    final Rect transformed = Rect.fromPoints(tl, br);
+    final Size viewSize = _getViewSize(context);
+    final Rect viewport = Rect.fromLTWH(0, 0, viewSize.width, viewSize.height);
+    return transformed.intersect(viewport);
   }
 
   Offset _mapLocalToOriginal(Offset localPos, Size viewSize) {
@@ -1696,58 +1818,95 @@ class _ImageEditPageState extends State<ImageEditPage>
               final double imgR = imageRect.right;
               final double imgT = imageRect.top;
               final double imgB = imageRect.bottom;
+              final Size viewSize = _getViewSize(context);
 
-              if (_selection != null &&
-                  (_selectionController.isPointInHorizontalOverlay(
-                        selection: _selection,
-                        localPos: localPos,
-                        imageRect: imageRect,
-                      ) ||
-                      _selectionController.isPointInVerticalOverlay(
-                        selection: _selection,
-                        localPos: localPos,
-                        imageRect: imageRect,
-                      ))) {
-                return;
-              }
+              final Matrix4 matrix = _transformationController.value;
+              final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
 
+              // Get current zoom scale for touch target sizing
+              final double zoomScale = _transformationController.value.getMaxScaleOnAxis();
+
+              // 1. High Priority: Check if tap hit a resize handle or selection body
               SelectionMode detectedMode = SelectionMode.none;
               if (_selection != null) {
                 detectedMode = _selectionController.hitTestHandles(
                   selection: _selection,
                   localPosition: localPos,
+                  zoomScale: zoomScale,
                 );
-              }
-
-              double snap(double val, double minBound, double maxBound) {
-                return val.clamp(minBound, maxBound);
               }
 
               if (detectedMode != SelectionMode.none) {
                 setState(() {
                   _mode = detectedMode;
                 });
-              } else if (_selection == null) {
-                setState(() {
-                  _dragStart = Offset(
-                    snap(localPos.dx, imgL, imgR),
-                    snap(localPos.dy, imgT, imgB),
-                  );
-                  _selection = SelectionRect(
-                    left: _dragStart!.dx,
-                    top: _dragStart!.dy,
-                    width: 0,
-                    height: 0,
-                  );
-                  _mode = SelectionMode.creating;
-                  _editingWidth = false;
-                  _editingHeight = false;
-                });
-              } else {
-                setState(() {
-                  _mode = SelectionMode.none;
-                });
+                return;
               }
+
+              // 2. Medium Priority: Check if tap is on an overlay widget or measurement lines.
+              // If so, let the overlay handle the event and skip all selection logic
+              if (_selection != null) {
+                final Offset vpTopLeft = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(_selection!.left, _selection!.top),
+                );
+                final Offset vpBottomRight = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(_selection!.left + _selection!.width, _selection!.top + _selection!.height),
+                );
+                final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
+
+                final double widthCardW = _editingWidth ? 110.0 : 60.0;
+                final Rect visibleImgRect = _getVisibleImageRect(context);
+                final Offset widthCardPos = _getWidthCardPosition(
+                  vpSelection: vpSelection,
+                  cardW: widthCardW,
+                  cardH: 40.0,
+                  vpW: viewSize.width,
+                  vpH: viewSize.height,
+                  visibleImageRect: visibleImgRect,
+                );
+                final Rect widthCardRect = Rect.fromLTWH(widthCardPos.dx, widthCardPos.dy, widthCardW, 40.0).inflate(12.0);
+
+                final double heightCardW = _editingHeight ? 110.0 : 60.0;
+                final Offset heightCardPos = _getHeightCardPosition(
+                  vpSelection: vpSelection,
+                  cardW: heightCardW,
+                  cardH: 40.0,
+                  vpW: viewSize.width,
+                  vpH: viewSize.height,
+                  visibleImageRect: visibleImgRect,
+                );
+                final Rect heightCardRect = Rect.fromLTWH(heightCardPos.dx, heightCardPos.dy, heightCardW, 40.0).inflate(12.0);
+
+                final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+                final double horizontalArrowTop = widthAxisAtTop ? vpSelection.top - 18 : vpSelection.bottom + 8;
+                final bool inWidthAxis = vpPos.dx >= vpSelection.left - 12.0 &&
+                                         vpPos.dx <= vpSelection.right + 12.0 &&
+                                         (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+                final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
+                final double verticalArrowLeft = heightAxisAtLeft ? vpSelection.left - 18 : vpSelection.right + 8;
+                final bool inHeightAxis = vpPos.dy >= vpSelection.top - 12.0 &&
+                                          vpPos.dy <= vpSelection.bottom + 12.0 &&
+                                          (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+                if (widthCardRect.contains(vpPos) ||
+                    heightCardRect.contains(vpPos) ||
+                    inWidthAxis ||
+                    inHeightAxis) {
+                  _interactingWithOverlay = true;
+                  return;
+                }
+              }
+
+              // 3. Low Priority: Tapped elsewhere inside the image viewport canvas.
+              // Prepare for creating a new selection if they drag, but do not clear selection immediately.
+              setState(() {
+                _dragStart = localPos;
+                _mode = SelectionMode.creating;
+                _isDrawingNewSelection = false;
+              });
             },
             onPointerMove: (event) {
               if (_activePointers.length >= 2 || _isPanning) {
@@ -1781,15 +1940,44 @@ class _ImageEditPageState extends State<ImageEditPage>
               final localPos = event.localPosition;
               final Rect imageRect = _getImageRect(context);
 
-
               if (_mode == SelectionMode.creating && _dragStart != null) {
-                setState(() {
-                  _selection = _selectionController.createSelection(
-                    dragStart: _dragStart!,
-                    currentPos: localPos,
-                    imageRect: imageRect,
-                  );
-                });
+                if (!_isDrawingNewSelection) {
+                  final double dragDistance = (localPos - _dragStart!).distance;
+                  if (dragDistance >= 5.0) {
+                    final double imgL = imageRect.left;
+                    final double imgR = imageRect.right;
+                    final double imgT = imageRect.top;
+                    final double imgB = imageRect.bottom;
+                    setState(() {
+                      _isDrawingNewSelection = true;
+                      // Clamp the drag start point to the image bounds when drawing starts
+                      final Offset clampedStart = Offset(
+                        _dragStart!.dx.clamp(imgL, imgR),
+                        _dragStart!.dy.clamp(imgT, imgB),
+                      );
+                      _dragStart = clampedStart;
+                      _selection = SelectionRect(
+                        left: clampedStart.dx,
+                        top: clampedStart.dy,
+                        width: 0,
+                        height: 0,
+                      );
+                      _editingWidth = false;
+                      _editingHeight = false;
+                    });
+                    context.read<ImageEditCubit>().clearSelection();
+                  }
+                }
+
+                if (_isDrawingNewSelection) {
+                  setState(() {
+                    _selection = _selectionController.createSelection(
+                      dragStart: _dragStart!,
+                      currentPos: localPos,
+                      imageRect: imageRect,
+                    );
+                  });
+                }
               } else if (_mode == SelectionMode.moving && _selection != null) {
                 setState(() {
                   _selection = _selectionController.moveSelection(
@@ -1810,6 +1998,16 @@ class _ImageEditPageState extends State<ImageEditPage>
               }
             },
             onPointerUp: (event) {
+              // If we were interacting with an overlay (label/editor),
+              // skip all selection logic on pointer up
+              if (_interactingWithOverlay) {
+                _interactingWithOverlay = false;
+                _activePointers.remove(event.pointer);
+                if (_activePointers.isEmpty) {
+                  _backupSelection = null;
+                }
+                return;
+              }
               if (_justSaved) {
                 _justSaved = false;
                 _activePointers.remove(event.pointer);
@@ -1819,32 +2017,182 @@ class _ImageEditPageState extends State<ImageEditPage>
                 return;
               }
               final localPos = event.localPosition;
-              final Rect imageRect = _getImageRect(context);
-              if (_backupSelection != null && _dragStart != null) {
-                final double dragDistance = (localPos - _dragStart!).distance;
-                if (dragDistance < 5.0 &&
-                    !_backupSelection!.rect.contains(localPos) &&
-                    !_selectionController.isPointInHorizontalOverlay(
-                      selection: _selection,
-                      localPos: localPos,
-                      imageRect: imageRect,
-                    ) &&
-                    !_selectionController.isPointInVerticalOverlay(
-                      selection: _selection,
-                      localPos: localPos,
-                      imageRect: imageRect,
-                    )) {
-                  setState(() {
-                    _selection = null;
-                    _mode = SelectionMode.none;
-                    _editingWidth = false;
-                    _editingHeight = false;
-                  });
-                  context.read<ImageEditCubit>().clearSelection();
+              final Size viewSize = _getViewSize(context);
+
+              // 1. If we were preparing to create a selection but never actually dragged (simple tap)
+              if (_mode == SelectionMode.creating) {
+                final double dragDistance = _dragStart != null ? (localPos - _dragStart!).distance : 0.0;
+                if (!_isDrawingNewSelection || dragDistance < 5.0) {
+                  final Matrix4 matrix = _transformationController.value;
+                  final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
+
+                  bool clickedOverlay = false;
+                  if (_backupSelection != null) {
+                    final Offset vpTopLeft = MatrixUtils.transformPoint(
+                      matrix,
+                      Offset(_backupSelection!.left, _backupSelection!.top),
+                    );
+                    final Offset vpBottomRight = MatrixUtils.transformPoint(
+                      matrix,
+                      Offset(_backupSelection!.left + _backupSelection!.width, _backupSelection!.top + _backupSelection!.height),
+                    );
+                    final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
+
+                    final double widthCardW = _editingWidth ? 110.0 : 60.0;
+                    final Rect visibleImgRect2 = _getVisibleImageRect(context);
+                    final Offset widthCardPos = _getWidthCardPosition(
+                      vpSelection: vpSelection,
+                      cardW: widthCardW,
+                      cardH: 40.0,
+                      vpW: viewSize.width,
+                      vpH: viewSize.height,
+                      visibleImageRect: visibleImgRect2,
+                    );
+                    final Rect widthCardRect = Rect.fromLTWH(widthCardPos.dx, widthCardPos.dy, widthCardW, 40.0).inflate(12.0);
+
+                    final double heightCardW = _editingHeight ? 110.0 : 60.0;
+                    final Offset heightCardPos = _getHeightCardPosition(
+                      vpSelection: vpSelection,
+                      cardW: heightCardW,
+                      cardH: 40.0,
+                      vpW: viewSize.width,
+                      vpH: viewSize.height,
+                      visibleImageRect: visibleImgRect2,
+                    );
+                    final Rect heightCardRect = Rect.fromLTWH(heightCardPos.dx, heightCardPos.dy, heightCardW, 40.0).inflate(12.0);
+
+                    final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+                    final double horizontalArrowTop = widthAxisAtTop ? vpSelection.top - 18 : vpSelection.bottom + 8;
+                    final bool inWidthAxis = vpPos.dx >= vpSelection.left - 12.0 &&
+                                             vpPos.dx <= vpSelection.right + 12.0 &&
+                                             (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+                    final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
+                    final double verticalArrowLeft = heightAxisAtLeft ? vpSelection.left - 18 : vpSelection.right + 8;
+                    final bool inHeightAxis = vpPos.dy >= vpSelection.top - 12.0 &&
+                                              vpPos.dy <= vpSelection.bottom + 12.0 &&
+                                              (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+                    if (widthCardRect.contains(vpPos) ||
+                        heightCardRect.contains(vpPos) ||
+                        inWidthAxis ||
+                        inHeightAxis) {
+                      clickedOverlay = true;
+                    }
+                  }
+
+                  if (clickedOverlay) {
+                    // Tap on overlay: keep the selection!
+                    setState(() {
+                      _selection = _backupSelection;
+                      _mode = SelectionMode.none;
+                    });
+                  } else {
+                    // Tap anywhere else (outside selection, handles, and overlays): clear selection!
+                    setState(() {
+                      _selection = null;
+                      _mode = SelectionMode.none;
+                      _editingWidth = false;
+                      _editingHeight = false;
+                    });
+                    context.read<ImageEditCubit>().clearSelection();
+                  }
+
                   _activePointers.remove(event.pointer);
                   _backupSelection = null;
                   _dragStart = null;
+                  _isDrawingNewSelection = false;
                   return;
+                }
+              }
+
+              // 2. If a resize/move gesture finished or a tap on an active handle/body occurred
+              if (_backupSelection != null && _dragStart != null && _mode != SelectionMode.creating) {
+                final double dragDistance = (localPos - _dragStart!).distance;
+                if (dragDistance < 5.0) {
+                  final Matrix4 matrix = _transformationController.value;
+                  final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
+                  final double zoomScale = matrix.getMaxScaleOnAxis();
+
+                  // Check if tap hit a resize handle or selection body
+                  final SelectionMode mode = _selectionController.hitTestHandles(
+                    selection: _backupSelection,
+                    localPosition: localPos,
+                    zoomScale: zoomScale,
+                  );
+
+                  bool clickedOverlay = false;
+                  if (_selection != null) {
+                    final Offset vpTopLeft = MatrixUtils.transformPoint(
+                      matrix,
+                      Offset(_selection!.left, _selection!.top),
+                    );
+                    final Offset vpBottomRight = MatrixUtils.transformPoint(
+                      matrix,
+                      Offset(_selection!.left + _selection!.width, _selection!.top + _selection!.height),
+                    );
+                    final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
+
+                    final double widthCardW = _editingWidth ? 110.0 : 60.0;
+                    final Rect visibleImgRect2 = _getVisibleImageRect(context);
+                    final Offset widthCardPos = _getWidthCardPosition(
+                      vpSelection: vpSelection,
+                      cardW: widthCardW,
+                      cardH: 40.0,
+                      vpW: viewSize.width,
+                      vpH: viewSize.height,
+                      visibleImageRect: visibleImgRect2,
+                    );
+                    final Rect widthCardRect = Rect.fromLTWH(widthCardPos.dx, widthCardPos.dy, widthCardW, 40.0).inflate(12.0);
+
+                    final double heightCardW = _editingHeight ? 110.0 : 60.0;
+                    final Offset heightCardPos = _getHeightCardPosition(
+                      vpSelection: vpSelection,
+                      cardW: heightCardW,
+                      cardH: 40.0,
+                      vpW: viewSize.width,
+                      vpH: viewSize.height,
+                      visibleImageRect: visibleImgRect2,
+                    );
+                    final Rect heightCardRect = Rect.fromLTWH(heightCardPos.dx, heightCardPos.dy, heightCardW, 40.0).inflate(12.0);
+
+                    final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+                    final double horizontalArrowTop = widthAxisAtTop ? vpSelection.top - 18 : vpSelection.bottom + 8;
+                    final bool inWidthAxis = vpPos.dx >= vpSelection.left - 12.0 &&
+                                             vpPos.dx <= vpSelection.right + 12.0 &&
+                                             (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+                    final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
+                    final double verticalArrowLeft = heightAxisAtLeft ? vpSelection.left - 18 : vpSelection.right + 8;
+                    final bool inHeightAxis = vpPos.dy >= vpSelection.top - 12.0 &&
+                                              vpPos.dy <= vpSelection.bottom + 12.0 &&
+                                              (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+                    if (widthCardRect.contains(vpPos) ||
+                        heightCardRect.contains(vpPos) ||
+                        inWidthAxis ||
+                        inHeightAxis) {
+                      clickedOverlay = true;
+                    }
+                  }
+
+                  // Clear the selection ONLY if:
+                  // 1. Tapped outside selection body/handles (mode == SelectionMode.none)
+                  // 2. Tapped outside overlays
+                  if (mode == SelectionMode.none && !clickedOverlay) {
+                    setState(() {
+                      _selection = null;
+                      _mode = SelectionMode.none;
+                      _editingWidth = false;
+                      _editingHeight = false;
+                    });
+                    context.read<ImageEditCubit>().clearSelection();
+                    _activePointers.remove(event.pointer);
+                    _backupSelection = null;
+                    _dragStart = null;
+                    _isDrawingNewSelection = false;
+                    return;
+                  }
                 }
               }
 
@@ -1853,6 +2201,8 @@ class _ImageEditPageState extends State<ImageEditPage>
               if (_activePointers.isEmpty) {
                 _backupSelection = null;
               }
+
+              _isDrawingNewSelection = false;
 
               if (_isPanning) {
                 if (_activePointers.isEmpty) {
@@ -2104,205 +2454,196 @@ class _ImageEditPageState extends State<ImageEditPage>
                     );
                   },
                 ),
-                if (_selection != null) ...[
-                  Builder(
-                    builder: (context) {
-                      final Rect imageRect = _getImageRect(context);
-                      final Size viewSize = _getViewSize(context);
-
-                      // Calculate available space on each side
-                      final double spaceBelow =
-                          imageRect.bottom -
-                          (_selection!.top + _selection!.height);
-                      final double spaceAbove = _selection!.top - imageRect.top;
-                      final double spaceRight =
-                          imageRect.right -
-                          (_selection!.left + _selection!.width);
-                      final double spaceLeft =
-                          _selection!.left - imageRect.left;
-
-                      // Decide which side to display the horizontal indicator (arrow/label)
-                      // Height of horizontal label is ~40px. Let's flip to bottom if top space is < 45px, or flip to top if bottom space is < 45px.
-                      bool showHorizontalArrowAtTop = false;
-                      if (_selection!.top - imageRect.top < 45.0) {
-                        showHorizontalArrowAtTop = false;
-                      } else if (imageRect.bottom - (_selection!.top + _selection!.height) < 45.0) {
-                        showHorizontalArrowAtTop = true;
-                      } else {
-                        showHorizontalArrowAtTop = spaceBelow < 50.0 && spaceAbove > spaceBelow;
-                      }
-
-                      // Decide which side to display the vertical indicator (arrow/label)
-                      // Width of vertical inline editor is ~120px. We show on the right if left space is < 125px, or show on the left if right space is < 125px.
-                      bool showVerticalArrowAtLeft = false;
-                      if (_selection!.left - imageRect.left < 125.0) {
-                        showVerticalArrowAtLeft = false;
-                      } else if (imageRect.right - (_selection!.left + _selection!.width) < 125.0) {
-                        showVerticalArrowAtLeft = true;
-                      } else {
-                        showVerticalArrowAtLeft = spaceRight < 120.0 && spaceLeft > spaceRight;
-                      }
-
-                      final double horizontalArrowTop = showHorizontalArrowAtTop
-                          ? _selection!.top - 18
-                          : _selection!.top + _selection!.height + 8;
-
-                      final double horizontalLabelTop = showHorizontalArrowAtTop
-                          ? _selection!.top - 42
-                          : _selection!.top + _selection!.height + 22;
-
-                      double verticalArrowLeft = showVerticalArrowAtLeft
-                          ? _selection!.left - 18
-                          : _selection!.left + _selection!.width + 8;
-
-                      double verticalLabelLeft = showVerticalArrowAtLeft
-                          ? _selection!.left - (_editingHeight ? 128.0 : 80.0)
-                          : _selection!.left + _selection!.width + 22;
-
-                      // Clamp coordinates to prevent clipping off screen/image edges
-                      final double screenW = viewSize.width;
-                      verticalArrowLeft = verticalArrowLeft.clamp(
-                        imageRect.left + 2,
-                        imageRect.right - 12,
-                      );
-                      verticalLabelLeft = verticalLabelLeft.clamp(
-                        8.0,
-                        screenW - 128.0, // Prevent inline editor (width ~120px) from overflowing right screen edge
-                      );
-
-                      double horizontalLabelLeft =
-                          _selection!.left + (_selection!.width - 150) / 2;
-                      horizontalLabelLeft = horizontalLabelLeft.clamp(
-                        8.0,
-                        screenW - 158.0, // Prevent inline editor (width 150px) from overflowing right screen edge
-                      );
-
-                      final double horizontalLabelTopClamped = horizontalLabelTop.clamp(8.0, viewSize.height - 48.0);
-                      final double verticalLabelTopClamped = (_selection!.top + (_selection!.height - 40) / 2).clamp(8.0, viewSize.height - 48.0);
-
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          // Horizontal double arrow line
-                          Positioned(
-                            left: _selection!.left,
-                            top: horizontalArrowTop,
-                            width: _selection!.width,
-                            height: 10,
-                            child: CustomPaint(
-                              painter: DashedLinePainter(axis: Axis.horizontal),
-                            ),
-                          ),
-                          // Vertical double arrow line
-                          Positioned(
-                            left: verticalArrowLeft,
-                            top: _selection!.top,
-                            width: 10,
-                            height: _selection!.height,
-                            child: CustomPaint(
-                              painter: DashedLinePainter(axis: Axis.vertical),
-                            ),
-                          ),
-                          // Horizontal dimension label / inline editor
-                          Positioned(
-                            left: horizontalLabelLeft,
-                            top: horizontalLabelTopClamped,
-                            width: 150,
-                            child: Center(
-                              child: _editingWidth
-                                  ? _buildInlineEditor(
-                                      controller: _widthEditController,
-                                      onSave: () {
-                                        _justSaved = true;
-                                        setState(() {
-                                          final parsedW = double.tryParse(
-                                            _widthEditController.text,
-                                          );
-                                          if (parsedW != null && parsedW > 0) {
-                                            _customWidthInches = parsedW;
-                                          }
-                                          _recalculateArea();
-                                          _notifyCubitOfSelection();
-                                        });
-
-                                        WidgetsBinding.instance
-                                            .addPostFrameCallback((_) {
-                                              if (mounted) {
-                                                setState(() {
-                                                  _editingWidth = false;
-                                                });
-                                              }
-                                            });
-                                      },
-                                    )
-                                  : _buildDisplayLabel(
-                                      value: _customWidthInches,
-                                      onTap: () {
-                                        setState(() {
-                                          _widthEditController.text =
-                                              _customWidthInches
-                                                  .round()
-                                                  .toString();
-                                          _editingWidth = true;
-                                        });
-                                      },
-                                    ),
-                            ),
-                          ),
-                          // Vertical dimension label / inline editor
-                          Positioned(
-                            left: verticalLabelLeft,
-                            top: verticalLabelTopClamped,
-                            child: Center(
-                              child: _editingHeight
-                                  ? _buildInlineEditor(
-                                      controller: _heightEditController,
-                                      onSave: () {
-                                        _justSaved = true;
-                                        setState(() {
-                                          final parsedH = double.tryParse(
-                                            _heightEditController.text,
-                                          );
-                                          if (parsedH != null && parsedH > 0) {
-                                            _customHeightInches = parsedH;
-                                          }
-                                          _recalculateArea();
-                                          _notifyCubitOfSelection();
-                                        });
-
-                                        WidgetsBinding.instance
-                                            .addPostFrameCallback((_) {
-                                              if (mounted) {
-                                                setState(() {
-                                                  _editingHeight = false;
-                                                });
-                                              }
-                                            });
-                                      },
-                                    )
-                                  : _buildDisplayLabel(
-                                      value: _customHeightInches,
-                                      onTap: () {
-                                        setState(() {
-                                          _heightEditController.text =
-                                              _customHeightInches
-                                                  .round()
-                                                  .toString();
-                                          _editingHeight = true;
-                                        });
-                                      },
-                                    ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
               ],
             ),
           ),
         ),
+        if (_selection != null)
+          Builder(
+            builder: (context) {
+              final Size viewSize = _getViewSize(context);
+              final double vpW = viewSize.width;
+              final double vpH = viewSize.height;
+              final Matrix4 matrix = _transformationController.value;
+
+              final Offset vpTopLeft = MatrixUtils.transformPoint(
+                matrix,
+                Offset(_selection!.left, _selection!.top),
+              );
+              final Offset vpBottomRight = MatrixUtils.transformPoint(
+                matrix,
+                Offset(_selection!.left + _selection!.width, _selection!.top + _selection!.height),
+              );
+              final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
+
+              // Calculate positions for Width and Height cards using priorities
+              final double widthCardW = _editingWidth ? 110.0 : 60.0;
+              final double widthCardH = 40.0;
+              final Rect visibleImgRectOverlay = _getVisibleImageRect(context);
+              final Offset widthCardPos = _getWidthCardPosition(
+                vpSelection: vpSelection,
+                cardW: widthCardW,
+                cardH: widthCardH,
+                vpW: vpW,
+                vpH: vpH,
+                visibleImageRect: visibleImgRectOverlay,
+              );
+
+              final double heightCardW = _editingHeight ? 110.0 : 60.0;
+              final double heightCardH = 40.0;
+              final Offset heightCardPos = _getHeightCardPosition(
+                vpSelection: vpSelection,
+                cardW: heightCardW,
+                cardH: heightCardH,
+                vpW: vpW,
+                vpH: vpH,
+                visibleImageRect: visibleImgRectOverlay,
+              );
+
+              // Decide whether dashed lines (measurement axes) should be Top/Bottom or Left/Right
+              // Width dashed line is top or bottom of the selection based on chosen card position
+              final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+              final double horizontalArrowTop = widthAxisAtTop
+                  ? vpSelection.top - 18
+                  : vpSelection.bottom + 8;
+
+              // Height dashed line is left or right of the selection based on chosen card position
+              final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
+              final double verticalArrowLeft = heightAxisAtLeft
+                  ? vpSelection.left - 18
+                  : vpSelection.right + 8;
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Horizontal double arrow line
+                  Positioned(
+                    left: vpSelection.left,
+                    top: horizontalArrowTop,
+                    width: vpSelection.width,
+                    height: 10,
+                    child: CustomPaint(
+                      painter: DashedLinePainter(axis: Axis.horizontal),
+                    ),
+                  ),
+                  // Vertical double arrow line
+                  Positioned(
+                    left: verticalArrowLeft,
+                    top: vpSelection.top,
+                    width: 10,
+                    height: vpSelection.height,
+                    child: CustomPaint(
+                      painter: DashedLinePainter(axis: Axis.vertical),
+                    ),
+                  ),
+                  // Horizontal dimension label / inline editor
+                  Positioned(
+                    left: widthCardPos.dx,
+                    top: widthCardPos.dy,
+                    width: widthCardW,
+                    child: Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: (e) {
+                        _interactingWithOverlay = true;
+                      },
+                      child: Center(
+                        child: _editingWidth
+                            ? _buildInlineEditor(
+                                controller: _widthEditController,
+                                onSave: () {
+                                  _justSaved = true;
+                                  setState(() {
+                                    final parsedW = double.tryParse(
+                                      _widthEditController.text,
+                                    );
+                                    if (parsedW != null && parsedW > 0) {
+                                      _customWidthInches = parsedW;
+                                    }
+                                    _recalculateArea();
+                                    _notifyCubitOfSelection();
+                                  });
+
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                        if (mounted) {
+                                          setState(() {
+                                            _editingWidth = false;
+                                          });
+                                        }
+                                      });
+                                },
+                              )
+                            : _buildDisplayLabel(
+                                value: _customWidthInches,
+                                onTap: () {
+                                  setState(() {
+                                    _widthEditController.text =
+                                        _customWidthInches
+                                            .round()
+                                            .toString();
+                                    _editingWidth = true;
+                                  });
+                                },
+                              ),
+                      ),
+                    ),
+                  ),
+                  // Vertical dimension label / inline editor
+                  Positioned(
+                    left: heightCardPos.dx,
+                    top: heightCardPos.dy,
+                    width: heightCardW,
+                    child: Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: (e) {
+                        _interactingWithOverlay = true;
+                      },
+                      child: Center(
+                        child: _editingHeight
+                            ? _buildInlineEditor(
+                                controller: _heightEditController,
+                                onSave: () {
+                                  _justSaved = true;
+                                  setState(() {
+                                    final parsedH = double.tryParse(
+                                      _heightEditController.text,
+                                    );
+                                    if (parsedH != null && parsedH > 0) {
+                                      _customHeightInches = parsedH;
+                                    }
+                                    _recalculateArea();
+                                    _notifyCubitOfSelection();
+                                  });
+
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                        if (mounted) {
+                                          setState(() {
+                                            _editingHeight = false;
+                                          });
+                                        }
+                                      });
+                                },
+                              )
+                            : _buildDisplayLabel(
+                                value: _customHeightInches,
+                                onTap: () {
+                                  setState(() {
+                                    _heightEditController.text =
+                                        _customHeightInches
+                                            .round()
+                                            .toString();
+                                    _editingHeight = true;
+                                  });
+                                },
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         // Zoom Controls
         Positioned(
           bottom: 24,
@@ -2481,38 +2822,27 @@ class _ImageEditPageState extends State<ImageEditPage>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: const BoxDecoration(color: Colors.transparent),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.00),
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               "${value.round()} in",
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withOpacity(0.7),
-                    offset: const Offset(0, 1),
-                    blurRadius: 3,
-                  ),
-                ],
               ),
             ),
             const SizedBox(width: 4),
-            Icon(
+            const Icon(
               Icons.edit,
               color: Colors.white,
-              size: 11,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withOpacity(0.7),
-                  offset: const Offset(0, 1),
-                  blurRadius: 3,
-                ),
-              ],
+              size: 12,
             ),
           ],
         ),
