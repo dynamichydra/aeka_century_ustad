@@ -24,6 +24,15 @@ import 'package:uuid/uuid.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
+// Extracted Architectural Imports
+import 'package:century_ai/features/camera_pages/models/selection_models.dart';
+import 'package:century_ai/features/camera_pages/services/coordinate_mapper.dart';
+import 'package:century_ai/features/camera_pages/services/measurement_service.dart';
+import 'package:century_ai/features/camera_pages/controllers/history_controller.dart';
+import 'package:century_ai/features/camera_pages/controllers/texture_controller.dart';
+import 'package:century_ai/features/camera_pages/controllers/selection_controller.dart';
+import 'package:century_ai/features/camera_pages/controllers/zoom_controller.dart';
+
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
   final Color? pickedColor;
@@ -55,6 +64,9 @@ class ImageEditPage extends StatefulWidget {
 
 class _ImageEditPageState extends State<ImageEditPage>
     with SingleTickerProviderStateMixin {
+  final SelectionController _selectionController = const SelectionController();
+  late final TextureController _textureController;
+
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _areaController = TextEditingController();
   final TextEditingController _widthEditController = TextEditingController();
@@ -199,140 +211,62 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Size _getViewSize(BuildContext context) {
-    return Size(
+    return CoordinateMapper.getViewSize(
       MediaQuery.of(context).size.width,
-      MediaQuery.of(context).size.height * 0.40,
+      MediaQuery.of(context).size.height,
     );
   }
 
   Rect _getImageRect(BuildContext context) {
-    final viewSize = _getViewSize(context);
-    final double imgW = _originalImageWidth != null
-        ? _originalImageWidth! * _currentDisplayScale
-        : viewSize.width;
-    final double imgH = _originalImageHeight != null
-        ? _originalImageHeight! * _currentDisplayScale
-        : viewSize.height;
-    final double imgL = (viewSize.width - imgW) / 2.0;
-    final double imgT = (viewSize.height - imgH) / 2.0;
-    return Rect.fromLTWH(imgL, imgT, imgW, imgH);
+    return CoordinateMapper.getImageRect(
+      viewSize: _getViewSize(context),
+      originalImageWidth: _originalImageWidth,
+      originalImageHeight: _originalImageHeight,
+      currentDisplayScale: _currentDisplayScale,
+    );
   }
 
   Offset _mapLocalToOriginal(Offset localPos, Size viewSize) {
-    if (_originalImageWidth == null || _originalImageHeight == null) {
-      return localPos;
-    }
-
-    final double imageWidth = _originalImageWidth!;
-    final double imageHeight = _originalImageHeight!;
-    final double viewWidth = viewSize.width;
-    final double viewHeight = viewSize.height;
-
-    // Use the actual contain/min scale
-    final double scale = _currentDisplayScale;
-
-    final double scaledWidth = imageWidth * scale;
-    final double scaledHeight = imageHeight * scale;
-
-    // Offset is usually centered
-    final double offsetX = (viewWidth - scaledWidth) / 2;
-    final double offsetY = (viewHeight - scaledHeight) / 2;
-
-    final double mappedX = (localPos.dx - offsetX) / scale;
-    final double mappedY = (localPos.dy - offsetY) / scale;
-
-    // Clamp to image boundaries
-    return Offset(mappedX.clamp(0, imageWidth), mappedY.clamp(0, imageHeight));
+    return CoordinateMapper.mapLocalToOriginal(
+      localPos: localPos,
+      viewSize: viewSize,
+      originalImageWidth: _originalImageWidth,
+      originalImageHeight: _originalImageHeight,
+      currentDisplayScale: _currentDisplayScale,
+    );
   }
 
   void _zoomIn() {
     final double vpW = MediaQuery.of(context).size.width;
     final double vpH = MediaQuery.of(context).size.height * 0.40;
-    final double currentScale = _transformationController.value
-        .getMaxScaleOnAxis();
-    final double newScale = (currentScale + 0.5).clamp(
-      _currentMinZoomLimit,
-      4.0,
-    );
-
-    // Pan bounds for OverflowBox-rendered image at newScale
-    final double imgDisplayW = _originalImageWidth != null
-        ? _originalImageWidth! * _currentDisplayScale
-        : vpW;
-    final double imgDisplayH = _originalImageHeight != null
-        ? _originalImageHeight! * _currentDisplayScale
-        : vpH;
-    final double imgLeft = (vpW - imgDisplayW) / 2.0;
-    final double imgTop = (vpH - imgDisplayH) / 2.0;
-
-    // Scale around viewport centre
-    final double currentTx = _transformationController.value.storage[12];
-    final double currentTy = _transformationController.value.storage[13];
-    final double ratio = newScale / currentScale;
-    double newTx = (vpW / 2.0) - (vpW / 2.0 - currentTx) * ratio;
-    double newTy = (vpH / 2.0) - (vpH / 2.0 - currentTy) * ratio;
-
-    final double minTx = vpW - newScale * (imgLeft + imgDisplayW);
-    final double maxTx = -newScale * imgLeft;
-    final double minBoundX = minTx.compareTo(maxTx) > 0 ? maxTx : minTx;
-    final double maxBoundX = minTx.compareTo(maxTx) > 0 ? minTx : maxTx;
-    newTx = newTx.clamp(minBoundX, maxBoundX);
-
-    final double minTy = vpH - newScale * (imgTop + imgDisplayH);
-    final double maxTy = -newScale * imgTop;
-    final double minBoundY = minTy.compareTo(maxTy) > 0 ? maxTy : minTy;
-    final double maxBoundY = minTy.compareTo(maxTy) > 0 ? minTy : maxTy;
-    newTy = newTy.clamp(minBoundY, maxBoundY);
-
     setState(() {
-      _transformationController.value = Matrix4.identity()
-        ..translate(newTx, newTy)
-        ..scale(newScale);
+      _transformationController.value = ZoomController.calculateZoomIn(
+        currentMatrix: _transformationController.value,
+        minZoomLimit: _currentMinZoomLimit,
+        maxScale: 4.0,
+        viewportWidth: vpW,
+        viewportHeight: vpH,
+        originalImageWidth: _originalImageWidth,
+        originalImageHeight: _originalImageHeight,
+        displayScale: _currentDisplayScale,
+      );
     });
   }
 
   void _zoomOut() {
     final double vpW = MediaQuery.of(context).size.width;
     final double vpH = MediaQuery.of(context).size.height * 0.40;
-    final double currentScale = _transformationController.value
-        .getMaxScaleOnAxis();
-    final double newScale = (currentScale - 0.5).clamp(
-      _currentMinZoomLimit,
-      4.0,
-    );
-
-    // Pan bounds for OverflowBox-rendered image at newScale
-    final double imgDisplayW = _originalImageWidth != null
-        ? _originalImageWidth! * _currentDisplayScale
-        : vpW;
-    final double imgDisplayH = _originalImageHeight != null
-        ? _originalImageHeight! * _currentDisplayScale
-        : vpH;
-    final double imgLeft = (vpW - imgDisplayW) / 2.0;
-    final double imgTop = (vpH - imgDisplayH) / 2.0;
-
-    final double currentTx = _transformationController.value.storage[12];
-    final double currentTy = _transformationController.value.storage[13];
-    final double ratio = newScale / currentScale;
-    double newTx = (vpW / 2.0) - (vpW / 2.0 - currentTx) * ratio;
-    double newTy = (vpH / 2.0) - (vpH / 2.0 - currentTy) * ratio;
-
-    final double minTx = vpW - newScale * (imgLeft + imgDisplayW);
-    final double maxTx = -newScale * imgLeft;
-    final double minBoundX = minTx.compareTo(maxTx) > 0 ? maxTx : minTx;
-    final double maxBoundX = minTx.compareTo(maxTx) > 0 ? minTx : maxTx;
-    newTx = newTx.clamp(minBoundX, maxBoundX);
-
-    final double minTy = vpH - newScale * (imgTop + imgDisplayH);
-    final double maxTy = -newScale * imgTop;
-    final double minBoundY = minTy.compareTo(maxTy) > 0 ? maxTy : minTy;
-    final double maxBoundY = minTy.compareTo(maxTy) > 0 ? minTy : maxTy;
-    newTy = newTy.clamp(minBoundY, maxBoundY);
-
     setState(() {
-      _transformationController.value = Matrix4.identity()
-        ..translate(newTx, newTy)
-        ..scale(newScale);
+      _transformationController.value = ZoomController.calculateZoomOut(
+        currentMatrix: _transformationController.value,
+        minZoomLimit: _currentMinZoomLimit,
+        maxScale: 4.0,
+        viewportWidth: vpW,
+        viewportHeight: vpH,
+        originalImageWidth: _originalImageWidth,
+        originalImageHeight: _originalImageHeight,
+        displayScale: _currentDisplayScale,
+      );
     });
   }
 
@@ -380,6 +314,11 @@ class _ImageEditPageState extends State<ImageEditPage>
   @override
   void initState() {
     super.initState();
+    _textureController = TextureController(
+      laminateApi: _laminateApi,
+      cacheService: _cacheService,
+      isExterior: widget.isExterior,
+    );
     _sessionId = const Uuid().v4();
     _baseImage = widget.imageFile.path;
     _getImageDimensions();
@@ -449,103 +388,14 @@ class _ImageEditPageState extends State<ImageEditPage>
           )
           .toList();
 
-      // 4. Merge and De-duplicate using record ID, Filename, and Laminate/Timestamp correlation
-      final Map<String, EditRecord> uniqueMap = {};
-      String getFileName(String path) => path.split('/').last.split('?').first;
-
-      // Add Network records first (as the source of truth for remote URLs)
-      for (var net in filteredNetwork) {
-        if (net.id.isNotEmpty) {
-          uniqueMap[net.id] = net;
-        } else {
-          final fallbackKey = getFileName(net.editedImageUrl);
-          uniqueMap[fallbackKey] = net;
-        }
-      }
-
-      // Add Local records only if they aren't already represented in uniqueMap by ID, Filename, or closely-matching metadata
-      for (var record in convertedLocal) {
-        final key = record.id;
-        final fallbackKey = getFileName(record.editedImageUrl);
-
-        // Check if this local record matches any already added network record by ID
-        if (uniqueMap.containsKey(key)) {
-          final existingNet = uniqueMap[key]!;
-          if (existingNet.usedLaminatesJson == null ||
-              existingNet.usedLaminatesJson!.isEmpty) {
-            uniqueMap[key] = EditRecord(
-              id: existingNet.id,
-              originalImageUrl: existingNet.originalImageUrl,
-              editedImageUrl: existingNet.editedImageUrl,
-              ownerId: existingNet.ownerId,
-              furnitureId: existingNet.furnitureId,
-              createdAt: existingNet.createdAt,
-              laminateName: record.laminateName,
-              usedLaminatesJson: record.usedLaminatesJson,
-            );
-          }
-          continue;
-        }
-
-        // Check if this local record matches any already added network record by Filename
-        if (uniqueMap.containsKey(fallbackKey)) {
-          final existingNet = uniqueMap[fallbackKey]!;
-          if (existingNet.usedLaminatesJson == null ||
-              existingNet.usedLaminatesJson!.isEmpty) {
-            uniqueMap[fallbackKey] = EditRecord(
-              id: existingNet.id,
-              originalImageUrl: existingNet.originalImageUrl,
-              editedImageUrl: existingNet.editedImageUrl,
-              ownerId: existingNet.ownerId,
-              furnitureId: existingNet.furnitureId,
-              createdAt: existingNet.createdAt,
-              laminateName: record.laminateName,
-              usedLaminatesJson: record.usedLaminatesJson,
-            );
-          }
-          continue;
-        }
-
-        // Deep/intelligent check to see if this local record represents the same edit as an existing network record (within 5 minutes)
-        bool isDuplicate = false;
-        for (var existingNet in uniqueMap.values) {
-          final diffSeconds = record.createdAt
-              .difference(existingNet.createdAt)
-              .inSeconds
-              .abs();
-          if (diffSeconds < 300) {
-            final netKey = existingNet.id.isNotEmpty
-                ? existingNet.id
-                : getFileName(existingNet.editedImageUrl);
-            if (existingNet.usedLaminatesJson == null ||
-                existingNet.usedLaminatesJson!.isEmpty) {
-              uniqueMap[netKey] = EditRecord(
-                id: existingNet.id,
-                originalImageUrl: existingNet.originalImageUrl,
-                editedImageUrl: existingNet.editedImageUrl,
-                ownerId: existingNet.ownerId,
-                furnitureId: existingNet.furnitureId,
-                createdAt: existingNet.createdAt,
-                laminateName: record.laminateName,
-                usedLaminatesJson: record.usedLaminatesJson,
-              );
-            }
-            isDuplicate = true;
-            break;
-          }
-        }
-
-        if (!isDuplicate) {
-          uniqueMap[key] = record;
-        }
-      }
+      final merged = HistoryController.mergeAndDeduplicate(
+        networkEdits: filteredNetwork,
+        localEdits: convertedLocal,
+      );
 
       if (mounted) {
         setState(() {
-          _userEdits = uniqueMap.values.toList();
-          // Sort by creation time descending (latest first)
-          _userEdits.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
+          _userEdits = merged;
           _isLoadingEdits = false;
           // auto-select first one if available to show comparison
           if (_userEdits.isNotEmpty && _selectedIndicesNotifier.value.isEmpty) {
@@ -569,31 +419,10 @@ class _ImageEditPageState extends State<ImageEditPage>
     });
 
     try {
-      final response = await _laminateApi.fetchBySku(
-        skuId: skuId.trim().toUpperCase(),
-        laminateType: widget.isExterior ? "Exteria" : "Laminates",
-      );
-
+      final list = await _textureController.fetchTexturesBySku(skuId);
       if (mounted) {
         setState(() {
-          if (response != null && response is Map) {
-            if (response['data'] != null) {
-              final data = response['data'];
-              if (data is List) {
-                _apiTextures = data;
-              } else if (data is Map) {
-                _apiTextures = [data];
-              } else {
-                _apiTextures = [];
-              }
-            } else if (response['laminates'] != null) {
-              _apiTextures = response['laminates'] as List<dynamic>;
-            } else {
-              _apiTextures = [];
-            }
-          } else {
-            _apiTextures = [];
-          }
+          _apiTextures = list;
           _isLoadingTextures = false;
         });
       }
@@ -626,62 +455,18 @@ class _ImageEditPageState extends State<ImageEditPage>
   Future<void> _fetchTextures() async {
     if (_selectedCategory == null) return;
 
-    String subCat =
-        (_selectedSubCategory == "All" || _selectedSubCategory == null)
-        ? ""
-        : _selectedSubCategory!;
-
-    // 1. Try cache first BEFORE showing loading state
-    final cached = _cacheService.getCategoryTextures(
-      _selectedCategory!,
-      subCat,
-      itemType: widget.isExterior ? "Exteria" : "Laminates",
-    );
-    if (cached != null && cached.isNotEmpty) {
-      debugPrint("✅ Using cached textures for $_selectedCategory - $subCat");
-      if (mounted) {
-        setState(() {
-          _apiTextures = cached;
-          _isLoadingTextures = false;
-          // Ensure selection is valid
-          // Removed auto-selection of first texture
-        });
-      }
-      return;
-    }
-
-    // 2. Only show loading if NOT in cache
     setState(() {
-      _apiTextures = [];
       _isLoadingTextures = true;
     });
 
     try {
-      final response = await _laminateApi.fetchByCategory(
+      final list = await _textureController.fetchTexturesByCategory(
         category: _selectedCategory!,
-        subcategory: subCat,
-        itemType: widget.isExterior ? "Exteria" : "Laminates",
+        subcategory: _selectedSubCategory,
       );
-
       if (mounted) {
         setState(() {
-          if (response != null &&
-              response is Map &&
-              response['laminates'] != null) {
-            _apiTextures = response['laminates'] as List<dynamic>;
-
-            // Save to cache
-            _cacheService.saveCategoryTextures(
-              _selectedCategory!,
-              subCat,
-              _apiTextures,
-              itemType: widget.isExterior ? "Exteria" : "Laminates",
-            );
-
-            // Removed auto-selection of first texture
-          } else {
-            _apiTextures = [];
-          }
+          _apiTextures = list;
           _isLoadingTextures = false;
         });
       }
@@ -699,62 +484,15 @@ class _ImageEditPageState extends State<ImageEditPage>
   Future<void> _fetchTexturesByColor() async {
     if (_selectedColor == null) return;
 
-    final hex = _selectedColor!["hex"];
-
-    // 1. Try cache first BEFORE showing loading state
-    final cached = _cacheService.getHexTextures(
-      hex,
-      itemType: widget.isExterior ? "Exteria" : "Laminates",
-    );
-    if (cached != null && cached.isNotEmpty) {
-      debugPrint("✅ Using cached textures for hex: $hex");
-      if (mounted) {
-        setState(() {
-          _apiTextures = cached;
-          _isLoadingTextures = false;
-        });
-      }
-      return;
-    }
-
-    // 2. Only show loading if NOT in cache
     setState(() {
-      _apiTextures = [];
       _isLoadingTextures = true;
     });
 
     try {
-      final response = await _laminateApi.fetchByHex(
-        hexCodes: [hex],
-        itemType: widget.isExterior ? "Exteria" : "Laminates",
-      );
-
+      final list = await _textureController.fetchTexturesByColor(_selectedColor!["hex"]);
       if (mounted) {
         setState(() {
-          if (response != null && response is Map && response.isNotEmpty) {
-            if (response.containsKey('laminates') &&
-                response['laminates'] != null) {
-              _apiTextures = response['laminates'] as List<dynamic>;
-            } else {
-              final key = response.keys.first;
-              if (response[key] is List) {
-                _apiTextures = response[key] as List<dynamic>;
-              } else {
-                _apiTextures = [];
-              }
-            }
-
-            // Save to cache
-            if (_apiTextures.isNotEmpty) {
-              _cacheService.saveHexTextures(
-                hex,
-                _apiTextures,
-                itemType: widget.isExterior ? "Exteria" : "Laminates",
-              );
-            }
-          } else {
-            _apiTextures = [];
-          }
+          _apiTextures = list;
           _isLoadingTextures = false;
         });
       }
@@ -769,84 +507,7 @@ class _ImageEditPageState extends State<ImageEditPage>
     }
   }
 
-  static const Map<String, List<String>> _laminateCategoriesMap = {
-    "Abstract Patterns": [
-      "All",
-      "Glitters",
-      "Exclusives",
-      "Wallpaper",
-      "Noir Collection",
-      "Patterns",
-      "Textile",
-      "Cane",
-      "Fabric",
-      "High Gloss",
-      "Adaluxe",
-      "Urban Leather",
-      "Linen",
-      "Tessuto",
-      "Iyo Petal",
-      "Lusio",
-    ],
-    "Woodgrains": [
-      "All",
-      "Woodgrains",
-      "Synchro Series",
-      "Evoke Oak",
-      "Willow Wood",
-      "Exotic Woodgrains",
-      "Pinkora",
-      "Vava Oxford",
-      "Crasse",
-      "Natural Horizontal",
-      "Horizontal",
-      "White Woods",
-      "Acacia",
-      "Ash",
-      "Hickory, Elm & Chestnut",
-      "Maple",
-      "Pine",
-      "Beech & Anegre",
-      "Cherry & Pear",
-      "Sapeli, Mahogany & Rosewood",
-      "Teak",
-      "Walnut",
-      "Oak",
-      "Wenge",
-      "Dyed Wood",
-    ],
-    "Stones": [
-      "All",
-      "Stones",
-      "Archi Concrete",
-      "Slate",
-      "Kering Matne",
-      "Black",
-      "White",
-    ],
-    "Solid": [
-      "All",
-      "Yellow & Orange",
-      "Green",
-      "Grey",
-      "Voilet",
-      "Blue",
-      "Red",
-      "Pink",
-      "Brown & Beige",
-    ],
-  };
-
-  /// Category/subcategory map for Exteria (exterior laminates)
-  static const Map<String, List<String>> _exteriaCategoriesMap = {
-    "Abstract Patterns": ["All", "Cement", "Grunge & Rustic", "Others"],
-    "Woodgrains": ["All", "Dark", "Medium", "Light"],
-    "Stones": ["All", "Marble", "Travertine", "Ivory"],
-    "Solid": ["All", "Green", "White", "Blue", "Yellow", "Grey", "Other"],
-  };
-
-  Map<String, List<String>> get _activeCategoriesMap =>
-      widget.isExterior ? _exteriaCategoriesMap : _laminateCategoriesMap;
+  Map<String, List<String>> get _activeCategoriesMap => _textureController.activeCategoriesMap;
 
   List<String> categoriesRow1 = [""];
   List<String> categoriesRow2 = [""];
@@ -854,7 +515,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   Future<void> getLamCategory() async {
     if (mounted) {
       setState(() {
-        categoriesRow1 = _activeCategoriesMap.keys.toList();
+        categoriesRow1 = _textureController.getCategories();
         if (_selectedCategory == null && categoriesRow1.isNotEmpty) {
           _selectedCategory = categoriesRow1.first;
           _selectedSubCategory = "All";
@@ -871,7 +532,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   void _fetchSubCategoriesFor(String categoryName) {
     if (mounted) {
       setState(() {
-        categoriesRow2 = _activeCategoriesMap[categoryName] ?? [];
+        categoriesRow2 = _textureController.getSubCategories(categoryName);
       });
     }
   }
@@ -1984,140 +1645,7 @@ class _ImageEditPageState extends State<ImageEditPage>
     );
   }
 
-  SelectionMode _hitTestHandles(Offset localPosition) {
-    if (_selection == null) return SelectionMode.none;
 
-    final double left = _selection!.left;
-    final double top = _selection!.top;
-    final double right = _selection!.left + _selection!.width;
-    final double bottom = _selection!.top + _selection!.height;
-    final double width = _selection!.width;
-    final double height = _selection!.height;
-
-    final Offset topLeft = Offset(left, top);
-    final Offset topRight = Offset(right, top);
-    final Offset bottomLeft = Offset(left, bottom);
-    final Offset bottomRight = Offset(right, bottom);
-
-    // Standard touch radius for handles - reduced slightly for better precision
-    const double touchRadius = 30.0;
-
-    // 1. Check corners first (high priority)
-    if ((localPosition - topLeft).distance <= touchRadius) {
-      return SelectionMode.resizeTopLeft;
-    }
-    if ((localPosition - topRight).distance <= touchRadius) {
-      return SelectionMode.resizeTopRight;
-    }
-    if ((localPosition - bottomLeft).distance <= touchRadius) {
-      return SelectionMode.resizeBottomLeft;
-    }
-    if ((localPosition - bottomRight).distance <= touchRadius) {
-      return SelectionMode.resizeBottomRight;
-    }
-
-    // Helper to calculate distance from point to vertical segment
-    double distToVert(Offset p, double targetX, double startY, double endY) {
-      final double clampedY = p.dy.clamp(startY, endY);
-      return (p - Offset(targetX, clampedY)).distance;
-    }
-
-    // Helper to calculate distance from point to horizontal segment
-    double distToHoriz(Offset p, double targetY, double startX, double endX) {
-      final double clampedX = p.dx.clamp(startX, endX);
-      return (p - Offset(clampedX, targetY)).distance;
-    }
-
-    // 2. Check edges (next priority)
-    if (distToVert(localPosition, left, top, bottom) <= touchRadius) {
-      return SelectionMode.resizeLeft;
-    }
-    if (distToVert(localPosition, right, top, bottom) <= touchRadius) {
-      return SelectionMode.resizeRight;
-    }
-    if (distToHoriz(localPosition, top, left, right) <= touchRadius) {
-      return SelectionMode.resizeTop;
-    }
-    if (distToHoriz(localPosition, bottom, left, right) <= touchRadius) {
-      return SelectionMode.resizeBottom;
-    }
-
-    // 3. Check middle area for moving/dragging
-    final bool isInside = localPosition.dx >= left &&
-        localPosition.dx <= right &&
-        localPosition.dy >= top &&
-        localPosition.dy <= bottom;
-
-    if (isInside) {
-      // For large boxes, moving works anywhere that is not near the edges.
-      // For small boxes, we define a small central hub of 32x32 pixels to ensure the user can still grab it.
-      final double centerX = left + width / 2;
-      final double centerY = top + height / 2;
-      
-      final bool isNearCenter = (localPosition.dx - centerX).abs() <= 16.0 &&
-                                (localPosition.dy - centerY).abs() <= 16.0;
-                                
-      final bool isFarFromEdges = (localPosition.dx - left) > touchRadius &&
-                                  (right - localPosition.dx) > touchRadius &&
-                                  (localPosition.dy - top) > touchRadius &&
-                                  (bottom - localPosition.dy) > touchRadius;
-                                  
-      if (isFarFromEdges || isNearCenter) {
-        return SelectionMode.moving;
-      }
-    }
-
-    return SelectionMode.none;
-  }
-
-  bool _isPointInHorizontalOverlay(Offset localPos) {
-    if (_selection == null) return false;
-    final Rect imageRect = _getImageRect(context);
-    final double spaceBelow =
-        imageRect.bottom - (_selection!.top + _selection!.height);
-    final double spaceAbove = _selection!.top - imageRect.top;
-    final bool showHorizontalArrowAtTop =
-        spaceBelow < 50.0 && spaceAbove > spaceBelow;
-
-    final double top = showHorizontalArrowAtTop
-        ? _selection!.top - 42
-        : _selection!.top + _selection!.height + 22;
-
-    double left = _selection!.left + (_selection!.width - 150) / 2;
-    left = left.clamp(imageRect.left + 4, imageRect.right - 154);
-
-    final double right = left + 150;
-    final double bottom = top + 40;
-    return localPos.dx >= left &&
-        localPos.dx <= right &&
-        localPos.dy >= top &&
-        localPos.dy <= bottom;
-  }
-
-  bool _isPointInVerticalOverlay(Offset localPos) {
-    if (_selection == null) return false;
-    final Rect imageRect = _getImageRect(context);
-    final double spaceRight =
-        imageRect.right - (_selection!.left + _selection!.width);
-    final double spaceLeft = _selection!.left - imageRect.left;
-    final bool showVerticalArrowAtLeft =
-        spaceRight < 120.0 && spaceLeft > spaceRight;
-
-    final double top = _selection!.top + (_selection!.height - 40) / 2;
-
-    double left = showVerticalArrowAtLeft
-        ? _selection!.left - 70
-        : _selection!.left + _selection!.width + 22;
-
-    left = left.clamp(imageRect.left + 2, imageRect.right - 75);
-
-    final double right = left + 120;
-    final double bottom = top + 40;
-    return localPos.dx >= left &&
-        localPos.dx <= right &&
-        localPos.dy >= top &&
-        localPos.dy <= bottom;
-  }
 
   Widget _buildImageOverlaySection(ImageEditState state) {
     return Stack(
@@ -2170,14 +1698,25 @@ class _ImageEditPageState extends State<ImageEditPage>
               final double imgB = imageRect.bottom;
 
               if (_selection != null &&
-                  (_isPointInHorizontalOverlay(localPos) ||
-                      _isPointInVerticalOverlay(localPos))) {
+                  (_selectionController.isPointInHorizontalOverlay(
+                        selection: _selection,
+                        localPos: localPos,
+                        imageRect: imageRect,
+                      ) ||
+                      _selectionController.isPointInVerticalOverlay(
+                        selection: _selection,
+                        localPos: localPos,
+                        imageRect: imageRect,
+                      ))) {
                 return;
               }
 
               SelectionMode detectedMode = SelectionMode.none;
               if (_selection != null) {
-                detectedMode = _hitTestHandles(localPos);
+                detectedMode = _selectionController.hitTestHandles(
+                  selection: _selection,
+                  localPosition: localPos,
+                );
               }
 
               double snap(double val, double minBound, double maxBound) {
@@ -2216,192 +1755,56 @@ class _ImageEditPageState extends State<ImageEditPage>
                 _activePointers[event.pointer] = event.position;
 
                 if (oldPos != null && oldPos != event.position) {
-                  final Matrix4 matrix = _transformationController.value
-                      .clone();
-                  final double oldScale = matrix.getMaxScaleOnAxis();
                   final viewSize = Size(
                     MediaQuery.of(context).size.width,
                     MediaQuery.of(context).size.height * 0.40,
                   );
 
-                  double targetScale = oldScale;
-                  double scaleRatio = 1.0;
-
-                  if (_activePointers.length >= 2) {
-                    final keys = _activePointers.keys.toList();
-                    final p1 = _activePointers[keys[0]]!;
-                    final p2 = _activePointers[keys[1]]!;
-                    final double currentDistance = (p1 - p2).distance;
-
-                    if (_initialPointerDistance > 1.0) {
-                      final double scaleFactor =
-                          currentDistance / _initialPointerDistance;
-                      // Clamp at _currentMinZoomLimit: never zoom out below containment level
-                      targetScale = (_initialScale * scaleFactor).clamp(
-                        _currentMinZoomLimit,
-                        4.0,
-                      );
-                      scaleRatio = targetScale / oldScale;
-                    }
-                  }
-
-                  Offset sumNew = Offset.zero;
-                  for (final pos in _activePointers.values) {
-                    sumNew += pos;
-                  }
-                  final Offset newCentroid =
-                      sumNew / _activePointers.length.toDouble();
-
-                  final Offset sumOld = sumNew - event.position + oldPos;
-                  final Offset oldCentroid =
-                      sumOld / _activePointers.length.toDouble();
-
-                  final double oldTx = matrix.storage[12];
-                  final double oldTy = matrix.storage[13];
-
-                  double newTx =
-                      newCentroid.dx - (oldCentroid.dx - oldTx) * scaleRatio;
-                  double newTy =
-                      newCentroid.dy - (oldCentroid.dy - oldTy) * scaleRatio;
-
-                  // Pan bounds: image (rendered via OverflowBox at _currentDisplayScale)
-                  // must always cover the entire viewport — no blank canvas.
-                  final double imgDisplayW = _originalImageWidth != null
-                      ? _originalImageWidth! * _currentDisplayScale
-                      : viewSize.width;
-                  final double imgDisplayH = _originalImageHeight != null
-                      ? _originalImageHeight! * _currentDisplayScale
-                      : viewSize.height;
-                  // OverflowBox centres image in Stack → left edge in Stack coords:
-                  final double imgLeft = (viewSize.width - imgDisplayW) / 2.0;
-                  final double imgTop = (viewSize.height - imgDisplayH) / 2.0;
-
-                  // At TransformationController scale=targetScale:
-                  //   image left viewport position = targetScale*imgLeft + newTx
-                  // Constraint: left ≤ 0 and right ≥ vpW, top ≤ 0 and bottom ≥ vpH
-                  final double minTx =
-                      viewSize.width - targetScale * (imgLeft + imgDisplayW);
-                  final double maxTx = -targetScale * imgLeft;
-                  final double minTy =
-                      viewSize.height - targetScale * (imgTop + imgDisplayH);
-                  final double maxTy = -targetScale * imgTop;
-
-                  final double minBoundX = minTx.compareTo(maxTx) > 0
-                      ? maxTx
-                      : minTx;
-                  final double maxBoundX = minTx.compareTo(maxTx) > 0
-                      ? minTx
-                      : maxTx;
-                  newTx = newTx.clamp(minBoundX, maxBoundX);
-
-                  final double minBoundY = minTy.compareTo(maxTy) > 0
-                      ? maxTy
-                      : minTy;
-                  final double maxBoundY = minTy.compareTo(maxTy) > 0
-                      ? minTy
-                      : maxTy;
-                  newTy = newTy.clamp(minBoundY, maxBoundY);
-
-                  _transformationController.value = Matrix4.identity()
-                    ..translate(newTx, newTy)
-                    ..scale(targetScale);
+                  _transformationController.value = ZoomController.calculatePinchPan(
+                    currentMatrix: _transformationController.value,
+                    activePointers: _activePointers,
+                    eventPosition: event.position,
+                    oldPos: oldPos,
+                    viewSize: viewSize,
+                    originalImageWidth: _originalImageWidth,
+                    originalImageHeight: _originalImageHeight,
+                    displayScale: _currentDisplayScale,
+                    initialPointerDistance: _initialPointerDistance,
+                    initialScale: _initialScale,
+                    minZoomLimit: _currentMinZoomLimit,
+                    maxScale: 4.0,
+                  );
                 }
                 return;
               }
 
               final localPos = event.localPosition;
               final Rect imageRect = _getImageRect(context);
-              final double imgL = imageRect.left;
-              final double imgR = imageRect.right;
-              final double imgT = imageRect.top;
-              final double imgB = imageRect.bottom;
 
-              double snap(double val, double minBound, double maxBound) {
-                return val.clamp(minBound, maxBound);
-              }
 
               if (_mode == SelectionMode.creating && _dragStart != null) {
-                final double currentX = snap(localPos.dx, imgL, imgR);
-                final double currentY = snap(localPos.dy, imgT, imgB);
-
-                final double left = math.min(_dragStart!.dx, currentX);
-                final double top = math.min(_dragStart!.dy, currentY);
-                final double width = (currentX - _dragStart!.dx).abs();
-                final double height = (currentY - _dragStart!.dy).abs();
-
                 setState(() {
-                  _selection = SelectionRect(
-                    left: left,
-                    top: top,
-                    width: width,
-                    height: height,
+                  _selection = _selectionController.createSelection(
+                    dragStart: _dragStart!,
+                    currentPos: localPos,
+                    imageRect: imageRect,
                   );
                 });
               } else if (_mode == SelectionMode.moving && _selection != null) {
-                double newLeft = _selection!.left + event.delta.dx;
-                double newTop = _selection!.top + event.delta.dy;
-
-                newLeft = math.max(
-                  imgL,
-                  math.min(imgR - _selection!.width, newLeft),
-                );
-                newTop = math.max(
-                  imgT,
-                  math.min(imgB - _selection!.height, newTop),
-                );
-
                 setState(() {
-                  _selection!.left = newLeft;
-                  _selection!.top = newTop;
+                  _selection = _selectionController.moveSelection(
+                    selection: _selection!,
+                    delta: event.delta,
+                    imageRect: imageRect,
+                  );
                 });
               } else if (_selection != null && _mode != SelectionMode.none) {
-                double left = _selection!.left;
-                double top = _selection!.top;
-                double right = _selection!.left + _selection!.width;
-                double bottom = _selection!.top + _selection!.height;
-
-                final double localX = snap(localPos.dx, imgL, imgR);
-                final double localY = snap(localPos.dy, imgT, imgB);
-
-                switch (_mode) {
-                  case SelectionMode.resizeTopLeft:
-                    left = math.max(imgL, math.min(right - 10.0, localX));
-                    top = math.max(imgT, math.min(bottom - 10.0, localY));
-                    break;
-                  case SelectionMode.resizeTopRight:
-                    right = math.min(imgR, math.max(left + 10.0, localX));
-                    top = math.max(imgT, math.min(bottom - 10.0, localY));
-                    break;
-                  case SelectionMode.resizeBottomLeft:
-                    left = math.max(imgL, math.min(right - 10.0, localX));
-                    bottom = math.min(imgB, math.max(top + 10.0, localY));
-                    break;
-                  case SelectionMode.resizeBottomRight:
-                    right = math.min(imgR, math.max(left + 10.0, localX));
-                    bottom = math.min(imgB, math.max(top + 10.0, localY));
-                    break;
-                  case SelectionMode.resizeLeft:
-                    left = math.max(imgL, math.min(right - 10.0, localX));
-                    break;
-                  case SelectionMode.resizeRight:
-                    right = math.min(imgR, math.max(left + 10.0, localX));
-                    break;
-                  case SelectionMode.resizeTop:
-                    top = math.max(imgT, math.min(bottom - 10.0, localY));
-                    break;
-                  case SelectionMode.resizeBottom:
-                    bottom = math.min(imgB, math.max(top + 10.0, localY));
-                    break;
-                  default:
-                    break;
-                }
-
                 setState(() {
-                  _selection = SelectionRect(
-                    left: left,
-                    top: top,
-                    width: right - left,
-                    height: bottom - top,
+                  _selection = _selectionController.resizeSelection(
+                    selection: _selection!,
+                    mode: _mode,
+                    localPos: localPos,
+                    imageRect: imageRect,
                   );
                 });
               }
@@ -2416,12 +1819,21 @@ class _ImageEditPageState extends State<ImageEditPage>
                 return;
               }
               final localPos = event.localPosition;
+              final Rect imageRect = _getImageRect(context);
               if (_backupSelection != null && _dragStart != null) {
                 final double dragDistance = (localPos - _dragStart!).distance;
                 if (dragDistance < 5.0 &&
                     !_backupSelection!.rect.contains(localPos) &&
-                    !_isPointInHorizontalOverlay(localPos) &&
-                    !_isPointInVerticalOverlay(localPos)) {
+                    !_selectionController.isPointInHorizontalOverlay(
+                      selection: _selection,
+                      localPos: localPos,
+                      imageRect: imageRect,
+                    ) &&
+                    !_selectionController.isPointInVerticalOverlay(
+                      selection: _selection,
+                      localPos: localPos,
+                      imageRect: imageRect,
+                    )) {
                   setState(() {
                     _selection = null;
                     _mode = SelectionMode.none;
@@ -2470,10 +1882,8 @@ class _ImageEditPageState extends State<ImageEditPage>
               });
 
               if (_selection != null && finishedMode != SelectionMode.none) {
-                final double calculatedW = (_selection!.width / 10.0)
-                    .roundToDouble();
-                final double calculatedH = (_selection!.height / 10.0)
-                    .roundToDouble();
+                final double calculatedW = MeasurementService.calculateWidthInchesFromPixelWidth(_selection!.width);
+                final double calculatedH = MeasurementService.calculateHeightInchesFromPixelHeight(_selection!.height);
 
                 double newW = _customWidthInches;
                 double newH = _customHeightInches;
@@ -2489,10 +1899,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                   newH = calculatedH;
                 }
 
-                final double calculatedArea = (newW * newH) / 144.0;
-                final double systemVal = double.parse(
-                  calculatedArea.toStringAsFixed(1),
-                );
+                final double systemVal = MeasurementService.calculateAreaInSqFt(newW, newH);
 
                 setState(() {
                   _customWidthInches = newW;
@@ -3024,9 +2431,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   void _recalculateArea() {
-    final double calculatedArea =
-        (_customWidthInches * _customHeightInches) / 144.0;
-    final double val = double.parse(calculatedArea.toStringAsFixed(1));
+    final double val = MeasurementService.calculateAreaInSqFt(_customWidthInches, _customHeightInches);
     setState(() {
       _systemArea = val;
       _areaController.text = val.toString();
@@ -4414,35 +3819,7 @@ class _DashedRectPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
-class SelectionRect {
-  double left;
-  double top;
-  double width;
-  double height;
 
-  SelectionRect({
-    required this.left,
-    required this.top,
-    required this.width,
-    required this.height,
-  });
-
-  Rect get rect => Rect.fromLTWH(left, top, width, height);
-}
-
-enum SelectionMode {
-  none,
-  creating,
-  moving,
-  resizeTopLeft,
-  resizeTopRight,
-  resizeBottomLeft,
-  resizeBottomRight,
-  resizeLeft,
-  resizeRight,
-  resizeTop,
-  resizeBottom,
-}
 
 class SelectionPainter extends CustomPainter {
   final Rect? selection;
