@@ -742,72 +742,30 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
     final File imageFile = File(image.path);
 
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const UploadLoaderDialog(),
-    );
+    // Start background upload immediately
+    context.read<UploadCubit>().startUpload(imageFile);
+    // Confirm upload immediately since user selected it from gallery
+    context.read<UploadCubit>().confirm();
 
-    try {
-      final productsCubit = context.read<ProductsCubit>();
-      final newProduct = await productsCubit.uploadProductImageNew(imageFile);
-
-      if (!mounted) return;
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-
-      if (newProduct == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to upload image to server.")),
-        );
-        return;
-      }
-
-      final imageBytes = await compute(
-        (File f) => f.readAsBytesSync(),
-        imageFile,
+    if (!mounted) return;
+    if (widget.fromColorPicker) {
+      context.pushReplacement(
+        AppRoutes.imageColorPicker,
+        extra: {
+          'imageFile': imageFile,
+          'image_id': context.read<UploadCubit>().state.imageId,
+          'originalImage': widget.originalImage,
+        },
       );
-      final imageId = newProduct.id;
-
-      await SelectedImagesRepository.saveImage(
-        SelectedImageData(
-          id: imageId,
-          imageData: imageBytes,
-          imagePath: imageFile.path,
-          category: 'Uploaded Image',
-          subcategory: 'User Upload',
-          selectedAt: DateTime.now(),
-        ),
+    } else {
+      context.pushReplacement(
+        AppRoutes.imageUploadPreview,
+        extra: {
+          'imageFile': imageFile,
+          'image_category': "Uploaded Image",
+          'sub_category': "User Upload",
+        },
       );
-
-      if (!mounted) return;
-      if (widget.fromColorPicker) {
-        context.pushReplacement(
-          AppRoutes.imageColorPicker,
-          extra: {
-            'imageFile': imageFile,
-            'image_id': imageId,
-            'originalImage': widget.originalImage,
-          },
-        );
-      } else {
-        context.pushReplacement(
-          AppRoutes.imagePreview,
-          extra: {
-            'imageFile': imageFile,
-            'image_id': imageId,
-            'image_category': "Uploaded Image",
-            'sub_category': "User Upload",
-          },
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
-      }
     }
   }
 
