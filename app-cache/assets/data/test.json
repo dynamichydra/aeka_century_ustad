@@ -7,7 +7,7 @@
       "optional_all_img": "transaparent/Kitchen/Kitchen.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 1
+      "sort_order": 2
     },
     {
       "id": 101,
@@ -26,7 +26,7 @@
       "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(All)_1.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 2
+      "sort_order": 1
     },
     {
       "id": 201,
@@ -92,7 +92,7 @@
       "optional_all_img": "transaparent/Bed_room/Bedroom_all.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 3
+      "sort_order": 4
     },
     {
       "id": 301,
@@ -159,7 +159,7 @@
       "optional_all_img": "transaparent/Kids_Bed_room/Kids_room.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 4
+      "sort_order": 7
     },
     {
       "id": 401,
@@ -197,7 +197,7 @@
       "optional_all_img": "transaparent/Dining/Dining_all.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 5
+      "sort_order": 3
     },
     {
       "id": 501,
@@ -235,7 +235,7 @@
       "optional_all_img": "transaparent/Study/Study_room_all.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 6
+      "sort_order": 5
     },
     {
       "id": 601,
@@ -273,7 +273,7 @@
       "optional_all_img": "DECO/SENZURA/Bathroom cabinet.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 7
+      "sort_order": 6
     },
     {
       "id": 701,
@@ -376,7 +376,7 @@
       "optional_all_img": "transaparent/Bed_room/Sub_categories/Wardrobe_1.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 1,
+      "sort_order": 2,
       "nested_key": "wardrobe"
     },
     {
@@ -386,7 +386,7 @@
       "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(Chest_drawer)_1.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 2,
+      "sort_order": 5,
       "nested_key": "drawers"
     },
     {
@@ -396,7 +396,7 @@
       "optional_all_img": "transaparent/Kitchen/Subcategories/Kitchen_cabinet.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 3
+      "sort_order": 4
     },
     {
       "id": 1006,
@@ -455,7 +455,7 @@
       "optional_all_img": "transaparent/Study/subcategories/Bookshelves.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 4,
+      "sort_order": 3,
       "nested_key": "bookshelves"
     },
     {
@@ -465,7 +465,7 @@
       "optional_all_img": "transaparent/Dining/Dining_all.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 5
+      "sort_order": 7
     },
     {
       "id": 1014,
@@ -538,7 +538,7 @@
       "optional_all_img": "transaparent/Bed_room/Bedroom_all.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 6
+      "sort_order": 1
     },
     {
       "id": 1022,
@@ -567,7 +567,7 @@
       "optional_all_img": "transaparent/Living_room/Living_room_sub_categories/Living_room_(TV_Unit)_1.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 7
+      "sort_order": 6
     },
     {
       "id": 1026,
@@ -594,7 +594,7 @@
       "optional_all_img": "images/furniture/sofa_2_seater.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 10,
+      "sort_order": 9,
       "nested_key": "sofa"
     },
     {
@@ -604,7 +604,7 @@
       "optional_all_img": "images/furniture/designer_chair.png",
       "parent_id": null,
       "preview_type": "normal",
-      "sort_order": 11,
+      "sort_order": 10,
       "nested_key": "chair"
     },
     {
