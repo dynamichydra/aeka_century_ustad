@@ -1,11 +1,11 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:century_ai/features/camera_pages/presentation/widgets/upload_loader_dialog.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image/image.dart' as img;
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
@@ -488,6 +488,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   bool _isImageTaken = false;
   File? _capturedFile;
   bool _isUploading = false; // NEW: track upload-in-progress state
+  FlashMode _flashMode = FlashMode.off;
 
   @override
   void initState() {
@@ -507,7 +508,58 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     await _controller!.initialize();
     if (!mounted) return;
 
+    // Set initial flash mode on the controller
+    try {
+      await _controller!.setFlashMode(_flashMode);
+    } catch (e) {
+      debugPrint('Error setting initial flash mode: $e');
+    }
+
     setState(() => _isReady = true);
+  }
+
+  Future<void> _toggleFlash() async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    FlashMode nextMode;
+    switch (_flashMode) {
+      case FlashMode.off:
+        nextMode = FlashMode.auto;
+        break;
+      case FlashMode.auto:
+        nextMode = FlashMode.always;
+        break;
+      case FlashMode.always:
+        nextMode = FlashMode.torch;
+        break;
+      case FlashMode.torch:
+        nextMode = FlashMode.off;
+        break;
+    }
+
+    try {
+      await _controller!.setFlashMode(nextMode);
+      if (mounted) {
+        setState(() {
+          _flashMode = nextMode;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error toggling flash mode: $e');
+    }
+  }
+
+  IconData _getFlashIcon() {
+    switch (_flashMode) {
+      case FlashMode.off:
+        return Icons.flash_off_rounded;
+      case FlashMode.auto:
+        return Icons.flash_auto_rounded;
+      case FlashMode.always:
+        return Icons.flash_on_rounded;
+      case FlashMode.torch:
+        return Icons.highlight_rounded;
+    }
   }
 
   @override
@@ -516,81 +568,87 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     super.dispose();
   }
 
-  Future<File> _cropToOverlay(File imageFile, Size screenSize) async {
+  /// Crops the captured image to the overlay area using native dart:ui Canvas.
+  /// This is much faster than the `image` package approach.
+  Future<File> _cropToOverlay(
+    File imageFile,
+    Size screenSize,
+  ) async {
     try {
       final bytes = await imageFile.readAsBytes();
       final filePath = imageFile.path;
 
-      final croppedBytes = await compute(
-        (Map<String, dynamic> params) {
-          final Uint8List imgBytes = params['bytes'];
-          final double screenW = params['screenW'];
-          final double screenH = params['screenH'];
-          final String path = params['path'];
+      // Decode using native dart:ui codec (GPU-accelerated)
+      final ui.Codec codec = await ui.instantiateImageCodec(bytes);
+      final ui.FrameInfo frameInfo = await codec.getNextFrame();
+      final ui.Image srcImage = frameInfo.image;
 
-          final image = img.decodeImage(imgBytes);
-          if (image == null) return imgBytes;
+      final double imgW = srcImage.width.toDouble();
+      final double imgH = srcImage.height.toDouble();
+      final double screenW = screenSize.width;
+      final double screenH = screenSize.height;
 
-          final orientedImage = img.bakeOrientation(image);
+      // BoxFit.cover math: find scale so image fills entire screen
+      final double scale = (imgW / screenW) > (imgH / screenH)
+          ? imgH / screenH
+          : imgW / screenW;
 
-          final double imgW = orientedImage.width.toDouble();
-          final double imgH = orientedImage.height.toDouble();
+      final double displayedW = imgW / scale;
+      final double displayedH = imgH / scale;
 
-          final double scale = (imgW / screenW) > (imgH / screenH)
-              ? imgH / screenH
-              : imgW / screenW;
+      final double offsetX = (screenW - displayedW) / 2;
+      final double offsetY = (screenH - displayedH) / 2;
 
-          final double displayedW = imgW / scale;
-          final double displayedH = imgH / scale;
+      // Centered overlay rect matching ratio of edit page
+      final double rectWidth = screenW - 32.0;
+      final double ratio = screenW / (screenH * 0.40);
+      final double rectHeight = rectWidth / ratio;
+      final double rectLeft = 16.0;
+      final double rectTop = (screenH - rectHeight) / 2;
 
-          final double offsetX = (screenW - displayedW) / 2;
-          final double offsetY = (screenH - displayedH) / 2;
+      // Map screen coordinates to image pixel space
+      final double cropX =
+          ((rectLeft - offsetX) * scale).clamp(0.0, imgW - 1.0);
+      final double cropY =
+          ((rectTop - offsetY) * scale).clamp(0.0, imgH - 1.0);
+      final double cropW = (rectWidth * scale).clamp(1.0, imgW - cropX);
+      final double cropH = (rectHeight * scale).clamp(1.0, imgH - cropY);
 
-          final double rectLeft = 20.0;
-          final double rectTop = screenH * 0.22;
-          final double rectWidth = screenW - 40.0;
-          final double rectHeight = screenH * 0.45;
+      // Use native Canvas to draw the cropped region
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
+      final Canvas canvas = Canvas(recorder);
 
-          final int cropX = (((rectLeft - offsetX) * scale)).round().clamp(
-            0,
-            orientedImage.width - 1,
-          );
-          final int cropY = (((rectTop - offsetY) * scale)).round().clamp(
-            0,
-            orientedImage.height - 1,
-          );
-          final int cropW = ((rectWidth * scale)).round().clamp(
-            1,
-            orientedImage.width - cropX,
-          );
-          final int cropH = ((rectHeight * scale)).round().clamp(
-            1,
-            orientedImage.height - cropY,
-          );
+      final Rect src = Rect.fromLTWH(cropX, cropY, cropW, cropH);
+      final Rect dst = Rect.fromLTWH(0, 0, cropW, cropH);
 
-          final cropped = img.copyCrop(
-            orientedImage,
-            x: cropX,
-            y: cropY,
-            width: cropW,
-            height: cropH,
-          );
-
-          return Uint8List.fromList(
-            img.encodeNamedImage(path, cropped) ?? img.encodeJpg(cropped),
-          );
-        },
-        {
-          'bytes': bytes,
-          'screenW': screenSize.width,
-          'screenH': screenSize.height,
-          'path': filePath,
-        },
+      canvas.drawImageRect(
+        srcImage,
+        src,
+        dst,
+        Paint()..filterQuality = FilterQuality.high,
       );
 
-      final croppedFile = File(filePath);
-      await croppedFile.writeAsBytes(croppedBytes);
-      return croppedFile;
+      final ui.Picture picture = recorder.endRecording();
+      final ui.Image croppedImage = await picture.toImage(
+        cropW.round(),
+        cropH.round(),
+      );
+
+      final ByteData? byteData = await croppedImage.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+
+      srcImage.dispose();
+      croppedImage.dispose();
+
+      if (byteData != null) {
+        final Uint8List croppedBytes = byteData.buffer.asUint8List();
+        final croppedFile = File(filePath);
+        await croppedFile.writeAsBytes(croppedBytes);
+        return croppedFile;
+      }
+
+      return imageFile;
     } catch (e) {
       debugPrint('Error cropping image to overlay: $e');
       return imageFile;
@@ -612,7 +670,8 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
     try {
       final screenSize = MediaQuery.of(context).size;
-      final croppedFile = await _cropToOverlay(imageFile, screenSize);
+      final croppedFile =
+          await _cropToOverlay(imageFile, screenSize);
 
       if (!mounted) return;
       setState(() {
@@ -803,10 +862,41 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
+          // 📷 Camera Preview or Captured Image Preview
           Positioned.fill(
             child: RepaintBoundary(
               child: _isImageTaken && _capturedFile != null
-                  ? Image.file(_capturedFile!, fit: BoxFit.contain)
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        final size = constraints.biggest;
+                        final double rectWidth = size.width - 32.0;
+                        final double ratio = size.width / (size.height * 0.40);
+                        final double rectHeight = rectWidth / ratio;
+                        final double rectLeft = 16.0;
+                        final double rectTop = (size.height - rectHeight) / 2;
+
+                        return Container(
+                          color: Colors.white,
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                left: rectLeft,
+                                top: rectTop,
+                                width: rectWidth,
+                                height: rectHeight,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.file(
+                                    _capturedFile!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )
                   : LayoutBuilder(
                       builder: (context, constraints) {
                         final size = constraints.biggest;
@@ -859,8 +949,8 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                 ),
                 if (!_isImageTaken)
                   IconButton(
-                    icon: Icon(Icons.flash_off_rounded, color: Colors.white),
-                    onPressed: () => {},
+                    icon: Icon(_getFlashIcon(), color: Colors.white),
+                    onPressed: _toggleFlash,
                   ),
               ],
             ),
@@ -1016,18 +1106,27 @@ class _CaptureOverlay extends StatelessWidget {
 }
 
 class _OverlayPainter extends CustomPainter {
+  _OverlayPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
     final dimPaint = Paint()..color = Colors.black.withOpacity(0.6);
 
+    // Centered overlay rect matching ratio of edit page
+    final double rectWidth = size.width - 32.0;
+    final double ratio = size.width / (size.height * 0.40);
+    final double rectHeight = rectWidth / ratio;
+    final double rectLeft = 16.0;
+    final double rectTop = (size.height - rectHeight) / 2;
+
     final captureRect = Rect.fromLTWH(
-      20,
-      size.height * 0.22,
-      size.width - 40,
-      size.height * 0.45,
+      rectLeft,
+      rectTop,
+      rectWidth,
+      rectHeight,
     );
 
-    // Draw 4 rectangles around the capture area instead of using saveLayer + clear
+    // Draw dim rectangles around the capture area
     // Top
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, captureRect.top), dimPaint);
     // Bottom
@@ -1056,7 +1155,7 @@ class _OverlayPainter extends CustomPainter {
       dimPaint,
     );
 
-    // White border
+    // White border with rounded corners around capture area
     canvas.drawRRect(
       RRect.fromRectAndRadius(captureRect, const Radius.circular(16)),
       Paint()
@@ -1067,5 +1166,5 @@ class _OverlayPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_) => false;
+  bool shouldRepaint(covariant _OverlayPainter oldDelegate) => false;
 }
