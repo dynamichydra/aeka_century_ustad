@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:century_ai/core/constants/api_constants.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart' as p;
+import 'package:http_parser/http_parser.dart';
 import '../../core/services/image_preprocessor.dart';
 
 class ApiService {
@@ -221,13 +223,23 @@ class ApiService {
 
   Future<dynamic> uploadFurniture(File file) async {
     final processedFile = await ImagePreprocessor.preprocessImage(file);
-    String fileName = processedFile.path.split('/').last;
+    String fileName = p.basename(processedFile.path);
     FormData formData = FormData.fromMap({
-      "file": await MultipartFile.fromFile(processedFile.path, filename: fileName),
+      "file": await MultipartFile.fromFile(
+        processedFile.path,
+        filename: fileName,
+        contentType: MediaType('image', 'jpeg'),
+      ),
     });
 
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.upload} | POST multipart/form-data (File: $fileName)');
-    final response = await _dio.post(TApiConstants.upload, data: formData);
+    final response = await _dio.post(
+      TApiConstants.upload,
+      data: formData,
+      options: Options(
+        contentType: 'multipart/form-data',
+      ),
+    );
     final data = response.data;
 
     // API now returns a List<dynamic> instead of a single object
@@ -284,9 +296,13 @@ class ApiService {
     String? applicationType,
   }) async {
     final processedFile = await ImagePreprocessor.preprocessImage(file);
-    String fileName = processedFile.path.split('/').last;
+    String fileName = p.basename(processedFile.path);
     final map = <String, dynamic>{
-      "file": await MultipartFile.fromFile(processedFile.path, filename: fileName),
+      "file": await MultipartFile.fromFile(
+        processedFile.path,
+        filename: fileName,
+        contentType: MediaType('image', 'jpeg'),
+      ),
     };
     if (product != null) map['product'] = product;
     if (furnitureCategory != null) map['furnitureCategory'] = furnitureCategory;
@@ -300,6 +316,9 @@ class ApiService {
     final response = await _dio.post(
       TApiConstants.searchSimilar,
       data: formData,
+      options: Options(
+        contentType: 'multipart/form-data',
+      ),
     );
     return response.data as List<dynamic>;
   }
