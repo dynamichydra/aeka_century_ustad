@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:century_ai/features/camera_pages/presentation/widgets/upload_loader_dialog.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -645,9 +646,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: TColors.primary),
-      ),
+      builder: (context) => const UploadLoaderDialog(),
     );
 
     try {
@@ -724,9 +723,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: TColors.primary),
-      ),
+      builder: (context) => const UploadLoaderDialog(),
     );
 
     try {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/home/home_cubit.dart';
+import 'package:century_ai/features/camera_pages/presentation/widgets/upload_loader_dialog.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:century_ai/common/widgets/exterior_interior/exterior_interior.dart';
 import 'package:century_ai/common/widgets/horizontal_icon_grid/circular_icon_item.dart';
@@ -558,12 +559,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final File imageFile = File(image.path);
 
     // Show loading dialog
-    showDialog(
+   showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: TColors.primary),
-      ),
+      builder: (context) => const UploadLoaderDialog(),
     );
 
     try {
