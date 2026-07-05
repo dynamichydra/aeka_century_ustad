@@ -2,6 +2,7 @@ import 'package:century_ai/data/repositories/auth_repository.dart';
 import 'package:century_ai/data/repositories/product_repository.dart';
 import 'package:century_ai/data/repositories/tips_repository.dart';
 import 'package:century_ai/data/repositories/user_profile_repository.dart';
+import 'package:century_ai/data/repositories/upload_repository.dart';
 import 'package:century_ai/data/services/api_service.dart';
 
 class AppDependencies {
@@ -10,6 +11,7 @@ class AppDependencies {
   final UserProfileRepository userProfileRepository;
   final ProductRepository productRepository;
   final TipsRepository tipsRepository;
+  final UploadRepository uploadRepository;
 
   AppDependencies._({
     required this.apiService,
@@ -17,6 +19,7 @@ class AppDependencies {
     required this.userProfileRepository,
     required this.productRepository,
     required this.tipsRepository,
+    required this.uploadRepository,
   });
 
   factory AppDependencies.create() {
@@ -27,6 +30,7 @@ class AppDependencies {
       userProfileRepository: UserProfileRepository(api),
       productRepository: ProductRepository(api),
       tipsRepository: TipsRepository(api),
+      uploadRepository: UploadRepository(api),
     );
   }
 }

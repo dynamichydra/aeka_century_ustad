@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
+import 'package:century_ai/cubit/upload/upload_cubit.dart';
 import 'package:century_ai/db/models/selected_image_data.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
 import 'package:image_picker/image_picker.dart';
@@ -656,7 +657,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   }
 
   /// Step 1: just capture + crop, then show for confirmation.
-  /// No upload happens here anymore.
+  /// Start upload in background immediately.
   Future<void> _capture() async {
     if (!_controller!.value.isInitialized) return;
 
@@ -679,6 +680,11 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         _capturedFile = croppedFile;
         _isUploading = false;
       });
+
+      // Start upload automatically in the background
+      if (mounted) {
+        context.read<UploadCubit>().startUpload(croppedFile);
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isUploading = false);
@@ -691,82 +697,42 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
   /// User tapped "Retake" — discard captured image, go back to live preview.
   void _retakePhoto() {
+    context.read<UploadCubit>().reset();
     setState(() {
       _isImageTaken = false;
       _capturedFile = null;
     });
   }
 
-  /// Step 2: user confirmed — now actually upload + save + navigate.
+  /// Step 2: user confirmed — navigate instantly to ImagePreviewPage.
   Future<void> _confirmPhoto() async {
     if (_capturedFile == null) return;
     final croppedFile = _capturedFile!;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const UploadLoaderDialog(),
-    );
+    // Confirm upload locally in the Cubit (will auto-save to SQLite when complete)
+    context.read<UploadCubit>().confirm();
 
-    try {
-      final productsCubit = context.read<ProductsCubit>();
-      final newProduct = await productsCubit.uploadProductImageNew(croppedFile);
-
-      if (!mounted) return;
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-
-      if (newProduct == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to upload image to server.")),
-        );
-        return;
-      }
-
-      final imageBytes = await compute(
-        (File f) => f.readAsBytesSync(),
-        croppedFile,
+    if (!mounted) return;
+    if (widget.fromColorPicker) {
+      context.pushReplacement(
+        AppRoutes.imageColorPicker,
+        extra: {
+          'imageFile': croppedFile,
+          'image_id': context.read<UploadCubit>().state.imageId,
+          'originalImage': widget.originalImage,
+        },
       );
-      final imageId = newProduct.id;
-
-      await SelectedImagesRepository.saveImage(
-        SelectedImageData(
-          id: imageId,
-          imageData: imageBytes,
-          imagePath: croppedFile.path,
-          category: 'Uploaded Image',
-          subcategory: 'User Upload',
-          selectedAt: DateTime.now(),
-        ),
+    } else {
+      context.pushReplacement(
+        AppRoutes.imagePreview,
+        extra: {
+          'imageFile': croppedFile,
+          'image_category': "Uploaded Image",
+          'sub_category': "User Upload",
+          'image_id': context.read<UploadCubit>().state.imageId,
+          'applicationType': context.read<UploadCubit>().state.applicationType,
+        },
       );
-
-      if (!mounted) return;
-      if (widget.fromColorPicker) {
-        context.pushReplacement(
-          AppRoutes.imageColorPicker,
-          extra: {
-            'imageFile': croppedFile,
-            'image_id': imageId,
-            'originalImage': widget.originalImage,
-          },
-        );
-      } else {
-        context.pushReplacement(
-          AppRoutes.imagePreview,
-          extra: {
-            'imageFile': croppedFile,
-            'image_id': imageId,
-            'image_category': "Uploaded Image",
-            'sub_category': "User Upload",
-          },
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
-      }
     }
   }
 

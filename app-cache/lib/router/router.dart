@@ -111,7 +111,7 @@ final GoRouter router = GoRouter(
             sub_category: subCategory,
             image_id: image_id,
             applicationType: applicationType,
-          ),
+          ), 
         );
       },
     ),

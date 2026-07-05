@@ -3,11 +3,13 @@ import 'package:century_ai/cubit/auth/auth_cubit.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/cubit/profile/profile_cubit.dart';
 import 'package:century_ai/cubit/tips/tips_cubit.dart';
+import 'package:century_ai/cubit/upload/upload_cubit.dart';
 import 'package:century_ai/db/db_core.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
 import 'package:century_ai/router/router.dart';
 import 'package:century_ai/core/theme/theme.dart';
+import 'package:century_ai/data/repositories/upload_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:century_ai/utils/helpers/network_manager.dart';
@@ -42,6 +44,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: _deps.userProfileRepository),
         RepositoryProvider.value(value: _deps.productRepository),
         RepositoryProvider.value(value: _deps.tipsRepository),
+        RepositoryProvider.value(value: _deps.uploadRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -52,6 +55,7 @@ class MyApp extends StatelessWidget {
           BlocProvider(create: (_) => TipsCubit(_deps.tipsRepository)..loadTips()),
           BlocProvider(create: (_) => AuthCubit(_deps.authRepository)),
           BlocProvider(create: (_) => ProfileCubit(_deps.userProfileRepository)),
+          BlocProvider(create: (context) => UploadCubit(context.read<UploadRepository>())),
         ],
         child: BlocListener<NetworkCubit, List<ConnectivityResult>>(
           listener: (context, state) {

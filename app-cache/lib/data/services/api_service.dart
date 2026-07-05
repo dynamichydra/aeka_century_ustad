@@ -260,6 +260,40 @@ class ApiService {
     return data;
   }
 
+  // --- Background Upload API ---
+
+  Future<Map<String, dynamic>> initUpload() async {
+    debugPrint('📡 API_LOG: initUpload POST ${TApiConstants.baseUrl}/upload/init');
+    final response = await _dio.post('/upload/init');
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<void> uploadBinary(String uploadUrl, File file) async {
+    debugPrint('📡 API_LOG: uploadBinary PUT to $uploadUrl');
+    final bytes = await file.readAsBytes();
+    await _dio.put(
+      uploadUrl,
+      data: Stream.fromIterable([bytes]),
+      options: Options(
+        headers: {
+          Headers.contentTypeHeader: 'application/octet-stream',
+          Headers.contentLengthHeader: bytes.length,
+        },
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> completeUpload(String uploadId, String storagePath) async {
+    final url = '/upload/$uploadId/complete';
+    final data = {'storagePath': storagePath};
+    debugPrint('📡 API_LOG: completeUpload POST ${TApiConstants.baseUrl}$url | Data: $data');
+    final response = await _dio.post(
+      url,
+      data: data,
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
 
   Future<List<dynamic>> searchFurnitureByText(
     String query, {
