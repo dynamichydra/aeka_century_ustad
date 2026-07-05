@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/cubit/products/products_state.dart';
-import 'package:century_ai/cubit/upload/upload_cubit.dart';
-import 'package:century_ai/cubit/upload/upload_state.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -60,26 +58,16 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-
-    final uploadState = context.read<UploadCubit>().state;
-    final bool isThisFile = uploadState.croppedFile?.path == widget.imageFile.path;
-    final effectiveImageId = (isThisFile && uploadState.uploadCompleted)
-        ? uploadState.imageId
-        : widget.image_id;
-    final effectiveAppType = (isThisFile && uploadState.uploadCompleted)
-        ? uploadState.applicationType
-        : widget.applicationType;
-
     _currentFile = widget.imageFile;
-    _currentApplicationType = effectiveAppType;
+    _currentApplicationType = widget.applicationType;
     _currentSelection = SelectedImageData(
-      id: effectiveImageId ?? _buildImageIdFromPath(widget.imageFile.path),
+      id: widget.image_id ?? _buildImageIdFromPath(widget.imageFile.path),
       imageData: const <int>[],
       imagePath: widget.imageFile.path,
       category: widget.image_category,
       subcategory: widget.sub_category,
       selectedAt: DateTime.now(),
-      applicationType: effectiveAppType,
+      applicationType: widget.applicationType,
     );
     _initializePreview();
   }
@@ -381,32 +369,11 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<UploadCubit, UploadState>(
-      listener: (context, state) {
-        final bool isThisFile = state.croppedFile?.path == widget.imageFile.path;
-        if (isThisFile && state.uploadCompleted && state.imageId != null) {
-          if (_currentSelection?.id != state.imageId) {
-            setState(() {
-              _currentApplicationType = state.applicationType;
-              _currentSelection = SelectedImageData(
-                id: state.imageId!,
-                imageData: const <int>[],
-                imagePath: widget.imageFile.path,
-                category: widget.image_category,
-                subcategory: widget.sub_category,
-                selectedAt: DateTime.now(),
-                applicationType: state.applicationType,
-              );
-            });
-            _refreshSimilarProducts();
-          }
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8F8F8),
-        body: SafeArea(
-          child: Stack(
-            children: [
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
+      body: SafeArea(
+        child: Stack(
+          children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -646,159 +613,98 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                   ),
                 ),
               ],
-            ),
-            BlocBuilder<UploadCubit, UploadState>(
-              builder: (context, uploadState) {
-                final bool isThisFile = uploadState.croppedFile?.path == widget.imageFile.path;
-                final bool isUploading = isThisFile && uploadState.uploadInProgress;
-                final bool isEditDisabled = isUploading || (_currentApplicationType == null || _currentApplicationType!.isEmpty);
-
-                return Positioned(
-                  bottom: 30,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(isEditDisabled ? 0.02 : 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
+            ),            Positioned(
+              bottom: 30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: 120,
+                    height: 44,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.zero,
+                        elevation: 0,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: _handleScrollEdit,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 8,
+                        children: [
+                          Image.asset(
+                            'assets/icons/app_icons/edit.png',
+                            height: 14,
+                          ),
+                          const Text(
+                            'Edit',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
-                      child: SizedBox(
-                        width: 120,
-                        height: 44,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isEditDisabled ? Colors.grey.shade200 : Colors.white,
-                            foregroundColor: isEditDisabled ? Colors.black38 : Colors.black,
-                            padding: EdgeInsets.zero,
-                            elevation: 0,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: isEditDisabled ? null : _handleScrollEdit,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            spacing: 8,
-                            children: [
-                              Opacity(
-                                opacity: isEditDisabled ? 0.4 : 1.0,
-                                child: Image.asset(
-                                  'assets/icons/app_icons/edit.png',
-                                  height: 14,
-                                ),
-                              ),
-                              const Text(
-                                'Edit',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                     ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildPreviewImage() {
     if (_isImageLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    Widget imageWidget = const SizedBox.shrink();
     if (_currentFile != null) {
-      imageWidget = Image.file(
+      return Image.file(
         _currentFile!,
         width: double.infinity,
         fit: BoxFit.cover,
         cacheWidth: 800, // Optimize memory for preview
       );
-    } else if (_currentAsset != null && _currentAsset!.isNotEmpty) {
-      imageWidget = Image.asset(
+    }
+
+    if (_currentAsset != null && _currentAsset!.isNotEmpty) {
+      return Image.asset(
         _currentAsset!,
         width: double.infinity,
         fit: BoxFit.cover,
       );
-    } else {
-      imageWidget = Container(
-        color: Colors.grey.shade200,
-        alignment: Alignment.center,
-        child: const Text(
-          'Image not available',
-          style: TextStyle(
-            color: Colors.black54,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
     }
 
-    return BlocBuilder<UploadCubit, UploadState>(
-      builder: (context, uploadState) {
-        final bool isThisFile = uploadState.croppedFile?.path == widget.imageFile.path;
-        final bool isUploading = isThisFile && uploadState.uploadInProgress;
-        
-        if (isUploading) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              imageWidget,
-              Positioned(
-                bottom: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Preparing image...',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-        return imageWidget;
-      },
+    return Container(
+      color: Colors.grey.shade200,
+      alignment: Alignment.center,
+      child: const Text(
+        'Image not available',
+        style: TextStyle(
+          color: Colors.black54,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 

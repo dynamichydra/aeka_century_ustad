@@ -43,7 +43,7 @@ class UploadCubit extends Cubit<UploadState> {
       final completeData = await _uploadRepository.completeUpload(uploadId, storagePath);
       if (_currentSessionToken != sessionToken) return;
 
-      final imageId = completeData['imageId']?.toString();
+      final imageId = (completeData['imageId'] ?? completeData['itemId'] ?? completeData['furnitureId'] ?? completeData['id'])?.toString();
       final applicationType = completeData['applicationType']?.toString();
 
       emit(state.copyWith(

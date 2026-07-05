@@ -291,7 +291,17 @@ class ApiService {
       url,
       data: data,
     );
-    return response.data as Map<String, dynamic>;
+    final responseData = response.data;
+    if (responseData is List) {
+      if (responseData.isEmpty) return {};
+      final highConfidenceItem = responseData.firstWhere(
+        (item) => item is Map && item['confidence'] == 'high',
+        orElse: () => null,
+      );
+      final chosenItem = highConfidenceItem ?? responseData.first;
+      return Map<String, dynamic>.from(chosenItem as Map);
+    }
+    return responseData as Map<String, dynamic>;
   }
 
 

@@ -5,3 +5,4 @@ export 'presentation/pages/image_edit_page.dart';
 export 'presentation/pages/image_edit_scroll_page.dart';
 export 'presentation/pages/image_finalize_page.dart';
 export 'presentation/pages/image_preview_page.dart';
+export 'presentation/pages/image_upload_preview_page.dart';

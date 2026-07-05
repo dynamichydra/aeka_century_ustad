@@ -724,13 +724,11 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       );
     } else {
       context.pushReplacement(
-        AppRoutes.imagePreview,
+        AppRoutes.imageUploadPreview,
         extra: {
           'imageFile': croppedFile,
           'image_category': "Uploaded Image",
           'sub_category': "User Upload",
-          'image_id': context.read<UploadCubit>().state.imageId,
-          'applicationType': context.read<UploadCubit>().state.applicationType,
         },
       );
     }

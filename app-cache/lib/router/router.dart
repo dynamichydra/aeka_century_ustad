@@ -116,6 +116,37 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
+      path: AppRoutes.imageUploadPreview,
+      name: "Image Upload Preview",
+      builder: (context, state) {
+        File? imageFile;
+        String imageCategory = "";
+        String? subCategory;
+
+        if (state.extra is Map<String, dynamic>) {
+          final data = state.extra as Map<String, dynamic>;
+          imageFile = data["imageFile"] as File?;
+          imageCategory = data["image_category"] as String? ?? "";
+          subCategory = data["sub_category"] as String?;
+        }
+
+        if (imageFile == null) {
+          return Scaffold(
+            body: Center(child: Text("Error: No image provided")),
+          );
+        }
+
+        return BlocProvider(
+          create: (context) => ProductsCubit(context.read<ProductRepository>()),
+          child: ImageUploadPreviewPage(
+            imageFile: imageFile,
+            image_category: imageCategory,
+            sub_category: subCategory,
+          ),
+        );
+      },
+    ),
+    GoRoute(
       path: AppRoutes.imageEdit,
       name: "Image Edit Page",
       builder: (context, state) {
