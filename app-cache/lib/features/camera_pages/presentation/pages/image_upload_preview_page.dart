@@ -472,126 +472,164 @@ class _ImageUploadPreviewPageState extends State<ImageUploadPreviewPage> {
                         children: [
                           BlocBuilder<ProductsCubit, ProductsState>(
                             builder: (context, state) {
-                              if (state.isLoading && state.products.isEmpty) {
-                                return GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 3,
-                                        crossAxisSpacing: 12,
-                                        mainAxisSpacing: 12,
-                                        childAspectRatio: 1.0,
-                                      ),
-                                  itemCount: 6,
-                                  itemBuilder: (context, index) => Shimmer.fromColors(
-                                    baseColor: Colors.grey[300]!,
-                                    highlightColor: Colors.grey[100]!,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
+                              return BlocBuilder<UploadCubit, UploadState>(
+                                builder: (context, uploadState) {
+                                  final bool isThisFile = uploadState.croppedFile?.path == widget.imageFile.path;
+                                  final bool isUploading = isThisFile && uploadState.uploadInProgress;
 
-                              final products = state.products;
-
-                              if (products.isEmpty && !state.isLoading) {
-                                return const Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  child: Text(
-                                    'No related images to explore.',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              return Column(
-                                children: [
-                                  GridView.builder(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 3,
-                                          crossAxisSpacing: 12,
-                                          mainAxisSpacing: 12,
-                                          childAspectRatio: 1.0,
-                                        ),
-                                    itemCount: products.length,
-                                    itemBuilder: (context, index) {
-                                      final product = products[index];
-                                      return GestureDetector(
-                                        onTap: () => _selectNetworkProduct(product),
-                                        child: Stack(
+                                  if (isUploading) {
+                                    return Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 40),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(4),
-                                              child: CachedNetworkImage(
-                                                imageUrl: product.image,
-                                                fit: BoxFit.cover,
-                                                height: double.infinity,
-                                                width: double.infinity,
-                                                memCacheWidth: 300,
-                                                placeholder: (context, url) =>
-                                                    Shimmer.fromColors(
-                                                      baseColor: Colors.grey[300]!,
-                                                      highlightColor: Colors.grey[100]!,
-                                                      child: Container(
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                errorWidget: (context, url, error) =>
-                                                    Container(
-                                                      color: Colors.grey[300],
-                                                      child: const Icon(
-                                                        Icons.error_outline,
-                                                      ),
-                                                    ),
+                                            const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.0,
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
                                               ),
                                             ),
-                                            if (product.isTrending)
-                                              const Positioned(
-                                                top: 8,
-                                                left: 8,
-                                                child: Icon(
-                                                  Icons.local_fire_department,
-                                                  color: Colors.red,
-                                                  size: 16,
-                                                ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              'Preparing image...',
+                                              style: TextStyle(
+                                                color: Colors.grey[700],
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
                                               ),
-                                            if (product.isFavorite)
-                                              const Positioned(
-                                                top: 8,
-                                                right: 8,
-                                                child: Icon(
-                                                  Icons.favorite,
-                                                  color: Colors.red,
-                                                  size: 16,
-                                                ),
-                                              ),
+                                            ),
                                           ],
                                         ),
-                                      );
-                                    },
-                                  ),
-                                  if (state.isLoadingMore)
-                                    const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 16),
-                                      child: Center(child: CircularProgressIndicator()),
-                                    ),
-                                ],
+                                      ),
+                                    );
+                                  }
+
+                                  if (state.isLoading && state.products.isEmpty) {
+                                    return GridView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 3,
+                                            crossAxisSpacing: 12,
+                                            mainAxisSpacing: 12,
+                                            childAspectRatio: 1.0,
+                                          ),
+                                      itemCount: 6,
+                                      itemBuilder: (context, index) => Shimmer.fromColors(
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[100]!,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  final products = state.products;
+
+                                  if (products.isEmpty && !state.isLoading) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      child: Text(
+                                        'No related images to explore.',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  return Column(
+                                    children: [
+                                      GridView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 3,
+                                              crossAxisSpacing: 12,
+                                              mainAxisSpacing: 12,
+                                              childAspectRatio: 1.0,
+                                            ),
+                                        itemCount: products.length,
+                                        itemBuilder: (context, index) {
+                                          final product = products[index];
+                                          return GestureDetector(
+                                            onTap: () => _selectNetworkProduct(product),
+                                            child: Stack(
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius: BorderRadius.circular(4),
+                                                  child: CachedNetworkImage(
+                                                    imageUrl: product.image,
+                                                    fit: BoxFit.cover,
+                                                    height: double.infinity,
+                                                    width: double.infinity,
+                                                    memCacheWidth: 300,
+                                                    placeholder: (context, url) =>
+                                                        Shimmer.fromColors(
+                                                          baseColor: Colors.grey[300]!,
+                                                          highlightColor: Colors.grey[100]!,
+                                                          child: Container(
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                    errorWidget: (context, url, error) =>
+                                                        Container(
+                                                          color: Colors.grey[300],
+                                                          child: const Icon(
+                                                            Icons.error_outline,
+                                                          ),
+                                                        ),
+                                                  ),
+                                                ),
+                                                if (product.isTrending)
+                                                  const Positioned(
+                                                    top: 8,
+                                                    left: 8,
+                                                    child: Icon(
+                                                      Icons.local_fire_department,
+                                                      color: Colors.red,
+                                                      size: 16,
+                                                    ),
+                                                  ),
+                                                if (product.isFavorite)
+                                                  const Positioned(
+                                                    top: 8,
+                                                    right: 8,
+                                                    child: Icon(
+                                                      Icons.favorite,
+                                                      color: Colors.red,
+                                                      size: 16,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      if (state.isLoadingMore)
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 16),
+                                          child: Center(child: CircularProgressIndicator()),
+                                        ),
+                                    ],
+                                  );
+                                },
                               );
                             },
                           ),
@@ -706,55 +744,7 @@ class _ImageUploadPreviewPageState extends State<ImageUploadPreviewPage> {
       );
     }
 
-    return BlocBuilder<UploadCubit, UploadState>(
-      builder: (context, uploadState) {
-        final bool isThisFile = uploadState.croppedFile?.path == widget.imageFile.path;
-        final bool isUploading = isThisFile && uploadState.uploadInProgress;
-        
-        if (isUploading) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              imageWidget,
-              Positioned(
-                bottom: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Preparing image...',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-        return imageWidget;
-      },
-    );
+    return imageWidget;
   }
 }
 

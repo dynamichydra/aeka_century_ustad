@@ -23,6 +23,8 @@ import 'package:shimmer/shimmer.dart';
 import 'package:century_ai/features/home/data/services/image_preparation_service.dart';
 import 'package:century_ai/features/home/presentation/widgets/search_bar.dart';
 import 'package:century_ai/router/app_routes.dart';
+import 'package:century_ai/cubit/upload/upload_cubit.dart';
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -419,62 +421,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
     final File imageFile = File(image.path);
 
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const UploadLoaderDialog(),
+    // Start background upload immediately using UploadCubit
+    context.read<UploadCubit>().startUpload(imageFile);
+    // Confirm upload immediately since the user picked it from the gallery
+    context.read<UploadCubit>().confirm();
+
+    if (!mounted) return;
+    context.push(
+      AppRoutes.imageUploadPreview,
+      extra: {
+        "imageFile": imageFile,
+        "image_category": "Uploaded Image",
+        "sub_category": "User Upload",
+      },
     );
-
-    try {
-      final productsCubit = context.read<ProductsCubit>();
-      final newProduct = await productsCubit.uploadProductImageNew(imageFile);
-
-      if (!mounted) return;
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-
-      if (newProduct == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to upload image to server.")),
-        );
-        return;
-      }
-
-      final imageBytes = await imageFile.readAsBytes();
-      final imageId = newProduct.id;
-
-      await SelectedImagesRepository.saveImage(
-        SelectedImageData(
-          id: imageId,
-          imageData: imageBytes,
-          imagePath: imageFile.path,
-          category: 'Uploaded Image',
-          subcategory: 'User Upload',
-          selectedAt: DateTime.now(),
-        ),
-      );
-
-      if (!mounted) return;
-      context.push(
-        AppRoutes.imagePreview,
-        extra: {
-          "imageFile": imageFile,
-          "image_id": imageId,
-          "image_category": "Uploaded Image",
-          "sub_category": "User Upload",
-          "applicationType": context.read<HomeCubit>().state.isExterior
-              ? "EXTERIOR"
-              : "INTERIOR",
-        },
-      );
-    } catch (e) {
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
-      }
-    }
   }
 
   Future<void> _openProductForEditing(ProductImageModel product) async {
