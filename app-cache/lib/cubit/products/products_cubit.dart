@@ -194,8 +194,11 @@ class ProductsCubit extends Cubit<ProductsState> {
       );
     }
 
-    final String productBase = isInterior ? subCategory : category;
-    final String? subFilter = isInterior ? null : subCategory;
+    // When subCategory is "All" or "General", there is no real intermediate
+    // subcategory, so the product path is the category itself.
+    final bool hasRealSubCategory = subCategory != "All" && subCategory != "General";
+    final String productBase = hasRealSubCategory ? subCategory : category;
+    final String? subFilter = null;
 
     emit(
       state.copyWith(
@@ -251,7 +254,13 @@ class ProductsCubit extends Cubit<ProductsState> {
     int limit = 12,
   }) async {
     final activeOwnerId = ownerId ?? state.currentOwnerId;
-    final String productBase = isInterior ? subCategory : category;
+    // When subCategory is "All" or "General", there is no real intermediate
+    // subcategory (e.g. Wardrobe with direct nested items), so the product
+    // path is the category itself (e.g. /browse/product/Wardrobe?subCategory=1 Door).
+    // When a real subcategory exists (e.g. Shoe Cabinet), use it as the product
+    // path (e.g. /browse/product/Shoe Cabinet?subCategory=1 Door).
+    final bool hasRealSubCategory = subCategory != "All" && subCategory != "General";
+    final String productBase = hasRealSubCategory ? subCategory : category;
     final String? subFilter = nestedSubCategory;
 
     emit(
