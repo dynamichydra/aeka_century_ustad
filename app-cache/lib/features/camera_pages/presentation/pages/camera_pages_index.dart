@@ -16,11 +16,467 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class CameraPagesIndex extends StatefulWidget {
   final bool fromColorPicker;
   final File? originalImage;
-  const CameraPagesIndex({super.key, this.fromColorPicker = false, this.originalImage});
+  const CameraPagesIndex({
+    super.key,
+    this.fromColorPicker = false,
+    this.originalImage,
+  });
 
   @override
   State<CameraPagesIndex> createState() => _CameraPagesIndexState();
 }
+
+// class __CameraPagesIndexState extends State<CameraPagesIndex> {
+//   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+//   CameraController? _controller;
+//   bool _isReady = false;
+//   final double _bottomBarHeight = 140;
+
+//   bool _isImageTaken = false;
+//   File? _capturedFile;
+//   bool _isUploading = false;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _initCamera();
+//   }
+
+//   Future<void> _initCamera() async {
+//     final cameras = await availableCameras();
+
+//     _controller = CameraController(
+//       cameras.first,
+//       ResolutionPreset.high,
+//       enableAudio: false,
+//     );
+
+//     await _controller!.initialize();
+//     if (!mounted) return;
+
+//     setState(() => _isReady = true);
+//   }
+
+//   @override
+//   void dispose() {
+//     _controller?.dispose();
+//     super.dispose();
+//   }
+
+//   Future<File> _cropToOverlay(File imageFile, Size screenSize) async {
+//     try {
+//       final bytes = await imageFile.readAsBytes();
+//       final filePath = imageFile.path;
+
+//       final croppedBytes = await compute((Map<String, dynamic> params) {
+//         final Uint8List imgBytes = params['bytes'];
+//         final double screenW = params['screenW'];
+//         final double screenH = params['screenH'];
+//         final String path = params['path'];
+
+//         final image = img.decodeImage(imgBytes);
+//         if (image == null) return imgBytes;
+
+//         final orientedImage = img.bakeOrientation(image);
+
+//         final double imgW = orientedImage.width.toDouble();
+//         final double imgH = orientedImage.height.toDouble();
+
+//         // Calculate the BoxFit.cover scaling factor
+//         final double scale = (imgW / screenW) > (imgH / screenH)
+//             ? imgH / screenH
+//             : imgW / screenW;
+
+//         final double displayedW = imgW / scale;
+//         final double displayedH = imgH / scale;
+
+//         final double offsetX = (screenW - displayedW) / 2;
+//         final double offsetY = (screenH - displayedH) / 2;
+
+//         // Rectangle bounds from _OverlayPainter
+//         final double rectLeft = 20.0;
+//         final double rectTop = screenH * 0.22;
+//         final double rectWidth = screenW - 40.0;
+//         final double rectHeight = screenH * 0.45;
+
+//         // Map screen rectangle coordinates to image pixel space
+//         final int cropX = (((rectLeft - offsetX) * scale)).round().clamp(0, orientedImage.width - 1);
+//         final int cropY = (((rectTop - offsetY) * scale)).round().clamp(0, orientedImage.height - 1);
+//         final int cropW = ((rectWidth * scale)).round().clamp(1, orientedImage.width - cropX);
+//         final int cropH = ((rectHeight * scale)).round().clamp(1, orientedImage.height - cropY);
+
+//         final cropped = img.copyCrop(
+//           orientedImage,
+//           x: cropX,
+//           y: cropY,
+//           width: cropW,
+//           height: cropH,
+//         );
+
+//         return Uint8List.fromList(
+//           img.encodeNamedImage(path, cropped) ?? img.encodeJpg(cropped),
+//         );
+//       }, {
+//         'bytes': bytes,
+//         'screenW': screenSize.width,
+//         'screenH': screenSize.height,
+//         'path': filePath,
+//       });
+
+//       final croppedFile = File(filePath);
+//       await croppedFile.writeAsBytes(croppedBytes);
+//       return croppedFile;
+//     } catch (e) {
+//       debugPrint('Error cropping image to overlay: $e');
+//       return imageFile; // Fallback to original image on error
+//     }
+//   }
+
+//   Future<void> _capture() async {
+//     if (!_controller!.value.isInitialized) return;
+
+//     final XFile file = await _controller!.takePicture();
+//     final File imageFile = File(file.path);
+
+//     setState(() {
+//       _isImageTaken = true;
+//       _capturedFile = imageFile;
+//     });
+
+//     if (!mounted) return;
+
+//     // Show loading dialog
+//     showDialog(
+//       context: context,
+//       barrierDismissible: false,
+//       builder: (context) => const Center(
+//         child: CircularProgressIndicator(color: TColors.primary),
+//       ),
+//     );
+
+//     try {
+//       final screenSize = MediaQuery.of(context).size;
+//       final croppedFile = await _cropToOverlay(imageFile, screenSize);
+
+//       if (!mounted) return;
+//       setState(() {
+//         _capturedFile = croppedFile;
+//       });
+//       final productsCubit = context.read<ProductsCubit>();
+//       final newProduct = await productsCubit.uploadProductImageNew(croppedFile);
+
+//       if (!mounted) return;
+//       Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+
+//       if (newProduct == null) {
+//         setState(() {
+//           _isImageTaken = false;
+//           _capturedFile = null;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(content: Text("Failed to upload image to server.")),
+//         );
+//         return;
+//       }
+
+//       final imageBytes = await compute((File f) => f.readAsBytesSync(), croppedFile);
+//       final imageId = newProduct.id;
+
+//       await SelectedImagesRepository.saveImage(
+//         SelectedImageData(
+//           id: imageId,
+//           imageData: imageBytes,
+//           imagePath: croppedFile.path,
+//           category: 'Uploaded Image',
+//           subcategory: 'User Upload',
+//           selectedAt: DateTime.now(),
+//         ),
+//       );
+
+//       if (!mounted) return;
+//       if (widget.fromColorPicker) {
+//         context.pushReplacement(AppRoutes.imageColorPicker, extra: {
+//           'imageFile': croppedFile,
+//           'image_id': imageId,
+//           'originalImage': widget.originalImage,
+//         });
+//       } else {
+//         context.pushReplacement(AppRoutes.imagePreview, extra: {
+//           'imageFile': croppedFile,
+//           'image_id': imageId,
+//           'image_category': "Uploaded Image",
+//           'sub_category': "User Upload",
+//         });
+//       }
+//     } catch (e) {
+//       if (mounted) {
+//         setState(() {
+//           _isImageTaken = false;
+//           _capturedFile = null;
+//         });
+//         Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text("Error processing image: $e")),
+//         );
+//       }
+//     }
+//   }
+
+//   Future<void> _pickFromGallery() async {
+//     final ImagePicker picker = ImagePicker();
+//     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+//     if (image == null || !mounted) return;
+
+//     final File imageFile = File(image.path);
+
+//     // Show loading dialog
+//     showDialog(
+//       context: context,
+//       barrierDismissible: false,
+//       builder: (context) => const Center(
+//         child: CircularProgressIndicator(color: TColors.primary),
+//       ),
+//     );
+
+//     try {
+//       final productsCubit = context.read<ProductsCubit>();
+//       final newProduct = await productsCubit.uploadProductImageNew(imageFile);
+
+//       if (!mounted) return;
+//       Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+
+//       if (newProduct == null) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(content: Text("Failed to upload image to server.")),
+//         );
+//         return;
+//       }
+
+//       final imageBytes = await compute((File f) => f.readAsBytesSync(), imageFile);
+//       final imageId = newProduct.id;
+
+//       await SelectedImagesRepository.saveImage(
+//         SelectedImageData(
+//           id: imageId,
+//           imageData: imageBytes,
+//           imagePath: imageFile.path,
+//           category: 'Uploaded Image',
+//           subcategory: 'User Upload',
+//           selectedAt: DateTime.now(),
+//         ),
+//       );
+
+//       if (!mounted) return;
+//       if (widget.fromColorPicker) {
+//         context.pushReplacement(AppRoutes.imageColorPicker, extra: {
+//           'imageFile': imageFile,
+//           'image_id': imageId,
+//           'originalImage': widget.originalImage,
+//         });
+//       } else {
+//         context.pushReplacement(AppRoutes.imagePreview, extra: {
+//           'imageFile': imageFile,
+//           'image_id': imageId,
+//           'image_category': "Uploaded Image",
+//           'sub_category': "User Upload",
+//         });
+//       }
+//     } catch (e) {
+//       if (mounted) {
+//         Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text("Error processing image: $e")),
+//         );
+//       }
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     if (!_isReady) {
+//       return Scaffold(
+//         backgroundColor: Colors.black,
+//         body: Center(child: CircularProgressIndicator()),
+//       );
+//     }
+
+//     return Scaffold(
+//       key: _scaffoldKey,
+//       drawer: const HomeDrawer(),
+//       backgroundColor: Colors.white,
+//       body: Stack(
+//         children: [
+//           // 📷 Camera Preview or Static Captured Image (full screen)
+//           Positioned.fill(
+//             child: RepaintBoundary(
+//               child: _isImageTaken && _capturedFile != null
+//                   ? Image.file(_capturedFile!, fit: BoxFit.cover)
+//                   : LayoutBuilder(
+//                       builder: (context, constraints) {
+//                         final size = constraints.biggest;
+//                         double scale = size.aspectRatio * _controller!.value.aspectRatio;
+//                         if (scale < 1.0) {
+//                           scale = 1.0 / scale;
+//                         }
+//                         return ClipRect(
+//                           child: Transform.scale(
+//                             scale: scale,
+//                             child: Center(
+//                               child: CameraPreview(_controller!),
+//                             ),
+//                           ),
+//                         );
+//                       },
+//                     ),
+//             ),
+//           ),
+
+//           // 🟦 Capture Area Overlay (stays above camera)
+//           const _CaptureOverlay(),
+
+//           // ⬜ WHITE BOTTOM PANEL
+//           Positioned(
+//             bottom: 0,
+//             left: 0,
+//             right: 0,
+//             height: _bottomBarHeight,
+//             child: Container(color: Colors.white),
+//           ),
+
+//           // 🔘 Capture Button (inside white area)
+//           Positioned(
+//             bottom: (_bottomBarHeight / 2) - 36,
+//             left: 0,
+//             right: 0,
+//             child: Center(
+//               child: Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceAround,
+//                 children: [
+//                   SizedBox(width: 5),
+//                   GestureDetector(
+//                     onTap: () {
+//                       Scaffold.of(context).openDrawer();
+//                     },
+//                     child: Container(
+//                       width: 50,
+//                       height: 50,
+//                       decoration: BoxDecoration(
+//                         shape: BoxShape.circle,
+//                         border: Border.all(
+//                           color: const Color(0xFFE5E5E5),
+//                           width: 0,
+//                         ),
+//                         boxShadow: [
+//                           BoxShadow(
+//                             blurRadius: 3,
+//                             color: Color(0xFF646464),
+//                             offset: const Offset(0, 2),
+//                           ),
+//                         ],
+//                         color: Colors.white,
+//                       ),
+//                       child: const Center(child: Icon(Icons.menu, size: 24)),
+//                     ),
+//                   ),
+//                   GestureDetector(
+//                     onTap: _capture,
+//                     child: Container(
+//                       width: 72,
+//                       height: 72,
+//                       decoration: BoxDecoration(
+//                         shape: BoxShape.circle,
+//                         border: Border.all(
+//                           color: const Color(0xFFE5E5E5),
+//                           width: 0,
+//                         ),
+//                         boxShadow: [
+//                           BoxShadow(
+//                             blurRadius: 3,
+//                             color: Color(0xFF646464),
+//                             offset: const Offset(0, 4),
+//                           ),
+//                         ],
+//                         color: Colors.white,
+//                       ),
+//                       child: Center(
+//                         child: Icon(Icons.camera_alt, size: 36),
+//                         // child: SvgPicture.asset("assets/icons/app_icons/image_flash.svg"),
+//                       ),
+//                     ),
+//                   ),
+//                   GestureDetector(
+//                     onTap: _pickFromGallery,
+//                     child: Container(
+//                       width: 50,
+//                       height: 50,
+//                       decoration: BoxDecoration(
+//                         shape: BoxShape.circle,
+//                         border: Border.all(
+//                           color: const Color(0xFFE5E5E5),
+//                           width: 0,
+//                         ),
+//                         boxShadow: [
+//                           BoxShadow(
+//                             blurRadius: 3,
+//                             color: Color(0xFF646464),
+//                             offset: const Offset(0, 2),
+//                           ),
+//                         ],
+//                         color: Colors.white,
+//                       ),
+//                       child: Center(
+//                         // child: SvgPicture.asset(
+//                         //   "assets/icons/app_icons/images.svg",
+//                         // ),
+//                         child: Icon(Icons.file_upload_outlined),
+//                       ),
+//                     ),
+//                   ),
+//                   SizedBox(width: 5),
+//                 ],
+//               ),
+//             ),
+//           ),
+
+//           // Custom App Button
+//           Positioned(
+//             top: 40,
+//             left: 0,
+//             right: 0,
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 IconButton(
+//                   icon: Icon(Icons.clear, color: Colors.white),
+//                   onPressed: () => {context.pop()},
+//                 ),
+//                 IconButton(
+//                   icon: Icon(Icons.flash_off_rounded, color: Colors.white),
+//                   onPressed: () => {},
+//                 ),
+//               ],
+//             ),
+//           ),
+
+//           Positioned(
+//             bottom: 45,
+//             left: 7,
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 IconButton(
+//                   icon: Icon(Icons.arrow_back_ios, color: Colors.black),
+//                   onPressed: () => context.pop(),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class _CameraPagesIndexState extends State<CameraPagesIndex> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -30,6 +486,7 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
   bool _isImageTaken = false;
   File? _capturedFile;
+  bool _isUploading = false; // NEW: track upload-in-progress state
 
   @override
   void initState() {
@@ -63,84 +520,128 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       final bytes = await imageFile.readAsBytes();
       final filePath = imageFile.path;
 
-      final croppedBytes = await compute((Map<String, dynamic> params) {
-        final Uint8List imgBytes = params['bytes'];
-        final double screenW = params['screenW'];
-        final double screenH = params['screenH'];
-        final String path = params['path'];
+      final croppedBytes = await compute(
+        (Map<String, dynamic> params) {
+          final Uint8List imgBytes = params['bytes'];
+          final double screenW = params['screenW'];
+          final double screenH = params['screenH'];
+          final String path = params['path'];
 
-        final image = img.decodeImage(imgBytes);
-        if (image == null) return imgBytes;
+          final image = img.decodeImage(imgBytes);
+          if (image == null) return imgBytes;
 
-        final orientedImage = img.bakeOrientation(image);
+          final orientedImage = img.bakeOrientation(image);
 
-        final double imgW = orientedImage.width.toDouble();
-        final double imgH = orientedImage.height.toDouble();
+          final double imgW = orientedImage.width.toDouble();
+          final double imgH = orientedImage.height.toDouble();
 
-        // Calculate the BoxFit.cover scaling factor
-        final double scale = (imgW / screenW) > (imgH / screenH)
-            ? imgH / screenH
-            : imgW / screenW;
+          final double scale = (imgW / screenW) > (imgH / screenH)
+              ? imgH / screenH
+              : imgW / screenW;
 
-        final double displayedW = imgW / scale;
-        final double displayedH = imgH / scale;
+          final double displayedW = imgW / scale;
+          final double displayedH = imgH / scale;
 
-        final double offsetX = (screenW - displayedW) / 2;
-        final double offsetY = (screenH - displayedH) / 2;
+          final double offsetX = (screenW - displayedW) / 2;
+          final double offsetY = (screenH - displayedH) / 2;
 
-        // Rectangle bounds from _OverlayPainter
-        final double rectLeft = 20.0;
-        final double rectTop = screenH * 0.22;
-        final double rectWidth = screenW - 40.0;
-        final double rectHeight = screenH * 0.45;
+          final double rectLeft = 20.0;
+          final double rectTop = screenH * 0.22;
+          final double rectWidth = screenW - 40.0;
+          final double rectHeight = screenH * 0.45;
 
-        // Map screen rectangle coordinates to image pixel space
-        final int cropX = (((rectLeft - offsetX) * scale)).round().clamp(0, orientedImage.width - 1);
-        final int cropY = (((rectTop - offsetY) * scale)).round().clamp(0, orientedImage.height - 1);
-        final int cropW = ((rectWidth * scale)).round().clamp(1, orientedImage.width - cropX);
-        final int cropH = ((rectHeight * scale)).round().clamp(1, orientedImage.height - cropY);
+          final int cropX = (((rectLeft - offsetX) * scale)).round().clamp(
+            0,
+            orientedImage.width - 1,
+          );
+          final int cropY = (((rectTop - offsetY) * scale)).round().clamp(
+            0,
+            orientedImage.height - 1,
+          );
+          final int cropW = ((rectWidth * scale)).round().clamp(
+            1,
+            orientedImage.width - cropX,
+          );
+          final int cropH = ((rectHeight * scale)).round().clamp(
+            1,
+            orientedImage.height - cropY,
+          );
 
-        final cropped = img.copyCrop(
-          orientedImage,
-          x: cropX,
-          y: cropY,
-          width: cropW,
-          height: cropH,
-        );
+          final cropped = img.copyCrop(
+            orientedImage,
+            x: cropX,
+            y: cropY,
+            width: cropW,
+            height: cropH,
+          );
 
-        return Uint8List.fromList(
-          img.encodeNamedImage(path, cropped) ?? img.encodeJpg(cropped),
-        );
-      }, {
-        'bytes': bytes,
-        'screenW': screenSize.width,
-        'screenH': screenSize.height,
-        'path': filePath,
-      });
+          return Uint8List.fromList(
+            img.encodeNamedImage(path, cropped) ?? img.encodeJpg(cropped),
+          );
+        },
+        {
+          'bytes': bytes,
+          'screenW': screenSize.width,
+          'screenH': screenSize.height,
+          'path': filePath,
+        },
+      );
 
       final croppedFile = File(filePath);
       await croppedFile.writeAsBytes(croppedBytes);
       return croppedFile;
     } catch (e) {
       debugPrint('Error cropping image to overlay: $e');
-      return imageFile; // Fallback to original image on error
+      return imageFile;
     }
   }
 
+  /// Step 1: just capture + crop, then show for confirmation.
+  /// No upload happens here anymore.
   Future<void> _capture() async {
     if (!_controller!.value.isInitialized) return;
 
     final XFile file = await _controller!.takePicture();
     final File imageFile = File(file.path);
 
-    setState(() {
-      _isImageTaken = true;
-      _capturedFile = imageFile;
-    });
-
     if (!mounted) return;
 
-    // Show loading dialog
+    // Small local loading indicator just for the crop step
+    setState(() => _isUploading = true);
+
+    try {
+      final screenSize = MediaQuery.of(context).size;
+      final croppedFile = await _cropToOverlay(imageFile, screenSize);
+
+      if (!mounted) return;
+      setState(() {
+        _isImageTaken = true;
+        _capturedFile = croppedFile;
+        _isUploading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
+      }
+    }
+  }
+
+  /// User tapped "Retake" — discard captured image, go back to live preview.
+  void _retakePhoto() {
+    setState(() {
+      _isImageTaken = false;
+      _capturedFile = null;
+    });
+  }
+
+  /// Step 2: user confirmed — now actually upload + save + navigate.
+  Future<void> _confirmPhoto() async {
+    if (_capturedFile == null) return;
+    final croppedFile = _capturedFile!;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -150,13 +651,6 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     );
 
     try {
-      final screenSize = MediaQuery.of(context).size;
-      final croppedFile = await _cropToOverlay(imageFile, screenSize);
-
-      if (!mounted) return;
-      setState(() {
-        _capturedFile = croppedFile;
-      });
       final productsCubit = context.read<ProductsCubit>();
       final newProduct = await productsCubit.uploadProductImageNew(croppedFile);
 
@@ -164,17 +658,16 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
 
       if (newProduct == null) {
-        setState(() {
-          _isImageTaken = false;
-          _capturedFile = null;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to upload image to server.")),
         );
         return;
       }
 
-      final imageBytes = await compute((File f) => f.readAsBytesSync(), croppedFile);
+      final imageBytes = await compute(
+        (File f) => f.readAsBytesSync(),
+        croppedFile,
+      );
       final imageId = newProduct.id;
 
       await SelectedImagesRepository.saveImage(
@@ -190,29 +683,31 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
       if (!mounted) return;
       if (widget.fromColorPicker) {
-        context.pushReplacement(AppRoutes.imageColorPicker, extra: {
-          'imageFile': croppedFile,
-          'image_id': imageId,
-          'originalImage': widget.originalImage,
-        });
+        context.pushReplacement(
+          AppRoutes.imageColorPicker,
+          extra: {
+            'imageFile': croppedFile,
+            'image_id': imageId,
+            'originalImage': widget.originalImage,
+          },
+        );
       } else {
-        context.pushReplacement(AppRoutes.imagePreview, extra: {
-          'imageFile': croppedFile,
-          'image_id': imageId,
-          'image_category': "Uploaded Image",
-          'sub_category': "User Upload",
-        });
+        context.pushReplacement(
+          AppRoutes.imagePreview,
+          extra: {
+            'imageFile': croppedFile,
+            'image_id': imageId,
+            'image_category': "Uploaded Image",
+            'sub_category': "User Upload",
+          },
+        );
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isImageTaken = false;
-          _capturedFile = null;
-        });
         Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error processing image: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
       }
     }
   }
@@ -248,7 +743,10 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         return;
       }
 
-      final imageBytes = await compute((File f) => f.readAsBytesSync(), imageFile);
+      final imageBytes = await compute(
+        (File f) => f.readAsBytesSync(),
+        imageFile,
+      );
       final imageId = newProduct.id;
 
       await SelectedImagesRepository.saveImage(
@@ -264,25 +762,31 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
       if (!mounted) return;
       if (widget.fromColorPicker) {
-        context.pushReplacement(AppRoutes.imageColorPicker, extra: {
-          'imageFile': imageFile,
-          'image_id': imageId,
-          'originalImage': widget.originalImage,
-        });
+        context.pushReplacement(
+          AppRoutes.imageColorPicker,
+          extra: {
+            'imageFile': imageFile,
+            'image_id': imageId,
+            'originalImage': widget.originalImage,
+          },
+        );
       } else {
-        context.pushReplacement(AppRoutes.imagePreview, extra: {
-          'imageFile': imageFile,
-          'image_id': imageId,
-          'image_category': "Uploaded Image",
-          'sub_category': "User Upload",
-        });
+        context.pushReplacement(
+          AppRoutes.imagePreview,
+          extra: {
+            'imageFile': imageFile,
+            'image_id': imageId,
+            'image_category': "Uploaded Image",
+            'sub_category': "User Upload",
+          },
+        );
       }
     } catch (e) {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop(); // Dismiss loader
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error processing image: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
       }
     }
   }
@@ -302,24 +806,22 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // 📷 Camera Preview or Static Captured Image (full screen)
           Positioned.fill(
             child: RepaintBoundary(
               child: _isImageTaken && _capturedFile != null
-                  ? Image.file(_capturedFile!, fit: BoxFit.cover)
+                  ? Image.file(_capturedFile!, fit: BoxFit.contain)
                   : LayoutBuilder(
                       builder: (context, constraints) {
                         final size = constraints.biggest;
-                        double scale = size.aspectRatio * _controller!.value.aspectRatio;
+                        double scale =
+                            size.aspectRatio * _controller!.value.aspectRatio;
                         if (scale < 1.0) {
                           scale = 1.0 / scale;
                         }
                         return ClipRect(
                           child: Transform.scale(
                             scale: scale,
-                            child: Center(
-                              child: CameraPreview(_controller!),
-                            ),
+                            child: Center(child: CameraPreview(_controller!)),
                           ),
                         );
                       },
@@ -327,10 +829,8 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
             ),
           ),
 
-          // 🟦 Capture Area Overlay (stays above camera)
-          const _CaptureOverlay(),
+          if (!_isImageTaken) const _CaptureOverlay(),
 
-          // ⬜ WHITE BOTTOM PANEL
           Positioned(
             bottom: 0,
             left: 0,
@@ -339,102 +839,16 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
             child: Container(color: Colors.white),
           ),
 
-          // 🔘 Capture Button (inside white area)
+          // 🔘 Bottom controls — swap based on whether image is captured
           Positioned(
             bottom: (_bottomBarHeight / 2) - 36,
             left: 0,
             right: 0,
             child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  SizedBox(width: 5),
-                  GestureDetector(
-                    onTap: () {
-                      Scaffold.of(context).openDrawer();
-                    },
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFE5E5E5),
-                          width: 0,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            blurRadius: 3,
-                            color: Color(0xFF646464),
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        color: Colors.white,
-                      ),
-                      child: const Center(child: Icon(Icons.menu, size: 24)),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _capture,
-                    child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFE5E5E5),
-                          width: 0,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            blurRadius: 3,
-                            color: Color(0xFF646464),
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                        color: Colors.white,
-                      ),
-                      child: Center(
-                        child: Icon(Icons.camera_alt, size: 36),
-                        // child: SvgPicture.asset("assets/icons/app_icons/image_flash.svg"),
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _pickFromGallery,
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFE5E5E5),
-                          width: 0,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            blurRadius: 3,
-                            color: Color(0xFF646464),
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        color: Colors.white,
-                      ),
-                      child: Center(
-                        // child: SvgPicture.asset(
-                        //   "assets/icons/app_icons/images.svg",
-                        // ),
-                        child: Icon(Icons.file_upload_outlined),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 5),
-                ],
-              ),
+              child: _isImageTaken ? _buildConfirmRow() : _buildCaptureRow(),
             ),
           ),
 
-          // Custom App Button
           Positioned(
             top: 40,
             left: 0,
@@ -446,29 +860,146 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
                   icon: Icon(Icons.clear, color: Colors.white),
                   onPressed: () => {context.pop()},
                 ),
-                IconButton(
-                  icon: Icon(Icons.flash_off_rounded, color: Colors.white),
-                  onPressed: () => {},
-                ),
+                if (!_isImageTaken)
+                  IconButton(
+                    icon: Icon(Icons.flash_off_rounded, color: Colors.white),
+                    onPressed: () => {},
+                  ),
               ],
             ),
           ),
 
-          Positioned(
-            bottom: 45,
-            left: 7,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          if (!_isImageTaken)
+            Positioned(
+              bottom: 45,
+              left: 7,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back_ios, color: Colors.black),
+                    onPressed: () => context.pop(),
+                  ),
+                ],
+              ),
+            ),
+
+          if (_isUploading)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black26,
+                child: Center(
+                  child: CircularProgressIndicator(color: TColors.primary),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Original: menu / capture / gallery
+  Widget _buildCaptureRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        const SizedBox(width: 5),
+        GestureDetector(
+          onTap: () => Scaffold.of(context).openDrawer(),
+          child: _circleButton(child: const Icon(Icons.menu, size: 24)),
+        ),
+        GestureDetector(
+          onTap: _capture,
+          child: _circleButton(
+            size: 72,
+            child: const Icon(Icons.camera_alt, size: 36),
+          ),
+        ),
+        GestureDetector(
+          onTap: _pickFromGallery,
+          child: _circleButton(child: const Icon(Icons.file_upload_outlined)),
+        ),
+        const SizedBox(width: 5),
+      ],
+    );
+  }
+
+  // NEW: Retake / Use Photo confirmation row
+  Widget _buildConfirmRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        // Retake
+        GestureDetector(
+          onTap: _retakePhoto,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: TColors.primary, width: 1.5),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back_ios, color: Colors.black),
-                  onPressed: () => context.pop(),
+                Icon(Icons.refresh, color: TColors.primary),
+                SizedBox(width: 6),
+                Text(
+                  "Retake",
+                  style: TextStyle(
+                    color: TColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
           ),
+        ),
+        // Use Photo (confirm)
+        GestureDetector(
+          onTap: _confirmPhoto,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            decoration: BoxDecoration(
+              color: TColors.primary,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check, color: Colors.white),
+                SizedBox(width: 6),
+                Text(
+                  "Use Photo",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _circleButton({double size = 50, required Widget child}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 3,
+            color: Color(0xFF646464),
+            offset: Offset(0, 2),
+          ),
         ],
+        color: Colors.white,
       ),
+      child: Center(child: child),
     );
   }
 }

@@ -664,7 +664,7 @@
   ],
   "nested_subcategories": {
     "kitchen_cabinet": ["1 Door", "2 Door", "2+ Door"],
-    "drawers": ["1 Drawer", "2 Drawer", "4 Drawer"],
+    "drawers": ["1 Drawer", "2 Drawer", "4 Drawer", "4+ Drawer", "6 Drawer"],
     "shoe_cabinet": [
       "1 Door",
       "2 Door",
@@ -697,7 +697,6 @@
     "chair": ["Dining Chair", "Office Chair", "Accent Chair", "Bar Stool"],
     "bookshelves": ["Open Rack", "1 Door", "2 Door", "3 Door"],
     "bathroom_cabinet": [
-      "Mirror",
       "Wall Mounted",
       "Standing",
       "Tall Storage",

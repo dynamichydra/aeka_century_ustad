@@ -228,8 +228,24 @@ class ApiService {
 
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.upload} | POST multipart/form-data (File: $fileName)');
     final response = await _dio.post(TApiConstants.upload, data: formData);
+    final data = response.data;
 
-    return response.data;
+    // API now returns a List<dynamic> instead of a single object
+    if (data is List) {
+      if (data.isEmpty) return null;
+
+      // Try to find the object with "confidence": "high"
+      final highConfidenceItem = data.firstWhere(
+        (item) => item is Map && item['confidence'] == 'high',
+        orElse: () => null,
+      );
+
+      // Fallback: if no "high" confidence item, just return the first one
+      return highConfidenceItem ?? data.first;
+    }
+
+    // Old behavior: API already returns a single object
+    return data;
   }
 
 
