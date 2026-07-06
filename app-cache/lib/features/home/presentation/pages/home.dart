@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:image/image.dart' as img;
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/cubit/home/home_cubit.dart';
 import 'package:century_ai/features/camera_pages/presentation/widgets/upload_loader_dialog.dart';
@@ -419,7 +420,35 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       return;
     }
 
-    final File imageFile = File(image.path);
+    File imageFile = File(image.path);
+
+    // Resize if either dimension exceeds 1024 px.
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded != null &&
+          (decoded.width > 1024 || decoded.height > 1024)) {
+        // copyResize keeps aspect ratio when only one dimension is given.
+        final resized = img.copyResize(
+          decoded,
+          width: decoded.width > decoded.height ? 1024 : -1,
+          height: decoded.height >= decoded.width ? 1024 : -1,
+        );
+        final isJpeg = lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg');
+        final encoded = isJpeg
+            ? img.encodeJpg(resized, quality: 90)
+            : img.encodePng(resized);
+        final resizedFile = File('${imageFile.parent.path}/resized_${image.name}');
+        await resizedFile.writeAsBytes(encoded);
+        imageFile = resizedFile;
+        debugPrint(
+          '🖼️ Image resized from ${decoded.width}x${decoded.height} '
+          'to ${resized.width}x${resized.height}',
+        );
+      }
+    } catch (e) {
+      debugPrint('⚠️ Image resize failed, uploading original: $e');
+    }
 
     // Start background upload immediately using UploadCubit
     context.read<UploadCubit>().startUpload(imageFile);
