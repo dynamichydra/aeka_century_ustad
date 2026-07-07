@@ -193,7 +193,7 @@
     {
       "id": 5,
       "name": "Dining",
-      "image": "DECO/SENZURA/Medium Application images (4).jpg",
+      "image": "images/furniture/Dining.jpg.jpeg",
       "optional_all_img": "transaparent/Dining/Dining_all.png",
       "parent_id": null,
       "preview_type": "normal",
