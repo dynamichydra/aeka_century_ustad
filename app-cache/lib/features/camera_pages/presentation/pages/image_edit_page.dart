@@ -2477,7 +2477,7 @@ class _ImageEditPageState extends State<ImageEditPage>
               final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
 
               // Calculate positions for Width and Height cards using priorities
-              final double widthCardW = _editingWidth ? 110.0 : 60.0;
+              final double widthCardW = _editingWidth ? 110.0 : 80.0;
               final double widthCardH = 40.0;
               final Rect visibleImgRectOverlay = _getVisibleImageRect(context);
               final Offset widthCardPos = _getWidthCardPosition(
@@ -2489,7 +2489,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                 visibleImageRect: visibleImgRectOverlay,
               );
 
-              final double heightCardW = _editingHeight ? 110.0 : 60.0;
+              final double heightCardW = _editingHeight ? 110.0 : 80.0;
               final double heightCardH = 40.0;
               final Offset heightCardPos = _getHeightCardPosition(
                 vpSelection: vpSelection,
@@ -3808,6 +3808,22 @@ class _ImageEditPageState extends State<ImageEditPage>
           debugPrint('getCumulativeLaminates error: $e');
           usedLaminates = List.from(selectedRecord.usedLaminatesList);
         }
+        final double h = _customHeightInches;
+        final double w = _customWidthInches;
+        final double selectionAreaSqFt = (h * w) / 144.0;
+        final double area =
+            selectedRecord.userArea ?? selectedRecord.systemArea ?? selectionAreaSqFt;
+        final double ratio = selectionAreaSqFt > 0 ? (area / selectionAreaSqFt) : 1.0;
+        final double fullSelectionSheets = (h * w) / 4608.0;
+        final double sheetsNeeded = ratio * fullSelectionSheets;
+        int est = sheetsNeeded.ceil();
+        if (est < 1) est = 1;
+
+        usedLaminates = usedLaminates.map((e) {
+          final m = Map<String, dynamic>.from(e);
+          m['estimatedSheets'] = m['estimatedSheets'] ?? est;
+          return m;
+        }).toList();
       }
     } else if (_userEdits.isNotEmpty) {
       final latestRecord = _userEdits.first;
@@ -3820,9 +3836,17 @@ class _ImageEditPageState extends State<ImageEditPage>
         debugPrint('getCumulativeLaminates error: $e');
         usedLaminates = List.from(latestRecord.usedLaminatesList);
       }
+      final double h = _customHeightInches;
+      final double w = _customWidthInches;
+      final double selectionAreaSqFt = (h * w) / 144.0;
       final double area =
-          latestRecord.userArea ?? latestRecord.systemArea ?? 5.0;
-      final int est = (area * 2.0).round();
+          latestRecord.userArea ?? latestRecord.systemArea ?? selectionAreaSqFt;
+      final double ratio = selectionAreaSqFt > 0 ? (area / selectionAreaSqFt) : 1.0;
+      final double fullSelectionSheets = (h * w) / 4608.0;
+      final double sheetsNeeded = ratio * fullSelectionSheets;
+      int est = sheetsNeeded.ceil();
+      if (est < 1) est = 1;
+
       usedLaminates = usedLaminates.map((e) {
         final m = Map<String, dynamic>.from(e);
         m['estimatedSheets'] = m['estimatedSheets'] ?? est;
@@ -3832,9 +3856,17 @@ class _ImageEditPageState extends State<ImageEditPage>
       // Fallback: pull from in-memory cubit history (no DB record yet)
       final state = context.read<ImageEditCubit>().state;
       final cubit = context.read<ImageEditCubit>();
+      final double h = _customHeightInches;
+      final double w = _customWidthInches;
+      final double selectionAreaSqFt = (h * w) / 144.0;
       final double currentArea =
-          double.tryParse(_areaController.text) ?? _systemArea ?? 5.0;
-      final int currentEst = (currentArea * 2.0).round();
+          double.tryParse(_areaController.text) ?? _systemArea ?? selectionAreaSqFt;
+      final double ratio = selectionAreaSqFt > 0 ? (currentArea / selectionAreaSqFt) : 1.0;
+      final double fullSelectionSheets = (h * w) / 4608.0;
+      final double sheetsNeeded = ratio * fullSelectionSheets;
+      int currentEst = sheetsNeeded.ceil();
+      if (currentEst < 1) currentEst = 1;
+
       for (var item in cubit.state.generatedHistory) {
         if (item['laminate'] != null) {
           final lam = Map<String, dynamic>.from(item['laminate'] as Map);

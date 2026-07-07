@@ -7,10 +7,10 @@ class MeasurementService {
   }
 
   static double calculateWidthInchesFromPixelWidth(double pixelWidth) {
-    return (pixelWidth / 10.0).roundToDouble();
+    return pixelWidth.roundToDouble();
   }
 
   static double calculateHeightInchesFromPixelHeight(double pixelHeight) {
-    return (pixelHeight / 10.0).roundToDouble();
+    return pixelHeight.roundToDouble();
   }
 }
