@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:image/image.dart' as img;
 import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
+import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:century_ai/features/camera_pages/presentation/widgets/upload_loader_dialog.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:flutter/foundation.dart';
@@ -139,7 +141,8 @@ class CameraPagesIndex extends StatefulWidget {
 //     if (!_controller!.value.isInitialized) return;
 
 //     final XFile file = await _controller!.takePicture();
-//     final File imageFile = File(file.path);
+//     File imageFile = File(file.path);
+//     imageFile = await _fixOrientation(imageFile);
 
 //     setState(() {
 //       _isImageTaken = true;
@@ -491,11 +494,27 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   File? _capturedFile;
   bool _isUploading = false; // NEW: track upload-in-progress state
   FlashMode _flashMode = FlashMode.off;
+  FlashMode _selectedFlashMode = FlashMode.off;
+
+  double _minZoomLevel = 1.0;
+  double _maxZoomLevel = 1.0;
+  double _currentZoomLevel = 1.0;
+  double _baseZoomLevel = 1.0;
+  StreamSubscription<NativeDeviceOrientation>? _orientationSubscription;
 
   @override
   void initState() {
     super.initState();
     _initCamera();
+    _orientationSubscription = NativeDeviceOrientationCommunicator()
+        .onOrientationChanged(useSensor: true)
+        .listen((orientation) {
+      debugPrint('++++++++++++++++++++');
+      debugPrint('++++++++++++++++++++');
+      debugPrint('Device Orientation: $orientation');
+      debugPrint('++++++++++++++++++++');
+      debugPrint('++++++++++++++++++++');
+    });
   }
 
   Future<void> _initCamera() async {
@@ -510,9 +529,26 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     await _controller!.initialize();
     if (!mounted) return;
 
+    try {
+      await _controller!.unlockCaptureOrientation();
+    } catch (e) {
+      debugPrint('Error unlocking capture orientation: $e');
+    }
+
+    // Get zoom ranges
+    try {
+      _minZoomLevel = await _controller!.getMinZoomLevel();
+      _maxZoomLevel = await _controller!.getMaxZoomLevel();
+    } catch (e) {
+      debugPrint('Error getting zoom levels: $e');
+    }
+
     // Set initial flash mode on the controller
     try {
-      await _controller!.setFlashMode(_flashMode);
+      await _controller!.setFlashMode(
+        _flashMode == FlashMode.always ? FlashMode.torch : _flashMode,
+      );
+      _selectedFlashMode = _flashMode;
     } catch (e) {
       debugPrint('Error setting initial flash mode: $e');
     }
@@ -532,18 +568,20 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
         nextMode = FlashMode.always;
         break;
       case FlashMode.always:
-        nextMode = FlashMode.torch;
-        break;
       case FlashMode.torch:
         nextMode = FlashMode.off;
         break;
     }
 
     try {
-      await _controller!.setFlashMode(nextMode);
+      // If we are setting to always, use torch so the flash light stays on continuously
+      await _controller!.setFlashMode(
+        nextMode == FlashMode.always ? FlashMode.torch : nextMode,
+      );
       if (mounted) {
         setState(() {
           _flashMode = nextMode;
+          _selectedFlashMode = nextMode;
         });
       }
     } catch (e) {
@@ -566,16 +604,101 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
   @override
   void dispose() {
+    _orientationSubscription?.cancel();
     _controller?.dispose();
     super.dispose();
   }
 
+  Future<File> _fixOrientation(File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      
+      final sensorOrientation = _controller!.description.sensorOrientation;
+      final lensDirection = _controller!.description.lensDirection;
+      final deviceOrientation = await NativeDeviceOrientationCommunicator().orientation();
+      
+      final fixedBytes = await compute(_bakeOrientationInCompute, {
+        'bytes': bytes,
+        'sensorOrientation': sensorOrientation,
+        'lensDirection': lensDirection.toString(),
+        'deviceOrientation': deviceOrientation.toString(),
+      });
+      
+      final File orientedFile = File(file.path);
+      await orientedFile.writeAsBytes(fixedBytes);
+      return orientedFile;
+    } catch (e) {
+      debugPrint('Error fixing image orientation: $e');
+      return file;
+    }
+  }
+
+  static Uint8List _bakeOrientationInCompute(Map<String, dynamic> params) {
+    final Uint8List bytes = params['bytes'] as Uint8List;
+    final int sensorOrientation = params['sensorOrientation'] as int;
+    final String lensDirectionStr = params['lensDirection'] as String;
+    final String deviceOrientationStr = params['deviceOrientation'] as String;
+
+    final image = img.decodeImage(bytes);
+    if (image == null) return bytes;
+
+    // Read EXIF orientation
+    final int exifOrientation = image.exif.imageIfd.orientation ?? 1;
+
+    debugPrint('📸 [Orientation Log] Decoded Image Size: ${image.width}x${image.height}');
+    debugPrint('📸 [Orientation Log] SensorOrientation: $sensorOrientation | LensDirection: $lensDirectionStr | DeviceOrientation: $deviceOrientationStr | EXIF: $exifOrientation');
+
+    // 1. Bake any EXIF orientation into pixel data
+    img.Image orientedImage = img.bakeOrientation(image);
+    debugPrint('📸 [Orientation Log] After EXIF Bake Size: ${orientedImage.width}x${orientedImage.height}');
+
+    // Desired orientation category from physical device
+    final bool isLandscapeDevice = deviceOrientationStr.contains('landscapeLeft') || 
+                                   deviceOrientationStr.contains('landscapeRight');
+    
+    // Current orientation category of the normalized image
+    final bool isImageLandscape = orientedImage.width > orientedImage.height;
+
+    int appliedRotation = 0;
+
+    if (isLandscapeDevice != isImageLandscape) {
+      // Mismatch: Desired Orientation != Current Orientation. We must rotate.
+      int rotateAngle = 90;
+      if (deviceOrientationStr.contains('landscapeLeft')) {
+        rotateAngle = 270;
+      } else if (deviceOrientationStr.contains('landscapeRight')) {
+        rotateAngle = 90;
+      } else {
+        // Device is portrait, but image is landscape. Rotate 90 to make it portrait.
+        rotateAngle = 90;
+      }
+      debugPrint('📸 [Orientation Log] Mismatch detected. Desired Landscape: $isLandscapeDevice | Image Landscape: $isImageLandscape. Rotating by $rotateAngle degrees.');
+      orientedImage = img.copyRotate(orientedImage, angle: rotateAngle);
+      appliedRotation = rotateAngle;
+    } else {
+      // Desired matches Current. Check if portraitDown needs 180 flip.
+      if (deviceOrientationStr.contains('portraitDown')) {
+        debugPrint('📸 [Orientation Log] Desired matches Current. Device is portraitDown, applying 180 degree rotation.');
+        orientedImage = img.copyRotate(orientedImage, angle: 180);
+        appliedRotation = 180;
+      } else {
+        debugPrint('📸 [Orientation Log] Desired matches Current. No rotation required.');
+      }
+    }
+
+    // Reset EXIF orientation metadata to 1 (Normal) so subsequent readers don't double-rotate
+    orientedImage.exif.imageIfd.orientation = 1;
+
+    debugPrint('📸 [Orientation Log] Final Applied Rotation: $appliedRotation');
+    debugPrint('📸 [Orientation Log] Final Normalized Image Size: ${orientedImage.width}x${orientedImage.height}');
+    
+    return Uint8List.fromList(img.encodeJpg(orientedImage));
+  }
+
+
   /// Crops the captured image to the overlay area using native dart:ui Canvas.
   /// This is much faster than the `image` package approach.
-  Future<File> _cropToOverlay(
-    File imageFile,
-    Size screenSize,
-  ) async {
+  Future<File> _cropToOverlay(File imageFile, Size screenSize) async {
     try {
       final bytes = await imageFile.readAsBytes();
       final filePath = imageFile.path;
@@ -609,10 +732,11 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       final double rectTop = (screenH - rectHeight) / 2;
 
       // Map screen coordinates to image pixel space
-      final double cropX =
-          ((rectLeft - offsetX) * scale).clamp(0.0, imgW - 1.0);
-      final double cropY =
-          ((rectTop - offsetY) * scale).clamp(0.0, imgH - 1.0);
+      final double cropX = ((rectLeft - offsetX) * scale).clamp(
+        0.0,
+        imgW - 1.0,
+      );
+      final double cropY = ((rectTop - offsetY) * scale).clamp(0.0, imgH - 1.0);
       final double cropW = (rectWidth * scale).clamp(1.0, imgW - cropX);
       final double cropH = (rectHeight * scale).clamp(1.0, imgH - cropY);
 
@@ -662,8 +786,18 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   Future<void> _capture() async {
     if (!_controller!.value.isInitialized) return;
 
+    try {
+      // If flash mode is auto, temporarily set to always to force a single flash/blink on capture
+      if (_flashMode == FlashMode.auto) {
+        await _controller!.setFlashMode(FlashMode.always);
+      }
+    } catch (e) {
+      debugPrint('Error setting flash mode for auto blink: $e');
+    }
+
     final XFile file = await _controller!.takePicture();
-    final File imageFile = File(file.path);
+    File imageFile = File(file.path);
+    imageFile = await _fixOrientation(imageFile);
 
     if (!mounted) return;
 
@@ -671,15 +805,21 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
     setState(() => _isUploading = true);
 
     try {
-      final screenSize = MediaQuery.of(context).size;
-      final croppedFile =
-          await _cropToOverlay(imageFile, screenSize);
+      // Turn flash off after taking picture
+      try {
+        await _controller!.setFlashMode(FlashMode.off);
+      } catch (e) {
+        debugPrint('Error turning off flash after capture: $e');
+      }
+
+      final croppedFile = imageFile;
 
       if (!mounted) return;
       setState(() {
         _isImageTaken = true;
         _capturedFile = croppedFile;
         _isUploading = false;
+        _flashMode = FlashMode.off;
       });
 
       // Start upload automatically in the background
@@ -699,9 +839,24 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   /// User tapped "Retake" — discard captured image, go back to live preview.
   void _retakePhoto() {
     context.read<UploadCubit>().reset();
+
+    // Restore the user's previously selected flash mode on the camera controller
+    try {
+      if (_controller != null && _controller!.value.isInitialized) {
+        _controller!.setFlashMode(
+          _selectedFlashMode == FlashMode.always
+              ? FlashMode.torch
+              : _selectedFlashMode,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error restoring flash mode on retake: $e');
+    }
+
     setState(() {
       _isImageTaken = false;
       _capturedFile = null;
+      _flashMode = _selectedFlashMode;
     });
   }
 
@@ -748,18 +903,20 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       final lowerPath = image.path.toLowerCase();
       final bytes = await imageFile.readAsBytes();
       final decoded = img.decodeImage(bytes);
-      if (decoded != null &&
-          (decoded.width > 1024 || decoded.height > 1024)) {
+      if (decoded != null && (decoded.width > 1024 || decoded.height > 1024)) {
         final resized = img.copyResize(
           decoded,
           width: decoded.width > decoded.height ? 1024 : -1,
           height: decoded.height >= decoded.width ? 1024 : -1,
         );
-        final isJpeg = lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg');
+        final isJpeg =
+            lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg');
         final encoded = isJpeg
             ? img.encodeJpg(resized, quality: 90)
             : img.encodePng(resized);
-        final resizedFile = File('${imageFile.parent.path}/resized_${image.name}');
+        final resizedFile = File(
+          '${imageFile.parent.path}/resized_${image.name}',
+        );
         await resizedFile.writeAsBytes(encoded);
         imageFile = resizedFile;
         debugPrint(
@@ -814,60 +971,47 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       body: Stack(
         children: [
           // 📷 Camera Preview or Captured Image Preview
-          Positioned.fill(
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: _bottomBarHeight,
             child: RepaintBoundary(
               child: _isImageTaken && _capturedFile != null
-                  ? LayoutBuilder(
-                      builder: (context, constraints) {
-                        final size = constraints.biggest;
-                        final double rectWidth = size.width - 32.0;
-                        final double ratio = size.width / (size.height * 0.40);
-                        final double rectHeight = rectWidth / ratio;
-                        final double rectLeft = 16.0;
-                        final double rectTop = (size.height - rectHeight) / 2;
-
-                        return Container(
-                          color: Colors.white,
-                          child: Stack(
-                            children: [
-                              Positioned(
-                                left: rectLeft,
-                                top: rectTop,
-                                width: rectWidth,
-                                height: rectHeight,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Image.file(
-                                    _capturedFile!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                  ? Container(
+                      color: Colors.white,
+                      child: Center(
+                        child: Image.file(_capturedFile!, fit: BoxFit.contain),
+                      ),
                     )
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        final size = constraints.biggest;
-                        double scale =
-                            size.aspectRatio * _controller!.value.aspectRatio;
-                        if (scale < 1.0) {
-                          scale = 1.0 / scale;
-                        }
-                        return ClipRect(
-                          child: Transform.scale(
-                            scale: scale,
-                            child: Center(child: CameraPreview(_controller!)),
-                          ),
-                        );
+                  : GestureDetector(
+                      onScaleStart: (details) {
+                        _baseZoomLevel = _currentZoomLevel;
                       },
+                      onScaleUpdate: (details) async {
+                        if (_controller == null ||
+                            !_controller!.value.isInitialized)
+                          return;
+                        double newZoom = _baseZoomLevel * details.scale;
+                        newZoom = newZoom.clamp(_minZoomLevel, _maxZoomLevel);
+                        if (newZoom != _currentZoomLevel) {
+                          _currentZoomLevel = newZoom;
+                          try {
+                            await _controller!.setZoomLevel(newZoom);
+                          } catch (e) {
+                            debugPrint('Error setting zoom: $e');
+                          }
+                        }
+                      },
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: 1 / _controller!.value.aspectRatio,
+                          child: CameraPreview(_controller!),
+                        ),
+                      ),
                     ),
             ),
           ),
-
-          if (!_isImageTaken) const _CaptureOverlay(),
 
           Positioned(
             bottom: 0,
@@ -1070,12 +1214,7 @@ class _OverlayPainter extends CustomPainter {
     final double rectLeft = 16.0;
     final double rectTop = (size.height - rectHeight) / 2;
 
-    final captureRect = Rect.fromLTWH(
-      rectLeft,
-      rectTop,
-      rectWidth,
-      rectHeight,
-    );
+    final captureRect = Rect.fromLTWH(rectLeft, rectTop, rectWidth, rectHeight);
 
     // Draw dim rectangles around the capture area
     // Top

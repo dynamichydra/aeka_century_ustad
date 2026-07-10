@@ -8,14 +8,11 @@ class SelectionController {
   SelectionMode hitTestHandles({
     required SelectionRect? selection,
     required Offset localPosition,
+    required Rect imageRect,
     double touchRadius = 36.0,
     double zoomScale = 1.0,
   }) {
     if (selection == null) return SelectionMode.none;
-
-    // Scale touch radius inversely with zoom so handles stay easy to grab
-    // at any zoom level. Minimum effective radius of 20px.
-    final double effectiveRadius = math.max(20.0, touchRadius / zoomScale);
 
     final double left = selection.left;
     final double top = selection.top;
@@ -24,26 +21,15 @@ class SelectionController {
     final double width = selection.width;
     final double height = selection.height;
 
+    // Convert dimensions to physical screen pixels
+    final double screenWidth = width * zoomScale;
+    final double screenHeight = height * zoomScale;
+
     final Offset topLeft = Offset(left, top);
     final Offset topRight = Offset(right, top);
     final Offset bottomLeft = Offset(left, bottom);
     final Offset bottomRight = Offset(right, bottom);
 
-    // 1. Check corners first (high priority)
-    if ((localPosition - topLeft).distance <= effectiveRadius) {
-      return SelectionMode.resizeTopLeft;
-    }
-    if ((localPosition - topRight).distance <= effectiveRadius) {
-      return SelectionMode.resizeTopRight;
-    }
-    if ((localPosition - bottomLeft).distance <= effectiveRadius) {
-      return SelectionMode.resizeBottomLeft;
-    }
-    if ((localPosition - bottomRight).distance <= effectiveRadius) {
-      return SelectionMode.resizeBottomRight;
-    }
-
-    // 2. Check middle handles (high priority)
     final double midX = left + width / 2;
     final double midY = top + height / 2;
     final Offset midLeft = Offset(left, midY);
@@ -51,17 +37,88 @@ class SelectionController {
     final Offset midTop = Offset(midX, top);
     final Offset midBottom = Offset(midX, bottom);
 
-    if ((localPosition - midLeft).distance <= effectiveRadius) {
-      return SelectionMode.resizeLeft;
+    // List of handle targets: (position, mode)
+    final List<MapEntry<Offset, SelectionMode>> handles = [
+      MapEntry(topLeft, SelectionMode.resizeTopLeft),
+      MapEntry(topRight, SelectionMode.resizeTopRight),
+      MapEntry(bottomLeft, SelectionMode.resizeBottomLeft),
+      MapEntry(bottomRight, SelectionMode.resizeBottomRight),
+      MapEntry(midLeft, SelectionMode.resizeLeft),
+      MapEntry(midRight, SelectionMode.resizeRight),
+      MapEntry(midTop, SelectionMode.resizeTop),
+      MapEntry(midBottom, SelectionMode.resizeBottom),
+    ];
+
+    // Check if inside the selection rect
+    final bool isInside = localPosition.dx >= left &&
+        localPosition.dx <= right &&
+        localPosition.dy >= top &&
+        localPosition.dy <= bottom;
+
+    final double imgL = imageRect.left;
+    final double imgR = imageRect.right;
+    final double imgT = imageRect.top;
+    final double imgB = imageRect.bottom;
+
+    if (isInside) {
+      // Find the closest handle and its physical screen distance
+      double minScreenDist = double.infinity;
+      SelectionMode? closestHandleMode;
+      Offset? closestHandlePos;
+
+      for (final entry in handles) {
+        // Physical screen distance to the handle
+        final double screenDist = (localPosition - entry.key).distance * zoomScale;
+        if (screenDist < minScreenDist) {
+          minScreenDist = screenDist;
+          closestHandleMode = entry.value;
+          closestHandlePos = entry.key;
+        }
+      }
+
+      // Check if the closest handle is near any image/screen edge in screen pixels.
+      // If a handle is near the edge, the user cannot grab it from the outside.
+      bool isHandleNearEdge = false;
+      if (closestHandlePos != null) {
+        final double screenDistToLeft = (closestHandlePos.dx - imgL).abs() * zoomScale;
+        final double screenDistToRight = (closestHandlePos.dx - imgR).abs() * zoomScale;
+        final double screenDistToTop = (closestHandlePos.dy - imgT).abs() * zoomScale;
+        final double screenDistToBottom = (closestHandlePos.dy - imgB).abs() * zoomScale;
+        isHandleNearEdge = screenDistToLeft < 16.0 ||
+            screenDistToRight < 16.0 ||
+            screenDistToTop < 16.0 ||
+            screenDistToBottom < 16.0;
+      }
+
+      // Dynamic inner threshold in screen pixels:
+      // Be much more generous if the handle is up against the image boundary
+      final double screenThreshold = isHandleNearEdge
+          ? math.min(30.0, math.min(screenWidth, screenHeight) * 0.45)
+          : math.min(16.0, math.min(screenWidth, screenHeight) * 0.35);
+
+      // If the touch is within the screen threshold of the closest handle, resize
+      if (closestHandleMode != null && minScreenDist <= screenThreshold) {
+        return closestHandleMode;
+      }
+
+      // Otherwise, dragging from the middle (moving)
+      return SelectionMode.moving;
     }
-    if ((localPosition - midRight).distance <= effectiveRadius) {
-      return SelectionMode.resizeRight;
+
+    // Outside the selection — check handles with full screen touch radius (36.0 dp)
+    double minScreenDist = double.infinity;
+    SelectionMode? closestHandleMode;
+
+    for (final entry in handles) {
+      final double screenDist = (localPosition - entry.key).distance * zoomScale;
+      if (screenDist < minScreenDist) {
+        minScreenDist = screenDist;
+        closestHandleMode = entry.value;
+      }
     }
-    if ((localPosition - midTop).distance <= effectiveRadius) {
-      return SelectionMode.resizeTop;
-    }
-    if ((localPosition - midBottom).distance <= effectiveRadius) {
-      return SelectionMode.resizeBottom;
+
+    if (closestHandleMode != null && minScreenDist <= 36.0) {
+      return closestHandleMode;
     }
 
     // Helper to calculate distance from point to vertical segment
@@ -76,63 +133,25 @@ class SelectionController {
       return (p - Offset(clampedX, targetY)).distance;
     }
 
-    // 3. Check if inside the selection rect first — prioritize moving
-    // over edge resize for interior taps to prevent accidental resize
-    final bool isInside = localPosition.dx >= left &&
-        localPosition.dx <= right &&
-        localPosition.dy >= top &&
-        localPosition.dy <= bottom;
+    // Outside the selection — check edges for resize (from outside) in screen pixels
+    final List<MapEntry<double, SelectionMode>> outsideEdges = [
+      MapEntry(distToVert(localPosition, left, top, bottom) * zoomScale, SelectionMode.resizeLeft),
+      MapEntry(distToVert(localPosition, right, top, bottom) * zoomScale, SelectionMode.resizeRight),
+      MapEntry(distToHoriz(localPosition, top, left, right) * zoomScale, SelectionMode.resizeTop),
+      MapEntry(distToHoriz(localPosition, bottom, left, right) * zoomScale, SelectionMode.resizeBottom),
+    ];
 
-    if (isInside) {
-      // Distance from each edge
-      final double dLeft = (localPosition.dx - left).abs();
-      final double dRight = (right - localPosition.dx).abs();
-      final double dTop = (localPosition.dy - top).abs();
-      final double dBottom = (bottom - localPosition.dy).abs();
-      final double minEdgeDist = math.min(
-        math.min(dLeft, dRight),
-        math.min(dTop, dBottom),
-      );
-
-      // If the touch is well inside (far from all edges), always move
-      // Use a tighter threshold (40% of effectiveRadius) for edge resize
-      // inside the selection to avoid accidental resize while dragging
-      final double edgeResizeThreshold = effectiveRadius * 0.4;
-
-      if (minEdgeDist > edgeResizeThreshold) {
-        return SelectionMode.moving;
+    double minOutsideEdgeDist = double.infinity;
+    SelectionMode? closestOutsideEdgeMode;
+    for (final entry in outsideEdges) {
+      if (entry.key < minOutsideEdgeDist) {
+        minOutsideEdgeDist = entry.key;
+        closestOutsideEdgeMode = entry.value;
       }
-
-      // Close to an edge but still inside — check which edge
-      if (dLeft <= edgeResizeThreshold) {
-        return SelectionMode.resizeLeft;
-      }
-      if (dRight <= edgeResizeThreshold) {
-        return SelectionMode.resizeRight;
-      }
-      if (dTop <= edgeResizeThreshold) {
-        return SelectionMode.resizeTop;
-      }
-      if (dBottom <= edgeResizeThreshold) {
-        return SelectionMode.resizeBottom;
-      }
-
-      // Fallback: still inside, move
-      return SelectionMode.moving;
     }
 
-    // 2. Outside the selection — check edges for resize (from outside)
-    if (distToVert(localPosition, left, top, bottom) <= effectiveRadius) {
-      return SelectionMode.resizeLeft;
-    }
-    if (distToVert(localPosition, right, top, bottom) <= effectiveRadius) {
-      return SelectionMode.resizeRight;
-    }
-    if (distToHoriz(localPosition, top, left, right) <= effectiveRadius) {
-      return SelectionMode.resizeTop;
-    }
-    if (distToHoriz(localPosition, bottom, left, right) <= effectiveRadius) {
-      return SelectionMode.resizeBottom;
+    if (closestOutsideEdgeMode != null && minOutsideEdgeDist <= 36.0) {
+      return closestOutsideEdgeMode;
     }
 
     return SelectionMode.none;

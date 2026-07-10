@@ -32,6 +32,29 @@ import 'package:century_ai/features/camera_pages/controllers/history_controller.
 import 'package:century_ai/features/camera_pages/controllers/texture_controller.dart';
 import 'package:century_ai/features/camera_pages/controllers/selection_controller.dart';
 import 'package:century_ai/features/camera_pages/controllers/zoom_controller.dart';
+int rectanglesNeeded({
+  required double bigWidth,
+  required double bigHeight,
+  required double smallWidth,
+  required double smallHeight,
+}) {
+  if (bigWidth <= 0 ||
+      bigHeight <= 0 ||
+      smallWidth <= 0 ||
+      smallHeight <= 0 ||
+      bigWidth.isNaN ||
+      bigHeight.isNaN ||
+      smallWidth.isNaN ||
+      smallHeight.isNaN) {
+    return 1;
+  }
+
+  final columns = (bigWidth / smallWidth).ceil();
+  final rows = (bigHeight / smallHeight).ceil();
+  final total = columns * rows;
+
+  return total > 0 ? total : 1;
+}
 
 class ImageEditPage extends StatefulWidget {
   final File imageFile;
@@ -77,6 +100,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   bool _editingWidth = false;
   bool _editingHeight = false;
   bool _justSaved = false;
+  bool? _feedbackLiked;
 
   Map<String, dynamic>? _selectedColor;
   String? _selectedCategory;
@@ -753,6 +777,11 @@ class _ImageEditPageState extends State<ImageEditPage>
   Widget build(BuildContext context) {
     return BlocListener<ImageEditCubit, ImageEditState>(
       listener: (context, state) {
+        if (state.isGenerating) {
+          setState(() {
+            _feedbackLiked = null;
+          });
+        }
         if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -952,6 +981,53 @@ class _ImageEditPageState extends State<ImageEditPage>
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (_selection != null) ...[
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selection = null;
+                            _mode = SelectionMode.none;
+                            _editingWidth = false;
+                            _editingHeight = false;
+                          });
+                          context.read<ImageEditCubit>().clearSelection();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Icon(
+                              //   Icons.clear,
+                              //   color: Colors.black.withOpacity(0.7),
+                              //   size: 12,
+                              // ),
+                              // const SizedBox(width: 4),
+                              Text(
+                                "Clear Selection",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     Opacity(
                       opacity: canUndo ? 1.0 : 0.4,
                       child: GestureDetector(
@@ -987,6 +1063,87 @@ class _ImageEditPageState extends State<ImageEditPage>
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Opacity(
+                      opacity: canUndo ? 1.0 : 0.4,
+                      child: GestureDetector(
+                        onTap: canUndo
+                            ? () {
+                                setState(() {
+                                  _feedbackLiked = (_feedbackLiked == true) ? null : true;
+                                });
+                              }
+                            : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _feedbackLiked == true
+                                ? Colors.green.shade50
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _feedbackLiked == true
+                                  ? Colors.green
+                                  : Colors.grey.shade300,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Icon(
+                            _feedbackLiked == true
+                                ? Icons.thumb_up
+                                : Icons.thumb_up_outlined,
+                            color: _feedbackLiked == true
+                                ? Colors.green
+                                : Colors.black.withOpacity(0.7),
+                            size: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 6),
+                    Opacity(
+                      opacity: canUndo ? 1.0 : 0.4,
+                      child: GestureDetector(
+                        onTap: canUndo
+                            ? () {
+                                setState(() {
+                                  _feedbackLiked = (_feedbackLiked == false) ? null : false;
+                                });
+                              }
+                            : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _feedbackLiked == false
+                                ? Colors.red.shade50
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _feedbackLiked == false
+                                  ? Colors.red
+                                  : Colors.grey.shade300,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Icon(
+                            _feedbackLiked == false
+                                ? Icons.thumb_down
+                                : Icons.thumb_down_outlined,
+                            color: _feedbackLiked == false
+                                ? Colors.red
+                                : Colors.black.withOpacity(0.7),
+                            size: 12,
                           ),
                         ),
                       ),
@@ -1772,17 +1929,9 @@ class _ImageEditPageState extends State<ImageEditPage>
   Widget _buildImageOverlaySection(ImageEditState state) {
     return Stack(
       children: [
-        InteractiveViewer(
-          clipBehavior: Clip.none,
-          transformationController: _transformationController,
-          minScale: _currentMinZoomLimit,
-          maxScale: 4.0,
-          boundaryMargin: EdgeInsets.zero,
-          panEnabled: false,
-          scaleEnabled: false,
-          child: Listener(
-            behavior: HitTestBehavior.opaque,
-            onPointerDown: (event) {
+        Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: (event) {
               _activePointers[event.pointer] = event.position;
 
               if (_activePointers.length == 1) {
@@ -1809,9 +1958,9 @@ class _ImageEditPageState extends State<ImageEditPage>
                 return;
               }
 
-              if (_isPanning) return;
-
-              final localPos = event.localPosition;
+              final Matrix4 matrix = _transformationController.value;
+              final Matrix4 inverse = Matrix4.inverted(matrix);
+              final Offset localPos = MatrixUtils.transformPoint(inverse, event.localPosition);
               _dragStart = localPos;
               final Rect imageRect = _getImageRect(context);
               final double imgL = imageRect.left;
@@ -1820,7 +1969,6 @@ class _ImageEditPageState extends State<ImageEditPage>
               final double imgB = imageRect.bottom;
               final Size viewSize = _getViewSize(context);
 
-              final Matrix4 matrix = _transformationController.value;
               final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
 
               // Get current zoom scale for touch target sizing
@@ -1832,6 +1980,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                 detectedMode = _selectionController.hitTestHandles(
                   selection: _selection,
                   localPosition: localPos,
+                  imageRect: imageRect,
                   zoomScale: zoomScale,
                 );
               }
@@ -1937,7 +2086,9 @@ class _ImageEditPageState extends State<ImageEditPage>
                 return;
               }
 
-              final localPos = event.localPosition;
+              final Matrix4 matrix = _transformationController.value;
+              final Matrix4 inverse = Matrix4.inverted(matrix);
+              final Offset localPos = MatrixUtils.transformPoint(inverse, event.localPosition);
               final Rect imageRect = _getImageRect(context);
 
               if (_mode == SelectionMode.creating && _dragStart != null) {
@@ -2016,7 +2167,9 @@ class _ImageEditPageState extends State<ImageEditPage>
                 }
                 return;
               }
-              final localPos = event.localPosition;
+              final Matrix4 matrix = _transformationController.value;
+              final Matrix4 inverse = Matrix4.inverted(matrix);
+              final Offset localPos = MatrixUtils.transformPoint(inverse, event.localPosition);
               final Size viewSize = _getViewSize(context);
 
               // 1. If we were preparing to create a selection but never actually dragged (simple tap)
@@ -2088,14 +2241,13 @@ class _ImageEditPageState extends State<ImageEditPage>
                       _mode = SelectionMode.none;
                     });
                   } else {
-                    // Tap anywhere else (outside selection, handles, and overlays): clear selection!
+                    // Tap anywhere else (outside selection, handles, and overlays): keep selection!
                     setState(() {
-                      _selection = null;
+                      if (_backupSelection != null) {
+                        _selection = _backupSelection;
+                      }
                       _mode = SelectionMode.none;
-                      _editingWidth = false;
-                      _editingHeight = false;
                     });
-                    context.read<ImageEditCubit>().clearSelection();
                   }
 
                   _activePointers.remove(event.pointer);
@@ -2114,10 +2266,12 @@ class _ImageEditPageState extends State<ImageEditPage>
                   final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
                   final double zoomScale = matrix.getMaxScaleOnAxis();
 
+                  final Rect imageRect = _getImageRect(context);
                   // Check if tap hit a resize handle or selection body
                   final SelectionMode mode = _selectionController.hitTestHandles(
                     selection: _backupSelection,
                     localPosition: localPos,
+                    imageRect: imageRect,
                     zoomScale: zoomScale,
                   );
 
@@ -2176,17 +2330,14 @@ class _ImageEditPageState extends State<ImageEditPage>
                     }
                   }
 
-                  // Clear the selection ONLY if:
-                  // 1. Tapped outside selection body/handles (mode == SelectionMode.none)
-                  // 2. Tapped outside overlays
+                  // Keep the selection if tapped outside selection body/handles/overlays
                   if (mode == SelectionMode.none && !clickedOverlay) {
                     setState(() {
-                      _selection = null;
+                      if (_backupSelection != null) {
+                        _selection = _backupSelection;
+                      }
                       _mode = SelectionMode.none;
-                      _editingWidth = false;
-                      _editingHeight = false;
                     });
-                    context.read<ImageEditCubit>().clearSelection();
                     _activePointers.remove(event.pointer);
                     _backupSelection = null;
                     _dragStart = null;
@@ -2313,7 +2464,15 @@ class _ImageEditPageState extends State<ImageEditPage>
                 });
               }
             },
-            child: Stack(
+            child: InteractiveViewer(
+              clipBehavior: Clip.none,
+              transformationController: _transformationController,
+              minScale: _currentMinZoomLimit,
+              maxScale: 4.0,
+              boundaryMargin: EdgeInsets.zero,
+              panEnabled: false,
+              scaleEnabled: false,
+              child: Stack(
               clipBehavior: Clip.none,
               children: [
                 // Base Image — rendered via OverflowBox so the full
@@ -2690,6 +2849,9 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Future<void> _handleUndo(ImageEditState state) async {
+    setState(() {
+      _feedbackLiked = null;
+    });
     if (state.generatedHistory.isNotEmpty) {
       context.read<ImageEditCubit>().undoLastEdit();
       final newState = context.read<ImageEditCubit>().state;
@@ -3814,8 +3976,20 @@ class _ImageEditPageState extends State<ImageEditPage>
         final double area =
             selectedRecord.userArea ?? selectedRecord.systemArea ?? selectionAreaSqFt;
         final double ratio = selectionAreaSqFt > 0 ? (area / selectionAreaSqFt) : 1.0;
-        final double fullSelectionSheets = (h * w) / 4608.0;
-        final double sheetsNeeded = ratio * fullSelectionSheets;
+        final int opt1 = rectanglesNeeded(
+          bigWidth: w,
+          bigHeight: h,
+          smallWidth: 96.0,
+          smallHeight: 48.0,
+        );
+        final int opt2 = rectanglesNeeded(
+          bigWidth: w,
+          bigHeight: h,
+          smallWidth: 48.0,
+          smallHeight: 96.0,
+        );
+        final int baseSheets = opt1 < opt2 ? opt1 : opt2;
+        final double sheetsNeeded = ratio * baseSheets;
         int est = sheetsNeeded.ceil();
         if (est < 1) est = 1;
 
@@ -3842,8 +4016,20 @@ class _ImageEditPageState extends State<ImageEditPage>
       final double area =
           latestRecord.userArea ?? latestRecord.systemArea ?? selectionAreaSqFt;
       final double ratio = selectionAreaSqFt > 0 ? (area / selectionAreaSqFt) : 1.0;
-      final double fullSelectionSheets = (h * w) / 4608.0;
-      final double sheetsNeeded = ratio * fullSelectionSheets;
+      final int opt1 = rectanglesNeeded(
+        bigWidth: w,
+        bigHeight: h,
+        smallWidth: 96.0,
+        smallHeight: 48.0,
+      );
+      final int opt2 = rectanglesNeeded(
+        bigWidth: w,
+        bigHeight: h,
+        smallWidth: 48.0,
+        smallHeight: 96.0,
+      );
+      final int baseSheets = opt1 < opt2 ? opt1 : opt2;
+      final double sheetsNeeded = ratio * baseSheets;
       int est = sheetsNeeded.ceil();
       if (est < 1) est = 1;
 
@@ -3862,8 +4048,20 @@ class _ImageEditPageState extends State<ImageEditPage>
       final double currentArea =
           double.tryParse(_areaController.text) ?? _systemArea ?? selectionAreaSqFt;
       final double ratio = selectionAreaSqFt > 0 ? (currentArea / selectionAreaSqFt) : 1.0;
-      final double fullSelectionSheets = (h * w) / 4608.0;
-      final double sheetsNeeded = ratio * fullSelectionSheets;
+      final int opt1 = rectanglesNeeded(
+        bigWidth: w,
+        bigHeight: h,
+        smallWidth: 96.0,
+        smallHeight: 48.0,
+      );
+      final int opt2 = rectanglesNeeded(
+        bigWidth: w,
+        bigHeight: h,
+        smallWidth: 48.0,
+        smallHeight: 96.0,
+      );
+      final int baseSheets = opt1 < opt2 ? opt1 : opt2;
+      final double sheetsNeeded = ratio * baseSheets;
       int currentEst = sheetsNeeded.ceil();
       if (currentEst < 1) currentEst = 1;
 
@@ -4253,10 +4451,10 @@ class SelectionPainter extends CustomPainter {
     final Paint handlePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
+      ..strokeWidth = 1.75
       ..strokeCap = StrokeCap.round;
 
-    final double cornerLength = 16.0;
+    final double cornerLength = 7.5;
 
     // Top-Left
     canvas.drawLine(
@@ -4309,7 +4507,7 @@ class SelectionPainter extends CustomPainter {
     // 5. Draw thick edge middle handles (horizontal / vertical bars)
     final double midX = (left + right) / 2;
     final double midY = (top + bottom) / 2;
-    final double edgeLength = 12.0;
+    final double edgeLength = 8.0;
 
     // Left Edge Middle
     canvas.drawLine(

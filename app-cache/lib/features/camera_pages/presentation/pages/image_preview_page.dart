@@ -89,11 +89,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
   }
 
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 200) {
-      context.read<ProductsCubit>().loadMoreProducts();
-    }
+    // Do not load more products on scroll to strictly limit to 12 images
   }
 
   void _pushToHistory() {
@@ -510,7 +506,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                               );
                             }
 
-                            final products = state.products;
+                            final products = state.products.take(12).toList();
 
                             if (products.isEmpty && !state.isLoading) {
                               return const Padding(
