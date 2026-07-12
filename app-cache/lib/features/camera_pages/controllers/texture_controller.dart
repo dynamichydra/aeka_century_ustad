@@ -101,34 +101,44 @@ class TextureController {
   Future<List<dynamic>> fetchTexturesByCategory({
     required String category,
     required String? subcategory,
+    int? page,
+    int? pageLimit,
   }) async {
     String subCat = (subcategory == "All" || subcategory == null) ? "" : subcategory;
 
-    // Try cache first
-    final cached = cacheService.getCategoryTextures(
-      category,
-      subCat,
-      itemType: isExterior ? "Exteria" : "Laminates",
-    );
-    if (cached != null && cached.isNotEmpty) {
-      return cached;
+    // Try cache first - ONLY if fetching the first page (so we don't return cached page 1 for page 2)
+    if (page == null || page == 1) {
+      final cached = cacheService.getCategoryTextures(
+        category,
+        subCat,
+        itemType: isExterior ? "Exteria" : "Laminates",
+      );
+      if (cached != null && cached.isNotEmpty) {
+        return cached;
+      }
     }
 
     final response = await laminateApi.fetchByCategory(
       category: category,
       subcategory: subCat,
       itemType: isExterior ? "Exteria" : "Laminates",
+      page: page,
+      pageLimit: pageLimit,
     );
 
-    if (response != null && response is Map && response['laminates'] != null) {
-      final textures = response['laminates'] as List<dynamic>;
-      cacheService.saveCategoryTextures(
-        category,
-        subCat,
-        textures,
-        itemType: isExterior ? "Exteria" : "Laminates",
-      );
-      return textures;
+    if (response != null && response is Map) {
+      final textures = (response['data'] ?? response['laminates']) as List<dynamic>?;
+      if (textures != null) {
+        if (page == null || page == 1) {
+          cacheService.saveCategoryTextures(
+            category,
+            subCat,
+            textures,
+            itemType: isExterior ? "Exteria" : "Laminates",
+          );
+        }
+        return textures;
+      }
     }
     return [];
   }
@@ -150,7 +160,9 @@ class TextureController {
 
     List<dynamic> textures = [];
     if (response != null && response is Map && response.isNotEmpty) {
-      if (response.containsKey('laminates') && response['laminates'] != null) {
+      if (response.containsKey('data') && response['data'] != null) {
+        textures = response['data'] as List<dynamic>;
+      } else if (response.containsKey('laminates') && response['laminates'] != null) {
         textures = response['laminates'] as List<dynamic>;
       } else {
         final key = response.keys.first;

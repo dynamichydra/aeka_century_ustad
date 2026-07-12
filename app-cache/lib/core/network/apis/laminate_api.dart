@@ -12,7 +12,7 @@ class LaminateService {
   }) async {
 
      var res = await api.post(
-      "/findBySKUId",
+      "findBySKUId/search",
       {
         "SKUId": skuId,
         "SKUsALLCode": skusAllCode,
@@ -42,11 +42,13 @@ class LaminateService {
     return res;
   }
 
-  /// Fetch By Category
+  /// Fetch By Category (Paginated)
   Future<dynamic> fetchByCategory({
     required String category,
     required String subcategory,
     String itemType = "Laminates",
+    int? page,
+    int? pageLimit,
   }) async {
 
     final Map<String, dynamic> body = {
@@ -56,10 +58,44 @@ class LaminateService {
 
     if (subcategory.isNotEmpty && subcategory != "All") {
       body["subcategory"] = subcategory;
+    } else {
+      body["subcategory"] = false;
+    }
+
+    if (page != null) {
+      body["page"] = page;
+    }
+    if (pageLimit != null) {
+      body["pageLimit"] = pageLimit;
     }
 
     var res = await api.post(
-      "/findByCategory",
+      "findByCategory/paginated",
+      body,
+    );
+
+    return res;
+  }
+
+  /// Daily Sync Incremental
+  Future<dynamic> fetchIncremental({
+    required String date,
+    int? page,
+    int? pageLimit,
+  }) async {
+    final Map<String, dynamic> body = {
+      "date": date,
+    };
+
+    if (page != null) {
+      body["page"] = page;
+    }
+    if (pageLimit != null) {
+      body["pageLimit"] = pageLimit;
+    }
+
+    var res = await api.post(
+      "laminates/incremental",
       body,
     );
 

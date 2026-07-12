@@ -17,6 +17,9 @@ import 'package:century_ai/db/models/selected_image_data.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:century_ai/features/camera_pages/presentation/widgets/camera_tips_bottom_sheet.dart';
 
 class CameraPagesIndex extends StatefulWidget {
   final bool fromColorPicker;
@@ -505,6 +508,12 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _initCamera();
     _orientationSubscription = NativeDeviceOrientationCommunicator()
         .onOrientationChanged(useSensor: true)
@@ -514,6 +523,14 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
       debugPrint('Device Orientation: $orientation');
       debugPrint('++++++++++++++++++++');
       debugPrint('++++++++++++++++++++');
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final box = GetStorage();
+      final bool dontShow = box.read<bool>('dont_show_camera_tips') ?? false;
+      if (!dontShow) {
+        CameraTipsBottomSheet.show(context);
+      }
     });
   }
 
@@ -604,95 +621,98 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
   @override
   void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _orientationSubscription?.cancel();
     _controller?.dispose();
     super.dispose();
   }
 
-  Future<File> _fixOrientation(File file) async {
+  Future<File> _fixOrientation(
+    File file, {
+    required Orientation screenOrientation,
+    required NativeDeviceOrientation deviceOrientation,
+  }) async {
     try {
       final bytes = await file.readAsBytes();
-      
-      final sensorOrientation = _controller!.description.sensorOrientation;
-      final lensDirection = _controller!.description.lensDirection;
-      final deviceOrientation = await NativeDeviceOrientationCommunicator().orientation();
-      
-      final fixedBytes = await compute(_bakeOrientationInCompute, {
+
+      final fixedBytes = await compute(_normalizeImageOrientation, {
         'bytes': bytes,
-        'sensorOrientation': sensorOrientation,
-        'lensDirection': lensDirection.toString(),
+        'screenOrientation': screenOrientation.name,
         'deviceOrientation': deviceOrientation.toString(),
       });
-      
-      final File orientedFile = File(file.path);
-      await orientedFile.writeAsBytes(fixedBytes);
-      return orientedFile;
+
+      await file.writeAsBytes(fixedBytes, flush: true);
+
+      // Important: remove Flutter's cached version of the old pixels.
+      await FileImage(file).evict();
+
+      return file;
     } catch (e) {
-      debugPrint('Error fixing image orientation: $e');
+      debugPrint('❌ Orientation fix failed: $e');
       return file;
     }
   }
 
-  static Uint8List _bakeOrientationInCompute(Map<String, dynamic> params) {
-    final Uint8List bytes = params['bytes'] as Uint8List;
-    final int sensorOrientation = params['sensorOrientation'] as int;
-    final String lensDirectionStr = params['lensDirection'] as String;
-    final String deviceOrientationStr = params['deviceOrientation'] as String;
+  static Uint8List _normalizeImageOrientation(
+    Map<String, dynamic> params,
+  ) {
+    final Uint8List bytes = params['bytes'];
+    final String screenOrientation = params['screenOrientation'];
+    final String deviceOrientation = params['deviceOrientation'];
 
-    final image = img.decodeImage(bytes);
-    if (image == null) return bytes;
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return bytes;
 
-    // Read EXIF orientation
-    final int exifOrientation = image.exif.imageIfd.orientation ?? 1;
+    // STEP 1:
+    // Apply the camera's EXIF orientation exactly once.
+    img.Image result = img.bakeOrientation(decoded);
 
-    debugPrint('📸 [Orientation Log] Decoded Image Size: ${image.width}x${image.height}');
-    debugPrint('📸 [Orientation Log] SensorOrientation: $sensorOrientation | LensDirection: $lensDirectionStr | DeviceOrientation: $deviceOrientationStr | EXIF: $exifOrientation');
+    final bool wantsLandscape =
+        screenOrientation == Orientation.landscape.name ||
+        deviceOrientation.contains('landscapeLeft') ||
+        deviceOrientation.contains('landscapeRight');
 
-    // 1. Bake any EXIF orientation into pixel data
-    img.Image orientedImage = img.bakeOrientation(image);
-    debugPrint('📸 [Orientation Log] After EXIF Bake Size: ${orientedImage.width}x${orientedImage.height}');
+    final bool currentlyLandscape =
+        result.width > result.height;
 
-    // Desired orientation category from physical device
-    final bool isLandscapeDevice = deviceOrientationStr.contains('landscapeLeft') || 
-                                   deviceOrientationStr.contains('landscapeRight');
-    
-    // Current orientation category of the normalized image
-    final bool isImageLandscape = orientedImage.width > orientedImage.height;
+    debugPrint(
+      '📸 Screen: $screenOrientation | '
+      'Device: $deviceOrientation | '
+      'After EXIF: ${result.width}x${result.height}',
+    );
 
-    int appliedRotation = 0;
+    // STEP 2:
+    // Only rotate if the final pixel dimensions don't match the screen.
+    if (wantsLandscape != currentlyLandscape) {
+      int angle = 90;
 
-    if (isLandscapeDevice != isImageLandscape) {
-      // Mismatch: Desired Orientation != Current Orientation. We must rotate.
-      int rotateAngle = 90;
-      if (deviceOrientationStr.contains('landscapeLeft')) {
-        rotateAngle = 270;
-      } else if (deviceOrientationStr.contains('landscapeRight')) {
-        rotateAngle = 90;
-      } else {
-        // Device is portrait, but image is landscape. Rotate 90 to make it portrait.
-        rotateAngle = 90;
+      if (deviceOrientation.contains('landscapeLeft')) {
+        angle = 270;
+      } else if (deviceOrientation.contains('landscapeRight')) {
+        angle = 90;
       }
-      debugPrint('📸 [Orientation Log] Mismatch detected. Desired Landscape: $isLandscapeDevice | Image Landscape: $isImageLandscape. Rotating by $rotateAngle degrees.');
-      orientedImage = img.copyRotate(orientedImage, angle: rotateAngle);
-      appliedRotation = rotateAngle;
-    } else {
-      // Desired matches Current. Check if portraitDown needs 180 flip.
-      if (deviceOrientationStr.contains('portraitDown')) {
-        debugPrint('📸 [Orientation Log] Desired matches Current. Device is portraitDown, applying 180 degree rotation.');
-        orientedImage = img.copyRotate(orientedImage, angle: 180);
-        appliedRotation = 180;
-      } else {
-        debugPrint('📸 [Orientation Log] Desired matches Current. No rotation required.');
-      }
+
+      result = img.copyRotate(result, angle: angle);
     }
 
-    // Reset EXIF orientation metadata to 1 (Normal) so subsequent readers don't double-rotate
-    orientedImage.exif.imageIfd.orientation = 1;
+    // Handle upside-down portrait.
+    if (!wantsLandscape &&
+        deviceOrientation.contains('portraitDown')) {
+      result = img.copyRotate(result, angle: 180);
+    }
 
-    debugPrint('📸 [Orientation Log] Final Applied Rotation: $appliedRotation');
-    debugPrint('📸 [Orientation Log] Final Normalized Image Size: ${orientedImage.width}x${orientedImage.height}');
-    
-    return Uint8List.fromList(img.encodeJpg(orientedImage));
+    // Prevent another reader from rotating it again.
+    result.exif.imageIfd.orientation = 1;
+
+    debugPrint(
+      '✅ Final image: ${result.width}x${result.height}',
+    );
+
+    return Uint8List.fromList(
+      img.encodeJpg(result, quality: 95),
+    );
   }
 
 
@@ -784,7 +804,15 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
   /// Step 1: just capture + crop, then show for confirmation.
   /// Start upload in background immediately.
   Future<void> _capture() async {
-    if (!_controller!.value.isInitialized) return;
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    // Capture the UI orientation BEFORE taking the photo.
+    final Orientation screenOrientation = MediaQuery.orientationOf(context);
+
+    final NativeDeviceOrientation deviceOrientation =
+        await NativeDeviceOrientationCommunicator().orientation(
+      useSensor: true,
+    );
 
     try {
       // If flash mode is auto, temporarily set to always to force a single flash/blink on capture
@@ -797,7 +825,11 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
     final XFile file = await _controller!.takePicture();
     File imageFile = File(file.path);
-    imageFile = await _fixOrientation(imageFile);
+    imageFile = await _fixOrientation(
+      imageFile,
+      screenOrientation: screenOrientation,
+      deviceOrientation: deviceOrientation,
+    );
 
     if (!mounted) return;
 

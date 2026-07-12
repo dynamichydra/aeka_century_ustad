@@ -120,6 +120,12 @@ class _ImageEditPageState extends State<ImageEditPage>
   List<dynamic> _apiTextures = [];
   bool _isSearching = false;
 
+  final ScrollController _horizontalScrollController = ScrollController();
+  int _currentPage = 1;
+  bool _hasMoreTextures = true;
+  bool _isFetchingMore = false;
+  static const int _pageSize = 25;
+
   bool _compareExpanded = false;
   bool _editExpanded = true;
   bool _hasAppliedOnce = false;
@@ -446,6 +452,7 @@ class _ImageEditPageState extends State<ImageEditPage>
 
   @override
   void dispose() {
+    _horizontalScrollController.dispose();
     _marchingAntsController.dispose();
     _decodedMaskImage?.dispose();
     _transformationController.dispose();
@@ -460,6 +467,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   @override
   void initState() {
     super.initState();
+    _horizontalScrollController.addListener(_onHorizontalScroll);
     _textureController = TextureController(
       laminateApi: _laminateApi,
       cacheService: _cacheService,
@@ -598,22 +606,38 @@ class _ImageEditPageState extends State<ImageEditPage>
     }
   }
 
+  void _onHorizontalScroll() {
+    if (_horizontalScrollController.hasClients &&
+        _horizontalScrollController.position.pixels >=
+            _horizontalScrollController.position.maxScrollExtent - 200) {
+      _fetchMoreTextures();
+    }
+  }
+
   Future<void> _fetchTextures() async {
     if (_selectedCategory == null) return;
 
     setState(() {
       _isLoadingTextures = true;
+      _currentPage = 1;
+      _hasMoreTextures = true;
+      _isFetchingMore = false;
     });
 
     try {
       final list = await _textureController.fetchTexturesByCategory(
         category: _selectedCategory!,
         subcategory: _selectedSubCategory,
+        page: 1,
+        pageLimit: _pageSize,
       );
       if (mounted) {
         setState(() {
           _apiTextures = list;
           _isLoadingTextures = false;
+          if (list.length < _pageSize) {
+            _hasMoreTextures = false;
+          }
         });
       }
     } catch (e) {
@@ -622,6 +646,46 @@ class _ImageEditPageState extends State<ImageEditPage>
         setState(() {
           _isLoadingTextures = false;
           _apiTextures = [];
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchMoreTextures() async {
+    if (_selectedCategory == null || _isFetchingMore || !_hasMoreTextures) return;
+
+    setState(() {
+      _isFetchingMore = true;
+    });
+
+    try {
+      final nextPage = _currentPage + 1;
+      final list = await _textureController.fetchTexturesByCategory(
+        category: _selectedCategory!,
+        subcategory: _selectedSubCategory,
+        page: nextPage,
+        pageLimit: _pageSize,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (list.isEmpty) {
+            _hasMoreTextures = false;
+          } else {
+            _apiTextures.addAll(list);
+            _currentPage = nextPage;
+            if (list.length < _pageSize) {
+              _hasMoreTextures = false;
+            }
+          }
+          _isFetchingMore = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching more textures: $e");
+      if (mounted) {
+        setState(() {
+          _isFetchingMore = false;
         });
       }
     }
@@ -3543,6 +3607,7 @@ class _ImageEditPageState extends State<ImageEditPage>
     return SizedBox(
       height: widget.textureListHeight,
       child: ListView.builder(
+        controller: _horizontalScrollController,
         scrollDirection: Axis.horizontal,
         itemCount: _apiTextures.length,
         itemBuilder: (context, index) {
