@@ -119,6 +119,7 @@ flutter:
     - assets/transaparent/center_table/
     - assets/db/app.db
     - assets/images/content/
+    - assets/images/camera_alert/
     - assets/images/animations/
     - assets/icons/payment_methods/
     - assets/icons/app_icons/

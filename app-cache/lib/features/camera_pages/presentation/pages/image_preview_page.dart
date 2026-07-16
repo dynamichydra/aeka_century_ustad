@@ -673,34 +673,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_currentFile != null) {
-      return Image.file(
-        _currentFile!,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        cacheWidth: 800, // Optimize memory for preview
-      );
-    }
-
-    if (_currentAsset != null && _currentAsset!.isNotEmpty) {
-      return Image.asset(
-        _currentAsset!,
-        width: double.infinity,
-        fit: BoxFit.cover,
-      );
-    }
-
-    return Container(
-      color: Colors.grey.shade200,
-      alignment: Alignment.center,
-      child: const Text(
-        'Image not available',
-        style: TextStyle(
-          color: Colors.black54,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+    return DraggableImageViewer(
+      imageFile: _currentFile,
+      assetPath: _currentAsset,
     );
   }
 
@@ -814,3 +789,166 @@ class _DashedRectPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
+
+class DraggableImageViewer extends StatefulWidget {
+  final File? imageFile;
+  final String? assetPath;
+
+  const DraggableImageViewer({
+    super.key,
+    this.imageFile,
+    this.assetPath,
+  });
+
+  @override
+  State<DraggableImageViewer> createState() => _DraggableImageViewerState();
+}
+
+class _DraggableImageViewerState extends State<DraggableImageViewer> {
+  ImageProvider? _imageProvider;
+  double? _imageAspectRatio;
+  double _dragX = 0.0;
+  double _dragY = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageProvider();
+  }
+
+  @override
+  void didUpdateWidget(covariant DraggableImageViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.imageFile != oldWidget.imageFile || widget.assetPath != oldWidget.assetPath) {
+      _loadImageProvider();
+    }
+  }
+
+  void _loadImageProvider() {
+    if (widget.imageFile != null) {
+      _imageProvider = FileImage(widget.imageFile!);
+    } else if (widget.assetPath != null && widget.assetPath!.isNotEmpty) {
+      _imageProvider = AssetImage(widget.assetPath!);
+    } else {
+      _imageProvider = null;
+      setState(() {
+        _imageAspectRatio = null;
+        _dragX = 0.0;
+        _dragY = 0.0;
+      });
+      return;
+    }
+
+    _resolveImageSize();
+  }
+
+  void _resolveImageSize() {
+    if (_imageProvider == null) return;
+    
+    final ImageStream stream = _imageProvider!.resolve(const ImageConfiguration());
+    ImageStreamListener? listener;
+    listener = ImageStreamListener(
+      (ImageInfo info, bool synchronousCall) {
+        if (mounted) {
+          setState(() {
+            _imageAspectRatio = info.image.width / info.image.height;
+            _dragX = 0.0;
+            _dragY = 0.0;
+          });
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          stream.removeListener(listener!);
+        });
+      },
+      onError: (exception, stackTrace) {
+        debugPrint("Error loading image size: $exception");
+        if (mounted) {
+          setState(() {
+            _imageAspectRatio = null;
+          });
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          stream.removeListener(listener!);
+        });
+      },
+    );
+    stream.addListener(listener);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_imageProvider == null) {
+      return Container(
+        color: Colors.grey.shade200,
+        alignment: Alignment.center,
+        child: const Text(
+          'Image not available',
+          style: TextStyle(
+            color: Colors.black54,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    if (_imageAspectRatio == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.maxWidth;
+        final isLandscape = _imageAspectRatio! > 1.0;
+
+        double maxDragX = 0.0;
+        double maxDragY = 0.0;
+        double scaledWidth = size;
+        double scaledHeight = size;
+
+        if (isLandscape) {
+          scaledWidth = size * _imageAspectRatio!;
+          scaledHeight = size;
+          maxDragX = (scaledWidth - size) / 2.0;
+        } else {
+          scaledWidth = size;
+          scaledHeight = size / _imageAspectRatio!;
+          maxDragY = (scaledHeight - size) / 2.0;
+        }
+
+        _dragX = _dragX.clamp(-maxDragX, maxDragX);
+        _dragY = _dragY.clamp(-maxDragY, maxDragY);
+
+        return GestureDetector(
+          onPanUpdate: (details) {
+            setState(() {
+              if (isLandscape) {
+                _dragX = (_dragX + details.delta.dx).clamp(-maxDragX, maxDragX);
+              } else {
+                _dragY = (_dragY + details.delta.dy).clamp(-maxDragY, maxDragY);
+              }
+            });
+          },
+          child: ClipRect(
+            child: OverflowBox(
+              minWidth: scaledWidth,
+              maxWidth: scaledWidth,
+              minHeight: scaledHeight,
+              maxHeight: scaledHeight,
+              child: Transform.translate(
+                offset: Offset(_dragX, _dragY),
+                child: Image(
+                  image: _imageProvider!,
+                  width: scaledWidth,
+                  height: scaledHeight,
+                  fit: BoxFit.fill,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+

@@ -679,4 +679,52 @@ class ApiService {
   Future<List<dynamic>> fetchPeople() async {
     return getProducts(limit: 20, skip: 0);
   }
+
+  Future<Map<String, dynamic>> submitTryOnFeedback({
+    required String originalImageUrl,
+    required String originalImageId,
+    required int x1,
+    required int y1,
+    required int x2,
+    required int y2,
+    required double objW,
+    required double objH,
+    required String feedback,
+    required String ownerId,
+  }) async {
+    final response = await _dio.post(
+      '/tryon/feedback',
+      data: {
+        'originalImageUrl': originalImageUrl,
+        'originalImageId': originalImageId,
+        'x1': x1,
+        'y1': y1,
+        'x2': x2,
+        'y2': y2,
+        'objW': objW,
+        'objH': objH,
+        'feedback': feedback,
+        'ownerId': ownerId,
+      },
+    );
+    return (response.data as Map).cast<String, dynamic>();
+  }
+
+  Future<void> uploadEditedImage({
+    required String uploadUrl,
+    required File imageFile,
+  }) async {
+    final bytes = await imageFile.readAsBytes();
+    final dio = Dio();
+    await dio.put(
+      uploadUrl,
+      data: bytes,
+      options: Options(
+        headers: {
+          'Content-Type': 'image/png',
+          'Content-Length': bytes.length,
+        },
+      ),
+    );
+  }
 }

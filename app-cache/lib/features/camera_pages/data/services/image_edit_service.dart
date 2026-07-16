@@ -143,4 +143,40 @@ class ImageEditService {
     await file.writeAsBytes(bytes);
     return file;
   }
+
+  Future<Map<String, dynamic>> submitTryOnFeedback({
+    required String originalImageUrl,
+    required String originalImageId,
+    required int x1,
+    required int y1,
+    required int x2,
+    required int y2,
+    required double objW,
+    required double objH,
+    required String feedback,
+    required String ownerId,
+  }) async {
+    return await _apiService.submitTryOnFeedback(
+      originalImageUrl: originalImageUrl,
+      originalImageId: originalImageId,
+      x1: x1,
+      y1: y1,
+      x2: x2,
+      y2: y2,
+      objW: objW,
+      objH: objH,
+      feedback: feedback,
+      ownerId: ownerId,
+    );
+  }
+
+  Future<void> uploadEditedImage({
+    required String uploadUrl,
+    required File imageFile,
+  }) async {
+    await _apiService.uploadEditedImage(
+      uploadUrl: uploadUrl,
+      imageFile: imageFile,
+    );
+  }
 }

@@ -145,6 +145,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         'original': state.originalImage!,
         'generated': newImagePath,
         'laminate': state.selectedPattern,
+        'coordinate': coordinate,
       });
 
       emit(
@@ -358,6 +359,62 @@ class ImageEditCubit extends Cubit<ImageEditState> {
       );
     } catch (e) {
       debugPrint('❌ Error saving to SQLite: $e');
+    }
+  }
+
+  Future<void> submitFeedback(String feedbackType) async {
+    final currentHistory = state.generatedHistory;
+    if (currentHistory.isEmpty) return;
+
+    final lastEdit = currentHistory.last;
+    final Map<String, dynamic>? coordinate = lastEdit['coordinate'] as Map<String, dynamic>? ?? state.selectedArea;
+    if (coordinate == null) return;
+
+    final String furnitureId = state.furnitureId ?? "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+    final String ownerId = state.ownerId ?? "user13@gmail.com";
+    
+    final String originalImg = state.originalImage ?? "";
+    String originalImageUrl = originalImg;
+    if (!originalImageUrl.startsWith('http')) {
+      originalImageUrl = "https://firebasestorage.googleapis.com/v0/b/aeka-ustaad.firebasestorage.app/o/furniture_images%2F$furnitureId.jpg?alt=media";
+    }
+
+    final int x1 = (coordinate['left'] as num?)?.toInt() ?? (coordinate['x'] as num?)?.toInt() ?? 100;
+    final int y1 = (coordinate['top'] as num?)?.toInt() ?? (coordinate['y'] as num?)?.toInt() ?? 200;
+    final int x2 = (coordinate['right'] as num?)?.toInt() ?? (coordinate['x'] as num?)?.toInt() ?? 400;
+    final int y2 = (coordinate['bottom'] as num?)?.toInt() ?? (coordinate['y'] as num?)?.toInt() ?? 600;
+    final double objW = (coordinate['obj_w'] as num?)?.toDouble() ?? 84.0;
+    final double objH = (coordinate['obj_h'] as num?)?.toDouble() ?? 96.0;
+
+    final String editedLocalPath = lastEdit['generated'] as String? ?? state.currentGeneratedImage ?? "";
+    if (editedLocalPath.isEmpty) return;
+
+    try {
+      debugPrint("📡 Sending tryon feedback...");
+      final res = await _imageEditService.submitTryOnFeedback(
+        originalImageUrl: originalImageUrl,
+        originalImageId: furnitureId,
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        objW: objW,
+        objH: objH,
+        feedback: feedbackType,
+        ownerId: ownerId,
+      );
+
+      final String? uploadUrl = res['uploadUrl'];
+      if (uploadUrl != null && uploadUrl.isNotEmpty) {
+        debugPrint("📡 Uploading edited image to signed URL: $uploadUrl");
+        await _imageEditService.uploadEditedImage(
+          uploadUrl: uploadUrl,
+          imageFile: File(editedLocalPath),
+        );
+        debugPrint("✅ Edited image uploaded successfully!");
+      }
+    } catch (e) {
+      debugPrint("❌ Failed to submit feedback/upload image: $e");
     }
   }
 }

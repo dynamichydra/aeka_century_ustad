@@ -32,6 +32,7 @@ import 'package:century_ai/features/camera_pages/controllers/history_controller.
 import 'package:century_ai/features/camera_pages/controllers/texture_controller.dart';
 import 'package:century_ai/features/camera_pages/controllers/selection_controller.dart';
 import 'package:century_ai/features/camera_pages/controllers/zoom_controller.dart';
+
 int rectanglesNeeded({
   required double bigWidth,
   required double bigHeight,
@@ -254,16 +255,30 @@ class _ImageEditPageState extends State<ImageEditPage>
     Rect? visibleImageRect,
   }) {
     // Effective bounds: use visible image rect when tighter than viewport
-    final double minX = visibleImageRect != null ? (visibleImageRect.left + 4) : 8.0;
-    final double maxX = visibleImageRect != null ? (visibleImageRect.right - 4) : (vpW - 8.0);
-    final double minY = visibleImageRect != null ? (visibleImageRect.top + 4) : 8.0;
-    final double maxY = visibleImageRect != null ? (visibleImageRect.bottom - 4) : (vpH - 8.0);
+    final double minX = visibleImageRect != null
+        ? (visibleImageRect.left + 4)
+        : 8.0;
+    final double maxX = visibleImageRect != null
+        ? (visibleImageRect.right - 4)
+        : (vpW - 8.0);
+    final double minY = visibleImageRect != null
+        ? (visibleImageRect.top + 4)
+        : 8.0;
+    final double maxY = visibleImageRect != null
+        ? (visibleImageRect.bottom - 4)
+        : (vpH - 8.0);
 
     final candidates = [
       // 1. Bottom Center (default)
-      Offset(vpSelection.left + (vpSelection.width - cardW) / 2, vpSelection.bottom + 22),
+      Offset(
+        vpSelection.left + (vpSelection.width - cardW) / 2,
+        vpSelection.bottom + 22,
+      ),
       // 2. Top Center
-      Offset(vpSelection.left + (vpSelection.width - cardW) / 2, vpSelection.top - 42),
+      Offset(
+        vpSelection.left + (vpSelection.width - cardW) / 2,
+        vpSelection.top - 42,
+      ),
       // 3. Bottom Left
       Offset(vpSelection.left, vpSelection.bottom + 22),
       // 4. Bottom Right
@@ -275,8 +290,10 @@ class _ImageEditPageState extends State<ImageEditPage>
     ];
 
     for (final pos in candidates) {
-      if (pos.dx >= minX && pos.dx + cardW <= maxX &&
-          pos.dy >= minY && pos.dy + cardH <= maxY) {
+      if (pos.dx >= minX &&
+          pos.dx + cardW <= maxX &&
+          pos.dy >= minY &&
+          pos.dy + cardH <= maxY) {
         return pos;
       }
     }
@@ -307,16 +324,30 @@ class _ImageEditPageState extends State<ImageEditPage>
     Rect? visibleImageRect,
   }) {
     // Effective bounds: use visible image rect when tighter than viewport
-    final double minX = visibleImageRect != null ? (visibleImageRect.left + 4) : 8.0;
-    final double maxX = visibleImageRect != null ? (visibleImageRect.right - 4) : (vpW - 8.0);
-    final double minY = visibleImageRect != null ? (visibleImageRect.top + 4) : 8.0;
-    final double maxY = visibleImageRect != null ? (visibleImageRect.bottom - 4) : (vpH - 8.0);
+    final double minX = visibleImageRect != null
+        ? (visibleImageRect.left + 4)
+        : 8.0;
+    final double maxX = visibleImageRect != null
+        ? (visibleImageRect.right - 4)
+        : (vpW - 8.0);
+    final double minY = visibleImageRect != null
+        ? (visibleImageRect.top + 4)
+        : 8.0;
+    final double maxY = visibleImageRect != null
+        ? (visibleImageRect.bottom - 4)
+        : (vpH - 8.0);
 
     final candidates = [
       // 1. Right Center (default)
-      Offset(vpSelection.right + 22, vpSelection.top + (vpSelection.height - cardH) / 2),
+      Offset(
+        vpSelection.right + 22,
+        vpSelection.top + (vpSelection.height - cardH) / 2,
+      ),
       // 2. Left Center
-      Offset(vpSelection.left - 22 - cardW, vpSelection.top + (vpSelection.height - cardH) / 2),
+      Offset(
+        vpSelection.left - 22 - cardW,
+        vpSelection.top + (vpSelection.height - cardH) / 2,
+      ),
       // 3. Top Right
       Offset(vpSelection.right + 22, vpSelection.top),
       // 4. Bottom Right
@@ -328,8 +359,10 @@ class _ImageEditPageState extends State<ImageEditPage>
     ];
 
     for (final pos in candidates) {
-      if (pos.dx >= minX && pos.dx + cardW <= maxX &&
-          pos.dy >= minY && pos.dy + cardH <= maxY) {
+      if (pos.dx >= minX &&
+          pos.dx + cardW <= maxX &&
+          pos.dy >= minY &&
+          pos.dy + cardH <= maxY) {
         return pos;
       }
     }
@@ -652,7 +685,8 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Future<void> _fetchMoreTextures() async {
-    if (_selectedCategory == null || _isFetchingMore || !_hasMoreTextures) return;
+    if (_selectedCategory == null || _isFetchingMore || !_hasMoreTextures)
+      return;
 
     setState(() {
       _isFetchingMore = true;
@@ -699,7 +733,9 @@ class _ImageEditPageState extends State<ImageEditPage>
     });
 
     try {
-      final list = await _textureController.fetchTexturesByColor(_selectedColor!["hex"]);
+      final list = await _textureController.fetchTexturesByColor(
+        _selectedColor!["hex"],
+      );
       if (mounted) {
         setState(() {
           _apiTextures = list;
@@ -717,7 +753,8 @@ class _ImageEditPageState extends State<ImageEditPage>
     }
   }
 
-  Map<String, List<String>> get _activeCategoriesMap => _textureController.activeCategoriesMap;
+  Map<String, List<String>> get _activeCategoriesMap =>
+      _textureController.activeCategoriesMap;
 
   List<String> categoriesRow1 = [""];
   List<String> categoriesRow2 = [""];
@@ -901,12 +938,8 @@ class _ImageEditPageState extends State<ImageEditPage>
         body: SafeArea(
           child: BlocBuilder<ImageEditCubit, ImageEditState>(
             builder: (context, state) {
-              final isApplying =
-                  state.isApplyLoading || _isPrecaching || _isUploading;
-              return AbsorbPointer(
-                absorbing: isApplying,
-                child: Stack(
-                  children: [
+              return Stack(
+                children: [
                     Column(
                       children: [
                         SizedBox(
@@ -914,9 +947,6 @@ class _ImageEditPageState extends State<ImageEditPage>
                           child: ValueListenableBuilder<List<int>>(
                             valueListenable: _selectedIndicesNotifier,
                             builder: (context, selectedIndices, child) {
-                              if (state.isApplyLoading || _isPrecaching) {
-                                return _buildGeneratingBlock();
-                              }
                               return _compareExpanded
                                   ? _buildTopComparisonSection(selectedIndices)
                                   : RepaintBoundary(
@@ -985,11 +1015,10 @@ class _ImageEditPageState extends State<ImageEditPage>
                         ),
                       ),
                   ],
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
       ),
     );
   }
@@ -1005,6 +1034,8 @@ class _ImageEditPageState extends State<ImageEditPage>
             isActive: _compareExpanded,
             showArrow: true,
             onTap: () {
+              final isApplying = context.read<ImageEditCubit>().state.isApplyLoading || _isPrecaching || _isUploading || context.read<ImageEditCubit>().state.isGenerating;
+              if (isApplying) return;
               setState(() {
                 _compareExpanded = !_compareExpanded;
                 if (_compareExpanded) {
@@ -1029,6 +1060,7 @@ class _ImageEditPageState extends State<ImageEditPage>
               final bool canUndo =
                   state.generatedHistory.isNotEmpty || (_parentEditId != null);
               final bool canRedo = state.redoHistory.isNotEmpty;
+              final bool isApplying = state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating;
               return _buildHeaderTile(
                 title: "Edit & Design",
                 iconImg: "edit.png",
@@ -1036,6 +1068,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                 showArrow: _hasAppliedOnce,
                 onTap: _hasAppliedOnce
                     ? () {
+                        if (isApplying) return;
                         setState(() {
                           _editExpanded = !_editExpanded;
                           if (_editExpanded) _compareExpanded = false;
@@ -1048,6 +1081,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                     if (_selection != null) ...[
                       GestureDetector(
                         onTap: () {
+                          if (isApplying) return;
                           setState(() {
                             _selection = null;
                             _mode = SelectionMode.none;
@@ -1093,9 +1127,9 @@ class _ImageEditPageState extends State<ImageEditPage>
                       const SizedBox(width: 8),
                     ],
                     Opacity(
-                      opacity: canUndo ? 1.0 : 0.4,
+                      opacity: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating)) ? 1.0 : 0.4,
                       child: GestureDetector(
-                        onTap: canUndo ? () => _handleUndo(state) : null,
+                        onTap: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating)) ? () => _handleUndo(state) : null,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -1133,13 +1167,17 @@ class _ImageEditPageState extends State<ImageEditPage>
                     ),
                     const SizedBox(width: 8),
                     Opacity(
-                      opacity: canUndo ? 1.0 : 0.4,
+                      opacity: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating)) ? 1.0 : 0.4,
                       child: GestureDetector(
-                        onTap: canUndo
+                        onTap: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating))
                             ? () {
+                                final newVal = (_feedbackLiked == true) ? null : true;
                                 setState(() {
-                                  _feedbackLiked = (_feedbackLiked == true) ? null : true;
+                                  _feedbackLiked = newVal;
                                 });
+                                if (newVal == true) {
+                                  context.read<ImageEditCubit>().submitFeedback("THUMBS_UP");
+                                }
                               }
                             : null,
                         child: Container(
@@ -1171,16 +1209,20 @@ class _ImageEditPageState extends State<ImageEditPage>
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(width: 6),
                     Opacity(
-                      opacity: canUndo ? 1.0 : 0.4,
+                      opacity: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating)) ? 1.0 : 0.4,
                       child: GestureDetector(
-                        onTap: canUndo
+                        onTap: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating))
                             ? () {
+                                final newVal = (_feedbackLiked == false) ? null : false;
                                 setState(() {
-                                  _feedbackLiked = (_feedbackLiked == false) ? null : false;
+                                  _feedbackLiked = newVal;
                                 });
+                                if (newVal == false) {
+                                  context.read<ImageEditCubit>().submitFeedback("THUMBS_DOWN");
+                                }
                               }
                             : null,
                         child: Container(
@@ -1988,332 +2030,507 @@ class _ImageEditPageState extends State<ImageEditPage>
     );
   }
 
-
-
   Widget _buildImageOverlaySection(ImageEditState state) {
     return Stack(
       children: [
         Listener(
           behavior: HitTestBehavior.opaque,
           onPointerDown: (event) {
-              _activePointers[event.pointer] = event.position;
+            _activePointers[event.pointer] = event.position;
 
-              if (_activePointers.length == 1) {
-                _backupSelection = _selection;
-              }
+            if (_activePointers.length == 1) {
+              _backupSelection = _selection;
+            }
 
-              if (_activePointers.length >= 2) {
-                setState(() {
-                  _selection = _backupSelection;
-                  _mode = SelectionMode.none;
-                  _isPanning = true;
+            if (_activePointers.length >= 2) {
+              setState(() {
+                _selection = _backupSelection;
+                _mode = SelectionMode.none;
+                _isPanning = true;
 
-                  // Initialize pinch baseline
-                  final keys = _activePointers.keys.toList();
-                  final p1 = _activePointers[keys[0]]!;
-                  final p2 = _activePointers[keys[1]]!;
-                  _initialPointerDistance = (p1 - p2).distance;
-                  if (_initialPointerDistance < 1.0) {
-                    _initialPointerDistance = 1.0;
-                  }
-                  _initialScale = _transformationController.value
-                      .getMaxScaleOnAxis();
-                });
+                // Initialize pinch baseline
+                final keys = _activePointers.keys.toList();
+                final p1 = _activePointers[keys[0]]!;
+                final p2 = _activePointers[keys[1]]!;
+                _initialPointerDistance = (p1 - p2).distance;
+                if (_initialPointerDistance < 1.0) {
+                  _initialPointerDistance = 1.0;
+                }
+                _initialScale = _transformationController.value
+                    .getMaxScaleOnAxis();
+              });
+              return;
+            }
+
+            final Matrix4 matrix = _transformationController.value;
+            final Matrix4 inverse = Matrix4.inverted(matrix);
+            final Offset localPos = MatrixUtils.transformPoint(
+              inverse,
+              event.localPosition,
+            );
+            _dragStart = localPos;
+            final Rect imageRect = _getImageRect(context);
+            final double imgL = imageRect.left;
+            final double imgR = imageRect.right;
+            final double imgT = imageRect.top;
+            final double imgB = imageRect.bottom;
+            final Size viewSize = _getViewSize(context);
+
+            final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
+
+            // Get current zoom scale for touch target sizing
+            final double zoomScale = _transformationController.value
+                .getMaxScaleOnAxis();
+
+            // 1. High Priority: Check if tap hit a resize handle or selection body
+            SelectionMode detectedMode = SelectionMode.none;
+            if (_selection != null) {
+              detectedMode = _selectionController.hitTestHandles(
+                selection: _selection,
+                localPosition: localPos,
+                imageRect: imageRect,
+                zoomScale: zoomScale,
+              );
+            }
+
+            if (detectedMode != SelectionMode.none) {
+              setState(() {
+                _mode = detectedMode;
+              });
+              return;
+            }
+
+            // 2. Medium Priority: Check if tap is on an overlay widget or measurement lines.
+            // If so, let the overlay handle the event and skip all selection logic
+            if (_selection != null) {
+              final Offset vpTopLeft = MatrixUtils.transformPoint(
+                matrix,
+                Offset(_selection!.left, _selection!.top),
+              );
+              final Offset vpBottomRight = MatrixUtils.transformPoint(
+                matrix,
+                Offset(
+                  _selection!.left + _selection!.width,
+                  _selection!.top + _selection!.height,
+                ),
+              );
+              final Rect vpSelection = Rect.fromPoints(
+                vpTopLeft,
+                vpBottomRight,
+              );
+
+              final double widthCardW = _editingWidth ? 110.0 : 60.0;
+              final Rect visibleImgRect = _getVisibleImageRect(context);
+              final Offset widthCardPos = _getWidthCardPosition(
+                vpSelection: vpSelection,
+                cardW: widthCardW,
+                cardH: 40.0,
+                vpW: viewSize.width,
+                vpH: viewSize.height,
+                visibleImageRect: visibleImgRect,
+              );
+              final Rect widthCardRect = Rect.fromLTWH(
+                widthCardPos.dx,
+                widthCardPos.dy,
+                widthCardW,
+                40.0,
+              ).inflate(12.0);
+
+              final double heightCardW = _editingHeight ? 110.0 : 60.0;
+              final Offset heightCardPos = _getHeightCardPosition(
+                vpSelection: vpSelection,
+                cardW: heightCardW,
+                cardH: 40.0,
+                vpW: viewSize.width,
+                vpH: viewSize.height,
+                visibleImageRect: visibleImgRect,
+              );
+              final Rect heightCardRect = Rect.fromLTWH(
+                heightCardPos.dx,
+                heightCardPos.dy,
+                heightCardW,
+                40.0,
+              ).inflate(12.0);
+
+              final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+              final double horizontalArrowTop = widthAxisAtTop
+                  ? vpSelection.top - 18
+                  : vpSelection.bottom + 8;
+              final bool inWidthAxis =
+                  vpPos.dx >= vpSelection.left - 12.0 &&
+                  vpPos.dx <= vpSelection.right + 12.0 &&
+                  (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+              final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
+              final double verticalArrowLeft = heightAxisAtLeft
+                  ? vpSelection.left - 18
+                  : vpSelection.right + 8;
+              final bool inHeightAxis =
+                  vpPos.dy >= vpSelection.top - 12.0 &&
+                  vpPos.dy <= vpSelection.bottom + 12.0 &&
+                  (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+              if (widthCardRect.contains(vpPos) ||
+                  heightCardRect.contains(vpPos) ||
+                  inWidthAxis ||
+                  inHeightAxis) {
+                _interactingWithOverlay = true;
                 return;
               }
+            }
 
-              final Matrix4 matrix = _transformationController.value;
-              final Matrix4 inverse = Matrix4.inverted(matrix);
-              final Offset localPos = MatrixUtils.transformPoint(inverse, event.localPosition);
+            // 3. Low Priority: Tapped elsewhere inside the image viewport canvas.
+            // Prepare for creating a new selection if they drag, but do not clear selection immediately.
+            setState(() {
               _dragStart = localPos;
-              final Rect imageRect = _getImageRect(context);
-              final double imgL = imageRect.left;
-              final double imgR = imageRect.right;
-              final double imgT = imageRect.top;
-              final double imgB = imageRect.bottom;
-              final Size viewSize = _getViewSize(context);
+              _mode = SelectionMode.creating;
+              _isDrawingNewSelection = false;
+            });
+          },
+          onPointerMove: (event) {
+            if (_activePointers.length >= 2 || _isPanning) {
+              final Offset? oldPos = _activePointers[event.pointer];
+              _activePointers[event.pointer] = event.position;
 
-              final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
+              if (oldPos != null && oldPos != event.position) {
+                final viewSize = Size(
+                  MediaQuery.of(context).size.width,
+                  MediaQuery.of(context).size.height * 0.40,
+                );
 
-              // Get current zoom scale for touch target sizing
-              final double zoomScale = _transformationController.value.getMaxScaleOnAxis();
+                _transformationController.value =
+                    ZoomController.calculatePinchPan(
+                      currentMatrix: _transformationController.value,
+                      activePointers: _activePointers,
+                      eventPosition: event.position,
+                      oldPos: oldPos,
+                      viewSize: viewSize,
+                      originalImageWidth: _originalImageWidth,
+                      originalImageHeight: _originalImageHeight,
+                      displayScale: _currentDisplayScale,
+                      initialPointerDistance: _initialPointerDistance,
+                      initialScale: _initialScale,
+                      minZoomLimit: _currentMinZoomLimit,
+                      maxScale: 4.0,
+                    );
+              }
+              return;
+            }
 
-              // 1. High Priority: Check if tap hit a resize handle or selection body
-              SelectionMode detectedMode = SelectionMode.none;
-              if (_selection != null) {
-                detectedMode = _selectionController.hitTestHandles(
-                  selection: _selection,
+            final Matrix4 matrix = _transformationController.value;
+            final Matrix4 inverse = Matrix4.inverted(matrix);
+            final Offset localPos = MatrixUtils.transformPoint(
+              inverse,
+              event.localPosition,
+            );
+            final Rect imageRect = _getImageRect(context);
+
+            if (_mode == SelectionMode.creating && _dragStart != null) {
+              if (!_isDrawingNewSelection) {
+                final double dragDistance = (localPos - _dragStart!).distance;
+                if (dragDistance >= 5.0) {
+                  final double imgL = imageRect.left;
+                  final double imgR = imageRect.right;
+                  final double imgT = imageRect.top;
+                  final double imgB = imageRect.bottom;
+                  setState(() {
+                    _isDrawingNewSelection = true;
+                    // Clamp the drag start point to the image bounds when drawing starts
+                    final Offset clampedStart = Offset(
+                      _dragStart!.dx.clamp(imgL, imgR),
+                      _dragStart!.dy.clamp(imgT, imgB),
+                    );
+                    _dragStart = clampedStart;
+                    _selection = SelectionRect(
+                      left: clampedStart.dx,
+                      top: clampedStart.dy,
+                      width: 0,
+                      height: 0,
+                    );
+                    _editingWidth = false;
+                    _editingHeight = false;
+                  });
+                  context.read<ImageEditCubit>().clearSelection();
+                }
+              }
+
+              if (_isDrawingNewSelection) {
+                setState(() {
+                  _selection = _selectionController.createSelection(
+                    dragStart: _dragStart!,
+                    currentPos: localPos,
+                    imageRect: imageRect,
+                  );
+                });
+              }
+            } else if (_mode == SelectionMode.moving && _selection != null) {
+              setState(() {
+                _selection = _selectionController.moveSelection(
+                  selection: _selection!,
+                  delta: event.delta,
+                  imageRect: imageRect,
+                );
+              });
+            } else if (_selection != null && _mode != SelectionMode.none) {
+              setState(() {
+                _selection = _selectionController.resizeSelection(
+                  selection: _selection!,
+                  mode: _mode,
+                  localPos: localPos,
+                  imageRect: imageRect,
+                );
+              });
+            }
+          },
+          onPointerUp: (event) {
+            // If we were interacting with an overlay (label/editor),
+            // skip all selection logic on pointer up
+            if (_interactingWithOverlay) {
+              _interactingWithOverlay = false;
+              _activePointers.remove(event.pointer);
+              if (_activePointers.isEmpty) {
+                _backupSelection = null;
+              }
+              return;
+            }
+            if (_justSaved) {
+              _justSaved = false;
+              _activePointers.remove(event.pointer);
+              if (_activePointers.isEmpty) {
+                _backupSelection = null;
+              }
+              return;
+            }
+            final Matrix4 matrix = _transformationController.value;
+            final Matrix4 inverse = Matrix4.inverted(matrix);
+            final Offset localPos = MatrixUtils.transformPoint(
+              inverse,
+              event.localPosition,
+            );
+            final Size viewSize = _getViewSize(context);
+
+            // 1. If we were preparing to create a selection but never actually dragged (simple tap)
+            if (_mode == SelectionMode.creating) {
+              final double dragDistance = _dragStart != null
+                  ? (localPos - _dragStart!).distance
+                  : 0.0;
+              if (!_isDrawingNewSelection || dragDistance < 5.0) {
+                final Matrix4 matrix = _transformationController.value;
+                final Offset vpPos = MatrixUtils.transformPoint(
+                  matrix,
+                  localPos,
+                );
+
+                bool clickedOverlay = false;
+                if (_backupSelection != null) {
+                  final Offset vpTopLeft = MatrixUtils.transformPoint(
+                    matrix,
+                    Offset(_backupSelection!.left, _backupSelection!.top),
+                  );
+                  final Offset vpBottomRight = MatrixUtils.transformPoint(
+                    matrix,
+                    Offset(
+                      _backupSelection!.left + _backupSelection!.width,
+                      _backupSelection!.top + _backupSelection!.height,
+                    ),
+                  );
+                  final Rect vpSelection = Rect.fromPoints(
+                    vpTopLeft,
+                    vpBottomRight,
+                  );
+
+                  final double widthCardW = _editingWidth ? 110.0 : 60.0;
+                  final Rect visibleImgRect2 = _getVisibleImageRect(context);
+                  final Offset widthCardPos = _getWidthCardPosition(
+                    vpSelection: vpSelection,
+                    cardW: widthCardW,
+                    cardH: 40.0,
+                    vpW: viewSize.width,
+                    vpH: viewSize.height,
+                    visibleImageRect: visibleImgRect2,
+                  );
+                  final Rect widthCardRect = Rect.fromLTWH(
+                    widthCardPos.dx,
+                    widthCardPos.dy,
+                    widthCardW,
+                    40.0,
+                  ).inflate(12.0);
+
+                  final double heightCardW = _editingHeight ? 110.0 : 60.0;
+                  final Offset heightCardPos = _getHeightCardPosition(
+                    vpSelection: vpSelection,
+                    cardW: heightCardW,
+                    cardH: 40.0,
+                    vpW: viewSize.width,
+                    vpH: viewSize.height,
+                    visibleImageRect: visibleImgRect2,
+                  );
+                  final Rect heightCardRect = Rect.fromLTWH(
+                    heightCardPos.dx,
+                    heightCardPos.dy,
+                    heightCardW,
+                    40.0,
+                  ).inflate(12.0);
+
+                  final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+                  final double horizontalArrowTop = widthAxisAtTop
+                      ? vpSelection.top - 18
+                      : vpSelection.bottom + 8;
+                  final bool inWidthAxis =
+                      vpPos.dx >= vpSelection.left - 12.0 &&
+                      vpPos.dx <= vpSelection.right + 12.0 &&
+                      (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+                  final bool heightAxisAtLeft =
+                      heightCardPos.dx < vpSelection.left;
+                  final double verticalArrowLeft = heightAxisAtLeft
+                      ? vpSelection.left - 18
+                      : vpSelection.right + 8;
+                  final bool inHeightAxis =
+                      vpPos.dy >= vpSelection.top - 12.0 &&
+                      vpPos.dy <= vpSelection.bottom + 12.0 &&
+                      (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+                  if (widthCardRect.contains(vpPos) ||
+                      heightCardRect.contains(vpPos) ||
+                      inWidthAxis ||
+                      inHeightAxis) {
+                    clickedOverlay = true;
+                  }
+                }
+
+                if (clickedOverlay) {
+                  // Tap on overlay: keep the selection!
+                  setState(() {
+                    _selection = _backupSelection;
+                    _mode = SelectionMode.none;
+                  });
+                } else {
+                  // Tap anywhere else (outside selection, handles, and overlays): keep selection!
+                  setState(() {
+                    if (_backupSelection != null) {
+                      _selection = _backupSelection;
+                    }
+                    _mode = SelectionMode.none;
+                  });
+                }
+
+                _activePointers.remove(event.pointer);
+                _backupSelection = null;
+                _dragStart = null;
+                _isDrawingNewSelection = false;
+                return;
+              }
+            }
+
+            // 2. If a resize/move gesture finished or a tap on an active handle/body occurred
+            if (_backupSelection != null &&
+                _dragStart != null &&
+                _mode != SelectionMode.creating) {
+              final double dragDistance = (localPos - _dragStart!).distance;
+              if (dragDistance < 5.0) {
+                final Matrix4 matrix = _transformationController.value;
+                final Offset vpPos = MatrixUtils.transformPoint(
+                  matrix,
+                  localPos,
+                );
+                final double zoomScale = matrix.getMaxScaleOnAxis();
+
+                final Rect imageRect = _getImageRect(context);
+                // Check if tap hit a resize handle or selection body
+                final SelectionMode mode = _selectionController.hitTestHandles(
+                  selection: _backupSelection,
                   localPosition: localPos,
                   imageRect: imageRect,
                   zoomScale: zoomScale,
                 );
-              }
 
-              if (detectedMode != SelectionMode.none) {
-                setState(() {
-                  _mode = detectedMode;
-                });
-                return;
-              }
-
-              // 2. Medium Priority: Check if tap is on an overlay widget or measurement lines.
-              // If so, let the overlay handle the event and skip all selection logic
-              if (_selection != null) {
-                final Offset vpTopLeft = MatrixUtils.transformPoint(
-                  matrix,
-                  Offset(_selection!.left, _selection!.top),
-                );
-                final Offset vpBottomRight = MatrixUtils.transformPoint(
-                  matrix,
-                  Offset(_selection!.left + _selection!.width, _selection!.top + _selection!.height),
-                );
-                final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
-
-                final double widthCardW = _editingWidth ? 110.0 : 60.0;
-                final Rect visibleImgRect = _getVisibleImageRect(context);
-                final Offset widthCardPos = _getWidthCardPosition(
-                  vpSelection: vpSelection,
-                  cardW: widthCardW,
-                  cardH: 40.0,
-                  vpW: viewSize.width,
-                  vpH: viewSize.height,
-                  visibleImageRect: visibleImgRect,
-                );
-                final Rect widthCardRect = Rect.fromLTWH(widthCardPos.dx, widthCardPos.dy, widthCardW, 40.0).inflate(12.0);
-
-                final double heightCardW = _editingHeight ? 110.0 : 60.0;
-                final Offset heightCardPos = _getHeightCardPosition(
-                  vpSelection: vpSelection,
-                  cardW: heightCardW,
-                  cardH: 40.0,
-                  vpW: viewSize.width,
-                  vpH: viewSize.height,
-                  visibleImageRect: visibleImgRect,
-                );
-                final Rect heightCardRect = Rect.fromLTWH(heightCardPos.dx, heightCardPos.dy, heightCardW, 40.0).inflate(12.0);
-
-                final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
-                final double horizontalArrowTop = widthAxisAtTop ? vpSelection.top - 18 : vpSelection.bottom + 8;
-                final bool inWidthAxis = vpPos.dx >= vpSelection.left - 12.0 &&
-                                         vpPos.dx <= vpSelection.right + 12.0 &&
-                                         (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
-
-                final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
-                final double verticalArrowLeft = heightAxisAtLeft ? vpSelection.left - 18 : vpSelection.right + 8;
-                final bool inHeightAxis = vpPos.dy >= vpSelection.top - 12.0 &&
-                                          vpPos.dy <= vpSelection.bottom + 12.0 &&
-                                          (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
-
-                if (widthCardRect.contains(vpPos) ||
-                    heightCardRect.contains(vpPos) ||
-                    inWidthAxis ||
-                    inHeightAxis) {
-                  _interactingWithOverlay = true;
-                  return;
-                }
-              }
-
-              // 3. Low Priority: Tapped elsewhere inside the image viewport canvas.
-              // Prepare for creating a new selection if they drag, but do not clear selection immediately.
-              setState(() {
-                _dragStart = localPos;
-                _mode = SelectionMode.creating;
-                _isDrawingNewSelection = false;
-              });
-            },
-            onPointerMove: (event) {
-              if (_activePointers.length >= 2 || _isPanning) {
-                final Offset? oldPos = _activePointers[event.pointer];
-                _activePointers[event.pointer] = event.position;
-
-                if (oldPos != null && oldPos != event.position) {
-                  final viewSize = Size(
-                    MediaQuery.of(context).size.width,
-                    MediaQuery.of(context).size.height * 0.40,
+                bool clickedOverlay = false;
+                if (_selection != null) {
+                  final Offset vpTopLeft = MatrixUtils.transformPoint(
+                    matrix,
+                    Offset(_selection!.left, _selection!.top),
+                  );
+                  final Offset vpBottomRight = MatrixUtils.transformPoint(
+                    matrix,
+                    Offset(
+                      _selection!.left + _selection!.width,
+                      _selection!.top + _selection!.height,
+                    ),
+                  );
+                  final Rect vpSelection = Rect.fromPoints(
+                    vpTopLeft,
+                    vpBottomRight,
                   );
 
-                  _transformationController.value = ZoomController.calculatePinchPan(
-                    currentMatrix: _transformationController.value,
-                    activePointers: _activePointers,
-                    eventPosition: event.position,
-                    oldPos: oldPos,
-                    viewSize: viewSize,
-                    originalImageWidth: _originalImageWidth,
-                    originalImageHeight: _originalImageHeight,
-                    displayScale: _currentDisplayScale,
-                    initialPointerDistance: _initialPointerDistance,
-                    initialScale: _initialScale,
-                    minZoomLimit: _currentMinZoomLimit,
-                    maxScale: 4.0,
+                  final double widthCardW = _editingWidth ? 110.0 : 60.0;
+                  final Rect visibleImgRect2 = _getVisibleImageRect(context);
+                  final Offset widthCardPos = _getWidthCardPosition(
+                    vpSelection: vpSelection,
+                    cardW: widthCardW,
+                    cardH: 40.0,
+                    vpW: viewSize.width,
+                    vpH: viewSize.height,
+                    visibleImageRect: visibleImgRect2,
                   );
-                }
-                return;
-              }
+                  final Rect widthCardRect = Rect.fromLTWH(
+                    widthCardPos.dx,
+                    widthCardPos.dy,
+                    widthCardW,
+                    40.0,
+                  ).inflate(12.0);
 
-              final Matrix4 matrix = _transformationController.value;
-              final Matrix4 inverse = Matrix4.inverted(matrix);
-              final Offset localPos = MatrixUtils.transformPoint(inverse, event.localPosition);
-              final Rect imageRect = _getImageRect(context);
+                  final double heightCardW = _editingHeight ? 110.0 : 60.0;
+                  final Offset heightCardPos = _getHeightCardPosition(
+                    vpSelection: vpSelection,
+                    cardW: heightCardW,
+                    cardH: 40.0,
+                    vpW: viewSize.width,
+                    vpH: viewSize.height,
+                    visibleImageRect: visibleImgRect2,
+                  );
+                  final Rect heightCardRect = Rect.fromLTWH(
+                    heightCardPos.dx,
+                    heightCardPos.dy,
+                    heightCardW,
+                    40.0,
+                  ).inflate(12.0);
 
-              if (_mode == SelectionMode.creating && _dragStart != null) {
-                if (!_isDrawingNewSelection) {
-                  final double dragDistance = (localPos - _dragStart!).distance;
-                  if (dragDistance >= 5.0) {
-                    final double imgL = imageRect.left;
-                    final double imgR = imageRect.right;
-                    final double imgT = imageRect.top;
-                    final double imgB = imageRect.bottom;
-                    setState(() {
-                      _isDrawingNewSelection = true;
-                      // Clamp the drag start point to the image bounds when drawing starts
-                      final Offset clampedStart = Offset(
-                        _dragStart!.dx.clamp(imgL, imgR),
-                        _dragStart!.dy.clamp(imgT, imgB),
-                      );
-                      _dragStart = clampedStart;
-                      _selection = SelectionRect(
-                        left: clampedStart.dx,
-                        top: clampedStart.dy,
-                        width: 0,
-                        height: 0,
-                      );
-                      _editingWidth = false;
-                      _editingHeight = false;
-                    });
-                    context.read<ImageEditCubit>().clearSelection();
+                  final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+                  final double horizontalArrowTop = widthAxisAtTop
+                      ? vpSelection.top - 18
+                      : vpSelection.bottom + 8;
+                  final bool inWidthAxis =
+                      vpPos.dx >= vpSelection.left - 12.0 &&
+                      vpPos.dx <= vpSelection.right + 12.0 &&
+                      (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+                  final bool heightAxisAtLeft =
+                      heightCardPos.dx < vpSelection.left;
+                  final double verticalArrowLeft = heightAxisAtLeft
+                      ? vpSelection.left - 18
+                      : vpSelection.right + 8;
+                  final bool inHeightAxis =
+                      vpPos.dy >= vpSelection.top - 12.0 &&
+                      vpPos.dy <= vpSelection.bottom + 12.0 &&
+                      (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+                  if (widthCardRect.contains(vpPos) ||
+                      heightCardRect.contains(vpPos) ||
+                      inWidthAxis ||
+                      inHeightAxis) {
+                    clickedOverlay = true;
                   }
                 }
 
-                if (_isDrawingNewSelection) {
+                // Keep the selection if tapped outside selection body/handles/overlays
+                if (mode == SelectionMode.none && !clickedOverlay) {
                   setState(() {
-                    _selection = _selectionController.createSelection(
-                      dragStart: _dragStart!,
-                      currentPos: localPos,
-                      imageRect: imageRect,
-                    );
-                  });
-                }
-              } else if (_mode == SelectionMode.moving && _selection != null) {
-                setState(() {
-                  _selection = _selectionController.moveSelection(
-                    selection: _selection!,
-                    delta: event.delta,
-                    imageRect: imageRect,
-                  );
-                });
-              } else if (_selection != null && _mode != SelectionMode.none) {
-                setState(() {
-                  _selection = _selectionController.resizeSelection(
-                    selection: _selection!,
-                    mode: _mode,
-                    localPos: localPos,
-                    imageRect: imageRect,
-                  );
-                });
-              }
-            },
-            onPointerUp: (event) {
-              // If we were interacting with an overlay (label/editor),
-              // skip all selection logic on pointer up
-              if (_interactingWithOverlay) {
-                _interactingWithOverlay = false;
-                _activePointers.remove(event.pointer);
-                if (_activePointers.isEmpty) {
-                  _backupSelection = null;
-                }
-                return;
-              }
-              if (_justSaved) {
-                _justSaved = false;
-                _activePointers.remove(event.pointer);
-                if (_activePointers.isEmpty) {
-                  _backupSelection = null;
-                }
-                return;
-              }
-              final Matrix4 matrix = _transformationController.value;
-              final Matrix4 inverse = Matrix4.inverted(matrix);
-              final Offset localPos = MatrixUtils.transformPoint(inverse, event.localPosition);
-              final Size viewSize = _getViewSize(context);
-
-              // 1. If we were preparing to create a selection but never actually dragged (simple tap)
-              if (_mode == SelectionMode.creating) {
-                final double dragDistance = _dragStart != null ? (localPos - _dragStart!).distance : 0.0;
-                if (!_isDrawingNewSelection || dragDistance < 5.0) {
-                  final Matrix4 matrix = _transformationController.value;
-                  final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
-
-                  bool clickedOverlay = false;
-                  if (_backupSelection != null) {
-                    final Offset vpTopLeft = MatrixUtils.transformPoint(
-                      matrix,
-                      Offset(_backupSelection!.left, _backupSelection!.top),
-                    );
-                    final Offset vpBottomRight = MatrixUtils.transformPoint(
-                      matrix,
-                      Offset(_backupSelection!.left + _backupSelection!.width, _backupSelection!.top + _backupSelection!.height),
-                    );
-                    final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
-
-                    final double widthCardW = _editingWidth ? 110.0 : 60.0;
-                    final Rect visibleImgRect2 = _getVisibleImageRect(context);
-                    final Offset widthCardPos = _getWidthCardPosition(
-                      vpSelection: vpSelection,
-                      cardW: widthCardW,
-                      cardH: 40.0,
-                      vpW: viewSize.width,
-                      vpH: viewSize.height,
-                      visibleImageRect: visibleImgRect2,
-                    );
-                    final Rect widthCardRect = Rect.fromLTWH(widthCardPos.dx, widthCardPos.dy, widthCardW, 40.0).inflate(12.0);
-
-                    final double heightCardW = _editingHeight ? 110.0 : 60.0;
-                    final Offset heightCardPos = _getHeightCardPosition(
-                      vpSelection: vpSelection,
-                      cardW: heightCardW,
-                      cardH: 40.0,
-                      vpW: viewSize.width,
-                      vpH: viewSize.height,
-                      visibleImageRect: visibleImgRect2,
-                    );
-                    final Rect heightCardRect = Rect.fromLTWH(heightCardPos.dx, heightCardPos.dy, heightCardW, 40.0).inflate(12.0);
-
-                    final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
-                    final double horizontalArrowTop = widthAxisAtTop ? vpSelection.top - 18 : vpSelection.bottom + 8;
-                    final bool inWidthAxis = vpPos.dx >= vpSelection.left - 12.0 &&
-                                             vpPos.dx <= vpSelection.right + 12.0 &&
-                                             (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
-
-                    final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
-                    final double verticalArrowLeft = heightAxisAtLeft ? vpSelection.left - 18 : vpSelection.right + 8;
-                    final bool inHeightAxis = vpPos.dy >= vpSelection.top - 12.0 &&
-                                              vpPos.dy <= vpSelection.bottom + 12.0 &&
-                                              (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
-
-                    if (widthCardRect.contains(vpPos) ||
-                        heightCardRect.contains(vpPos) ||
-                        inWidthAxis ||
-                        inHeightAxis) {
-                      clickedOverlay = true;
-                    }
-                  }
-
-                  if (clickedOverlay) {
-                    // Tap on overlay: keep the selection!
-                    setState(() {
+                    if (_backupSelection != null) {
                       _selection = _backupSelection;
-                      _mode = SelectionMode.none;
-                    });
-                  } else {
-                    // Tap anywhere else (outside selection, handles, and overlays): keep selection!
-                    setState(() {
-                      if (_backupSelection != null) {
-                        _selection = _backupSelection;
-                      }
-                      _mode = SelectionMode.none;
-                    });
-                  }
-
+                    }
+                    _mode = SelectionMode.none;
+                  });
                   _activePointers.remove(event.pointer);
                   _backupSelection = null;
                   _dragStart = null;
@@ -2321,222 +2538,143 @@ class _ImageEditPageState extends State<ImageEditPage>
                   return;
                 }
               }
+            }
 
-              // 2. If a resize/move gesture finished or a tap on an active handle/body occurred
-              if (_backupSelection != null && _dragStart != null && _mode != SelectionMode.creating) {
-                final double dragDistance = (localPos - _dragStart!).distance;
-                if (dragDistance < 5.0) {
-                  final Matrix4 matrix = _transformationController.value;
-                  final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
-                  final double zoomScale = matrix.getMaxScaleOnAxis();
+            _activePointers.remove(event.pointer);
 
-                  final Rect imageRect = _getImageRect(context);
-                  // Check if tap hit a resize handle or selection body
-                  final SelectionMode mode = _selectionController.hitTestHandles(
-                    selection: _backupSelection,
-                    localPosition: localPos,
-                    imageRect: imageRect,
-                    zoomScale: zoomScale,
-                  );
+            if (_activePointers.isEmpty) {
+              _backupSelection = null;
+            }
 
-                  bool clickedOverlay = false;
-                  if (_selection != null) {
-                    final Offset vpTopLeft = MatrixUtils.transformPoint(
-                      matrix,
-                      Offset(_selection!.left, _selection!.top),
-                    );
-                    final Offset vpBottomRight = MatrixUtils.transformPoint(
-                      matrix,
-                      Offset(_selection!.left + _selection!.width, _selection!.top + _selection!.height),
-                    );
-                    final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
+            _isDrawingNewSelection = false;
 
-                    final double widthCardW = _editingWidth ? 110.0 : 60.0;
-                    final Rect visibleImgRect2 = _getVisibleImageRect(context);
-                    final Offset widthCardPos = _getWidthCardPosition(
-                      vpSelection: vpSelection,
-                      cardW: widthCardW,
-                      cardH: 40.0,
-                      vpW: viewSize.width,
-                      vpH: viewSize.height,
-                      visibleImageRect: visibleImgRect2,
-                    );
-                    final Rect widthCardRect = Rect.fromLTWH(widthCardPos.dx, widthCardPos.dy, widthCardW, 40.0).inflate(12.0);
-
-                    final double heightCardW = _editingHeight ? 110.0 : 60.0;
-                    final Offset heightCardPos = _getHeightCardPosition(
-                      vpSelection: vpSelection,
-                      cardW: heightCardW,
-                      cardH: 40.0,
-                      vpW: viewSize.width,
-                      vpH: viewSize.height,
-                      visibleImageRect: visibleImgRect2,
-                    );
-                    final Rect heightCardRect = Rect.fromLTWH(heightCardPos.dx, heightCardPos.dy, heightCardW, 40.0).inflate(12.0);
-
-                    final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
-                    final double horizontalArrowTop = widthAxisAtTop ? vpSelection.top - 18 : vpSelection.bottom + 8;
-                    final bool inWidthAxis = vpPos.dx >= vpSelection.left - 12.0 &&
-                                             vpPos.dx <= vpSelection.right + 12.0 &&
-                                             (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
-
-                    final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
-                    final double verticalArrowLeft = heightAxisAtLeft ? vpSelection.left - 18 : vpSelection.right + 8;
-                    final bool inHeightAxis = vpPos.dy >= vpSelection.top - 12.0 &&
-                                              vpPos.dy <= vpSelection.bottom + 12.0 &&
-                                              (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
-
-                    if (widthCardRect.contains(vpPos) ||
-                        heightCardRect.contains(vpPos) ||
-                        inWidthAxis ||
-                        inHeightAxis) {
-                      clickedOverlay = true;
-                    }
-                  }
-
-                  // Keep the selection if tapped outside selection body/handles/overlays
-                  if (mode == SelectionMode.none && !clickedOverlay) {
-                    setState(() {
-                      if (_backupSelection != null) {
-                        _selection = _backupSelection;
-                      }
-                      _mode = SelectionMode.none;
-                    });
-                    _activePointers.remove(event.pointer);
-                    _backupSelection = null;
-                    _dragStart = null;
-                    _isDrawingNewSelection = false;
-                    return;
-                  }
-                }
-              }
-
-              _activePointers.remove(event.pointer);
-
-              if (_activePointers.isEmpty) {
-                _backupSelection = null;
-              }
-
-              _isDrawingNewSelection = false;
-
-              if (_isPanning) {
-                if (_activePointers.isEmpty) {
-                  setState(() {
-                    _isPanning = false;
-                  });
-                }
-                return;
-              }
-
-              if (_selection != null) {
-                if (_selection!.width < 10.0 || _selection!.height < 10.0) {
-                  setState(() {
-                    _selection = null;
-                    _mode = SelectionMode.none;
-                    _editingWidth = false;
-                    _editingHeight = false;
-                  });
-                  context.read<ImageEditCubit>().clearSelection();
-                  return;
-                }
-              }
-
-              final SelectionMode finishedMode = _mode;
-              setState(() {
-                _mode = SelectionMode.none;
-              });
-
-              if (_selection != null && finishedMode != SelectionMode.none) {
-                final double calculatedW = MeasurementService.calculateWidthInchesFromPixelWidth(_selection!.width);
-                final double calculatedH = MeasurementService.calculateHeightInchesFromPixelHeight(_selection!.height);
-
-                double newW = _customWidthInches;
-                double newH = _customHeightInches;
-                if (finishedMode == SelectionMode.resizeLeft ||
-                    finishedMode == SelectionMode.resizeRight) {
-                  newW = calculatedW;
-                } else if (finishedMode == SelectionMode.resizeTop ||
-                    finishedMode == SelectionMode.resizeBottom) {
-                  newH = calculatedH;
-                } else {
-                  // Corner resize, moving, or creating updates both
-                  newW = calculatedW;
-                  newH = calculatedH;
-                }
-
-                final double systemVal = MeasurementService.calculateAreaInSqFt(newW, newH);
-
-                setState(() {
-                  _customWidthInches = newW;
-                  _customHeightInches = newH;
-                  _systemArea = systemVal;
-                  _areaController.text = systemVal.toString();
-                  _editingWidth = false;
-                  _editingHeight = false;
-                });
-
-                final viewSize = Size(
-                  MediaQuery.of(context).size.width,
-                  MediaQuery.of(context).size.height * 0.40,
-                );
-
-                final Offset localTopLeft = Offset(
-                  _selection!.left,
-                  _selection!.top,
-                );
-                final Offset localBottomRight = Offset(
-                  _selection!.left + _selection!.width,
-                  _selection!.top + _selection!.height,
-                );
-
-                final Offset originalTopLeft = _mapLocalToOriginal(
-                  localTopLeft,
-                  viewSize,
-                );
-                final Offset originalBottomRight = _mapLocalToOriginal(
-                  localBottomRight,
-                  viewSize,
-                );
-
-                final int originalLeft = originalTopLeft.dx.round();
-                final int originalTop = originalTopLeft.dy.round();
-                final int originalRight = originalBottomRight.dx.round();
-                final int originalBottom = originalBottomRight.dy.round();
-
-                final areaData = {
-                  "left": originalLeft,
-                  "top": originalTop,
-                  "right": originalRight,
-                  "bottom": originalBottom,
-                  "obj_w": _customWidthInches,
-                  "obj_h": _customHeightInches,
-                };
-
-                debugPrint(
-                  "Selected Area (Original Coordinates): $areaData | System Area prediction: $systemVal",
-                );
-                context.read<ImageEditCubit>().selectArea(areaData);
-              }
-            },
-            onPointerCancel: (event) {
-              _activePointers.remove(event.pointer);
+            if (_isPanning) {
               if (_activePointers.isEmpty) {
                 setState(() {
                   _isPanning = false;
-                  _mode = SelectionMode.none;
-                  _backupSelection = null;
                 });
               }
-            },
-            child: InteractiveViewer(
-              clipBehavior: Clip.none,
-              transformationController: _transformationController,
-              minScale: _currentMinZoomLimit,
-              maxScale: 4.0,
-              boundaryMargin: EdgeInsets.zero,
-              panEnabled: false,
-              scaleEnabled: false,
-              child: Stack(
+              return;
+            }
+
+            if (_selection != null) {
+              if (_selection!.width < 10.0 || _selection!.height < 10.0) {
+                setState(() {
+                  _selection = null;
+                  _mode = SelectionMode.none;
+                  _editingWidth = false;
+                  _editingHeight = false;
+                });
+                context.read<ImageEditCubit>().clearSelection();
+                return;
+              }
+            }
+
+            final SelectionMode finishedMode = _mode;
+            setState(() {
+              _mode = SelectionMode.none;
+            });
+
+            if (_selection != null && finishedMode != SelectionMode.none) {
+              final double calculatedW =
+                  MeasurementService.calculateWidthInchesFromPixelWidth(
+                    _selection!.width,
+                  );
+              final double calculatedH =
+                  MeasurementService.calculateHeightInchesFromPixelHeight(
+                    _selection!.height,
+                  );
+
+              double newW = _customWidthInches;
+              double newH = _customHeightInches;
+              if (finishedMode == SelectionMode.resizeLeft ||
+                  finishedMode == SelectionMode.resizeRight) {
+                newW = calculatedW;
+              } else if (finishedMode == SelectionMode.resizeTop ||
+                  finishedMode == SelectionMode.resizeBottom) {
+                newH = calculatedH;
+              } else {
+                // Corner resize, moving, or creating updates both
+                newW = calculatedW;
+                newH = calculatedH;
+              }
+
+              final double systemVal = MeasurementService.calculateAreaInSqFt(
+                newW,
+                newH,
+              );
+
+              setState(() {
+                _customWidthInches = newW;
+                _customHeightInches = newH;
+                _systemArea = systemVal;
+                _areaController.text = systemVal.toString();
+                _editingWidth = false;
+                _editingHeight = false;
+              });
+
+              final viewSize = Size(
+                MediaQuery.of(context).size.width,
+                MediaQuery.of(context).size.height * 0.40,
+              );
+
+              final Offset localTopLeft = Offset(
+                _selection!.left,
+                _selection!.top,
+              );
+              final Offset localBottomRight = Offset(
+                _selection!.left + _selection!.width,
+                _selection!.top + _selection!.height,
+              );
+
+              final Offset originalTopLeft = _mapLocalToOriginal(
+                localTopLeft,
+                viewSize,
+              );
+              final Offset originalBottomRight = _mapLocalToOriginal(
+                localBottomRight,
+                viewSize,
+              );
+
+              final int originalLeft = originalTopLeft.dx.round();
+              final int originalTop = originalTopLeft.dy.round();
+              final int originalRight = originalBottomRight.dx.round();
+              final int originalBottom = originalBottomRight.dy.round();
+
+              final areaData = {
+                "left": originalLeft,
+                "top": originalTop,
+                "right": originalRight,
+                "bottom": originalBottom,
+                "obj_w": _customWidthInches,
+                "obj_h": _customHeightInches,
+              };
+
+              debugPrint(
+                "Selected Area (Original Coordinates): $areaData | System Area prediction: $systemVal",
+              );
+              context.read<ImageEditCubit>().selectArea(areaData);
+            }
+          },
+          onPointerCancel: (event) {
+            _activePointers.remove(event.pointer);
+            if (_activePointers.isEmpty) {
+              setState(() {
+                _isPanning = false;
+                _mode = SelectionMode.none;
+                _backupSelection = null;
+              });
+            }
+          },
+          child: InteractiveViewer(
+            clipBehavior: Clip.none,
+            transformationController: _transformationController,
+            minScale: _currentMinZoomLimit,
+            maxScale: 4.0,
+            boundaryMargin: EdgeInsets.zero,
+            panEnabled: false,
+            scaleEnabled: false,
+            child: Stack(
               clipBehavior: Clip.none,
               children: [
                 // Base Image — rendered via OverflowBox so the full
@@ -2662,26 +2800,92 @@ class _ImageEditPageState extends State<ImageEditPage>
                             gaplessPlayback: true,
                           ),
 
-                // Selected Coordinate Dot overlay removed and replaced with selection painter
-                Builder(
-                  builder: (context) {
-                    return Positioned.fill(
-                      child: RepaintBoundary(
-                        child: CustomPaint(
-                          painter: SelectionPainter(
-                            selection: _selection?.rect,
-                            imageRect: _getImageRect(context),
+                if (!(state.isApplyLoading || _isPrecaching))
+                  Builder(
+                    builder: (context) {
+                      return Positioned.fill(
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            painter: SelectionPainter(
+                              selection: _selection?.rect,
+                              imageRect: _getImageRect(context),
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
               ],
             ),
           ),
         ),
-        if (_selection != null)
+        if (state.isApplyLoading || _isPrecaching) ...[
+          // Viewport-bounded blur overlay
+          Builder(
+            builder: (context) {
+              final Size viewSize = _getViewSize(context);
+              final Rect visibleImgRect = _getVisibleImageRect(context);
+
+              Rect? vpSel;
+              if (_selection != null) {
+                final Matrix4 matrix = _transformationController.value;
+                final Offset vpTopLeft = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(_selection!.left, _selection!.top),
+                );
+                final Offset vpBottomRight = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(
+                    _selection!.left + _selection!.width,
+                    _selection!.top + _selection!.height,
+                  ),
+                );
+                vpSel = Rect.fromPoints(vpTopLeft, vpBottomRight);
+              }
+
+              return Positioned.fill(
+                child: ClipRect(
+                  child: ClipPath(
+                    clipper: InvertedRectClipper(
+                      selection: vpSel,
+                      imageRect: visibleImgRect,
+                    ),
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(color: Colors.black.withOpacity(0.4)),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          if (_selection != null)
+            Builder(
+              builder: (context) {
+                final Matrix4 matrix = _transformationController.value;
+                final Offset vpTopLeft = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(_selection!.left, _selection!.top),
+                );
+                final Offset vpBottomRight = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(
+                    _selection!.left + _selection!.width,
+                    _selection!.top + _selection!.height,
+                  ),
+                );
+                final Rect vpSel = Rect.fromPoints(vpTopLeft, vpBottomRight);
+                return Positioned.fill(
+                  child: AIProcessingOverlay(
+                    selectionRect: vpSel,
+                    visibleImageRect: _getVisibleImageRect(context),
+                  ),
+                );
+              },
+            ),
+        ],
+
+        if (_selection != null && !(state.isApplyLoading || _isPrecaching))
           Builder(
             builder: (context) {
               final Size viewSize = _getViewSize(context);
@@ -2695,9 +2899,15 @@ class _ImageEditPageState extends State<ImageEditPage>
               );
               final Offset vpBottomRight = MatrixUtils.transformPoint(
                 matrix,
-                Offset(_selection!.left + _selection!.width, _selection!.top + _selection!.height),
+                Offset(
+                  _selection!.left + _selection!.width,
+                  _selection!.top + _selection!.height,
+                ),
               );
-              final Rect vpSelection = Rect.fromPoints(vpTopLeft, vpBottomRight);
+              final Rect vpSelection = Rect.fromPoints(
+                vpTopLeft,
+                vpBottomRight,
+              );
 
               // Calculate positions for Width and Height cards using priorities
               final double widthCardW = _editingWidth ? 110.0 : 80.0;
@@ -2786,14 +2996,15 @@ class _ImageEditPageState extends State<ImageEditPage>
                                     _notifyCubitOfSelection();
                                   });
 
-                                  WidgetsBinding.instance
-                                      .addPostFrameCallback((_) {
-                                        if (mounted) {
-                                          setState(() {
-                                            _editingWidth = false;
-                                          });
-                                        }
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (mounted) {
+                                      setState(() {
+                                        _editingWidth = false;
                                       });
+                                    }
+                                  });
                                 },
                               )
                             : _buildDisplayLabel(
@@ -2801,9 +3012,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                                 onTap: () {
                                   setState(() {
                                     _widthEditController.text =
-                                        _customWidthInches
-                                            .round()
-                                            .toString();
+                                        _customWidthInches.round().toString();
                                     _editingWidth = true;
                                   });
                                 },
@@ -2838,14 +3047,15 @@ class _ImageEditPageState extends State<ImageEditPage>
                                     _notifyCubitOfSelection();
                                   });
 
-                                  WidgetsBinding.instance
-                                      .addPostFrameCallback((_) {
-                                        if (mounted) {
-                                          setState(() {
-                                            _editingHeight = false;
-                                          });
-                                        }
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (mounted) {
+                                      setState(() {
+                                        _editingHeight = false;
                                       });
+                                    }
+                                  });
                                 },
                               )
                             : _buildDisplayLabel(
@@ -2853,9 +3063,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                                 onTap: () {
                                   setState(() {
                                     _heightEditController.text =
-                                        _customHeightInches
-                                            .round()
-                                            .toString();
+                                        _customHeightInches.round().toString();
                                     _editingHeight = true;
                                   });
                                 },
@@ -2906,8 +3114,9 @@ class _ImageEditPageState extends State<ImageEditPage>
             ),
           ),
         ),
-        // Redundant overlay removed as it's now handled by _buildGeneratingBlock in the main stack
-        const SizedBox.shrink(),
+        // Progress status card showing lamination steps during API generation
+        if ((state.isApplyLoading || _isPrecaching) && _selection == null)
+          Align(alignment: Alignment.center, child: const ProgressStatusCard()),
       ],
     );
   }
@@ -2921,7 +3130,10 @@ class _ImageEditPageState extends State<ImageEditPage>
       final newState = context.read<ImageEditCubit>().state;
       setState(() {
         _currentAssetPreview = newState.editedImageFile;
-        _baseImage = newState.editedImageFile ?? newState.originalImage ?? widget.imageFile.path;
+        _baseImage =
+            newState.editedImageFile ??
+            newState.originalImage ??
+            widget.imageFile.path;
         if (newState.generatedHistory.isEmpty) {
           _hasNewUnappliedEdit = false;
           _hasAppliedOnce = false;
@@ -2989,7 +3201,10 @@ class _ImageEditPageState extends State<ImageEditPage>
       final newState = context.read<ImageEditCubit>().state;
       setState(() {
         _currentAssetPreview = newState.editedImageFile;
-        _baseImage = newState.editedImageFile ?? newState.originalImage ?? widget.imageFile.path;
+        _baseImage =
+            newState.editedImageFile ??
+            newState.originalImage ??
+            widget.imageFile.path;
         if (newState.generatedHistory.isNotEmpty) {
           _hasNewUnappliedEdit = true;
         }
@@ -2998,7 +3213,10 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   void _recalculateArea() {
-    final double val = MeasurementService.calculateAreaInSqFt(_customWidthInches, _customHeightInches);
+    final double val = MeasurementService.calculateAreaInSqFt(
+      _customWidthInches,
+      _customHeightInches,
+    );
     setState(() {
       _systemArea = val;
       _areaController.text = val.toString();
@@ -3065,11 +3283,7 @@ class _ImageEditPageState extends State<ImageEditPage>
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(
-              Icons.edit,
-              color: Colors.white,
-              size: 12,
-            ),
+            const Icon(Icons.edit, color: Colors.white, size: 12),
           ],
         ),
       ),
@@ -3699,6 +3913,8 @@ class _ImageEditPageState extends State<ImageEditPage>
 
     return GestureDetector(
       onTap: () {
+        final isApplying = context.read<ImageEditCubit>().state.isApplyLoading || _isPrecaching || _isUploading || context.read<ImageEditCubit>().state.isGenerating;
+        if (isApplying) return;
         if (_selection == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -3859,29 +4075,36 @@ class _ImageEditPageState extends State<ImageEditPage>
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    color: Colors.white,
-                    child: imageToShow.startsWith('http')
-                        ? Image.network(
-                            imageToShow,
-                            fit: BoxFit.contain,
-                            gaplessPlayback: true,
-                          )
-                        : (imageToShow.startsWith('/') ||
-                              imageToShow.contains('tryon_result') ||
-                              imageToShow.contains('data/user') ||
-                              imageToShow.contains('emulator') ||
-                              imageToShow.contains('storage/emulated'))
-                        ? Image.file(
-                            File(imageToShow),
-                            fit: BoxFit.contain,
-                            gaplessPlayback: true,
-                          )
-                        : Image.asset(
-                            imageToShow,
-                            fit: BoxFit.contain,
-                            gaplessPlayback: true,
-                          ),
+                  child: InteractiveViewer(
+                    clipBehavior: Clip.none,
+                    panEnabled: true,
+                    scaleEnabled: true,
+                    minScale: 1.0,
+                    maxScale: 5.0,
+                    child: Container(
+                      color: Colors.white,
+                      child: imageToShow.startsWith('http')
+                          ? Image.network(
+                              imageToShow,
+                              fit: BoxFit.contain,
+                              gaplessPlayback: true,
+                            )
+                          : (imageToShow.startsWith('/') ||
+                                imageToShow.contains('tryon_result') ||
+                                imageToShow.contains('data/user') ||
+                                imageToShow.contains('emulator') ||
+                                imageToShow.contains('storage/emulated'))
+                          ? Image.file(
+                              File(imageToShow),
+                              fit: BoxFit.contain,
+                              gaplessPlayback: true,
+                            )
+                          : Image.asset(
+                              imageToShow,
+                              fit: BoxFit.contain,
+                              gaplessPlayback: true,
+                            ),
+                    ),
                   ),
                 ),
               ),
@@ -4039,8 +4262,12 @@ class _ImageEditPageState extends State<ImageEditPage>
         final double w = _customWidthInches;
         final double selectionAreaSqFt = (h * w) / 144.0;
         final double area =
-            selectedRecord.userArea ?? selectedRecord.systemArea ?? selectionAreaSqFt;
-        final double ratio = selectionAreaSqFt > 0 ? (area / selectionAreaSqFt) : 1.0;
+            selectedRecord.userArea ??
+            selectedRecord.systemArea ??
+            selectionAreaSqFt;
+        final double ratio = selectionAreaSqFt > 0
+            ? (area / selectionAreaSqFt)
+            : 1.0;
         final int opt1 = rectanglesNeeded(
           bigWidth: w,
           bigHeight: h,
@@ -4080,7 +4307,9 @@ class _ImageEditPageState extends State<ImageEditPage>
       final double selectionAreaSqFt = (h * w) / 144.0;
       final double area =
           latestRecord.userArea ?? latestRecord.systemArea ?? selectionAreaSqFt;
-      final double ratio = selectionAreaSqFt > 0 ? (area / selectionAreaSqFt) : 1.0;
+      final double ratio = selectionAreaSqFt > 0
+          ? (area / selectionAreaSqFt)
+          : 1.0;
       final int opt1 = rectanglesNeeded(
         bigWidth: w,
         bigHeight: h,
@@ -4111,8 +4340,12 @@ class _ImageEditPageState extends State<ImageEditPage>
       final double w = _customWidthInches;
       final double selectionAreaSqFt = (h * w) / 144.0;
       final double currentArea =
-          double.tryParse(_areaController.text) ?? _systemArea ?? selectionAreaSqFt;
-      final double ratio = selectionAreaSqFt > 0 ? (currentArea / selectionAreaSqFt) : 1.0;
+          double.tryParse(_areaController.text) ??
+          _systemArea ??
+          selectionAreaSqFt;
+      final double ratio = selectionAreaSqFt > 0
+          ? (currentArea / selectionAreaSqFt)
+          : 1.0;
       final int opt1 = rectanglesNeeded(
         bigWidth: w,
         bigHeight: h,
@@ -4234,14 +4467,13 @@ class _ImageEditPageState extends State<ImageEditPage>
                 height: 40,
                 child: BlocBuilder<ImageEditCubit, ImageEditState>(
                   builder: (context, state) {
-                    final bool isGenerating = state.isGenerating;
-                    final bool isLoading = isGenerating || _isUploading;
+                    final bool isApplying = state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating;
                     final bool hasResult =
                         state.currentGeneratedImage != null &&
                         _hasNewUnappliedEdit;
 
                     return ElevatedButton(
-                      onPressed: (isLoading || !hasResult)
+                      onPressed: (isApplying || !hasResult)
                           ? null
                           : _finalizeEdit,
                       style: ElevatedButton.styleFrom(
@@ -4252,7 +4484,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                         disabledBackgroundColor: Colors.grey[100],
                         disabledForegroundColor: Colors.black26,
                         side: BorderSide(
-                          color: (isLoading || !hasResult)
+                          color: (isApplying || !hasResult)
                               ? Colors.transparent
                               : Colors.black12,
                           width: 1,
@@ -4443,8 +4675,6 @@ class _DashedRectPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
-
-
 
 class SelectionPainter extends CustomPainter {
   final Rect? selection;
@@ -4853,4 +5083,834 @@ class DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant DashedLinePainter oldDelegate) => false;
+}
+
+class InvertedRectClipper extends CustomClipper<Path> {
+  final Rect? selection;
+  final Rect imageRect;
+
+  InvertedRectClipper({required this.selection, required this.imageRect});
+
+  @override
+  Path getClip(Size size) {
+    if (selection == null) {
+      return Path()..addRect(imageRect);
+    }
+    final Path path = Path()..addRect(imageRect);
+    final Path selPath = Path()..addRect(selection!);
+    return Path.combine(PathOperation.difference, path, selPath);
+  }
+
+  @override
+  bool shouldReclip(covariant InvertedRectClipper oldClipper) {
+    return oldClipper.selection != selection ||
+        oldClipper.imageRect != imageRect;
+  }
+}
+
+class AIProcessingOverlay extends StatefulWidget {
+  final Rect selectionRect;
+  final Rect visibleImageRect;
+
+  const AIProcessingOverlay({
+    super.key,
+    required this.selectionRect,
+    required this.visibleImageRect,
+  });
+
+  @override
+  State<AIProcessingOverlay> createState() => _AIProcessingOverlayState();
+}
+
+class _AIProcessingOverlayState extends State<AIProcessingOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Stopwatch _stopwatch;
+  Timer? _statusTimer;
+  int _currentTextStep = 0;
+  int _fakeProgress = 0;
+  double _fakeProgressDouble = 0.0;
+
+  double _t1Start = 0.0;
+  double _t1End = 0.0;
+  double _t2Start = 0.0;
+  double _t2End = 0.0;
+  double _t3Start = 0.0;
+  double _t3End = 0.0;
+  double _t4Start = 0.0;
+  double _t4End = 0.0;
+  double _t5Start = 0.0;
+
+  final List<String> _steps = [
+    "Perspective aligned",
+    "Lighting matched",
+    "Texture applied",
+    "Edge refinement",
+    "Final rendering",
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _stopwatch = Stopwatch()..start();
+    
+    // Generate randomized durations between 4.0 and 7.0 seconds for each stage
+    final random = math.Random();
+    final double d0 = 4.5 + random.nextDouble() * 2.5;
+    final double d1 = 4.5 + random.nextDouble() * 2.5;
+    final double d2 = 4.5 + random.nextDouble() * 2.5;
+    final double d3 = 4.5 + random.nextDouble() * 2.5;
+    const double overlap = 0.5;
+
+    _t1Start = 0.0;
+    _t1End = d0;
+
+    _t2Start = _t1End - overlap;
+    _t2End = _t2Start + d1;
+
+    _t3Start = _t2End - overlap;
+    _t3End = _t3Start + d2;
+
+    _t4Start = _t3End - overlap;
+    _t4End = _t4Start + d3;
+
+    _t5Start = _t4End;
+    
+    // Repeating 60fps trigger to keep repainting continuously
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+
+    _statusTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (mounted) {
+        double elapsed = _stopwatch.elapsedMilliseconds / 1000.0;
+        int newStep = 0;
+        if (elapsed >= _t5Start) newStep = 4;
+        else if (elapsed >= _t4Start) newStep = 3;
+        else if (elapsed >= _t3Start) newStep = 2;
+        else if (elapsed >= _t2Start) newStep = 1;
+
+        // Wave-like random speeds: some periods fast surge, some slow stall
+        final int phase = (elapsed.toInt()) % 5;
+        double speedFactor = 1.0;
+        if (phase == 0) {
+          speedFactor = 2.4; // Quick surge
+        } else if (phase == 2) {
+          speedFactor = 0.2; // Slow stall
+        } else if (phase == 4) {
+          speedFactor = 1.6; // Moderate surge
+        } else {
+          speedFactor = 0.8;
+        }
+
+        // Increment the float progress
+        _fakeProgressDouble += (0.4 * speedFactor);
+        if (_fakeProgressDouble > 99.0) {
+          _fakeProgressDouble = 99.0;
+        }
+        int targetProgress = _fakeProgressDouble.toInt();
+
+        if (newStep != _currentTextStep || targetProgress != _fakeProgress) {
+          setState(() {
+            _currentTextStep = newStep;
+            _fakeProgress = targetProgress;
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _statusTimer?.cancel();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Rect vpSel = widget.selectionRect;
+    final bool showOutside = vpSel.top > 55.0 && vpSel.left > 12.0;
+
+    final double textLeft = showOutside ? vpSel.left : vpSel.left + 12.0;
+    final double textTop = showOutside ? vpSel.top - 42.0 : vpSel.top + 12.0;
+
+    final double percentLeft = showOutside ? vpSel.left : vpSel.left + 12.0;
+    final double percentTop = showOutside ? vpSel.bottom + 8.0 : vpSel.bottom - 24.0;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fromRect(
+          rect: vpSel,
+          child: ClipRect(
+            child: CustomPaint(
+              size: Size(vpSel.width, vpSel.height),
+              painter: StepSpecificPainter(
+                animation: _animationController,
+                stopwatch: _stopwatch,
+                t1Start: _t1Start,
+                t1End: _t1End,
+                t2Start: _t2Start,
+                t2End: _t2End,
+                t3Start: _t3Start,
+                t3End: _t3End,
+                t4Start: _t4Start,
+                t4End: _t4End,
+                t5Start: _t5Start,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: textLeft,
+          top: textTop,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            child: Row(
+              key: ValueKey<int>(_currentTextStep),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.8,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _steps[_currentTextStep],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black87,
+                        blurRadius: 4,
+                        offset: Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Progress percentage indicator at the bottom right of the selection
+        Positioned(
+          left: percentLeft,
+          top: percentTop,
+          child: Text(
+            "Rendering... $_fakeProgress%",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                Shadow(
+                  color: Colors.black87,
+                  blurRadius: 4,
+                  offset: Offset(1, 1),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class StepSpecificPainter extends CustomPainter {
+  final Animation<double> animation;
+  final Stopwatch stopwatch;
+  final double t1Start;
+  final double t1End;
+  final double t2Start;
+  final double t2End;
+  final double t3Start;
+  final double t3End;
+  final double t4Start;
+  final double t4End;
+  final double t5Start;
+
+  StepSpecificPainter({
+    required this.animation,
+    required this.stopwatch,
+    required this.t1Start,
+    required this.t1End,
+    required this.t2Start,
+    required this.t2End,
+    required this.t3Start,
+    required this.t3End,
+    required this.t4Start,
+    required this.t4End,
+    required this.t5Start,
+  }) : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    canvas.clipRect(rect);
+    
+    double elapsed = stopwatch.elapsedMilliseconds / 1000.0;
+    
+    // Constant base dimming overlay
+    double baseOpacity = 0.6;
+    if (baseOpacity > 0) {
+      canvas.drawRect(
+        rect,
+        Paint()..color = Colors.black.withOpacity(baseOpacity),
+      );
+    }
+
+    // Overlapping Pipeline Stages (using Stopwatch time so they never freeze)
+    if (elapsed > t1Start && elapsed < t1End)
+      _drawPerspectiveGrid(canvas, size, _mapTime(elapsed, t1Start, t1End));
+    if (elapsed > t2Start && elapsed < t2End)
+      _drawLighting(canvas, size, _mapTime(elapsed, t2Start, t2End));
+    if (elapsed > t3Start && elapsed < t3End)
+      _drawTextureMapping(canvas, size, _mapTime(elapsed, t3Start, t3End));
+    if (elapsed > t4Start && elapsed < t4End)
+      _drawEdgeRefinement(canvas, size, _mapTime(elapsed, t4Start, t4End));
+    if (elapsed > t5Start) _drawFinalRender(canvas, size, elapsed - t5Start);
+  }
+
+  double _mapTime(double elapsed, double start, double end) {
+    return ((elapsed - start) / (end - start)).clamp(0.0, 1.0);
+  }
+
+  void _drawPerspectiveGrid(Canvas canvas, Size size, double progress) {
+    double fade = (1.0 - progress).clamp(0.0, 1.0);
+    if (fade <= 0) return;
+
+    final Paint gridPaint = Paint()
+      ..color = Colors.white.withOpacity(0.2 * fade)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    double spacing = size.width / 8;
+    int vLines = (size.width / spacing).ceil();
+    int hLines = (size.height / spacing).ceil();
+
+    for (int i = 0; i <= vLines; i++) {
+      double x = i * spacing;
+      double distanceToCenter = (x - size.width / 2).abs();
+      double lineProgress = (progress * 2.0 - distanceToCenter / size.width)
+          .clamp(0.0, 1.0);
+      if (lineProgress > 0) {
+        double startY = size.height / 2 * (1 - lineProgress);
+        double endY = size.height - startY;
+        canvas.drawLine(Offset(x, startY), Offset(x, endY), gridPaint);
+      }
+    }
+
+    for (int i = 0; i <= hLines; i++) {
+      double y = i * spacing;
+      double distanceToCenter = (y - size.height / 2).abs();
+      double lineProgress = (progress * 2.0 - distanceToCenter / size.height)
+          .clamp(0.0, 1.0);
+      if (lineProgress > 0) {
+        double startX = size.width / 2 * (1 - lineProgress);
+        double endX = size.width - startX;
+        canvas.drawLine(Offset(startX, y), Offset(endX, y), gridPaint);
+      }
+    }
+  }
+
+  void _drawLighting(Canvas canvas, Size size, double progress) {
+    double alpha = math.sin(progress * math.pi);
+    if (alpha <= 0) return;
+
+    final double gradientOffset = math.sin(progress * 2 * math.pi) * 0.5 + 0.5;
+    final Paint lightPaint = Paint()
+      ..shader = ui.Gradient.radial(
+        Offset(size.width * gradientOffset, size.height * 0.5),
+        math.max(size.width, size.height) * 0.8,
+        [Colors.amber.withOpacity(0.3 * alpha), Colors.transparent],
+      )
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), lightPaint);
+  }
+
+  void _drawTextureMapping(Canvas canvas, Size size, double progress) {
+    double fade = math.sin(progress * math.pi); // Fade in and out
+    if (fade <= 0) return;
+
+    final Paint pointPaint = Paint()..strokeWidth = 1.0;
+
+    double spacing = 8.0;
+    int cols = (size.width / spacing).ceil();
+    int rows = (size.height / spacing).ceil();
+
+    for (int i = 0; i <= cols; i++) {
+      for (int j = 0; j <= rows; j++) {
+        // Deterministic pseudo-random value
+        double hash = ((i * 12.9898 + j * 78.233) * 43758.5453) % 1.0;
+        hash = hash.abs();
+
+        double spatialOffset = (i / cols + j / rows) / 2.0;
+
+        // Continuous looping evolution for each point
+        double localTime = (progress * 10.0 + hash + spatialOffset);
+        double cycle = (localTime % 1.0);
+
+        double particleAlpha = math.sin(cycle * math.pi) * fade;
+
+        if (particleAlpha > 0.05) {
+          pointPaint.color = Colors.white.withOpacity(0.3 * particleAlpha);
+          double x = i * spacing;
+          double y = j * spacing;
+
+          if (hash > 0.5) {
+            canvas.drawCircle(Offset(x, y), 1.0 + particleAlpha, pointPaint);
+          } else {
+            canvas.drawLine(
+              Offset(x - particleAlpha * 2, y),
+              Offset(x + particleAlpha * 2, y),
+              pointPaint,
+            );
+            canvas.drawLine(
+              Offset(x, y - particleAlpha * 2),
+              Offset(x, y + particleAlpha * 2),
+              pointPaint,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  void _drawEdgeRefinement(Canvas canvas, Size size, double progress) {
+    double fade = math.sin(progress * math.pi);
+    if (fade <= 0) return;
+
+    final Path borderPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    double perimeter = 2 * size.width + 2 * size.height;
+
+    // Base edge that gently solidifies
+    final Paint basePaint = Paint()
+      ..color = Colors.white.withOpacity(0.05 * fade)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawPath(borderPath, basePaint);
+
+    // Fast moving glowing tracers
+    final Paint glowPaint = Paint()
+      ..color = Colors.white.withOpacity(fade)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+
+    final Paint corePaint = Paint()
+      ..color = Colors.white.withOpacity(fade)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    int numTracers = 3;
+    double tracerLength = perimeter * 0.15;
+
+    for (int i = 0; i < numTracers; i++) {
+      // Continuous uninterrupted movement
+      double speed = 1.0 + i * 0.3;
+      double startOffset = (i / numTracers) * perimeter;
+      double currentDist =
+          (startOffset + progress * 6.0 * perimeter * speed) % perimeter;
+
+      Path tracer = _extractPath(borderPath, currentDist, tracerLength);
+      canvas.drawPath(tracer, glowPaint);
+      canvas.drawPath(tracer, corePaint);
+    }
+  }
+
+  Path _extractPath(Path source, double start, double length) {
+    Path dest = Path();
+    for (final ui.PathMetric metric in source.computeMetrics()) {
+      if (start + length > metric.length) {
+        dest.addPath(metric.extractPath(start, metric.length), Offset.zero);
+        dest.addPath(
+          metric.extractPath(0, (start + length) - metric.length),
+          Offset.zero,
+        );
+      } else {
+        dest.addPath(metric.extractPath(start, start + length), Offset.zero);
+      }
+    }
+    return dest;
+  }
+
+  void _drawFinalRender(Canvas canvas, Size size, double stageElapsed) {
+    // Loop the wave sweep continuously every 2.0 seconds based on stageElapsed
+    double animationValue = (stageElapsed / 2.0) % 1.0;
+    
+    // Restrict drawing strictly to selection boundaries
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    const double cellSpacing = 12.0;
+    final int cols = (size.width / cellSpacing).ceil();
+    final int rows = (size.height / cellSpacing).ceil();
+
+    // 1. Draw thin, highly transparent background grid lines (red at 3% opacity)
+    final Paint linePaint = Paint()
+      ..color = Colors.red.withOpacity(0.03)
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke;
+
+    for (int col = 0; col <= cols; col++) {
+      final double x = col * cellSpacing;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+    for (int row = 0; row <= rows; row++) {
+      final double y = row * cellSpacing;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    // 2. Wave calculation: sweep vertically continuously without pausing
+    final double waveProgress = animationValue;
+    final double waveCenter = waveProgress * (rows + 4) - 2.0;
+
+    for (int row = 0; row < rows; row++) {
+      for (int col = 0; col < cols; col++) {
+        // Deterministic seed based on cell coordinates and prime numbers
+        final int seed = row * 197 + col * 307;
+
+        // Phase offset and time factor - use continuous stageElapsed to prevent modulo wrapping glitches
+        final double phase = (seed % 100) / 100.0 * 2.0 * math.pi;
+        final double timeScale = 1.0 + ((seed % 4) * 0.15);
+        final double angle = (stageElapsed * 2.0 * math.pi * timeScale) + phase;
+        final double baseOsc = (math.sin(angle) + 1.0) / 2.0; // 0.0 to 1.0
+
+        // Spatial clustering (moving zone of active cells)
+        final double clusterVal =
+            (math.sin(col * 0.3 + stageElapsed * 2.0 * math.pi) +
+                math.cos(row * 0.3 - stageElapsed * 2.0 * math.pi * 1.3) +
+                2.0) /
+            4.0;
+
+        // Vertical wave boost (sweeps top to bottom rapidly)
+        double waveBoost = 0.0;
+        final double distToWave = (row.toDouble() - waveCenter).abs();
+        if (distToWave < 3.5) {
+          waveBoost = (1.0 - (distToWave / 3.5)) * 0.15;
+        }
+
+        // Determine activation threshold and calculate final opacity
+        final double threshold = 0.58 + ((seed % 8) * 0.04); // 0.58 to 0.90
+        double cellOpacity = 0.0;
+
+        if (baseOsc > threshold) {
+          final double normalizedActive =
+              (baseOsc - threshold) / (1.0 - threshold);
+          // Blends the activation strength with the spatial cluster factor
+          cellOpacity =
+              0.03 + (normalizedActive * 0.09 * (0.2 + 0.8 * clusterVal));
+        } else {
+          // Extremely subtle background pixel breathing
+          cellOpacity = 0.003 + (baseOsc * 0.012);
+        }
+
+        // Apply processing wave boost
+        cellOpacity += waveBoost;
+        cellOpacity = cellOpacity.clamp(0.0, 0.22);
+
+        // Render the active cell
+        if (cellOpacity > 0.015) {
+          final Paint cellPaint = Paint()
+            ..color = Colors.red.withOpacity(cellOpacity)
+            ..style = PaintingStyle.fill;
+
+          final Rect cellRect = Rect.fromLTWH(
+            col * cellSpacing + 0.75,
+            row * cellSpacing + 0.75,
+            cellSpacing - 1.5,
+            cellSpacing - 1.5,
+          );
+          canvas.drawRect(cellRect, cellPaint);
+
+          // Optional tiny center glow for high-activity cells
+          if (cellOpacity > 0.16) {
+            final Paint glowPaint = Paint()
+              ..color = Colors.white.withOpacity(0.6)
+              ..style = PaintingStyle.fill;
+            canvas.drawCircle(
+              Offset(
+                col * cellSpacing + cellSpacing / 2.0,
+                row * cellSpacing + cellSpacing / 2.0,
+              ),
+              0.8,
+              glowPaint,
+            );
+          }
+        }
+      }
+    }
+
+    // 3. Draw a very subtle selection boundary border (30% opacity red)
+    final Paint borderPaint = Paint()
+      ..color = Colors.red.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant StepSpecificPainter oldDelegate) {
+    return oldDelegate.animation != animation;
+  }
+}
+
+class RegionScanningOverlay extends StatefulWidget {
+  final Rect rect;
+
+  const RegionScanningOverlay({super.key, required this.rect});
+
+  @override
+  State<RegionScanningOverlay> createState() => _RegionScanningOverlayState();
+}
+
+class _RegionScanningOverlayState extends State<RegionScanningOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          size: Size(widget.rect.width, widget.rect.height),
+          painter: _ScanningPainter(animationValue: _controller.value),
+        );
+      },
+    );
+  }
+}
+
+class _ScanningPainter extends CustomPainter {
+  final double animationValue;
+
+  _ScanningPainter({required this.animationValue});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Restrict drawing strictly to selection boundaries
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    const double cellSpacing = 12.0;
+    final int cols = (size.width / cellSpacing).ceil();
+    final int rows = (size.height / cellSpacing).ceil();
+
+    // 1. Draw thin, highly transparent background grid lines (red at 3% opacity)
+    final Paint linePaint = Paint()
+      ..color = Colors.red.withOpacity(0.03)
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke;
+
+    for (int col = 0; col <= cols; col++) {
+      final double x = col * cellSpacing;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+    for (int row = 0; row <= rows; row++) {
+      final double y = row * cellSpacing;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    // 2. Wave calculation: sweep vertically (top to bottom) during the first 35% of cycle, then pause
+    final bool isWaveActive = animationValue < 0.35;
+    final double waveProgress = isWaveActive ? (animationValue / 0.35) : 0.0;
+    final double waveCenter = waveProgress * (rows + 4) - 2.0;
+
+    for (int row = 0; row < rows; row++) {
+      for (int col = 0; col < cols; col++) {
+        // Deterministic seed based on cell coordinates and prime numbers
+        final int seed = row * 197 + col * 307;
+
+        // Phase offset and time factor for cell animation
+        final double phase = (seed % 100) / 100.0 * 2.0 * math.pi;
+        final double timeScale = 1.0 + ((seed % 4) * 0.15);
+        final double angle =
+            (animationValue * 2.0 * math.pi * timeScale) + phase;
+        final double baseOsc = (math.sin(angle) + 1.0) / 2.0; // 0.0 to 1.0
+
+        // Spatial clustering (moving zone of active cells)
+        final double clusterVal =
+            (math.sin(col * 0.3 + animationValue * 2.0 * math.pi) +
+                math.cos(row * 0.3 - animationValue * 2.0 * math.pi * 1.3) +
+                2.0) /
+            4.0;
+
+        // Vertical wave boost (sweeps top to bottom rapidly, then pauses)
+        double waveBoost = 0.0;
+        if (isWaveActive) {
+          final double distToWave = (row.toDouble() - waveCenter).abs();
+          if (distToWave < 3.5) {
+            waveBoost = (1.0 - (distToWave / 3.5)) * 0.15;
+          }
+        }
+
+        // Determine activation threshold and calculate final opacity
+        final double threshold = 0.58 + ((seed % 8) * 0.04); // 0.58 to 0.90
+        double cellOpacity = 0.0;
+
+        if (baseOsc > threshold) {
+          final double normalizedActive =
+              (baseOsc - threshold) / (1.0 - threshold);
+          // Blends the activation strength with the spatial cluster factor
+          cellOpacity =
+              0.03 + (normalizedActive * 0.09 * (0.2 + 0.8 * clusterVal));
+        } else {
+          // Extremely subtle background pixel breathing
+          cellOpacity = 0.003 + (baseOsc * 0.012);
+        }
+
+        // Apply processing wave boost
+        cellOpacity += waveBoost;
+        cellOpacity = cellOpacity.clamp(0.0, 0.22);
+
+        // Render the active cell
+        if (cellOpacity > 0.015) {
+          final Paint cellPaint = Paint()
+            ..color = Colors.red.withOpacity(cellOpacity)
+            ..style = PaintingStyle.fill;
+
+          final Rect cellRect = Rect.fromLTWH(
+            col * cellSpacing + 0.75,
+            row * cellSpacing + 0.75,
+            cellSpacing - 1.5,
+            cellSpacing - 1.5,
+          );
+          canvas.drawRect(cellRect, cellPaint);
+
+          // Optional tiny center glow for high-activity cells
+          if (cellOpacity > 0.16) {
+            final Paint glowPaint = Paint()
+              ..color = Colors.white.withOpacity(0.6)
+              ..style = PaintingStyle.fill;
+            canvas.drawCircle(
+              Offset(
+                col * cellSpacing + cellSpacing / 2.0,
+                row * cellSpacing + cellSpacing / 2.0,
+              ),
+              0.8,
+              glowPaint,
+            );
+          }
+        }
+      }
+    }
+
+    // 3. Draw a very subtle selection boundary border (30% opacity red)
+    final Paint borderPaint = Paint()
+      ..color = Colors.red.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScanningPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
+  }
+}
+
+class ProgressStatusCard extends StatefulWidget {
+  const ProgressStatusCard({super.key});
+
+  @override
+  State<ProgressStatusCard> createState() => _ProgressStatusCardState();
+}
+
+class _ProgressStatusCardState extends State<ProgressStatusCard> {
+  int _currentStep = 0;
+  Timer? _timer;
+  final List<String> _steps = [
+    "Measuring the area...",
+    "Cutting the lamination...",
+    "Applying the lamination...",
+    "Finalizing...",
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 7), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_currentStep < _steps.length - 1) {
+            _currentStep++;
+          } else {
+            _timer?.cancel();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.18), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.45),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            _steps[_currentStep],
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

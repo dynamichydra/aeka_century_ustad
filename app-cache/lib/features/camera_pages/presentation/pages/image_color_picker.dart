@@ -34,16 +34,52 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
   final ImagePicker _picker = ImagePicker();
   bool _isCapturing = false;
 
+  double? _imageAspectRatio;
+  double _dragX = 0.0;
+  double _dragY = 0.0;
+
+  void _resolveImageSize() {
+    final ImageProvider imageProvider = FileImage(_currentImage);
+    final ImageStream stream = imageProvider.resolve(const ImageConfiguration());
+    ImageStreamListener? listener;
+    listener = ImageStreamListener(
+      (ImageInfo info, bool synchronousCall) {
+        if (mounted) {
+          setState(() {
+            _imageAspectRatio = info.image.width / info.image.height;
+            _dragX = 0.0;
+            _dragY = 0.0;
+          });
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          stream.removeListener(listener!);
+        });
+      },
+      onError: (exception, stackTrace) {
+        debugPrint("Error loading image size: $exception");
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          stream.removeListener(listener!);
+        });
+      },
+    );
+    stream.addListener(listener);
+  }
+
   @override
   void initState() {
     super.initState();
     _currentImage = widget.imageFile;
-    // Initialize touch position to the center of the image area
+    _resolveImageSize();
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final size = MediaQuery.of(context).size;
       setState(() {
         _touchPos = Offset(size.width / 2, size.height * 0.3);
-        _pickColor(_touchPos);
+      });
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) {
+          _pickColor(_touchPos);
+        }
       });
     });
   }
@@ -58,6 +94,7 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
           _pixelData = null;
           _imageKey = GlobalKey(); // Force new RepaintBoundary
         });
+        _resolveImageSize();
 
         // Reset touch pos and pick new color after image has time to render
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -138,58 +175,124 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
         children: [
           // Top Image Area
           Expanded(
-            child: Stack(
-              children: [
-                // Image with RepaintBoundary
-                RepaintBoundary(
-                  key: _imageKey,
-                  child: GestureDetector(
-                    onPanStart: (details) {
-                      _cachedImage = null;
-                      _pixelData = null;
-                    },
-                    onPanUpdate: (details) {
-                      setState(() {
-                        _touchPos = details.localPosition;
-                      });
-                      _pickColor(details.localPosition);
-                    },
-                    onTapDown: (details) {
-                      _cachedImage = null;
-                      _pixelData = null;
-                      setState(() {
-                        _touchPos = details.localPosition;
-                      });
-                      _pickColor(details.localPosition);
-                    },
-                    child: Image.file(
-                      _currentImage,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final viewportWidth = constraints.maxWidth;
+                final viewportHeight = constraints.maxHeight;
 
-                // Color Picker Target Icon
-                Positioned(
-                  left: _touchPos.dx - 20,
-                  top: _touchPos.dy - 20,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                if (_imageAspectRatio == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final viewportRatio = viewportWidth / viewportHeight;
+                final isLandscape = _imageAspectRatio! > viewportRatio;
+
+                double maxDragX = 0.0;
+                double maxDragY = 0.0;
+                double scaledWidth = viewportWidth;
+                double scaledHeight = viewportHeight;
+
+                if (isLandscape) {
+                  scaledWidth = viewportHeight * _imageAspectRatio!;
+                  scaledHeight = viewportHeight;
+                  maxDragX = (scaledWidth - viewportWidth) / 2.0;
+                } else {
+                  scaledWidth = viewportWidth;
+                  scaledHeight = viewportWidth / _imageAspectRatio!;
+                  maxDragY = (scaledHeight - viewportHeight) / 2.0;
+                }
+
+                _dragX = _dragX.clamp(-maxDragX, maxDragX);
+                _dragY = _dragY.clamp(-maxDragY, maxDragY);
+
+                bool isDraggingTarget = false;
+
+                return Stack(
+                  children: [
+                    RepaintBoundary(
+                      key: _imageKey,
+                      child: GestureDetector(
+                        onPanStart: (details) {
+                          _cachedImage = null;
+                          _pixelData = null;
+                          final distance = (details.localPosition - _touchPos).distance;
+                          if (distance < 40.0) {
+                            isDraggingTarget = true;
+                          } else {
+                            isDraggingTarget = false;
+                          }
+                        },
+                        onPanUpdate: (details) {
+                          if (isDraggingTarget) {
+                            setState(() {
+                              _touchPos = details.localPosition;
+                            });
+                            _pickColor(details.localPosition);
+                          } else {
+                            setState(() {
+                              if (isLandscape) {
+                                _dragX = (_dragX + details.delta.dx).clamp(-maxDragX, maxDragX);
+                              } else {
+                                _dragY = (_dragY + details.delta.dy).clamp(-maxDragY, maxDragY);
+                              }
+                            });
+                            _pickColor(_touchPos);
+                          }
+                        },
+                        onTapDown: (details) {
+                          _cachedImage = null;
+                          _pixelData = null;
+                          setState(() {
+                            _touchPos = details.localPosition;
+                          });
+                          _pickColor(details.localPosition);
+                        },
+                        child: Container(
+                          width: viewportWidth,
+                          height: viewportHeight,
+                          color: Colors.black,
+                          child: ClipRect(
+                            child: OverflowBox(
+                              minWidth: scaledWidth,
+                              maxWidth: scaledWidth,
+                              minHeight: scaledHeight,
+                              maxHeight: scaledHeight,
+                              child: Transform.translate(
+                                offset: Offset(_dragX, _dragY),
+                                child: Image.file(
+                                  _currentImage,
+                                  width: scaledWidth,
+                                  height: scaledHeight,
+                                  fit: BoxFit.fill,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.gps_fixed,
-                      color: Colors.white,
-                      size: 24,
+
+                    // Color Picker Target Icon
+                    Positioned(
+                      left: _touchPos.dx - 20,
+                      top: _touchPos.dy - 20,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.gps_fixed,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
 
@@ -198,7 +301,7 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
             padding: const EdgeInsets.all(24),
             decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(0)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
