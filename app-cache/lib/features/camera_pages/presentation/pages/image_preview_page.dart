@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:century_ai/db/db_core.dart';
 import 'package:century_ai/db/models/selected_image_data.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
 import 'package:century_ai/features/camera_pages/data/services/preview_service.dart';
@@ -22,6 +23,8 @@ class ImagePreviewPage extends StatefulWidget {
   final String image_category;
   final String? sub_category;
   final String? image_id;
+  final String? originalImageUrl;
+  final String? imageUrl;
 
   /// "INTERIOR" or "EXTERIOR" — from the API response applicationType field
   final String? applicationType;
@@ -32,6 +35,8 @@ class ImagePreviewPage extends StatefulWidget {
     required this.image_category,
     this.sub_category,
     this.image_id,
+    this.originalImageUrl,
+    this.imageUrl,
     this.applicationType,
   });
 
@@ -63,11 +68,12 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     _currentSelection = SelectedImageData(
       id: widget.image_id ?? _buildImageIdFromPath(widget.imageFile.path),
       imageData: const <int>[],
-      imagePath: widget.imageFile.path,
+      imagePath: widget.imageUrl ?? widget.imageFile.path,
       category: widget.image_category,
       subcategory: widget.sub_category,
       selectedAt: DateTime.now(),
       applicationType: widget.applicationType,
+      originalImageUrl: widget.originalImageUrl,
     );
     _initializePreview();
   }
@@ -150,8 +156,50 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
       final selectedImage = await SelectedImagesRepository.getImage(imageId);
       if (selectedImage == null || !mounted) return;
 
+      String updatedPath = selectedImage.imagePath;
+      if (!updatedPath.startsWith('http') &&
+          widget.imageUrl != null &&
+          widget.imageUrl!.startsWith('http')) {
+        updatedPath = widget.imageUrl!;
+      }
+
+      String? updatedOriginalUrl = selectedImage.originalImageUrl;
+      if ((updatedOriginalUrl == null || updatedOriginalUrl.isEmpty) &&
+          widget.originalImageUrl != null &&
+          widget.originalImageUrl!.startsWith('http')) {
+        updatedOriginalUrl = widget.originalImageUrl!;
+      }
+
+      if (updatedPath != selectedImage.imagePath ||
+          updatedOriginalUrl != selectedImage.originalImageUrl) {
+        try {
+          final db = await DbCore.database;
+          await db.update(
+            SelectedImagesRepository.tableName,
+            {
+              'image_path': updatedPath,
+              'original_image_url': updatedOriginalUrl,
+            },
+            where: 'product_id = ?',
+            whereArgs: [selectedImage.id],
+          );
+          debugPrint("💾 Updated SQLite record ${selectedImage.id} with network URLs");
+        } catch (e) {
+          debugPrint("⚠️ Failed to update SQLite record: $e");
+        }
+      }
+
       setState(() {
-        _currentSelection = selectedImage;
+        _currentSelection = SelectedImageData(
+          id: selectedImage.id,
+          imageData: selectedImage.imageData,
+          imagePath: updatedPath,
+          category: selectedImage.category,
+          subcategory: selectedImage.subcategory,
+          selectedAt: selectedImage.selectedAt,
+          applicationType: selectedImage.applicationType,
+          originalImageUrl: updatedOriginalUrl,
+        );
         _currentApplicationType = selectedImage.applicationType;
       });
     } catch (e) {
@@ -243,7 +291,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
       final imageData = SelectedImageData(
         id: imageId,
         imageData: imageBytes,
-        imagePath: file.path,
+        imagePath: product.image.startsWith('http') ? product.image : file.path,
         category: product.category ?? widget.image_category,
         subcategory: product.subcategory ?? widget.sub_category,
         selectedAt: DateTime.now(),
@@ -350,6 +398,8 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         extra: {
           'imageFile': fileToEdit,
           'image_id': _currentSelection?.id ?? widget.image_id,
+          'imageUrl': _currentSelection?.imagePath,
+          'originalImageUrl': _currentSelection?.originalImageUrl,
           'applicationType':
               _currentApplicationType ??
               _currentSelection?.applicationType ??

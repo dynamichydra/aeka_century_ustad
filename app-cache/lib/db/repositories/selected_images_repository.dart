@@ -16,7 +16,8 @@ class SelectedImagesRepository {
       category TEXT,
       subcategory TEXT,
       selected_at TEXT NOT NULL,
-      application_type TEXT
+      application_type TEXT,
+      original_image_url TEXT
     )
   ''';
 
@@ -27,9 +28,12 @@ class SelectedImagesRepository {
       final db = await DbCore.database;
       await db.execute('ALTER TABLE $tableName ADD COLUMN application_type TEXT');
       print('Added column application_type to $tableName');
-    } catch (_) {
-      // Column already exists or table didn't need alter
-    }
+    } catch (_) {}
+    try {
+      final db = await DbCore.database;
+      await db.execute('ALTER TABLE $tableName ADD COLUMN original_image_url TEXT');
+      print('Added column original_image_url to $tableName');
+    } catch (_) {}
   }
 
   /// Save selected image to database once.

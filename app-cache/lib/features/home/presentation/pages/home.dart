@@ -510,6 +510,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             "image_id": prepared.imageId,
             "image_category": prepared.category,
             "sub_category": prepared.subcategory,
+            "imageUrl": product.image,
+            "originalImageUrl": product.originalImageUrl,
             "applicationType":
                 product.applicationType ??
                 (context.read<HomeCubit>().state.isExterior

@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
 import 'package:century_ai/db/models/edit_history_data.dart';
+import 'package:century_ai/db/repositories/selected_images_repository.dart';
 import 'dart:typed_data';
 
 class ImageEditCubit extends Cubit<ImageEditState> {
@@ -23,6 +24,8 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     String? furnitureId,
     String? ownerId,
     String? sessionId,
+    String? originalImageUrl,
+    String? imageUrl,
   }) {
     // Emit a completely fresh state so nothing from the previous session
     // (selected laminate, generated images, success/error messages) leaks in.
@@ -32,6 +35,8 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         furnitureId: furnitureId,
         ownerId: ownerId,
         sessionId: sessionId,
+        originalImageUrl: originalImageUrl,
+        imageUrl: imageUrl,
         imageHistory: [imagePath],
       ),
     );
@@ -374,9 +379,30 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     final String ownerId = state.ownerId ?? "user13@gmail.com";
     
     final String originalImg = state.originalImage ?? "";
-    String originalImageUrl = originalImg;
+    String originalImageUrl = state.originalImageUrl ?? "";
+    String imageUrl = state.imageUrl ?? "";
+
+    if (!imageUrl.startsWith('http') || !originalImageUrl.startsWith('http')) {
+      try {
+        final record = await SelectedImagesRepository.getImage(furnitureId);
+        if (record != null) {
+          if (imageUrl.isEmpty || !imageUrl.startsWith('http')) {
+            imageUrl = record.imagePath;
+          }
+          if (originalImageUrl.isEmpty || !originalImageUrl.startsWith('http')) {
+            originalImageUrl = record.originalImageUrl ?? "";
+          }
+        }
+      } catch (e) {
+        debugPrint("⚠️ SelectedImagesRepository look up failed: $e");
+      }
+    }
+    
+    if (!imageUrl.startsWith('http')) {
+      imageUrl = "https://firebasestorage.googleapis.com/v0/b/century-ustad.firebasestorage.app/o/furniture%2Fprocessed%2F$furnitureId.jpg?alt=media";
+    }
     if (!originalImageUrl.startsWith('http')) {
-      originalImageUrl = "https://firebasestorage.googleapis.com/v0/b/aeka-ustaad.firebasestorage.app/o/furniture_images%2F$furnitureId.jpg?alt=media";
+      originalImageUrl = "https://firebasestorage.googleapis.com/v0/b/century-ustad.firebasestorage.app/o/furniture%2Foriginal%2F$furnitureId.jpg?alt=media";
     }
 
     final int x1 = (coordinate['left'] as num?)?.toInt() ?? (coordinate['x'] as num?)?.toInt() ?? 100;
@@ -390,8 +416,10 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     if (editedLocalPath.isEmpty) return;
 
     try {
+      debugPrint("📡 submitFeedback: imageUrl=$imageUrl, originalImageUrl=$originalImageUrl, furnitureId=$furnitureId");
       debugPrint("📡 Sending tryon feedback...");
       final res = await _imageEditService.submitTryOnFeedback(
+        imageUrl: imageUrl,
         originalImageUrl: originalImageUrl,
         originalImageId: furnitureId,
         x1: x1,

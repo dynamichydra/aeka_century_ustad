@@ -2,6 +2,8 @@ import 'package:century_ai/core/network/api_client.dart';
 import 'package:century_ai/data/services/api_service.dart';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+
 class ImageEditService {
   final ApiClient api = ApiClient();
   final ApiService _apiService = ApiService();
@@ -145,6 +147,7 @@ class ImageEditService {
   }
 
   Future<Map<String, dynamic>> submitTryOnFeedback({
+    required String imageUrl,
     required String originalImageUrl,
     required String originalImageId,
     required int x1,
@@ -156,7 +159,9 @@ class ImageEditService {
     required String feedback,
     required String ownerId,
   }) async {
+    debugPrint("📡 image_edit_service.submitTryOnFeedback: imageUrl=$imageUrl, originalImageUrl=$originalImageUrl, originalImageId=$originalImageId");
     return await _apiService.submitTryOnFeedback(
+      imageUrl: imageUrl,
       originalImageUrl: originalImageUrl,
       originalImageId: originalImageId,
       x1: x1,

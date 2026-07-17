@@ -20,6 +20,8 @@ class ImageEditState extends Equatable {
   final String? furnitureId;
   final String? ownerId;
   final String? sessionId;
+  final String? originalImageUrl;
+  final String? imageUrl;
 
   /// Stack of image paths: [original, edit1, edit2, ...].
   /// The last element is the current image displayed.
@@ -44,6 +46,8 @@ class ImageEditState extends Equatable {
     this.furnitureId,
     this.ownerId,
     this.sessionId,
+    this.originalImageUrl,
+    this.imageUrl,
     this.imageHistory = const [],
   });
 
@@ -65,6 +69,8 @@ class ImageEditState extends Equatable {
     String? furnitureId,
     String? ownerId,
     String? sessionId,
+    String? originalImageUrl,
+    String? imageUrl,
     List<String>? imageHistory,
     bool clearError = false,
     bool clearSuccess = false,
@@ -89,6 +95,8 @@ class ImageEditState extends Equatable {
       furnitureId: furnitureId ?? this.furnitureId,
       ownerId: ownerId ?? this.ownerId,
       sessionId: sessionId ?? this.sessionId,
+      originalImageUrl: originalImageUrl ?? this.originalImageUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
       imageHistory: imageHistory ?? this.imageHistory,
     );
   }
@@ -112,6 +120,8 @@ class ImageEditState extends Equatable {
     furnitureId,
     ownerId,
     sessionId,
+    originalImageUrl,
+    imageUrl,
     imageHistory,
   ];
 }

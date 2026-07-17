@@ -681,6 +681,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> submitTryOnFeedback({
+    required String imageUrl,
     required String originalImageUrl,
     required String originalImageId,
     required int x1,
@@ -692,9 +693,11 @@ class ApiService {
     required String feedback,
     required String ownerId,
   }) async {
+    debugPrint("📡 api_service.submitTryOnFeedback: imageUrl=$imageUrl, originalImageUrl=$originalImageUrl, originalImageId=$originalImageId");
     final response = await _dio.post(
       '/tryon/feedback',
       data: {
+        'imageUrl': imageUrl,
         'originalImageUrl': originalImageUrl,
         'originalImageId': originalImageId,
         'x1': x1,

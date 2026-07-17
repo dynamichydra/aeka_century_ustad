@@ -32,6 +32,7 @@ class ProductRepository {
       itemId: json['itemId']?.toString(),
       name: json['product'] ?? json['furnitureCategory'] ?? 'Unknown',
       image: json['imageUrl'] ?? '',
+      originalImageUrl: json['originalImageUrl']?.toString(),
       isTrending: json['isTrending'] == true ||
           json['isTrending']?.toString().toLowerCase() == 'true' ||
           json['isTrending'] == 1 ||

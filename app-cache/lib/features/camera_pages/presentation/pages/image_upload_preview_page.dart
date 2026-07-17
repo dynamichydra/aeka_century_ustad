@@ -253,7 +253,7 @@ class _ImageUploadPreviewPageState extends State<ImageUploadPreviewPage> {
       final imageData = SelectedImageData(
         id: imageId,
         imageData: imageBytes,
-        imagePath: file.path,
+        imagePath: product.image.startsWith('http') ? product.image : file.path,
         category: product.category ?? widget.image_category,
         subcategory: product.subcategory ?? widget.sub_category,
         selectedAt: DateTime.now(),
@@ -358,6 +358,8 @@ class _ImageUploadPreviewPageState extends State<ImageUploadPreviewPage> {
         extra: {
           'imageFile': fileToEdit,
           'image_id': _currentSelection?.id,
+          'imageUrl': _currentSelection?.imagePath,
+          'originalImageUrl': _currentSelection?.originalImageUrl,
           'applicationType':
               _currentApplicationType ??
               _currentSelection?.applicationType,

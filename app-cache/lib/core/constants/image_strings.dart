@@ -133,6 +133,7 @@ class ProductImageModel {
   final String? itemId;
   final String name;
   final String image; // Contains asset path or network URL
+  final String? originalImageUrl;
   final bool isTrending;
   final String? category;
   final String? subcategory;
@@ -148,6 +149,7 @@ class ProductImageModel {
     this.itemId,
     required this.name,
     required this.image,
+    this.originalImageUrl,
     required this.isTrending,
     this.category,
     this.subcategory,
@@ -168,6 +170,7 @@ class ProductImageModel {
     String? itemId,
     String? name,
     String? image,
+    String? originalImageUrl,
     bool? isTrending,
     String? category,
     String? subcategory,
@@ -182,6 +185,7 @@ class ProductImageModel {
       itemId: itemId ?? this.itemId,
       name: name ?? this.name,
       image: image ?? this.image,
+      originalImageUrl: originalImageUrl ?? this.originalImageUrl,
       isTrending: isTrending ?? this.isTrending,
       category: category ?? this.category,
       subcategory: subcategory ?? this.subcategory,

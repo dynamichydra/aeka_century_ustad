@@ -63,10 +63,12 @@ class ImagePreparationService {
         SelectedImageData(
           id: product.id,
           imageData: imageBytes,
-          imagePath: file.path,
+          imagePath: product.image.startsWith('http') ? product.image : file.path,
           category: category,
           subcategory: subcategory,
           selectedAt: DateTime.now(),
+          applicationType: product.applicationType,
+          originalImageUrl: product.originalImageUrl,
         ),
       );
     }

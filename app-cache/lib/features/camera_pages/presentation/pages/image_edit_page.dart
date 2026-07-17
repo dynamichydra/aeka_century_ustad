@@ -61,6 +61,8 @@ class ImageEditPage extends StatefulWidget {
   final File imageFile;
   final Color? pickedColor;
   final String? image_id;
+  final String? originalImageUrl;
+  final String? imageUrl;
   final bool isExterior;
 
   final bool scrollableEditSection;
@@ -74,6 +76,8 @@ class ImageEditPage extends StatefulWidget {
     required this.imageFile,
     this.pickedColor,
     this.image_id,
+    this.originalImageUrl,
+    this.imageUrl,
     this.isExterior = false,
     this.scrollableEditSection = false,
     this.showTextureDetailOnTap = true,
@@ -532,6 +536,8 @@ class _ImageEditPageState extends State<ImageEditPage>
         furnitureId: widget.image_id,
         ownerId: _ownerEmail,
         sessionId: _sessionId,
+        originalImageUrl: widget.originalImageUrl,
+        imageUrl: widget.imageUrl,
       );
     });
   }

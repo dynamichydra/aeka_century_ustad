@@ -586,10 +586,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         SelectedImageData(
           id: imageId,
           imageData: imageBytes,
-          imagePath: imageFile.path,
+          imagePath: newProduct.image,
           category: 'Uploaded Image',
           subcategory: 'User Upload',
           selectedAt: DateTime.now(),
+          applicationType: newProduct.applicationType,
+          originalImageUrl: newProduct.originalImageUrl,
         ),
       );
 
@@ -601,9 +603,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           "image_id": imageId,
           "image_category": "Uploaded Image",
           "sub_category": "User Upload",
-          "applicationType": context.read<HomeCubit>().state.isExterior
-              ? "EXTERIOR"
-              : "INTERIOR",
+          "imageUrl": newProduct.image,
+          "originalImageUrl": newProduct.originalImageUrl,
+          "applicationType": newProduct.applicationType,
         },
       );
     } catch (e) {
@@ -653,6 +655,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             "image_id": prepared.imageId,
             "image_category": prepared.category,
             "sub_category": prepared.subcategory,
+            "imageUrl": product.image,
+            "originalImageUrl": product.originalImageUrl,
             "applicationType":
                 product.applicationType ??
                 (context.read<HomeCubit>().state.isExterior
