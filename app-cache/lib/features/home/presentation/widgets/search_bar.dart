@@ -8,12 +8,14 @@ class HomeSearchBar extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onCategoryCleared;
   final void Function(String query) onSearchStarted;
+  final bool isExterior;
 
   const HomeSearchBar({
     super.key,
     required this.controller,
     required this.onCategoryCleared,
     required this.onSearchStarted,
+    this.isExterior = false,
   });
 
   @override
@@ -144,7 +146,7 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
               ),
             ),
           ),
-          hintText: "Ai based furniture idea search",
+          hintText: widget.isExterior ? "Ai search" : "Ai based furniture idea search",
           hintStyle: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w100,

@@ -744,6 +744,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         const SizedBox(height: 20),
         // SearchInput(),
         HomeSearchBar(
+          isExterior: homeState.isExterior,
           controller: _searchController,
           onCategoryCleared: () {
             setState(() {

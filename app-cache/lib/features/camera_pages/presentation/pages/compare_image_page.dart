@@ -9,6 +9,27 @@ import 'package:century_ai/features/camera_pages/data/dummy_data.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
 import 'package:century_ai/db/models/edit_history_data.dart';
 
+/// A single comparable item — either the original image or an edited version.
+class CompareItem {
+  final bool isOriginal;
+  final File imageFile;
+  final EditHistoryData? edit;
+  final String label;
+
+  const CompareItem({
+    required this.isOriginal,
+    required this.imageFile,
+    this.edit,
+    required this.label,
+  });
+
+  /// The path to return when the user taps edit/select on this item.
+  String? get editedImagePath => edit?.editedImagePath;
+
+  /// Whether the image is served over network.
+  bool get isNetwork => edit != null && edit!.editedImagePath.startsWith('http');
+}
+
 class CompareImagePage extends StatefulWidget {
   final File originalImage;
   final String? furnitureId;
@@ -26,13 +47,13 @@ class CompareImagePage extends StatefulWidget {
 }
 
 class _CompareImagePageState extends State<CompareImagePage> {
-  // Track selected design indices. Original image is always included.
-  // Limit designs to 3 (Total 4 including Original).
-  final List<int> _selectedIndices = [0]; 
-  double _sliderPosition = 0.5;
+  /// All available items for comparison (Original + all edits).
+  List<CompareItem> _allItems = [];
 
-  // Saved versions - initialized as empty since ProductImages is removed
-  List<EditHistoryData> _savedVersions = [];
+  /// Currently selected items for the top comparison view. Max 4.
+  final List<CompareItem> _selectedItems = [];
+
+  double _sliderPosition = 0.5;
   bool _isLoading = false;
 
   @override
@@ -48,18 +69,18 @@ class _CompareImagePageState extends State<CompareImagePage> {
     try {
       final List<EditHistoryData> edits;
       if (widget.sessionId != null) {
-        edits = await EditHistoryRepository.getEditsBySessionId(widget.sessionId!);
+        edits = await EditHistoryRepository.getEditsBySessionId(
+          widget.sessionId!,
+        );
       } else {
-        edits = await EditHistoryRepository.getEditsByFurnitureId(widget.furnitureId!);
+        edits = await EditHistoryRepository.getEditsByFurnitureId(
+          widget.furnitureId!,
+        );
       }
-      
+
       setState(() {
-        _savedVersions = edits;
         _isLoading = false;
-        // Automatically select the first edit if available for comparison
-        if (_savedVersions.isNotEmpty && _selectedIndices.length == 1) {
-          _selectedIndices.add(1); // Index 0 is Original, so 1 is first edit
-        }
+        _buildItemsList(edits);
       });
     } catch (e) {
       debugPrint("Error loading edit history: $e");
@@ -67,15 +88,49 @@ class _CompareImagePageState extends State<CompareImagePage> {
     }
   }
 
-  void _toggleSelection(int index) {
+  /// Builds the unified _allItems list and sets initial selection.
+  void _buildItemsList(List<EditHistoryData> edits) {
+    final items = <CompareItem>[];
+
+    // Original is just another item in the list
+    items.add(CompareItem(
+      isOriginal: true,
+      imageFile: widget.originalImage,
+      label: "Original",
+    ));
+
+    // Add each edit as a CompareItem
+    for (final edit in edits) {
+      items.add(CompareItem(
+        isOriginal: false,
+        imageFile: File(edit.editedImagePath),
+        edit: edit,
+        label: "Edited",
+      ));
+    }
+
+    _allItems = items;
+
+    // Auto-select: Original + first edit for initial comparison
+    _selectedItems.clear();
+    if (_allItems.length >= 2) {
+      _selectedItems.add(_allItems[0]); // Original
+      _selectedItems.add(_allItems[1]); // First edit
+    } else if (_allItems.isNotEmpty) {
+      _selectedItems.add(_allItems[0]); // Only Original available
+    }
+  }
+
+  /// Toggle selection of a CompareItem. Max 4 selected, min 1.
+  void _toggleSelection(CompareItem item) {
     setState(() {
-      if (_selectedIndices.contains(index)) {
-        if (_selectedIndices.length > 1) {
-          _selectedIndices.remove(index);
+      if (_selectedItems.contains(item)) {
+        if (_selectedItems.length > 1) {
+          _selectedItems.remove(item);
         }
       } else {
-        if (_selectedIndices.length < 3) {
-          _selectedIndices.add(index);
+        if (_selectedItems.length < 4) {
+          _selectedItems.add(item);
         }
       }
     });
@@ -89,10 +144,7 @@ class _CompareImagePageState extends State<CompareImagePage> {
         child: Column(
           children: [
             /// ---------------- TOP COMPARISON SECTION ----------------
-            Expanded(
-              flex: 5,
-              child: _buildTopComparisonSection(),
-            ),
+            Expanded(flex: 5, child: _buildTopComparisonSection()),
 
             /// ---------------- BOTTOM SELECTION SECTION ----------------
             Expanded(
@@ -105,18 +157,23 @@ class _CompareImagePageState extends State<CompareImagePage> {
                 ),
                 child: Column(
                   children: [
-                    _selectedIndices.length == 1 ? const SizedBox(height: 12) : const SizedBox(height: 0),
+                    _selectedItems.length == 1
+                        ? const SizedBox(height: 12)
+                        : const SizedBox(height: 0),
                     // Header: Compare & Select
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Row(
                           children: [
-                             Icon(Iconsax.maximize_1, size: 20),
+                            Icon(Iconsax.maximize_1, size: 20),
                             SizedBox(width: 8),
                             Text(
                               "Select & Compare",
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
@@ -128,109 +185,30 @@ class _CompareImagePageState extends State<CompareImagePage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Grid of Versions
+                    // Grid of Versions (bottom gallery)
                     Expanded(
-                      child: _isLoading 
-                        ? const Center(child: CircularProgressIndicator())
-                        : _savedVersions.isEmpty 
-                        ? const Center(child: Text("No versions available for comparison"))
-                        : GridView.builder(
-                          itemCount: _savedVersions.length + 1, // +1 for Original
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.8,
-                          ),
-                          itemBuilder: (context, index) {
-                            if (index == 0) {
-                              // Original Image Tile
-                              final isSelected = _selectedIndices.contains(0);
-                              return GestureDetector(
-                                onTap: () => _toggleSelection(0),
-                                child: Stack(
-                                  children: [
-                                    Column(
-                                      children: [
-                                        Expanded(
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: Image.file(
-                                              widget.originalImage,
-                                              fit: BoxFit.cover,
-                                              width: double.infinity,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Positioned(
-                                      top: 4,
-                                      left: 4,
-                                      child: Icon(
-                                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                                        size: 18,
-                                        color: isSelected ? Colors.black : Colors.black54,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 4,
-                                      left: 0,
-                                      right: 0,
-                                      child: Container(
-                                        color: Colors.black45,
-                                        padding: const EdgeInsets.symmetric(vertical: 2),
-                                        child: const Text(
-                                          "Original",
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-
-                            final version = _savedVersions[index - 1];
-                            final isSelected = _selectedIndices.contains(index);
-                            
-                            return GestureDetector(
-                              onTap: () => _toggleSelection(index),
-                              child: Stack(
-                                children: [
-                                  Column(
-                                    children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Image.file(
-                                            File(version.editedImagePath),
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                  // Selection Indicator (Top Left)
-                                  Positioned(
-                                    top: 4,
-                                    left: 4,
-                                    child: Icon(
-                                      isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                                      size: 18,
-                                      color: isSelected ? Colors.black : Colors.black54,
-                                    ),
-                                  ),
-
-
-                                ],
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _allItems.length <= 1
+                          ? const Center(
+                              child: Text(
+                                "No versions available for comparison",
                               ),
-                            );
-                          },
-                        ),
+                            )
+                          : GridView.builder(
+                              itemCount: _allItems.length,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                    childAspectRatio: 0.8,
+                                  ),
+                              itemBuilder: (context, index) {
+                                final item = _allItems[index];
+                                return _buildGalleryTile(item);
+                              },
+                            ),
                     ),
                   ],
                 ),
@@ -242,38 +220,124 @@ class _CompareImagePageState extends State<CompareImagePage> {
     );
   }
 
-  Widget _buildTopComparisonSection() {
-    // Total items to compare = Original Image + Selected Designs
-    final totalItems = 1 + (_savedVersions.isEmpty ? 0 : _selectedIndices.length);
+  /// Builds a single thumbnail tile in the bottom gallery.
+  Widget _buildGalleryTile(CompareItem item) {
+    final isSelected = _selectedItems.contains(item);
 
-    if (_selectedIndices.length == 1 && _selectedIndices.contains(0)) {
-       return Image.file(widget.originalImage, fit: BoxFit.cover);
+    return GestureDetector(
+      onTap: () => _toggleSelection(item),
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    item.imageFile,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Selection Indicator (Top Left)
+          Positioned(
+            top: 4,
+            left: 4,
+            child: Icon(
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_off,
+              size: 18,
+              color: isSelected ? Colors.black : Colors.black54,
+            ),
+          ),
+          // "Original" label only for the original image
+          if (item.isOriginal)
+            Positioned(
+              bottom: 4,
+              left: 0,
+              right: 0,
+              child: Container(
+                color: Colors.black45,
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: const Text(
+                  "Original",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Top comparison area — layout decided purely by selected count & content.
+  Widget _buildTopComparisonSection() {
+    final count = _selectedItems.length;
+
+    // Nothing selected
+    if (count == 0) {
+      return const Center(
+        child: Text(
+          "Select images to compare",
+          style: TextStyle(fontSize: 14, color: Colors.black54),
+        ),
+      );
     }
 
-    if (_selectedIndices.length == 2 && _selectedIndices.contains(0)) {
-      // Single Design Selection vs Original -> Slider View
-      final selectedEditIndex = _selectedIndices.firstWhere((i) => i != 0) - 1;
-      final selectedEdit = _savedVersions[selectedEditIndex];
+    // Single image selected — show it full
+    if (count == 1) {
+      final item = _selectedItems[0];
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.file(item.imageFile, fit: BoxFit.cover),
+          if (!item.isOriginal)
+            Positioned(
+              bottom: 24,
+              right: 16,
+              child: _buildCircleButton(
+                icon: Iconsax.edit_2,
+                onTap: () => context.pop(item.editedImagePath),
+                size: 20,
+                padding: 8,
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Exactly 2 selected AND one is Original → Slider mode
+    if (count == 2 && _selectedItems.any((item) => item.isOriginal)) {
+      final originalItem = _selectedItems.firstWhere((item) => item.isOriginal);
+      final editItem = _selectedItems.firstWhere((item) => !item.isOriginal);
 
       return Stack(
         children: [
           ImageCompareSlider(
-            before: widget.originalImage,
-            after: selectedEdit.editedImagePath.startsWith('http') 
-                ? selectedEdit.editedImagePath 
-                : File(selectedEdit.editedImagePath),
-            isAfterNetwork: selectedEdit.editedImagePath.startsWith('http'),
+            before: originalItem.imageFile,
+            after: editItem.isNetwork
+                ? editItem.editedImagePath!
+                : editItem.imageFile,
+            isAfterNetwork: editItem.isNetwork,
             position: _sliderPosition,
             onChanged: (val) => setState(() => _sliderPosition = val),
           ),
-          // Edit Button in Bottom Right
           Positioned(
             bottom: 24,
             right: 16,
             child: _buildCircleButton(
-              icon: Iconsax.edit_2, 
+              icon: Iconsax.edit_2,
               onTap: () {
-                context.pop(selectedEdit.editedImagePath);
+                context.pop(editItem.editedImagePath);
               },
               size: 20,
               padding: 8,
@@ -281,54 +345,49 @@ class _CompareImagePageState extends State<CompareImagePage> {
           ),
         ],
       );
-    } else {
-      // Multi Selection (could be multiple edits or edit without original) -> Grid View
-      return GridView.builder(
-        padding: EdgeInsets.zero,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: _selectedIndices.length > 2 ? 2 : 1,
-          childAspectRatio: 1.0,
-        ),
-        itemCount: _selectedIndices.length,
-        itemBuilder: (context, index) {
-          final selectedIdx = _selectedIndices[index];
-          final isOriginal = selectedIdx == 0;
-          final String? imagePath = isOriginal ? null : _savedVersions[selectedIdx - 1].editedImagePath;
-          
-          return Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white, width: 0.5),
-            ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (isOriginal)
-                  Image.file(widget.originalImage, fit: BoxFit.cover)
-                else
-                  Image.file(File(imagePath!), fit: BoxFit.cover),
-                
-                if (!isOriginal)
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: _buildCircleButton(
-                      icon: Iconsax.edit_2, 
-                      onTap: () => context.pop(imagePath),
-                      size: 14,
-                      padding: 6,
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
-      );
     }
+
+    // All other cases → Grid comparison
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: count > 2 ? 2 : count,
+        childAspectRatio: 1.0,
+      ),
+      itemCount: count,
+      itemBuilder: (context, index) {
+        final item = _selectedItems[index];
+
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.white, width: 0.5),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.file(item.imageFile, fit: BoxFit.cover),
+
+              if (!item.isOriginal)
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: _buildCircleButton(
+                    icon: Iconsax.edit_2,
+                    onTap: () => context.pop(item.editedImagePath),
+                    size: 14,
+                    padding: 6,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildOverlayButtons({
-    required double bottom, 
+    required double bottom,
     required bool isGrid,
     bool showRemove = false,
     VoidCallback? onRemove,
@@ -346,13 +405,13 @@ class _CompareImagePageState extends State<CompareImagePage> {
         children: [
           // Edit Button
           _buildCircleButton(
-            icon: Iconsax.edit_2, 
+            icon: Iconsax.edit_2,
             onTap: onEdit ?? () => context.pop(),
             size: iconSize,
             padding: padding,
           ),
           const SizedBox(width: 8),
-          
+
           // Select Button (Tick)
           _buildCircleButton(
             icon: Iconsax.tick_circle,
@@ -360,7 +419,7 @@ class _CompareImagePageState extends State<CompareImagePage> {
             size: iconSize,
             padding: padding,
           ),
-          
+
           if (showRemove) ...[
             const SizedBox(width: 8),
             // Close Button / Cancel
@@ -377,9 +436,9 @@ class _CompareImagePageState extends State<CompareImagePage> {
   }
 
   Widget _buildCircleButton({
-    required IconData icon, 
-    required VoidCallback onTap, 
-    required double size, 
+    required IconData icon,
+    required VoidCallback onTap,
+    required double size,
     required double padding,
   }) {
     return GestureDetector(
@@ -390,7 +449,11 @@ class _CompareImagePageState extends State<CompareImagePage> {
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
-            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         child: Icon(icon, size: size, color: Colors.black),

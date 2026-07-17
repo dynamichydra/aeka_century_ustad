@@ -463,7 +463,7 @@ class _ImageEditPageState extends State<ImageEditPage>
         _selectedIndicesNotifier.value = currentSelected;
       }
     } else {
-      if (currentSelected.length < 3) {
+      if (currentSelected.length < 4) {
         currentSelected.add(index);
         _selectedIndicesNotifier.value = currentSelected;
 
@@ -1626,8 +1626,49 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Widget _buildTopComparisonSection(List<int> selectedIndices) {
-    final totalItems = 1 + selectedIndices.length;
+    // When nothing is selected, show only the original
+    if (selectedIndices.isEmpty) {
+      return _buildComparisonItem(
+        path: null,
+        isOriginal: true,
+        onRemove: () {},
+        onSelect: () {
+          context.push(
+            AppRoutes.imageFinalize,
+            extra: {
+              'editedImage': widget.imageFile.path,
+              'usedLaminates': <Map<String, dynamic>>[],
+            },
+          );
+        },
+        onEdit: () {
+          setState(() {
+            _sessionId = const Uuid().v4();
+            _baseImage = widget.imageFile.path;
+            _parentEditId = null;
+            _currentAssetPreview = null;
+            _selectedIndicesNotifier.value = [];
+            _hasAppliedOnce = true;
+            _compareExpanded = false;
+            _editExpanded = true;
+            _selectedTexture = null;
+            _selectedColor = null;
+            _selectedCategory = null;
+            _selectedSubCategory = null;
+            _selection = null;
+          });
+          context.read<ImageEditCubit>().initOriginalImage(
+            _baseImage,
+            furnitureId: widget.image_id,
+            ownerId: _ownerEmail,
+            sessionId: _sessionId,
+          );
+          _fetchUserEditHistory();
+        },
+      );
+    }
 
+    // Exactly 1 selected → Slider (Original vs selected edit)
     if (selectedIndices.length == 1) {
       return Stack(
         children: [
@@ -1650,30 +1691,26 @@ class _ImageEditPageState extends State<ImageEditPage>
                     : widget.imageFile.path;
 
                 setState(() {
-                  _sessionId = const Uuid().v4(); // START NEW SESSION
-                  _baseImage = newPath; // UPDATE BASE IMAGE
-                  _currentAssetPreview =
-                      null; // Clear overlay since it's now the base
-                  _selectedIndicesNotifier.value =
-                      []; // CLEAR SELECTIONS FOR NEW SESSION
+                  _sessionId = const Uuid().v4();
+                  _baseImage = newPath;
+                  _currentAssetPreview = null;
+                  _selectedIndicesNotifier.value = [];
                   _hasAppliedOnce = true;
                   _compareExpanded = false;
                   _editExpanded = true;
-                  // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY
                   _selectedTexture = null;
                   _selectedColor = null;
                   _selectedCategory = null;
                   _selectedSubCategory = null;
                   _selection = null;
                 });
-                // RE-INIT CUBIT WITH NEW IMAGE AND SESSION
                 context.read<ImageEditCubit>().initOriginalImage(
                   newPath,
                   furnitureId: widget.image_id,
                   ownerId: _ownerEmail,
                   sessionId: _sessionId,
                 );
-                _fetchUserEditHistory(); // REFRESH UI FOR NEW SESSION
+                _fetchUserEditHistory();
               },
               size: 20,
               padding: 8,
@@ -1683,56 +1720,55 @@ class _ImageEditPageState extends State<ImageEditPage>
       );
     }
 
-    // Dynamic Layout to fill space for 2, 3, or 4 total items
+    // 2-3 selected → show Original + selected edits in grid
+    // 4 selected → show only the 4 selected edits (no Original)
     final List<Widget> items = [];
+    final bool includeOriginal = selectedIndices.length < 4;
 
-    // Add Original
-    items.add(
-      _buildComparisonItem(
-        path: null,
-        isOriginal: true,
-        onRemove: () {},
-        onSelect: () {
-          context.push(
-            AppRoutes.imageFinalize,
-            extra: {
-              'editedImage': widget.imageFile.path,
-              'usedLaminates': <Map<String, dynamic>>[],
-            },
-          );
-          // Original image has no laminates — nothing to fetch
-        },
-        onEdit: () {
-          setState(() {
-            _sessionId = const Uuid().v4(); // START NEW SESSION
-            _baseImage = widget.imageFile.path; // RESET TO ORIGINAL
-            _parentEditId = null; // editing from original — no parent
-            _currentAssetPreview = null;
-            _selectedIndicesNotifier.value =
-                []; // CLEAR SELECTIONS FOR NEW SESSION
-            _hasAppliedOnce = true;
-            _compareExpanded = false;
-            _editExpanded = true;
-            // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY
-            _selectedTexture = null;
-            _selectedColor = null;
-            _selectedCategory = null;
-            _selectedSubCategory = null;
-            _selection = null;
-          });
-          // RE-INIT CUBIT WITH NEW SESSION
-          context.read<ImageEditCubit>().initOriginalImage(
-            _baseImage,
-            furnitureId: widget.image_id,
-            ownerId: _ownerEmail,
-            sessionId: _sessionId,
-          );
-          _fetchUserEditHistory(); // REFRESH UI FOR NEW SESSION
-        },
-      ),
-    );
+    if (includeOriginal) {
+      items.add(
+        _buildComparisonItem(
+          path: null,
+          isOriginal: true,
+          onRemove: () {},
+          onSelect: () {
+            context.push(
+              AppRoutes.imageFinalize,
+              extra: {
+                'editedImage': widget.imageFile.path,
+                'usedLaminates': <Map<String, dynamic>>[],
+              },
+            );
+          },
+          onEdit: () {
+            setState(() {
+              _sessionId = const Uuid().v4();
+              _baseImage = widget.imageFile.path;
+              _parentEditId = null;
+              _currentAssetPreview = null;
+              _selectedIndicesNotifier.value = [];
+              _hasAppliedOnce = true;
+              _compareExpanded = false;
+              _editExpanded = true;
+              _selectedTexture = null;
+              _selectedColor = null;
+              _selectedCategory = null;
+              _selectedSubCategory = null;
+              _selection = null;
+            });
+            context.read<ImageEditCubit>().initOriginalImage(
+              _baseImage,
+              furnitureId: widget.image_id,
+              ownerId: _ownerEmail,
+              sessionId: _sessionId,
+            );
+            _fetchUserEditHistory();
+          },
+        ),
+      );
+    }
 
-    // Add Selected Versions
+    // Add selected edited versions
     for (int i = 0; i < selectedIndices.length; i++) {
       final index = selectedIndices[i];
       final String imgPath = _userEdits[index].editedImageUrl;
@@ -1745,7 +1781,6 @@ class _ImageEditPageState extends State<ImageEditPage>
           onRemove: () => _toggleSelection(index),
           onSelect: () async {
             final record = _userEdits[index];
-            // Walk the full parent chain in SQLite for cumulative laminates
             List<Map<String, dynamic>> usedLaminates = [];
             try {
               usedLaminates =
@@ -1754,7 +1789,6 @@ class _ImageEditPageState extends State<ImageEditPage>
               debugPrint('getCumulativeLaminates error: $e');
             }
 
-            // Fallback: current session history → record list → selected texture
             if (usedLaminates.isEmpty) {
               final cubit = context.read<ImageEditCubit>();
               for (var item in cubit.state.generatedHistory) {
@@ -1784,17 +1818,14 @@ class _ImageEditPageState extends State<ImageEditPage>
           onEdit: () {
             final editRecord = _userEdits[index];
             setState(() {
-              _sessionId = const Uuid().v4(); // START NEW SESSION
-              _baseImage = imgPath; // UPDATE BASE IMAGE
-              _parentEditId = editRecord.id; // track ancestry chain
-              _currentAssetPreview =
-                  null; // Clear overlay since it's now the base
-              _selectedIndicesNotifier.value =
-                  []; // CLEAR SELECTIONS FOR NEW SESSION
+              _sessionId = const Uuid().v4();
+              _baseImage = imgPath;
+              _parentEditId = editRecord.id;
+              _currentAssetPreview = null;
+              _selectedIndicesNotifier.value = [];
               _hasAppliedOnce = true;
               _compareExpanded = false;
               _editExpanded = true;
-              // CLEAR PREVIOUS LAMINATE AND AREA SO IT DOESN'T AUTO-APPLY
               _selectedTexture = null;
               _selectedColor = null;
               _selectedCategory = null;
@@ -1811,21 +1842,19 @@ class _ImageEditPageState extends State<ImageEditPage>
               );
             }
 
-            // RE-INIT CUBIT WITH NEW IMAGE AND SESSION
             context.read<ImageEditCubit>().initOriginalImage(
               _baseImage,
               furnitureId: widget.image_id,
               ownerId: _ownerEmail,
               sessionId: _sessionId,
             );
-            _fetchUserEditHistory(); // REFRESH UI FOR NEW SESSION
+            _fetchUserEditHistory();
           },
         ),
       );
     }
 
-    // ENSURE TOTAL ITEMS HANDLED (Limit to 4 for the split view, or keep as is)
-    // Actually, let's keep the logic but the Original is already items[0].
+    final totalItems = items.length;
 
     if (totalItems == 1) {
       return items[0];
@@ -2031,7 +2060,8 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Widget _buildImageOverlaySection(ImageEditState state) {
-    return Stack(
+    return ClipRect(
+      child: Stack(
       children: [
         Listener(
           behavior: HitTestBehavior.opaque,
@@ -3118,6 +3148,7 @@ class _ImageEditPageState extends State<ImageEditPage>
         if ((state.isApplyLoading || _isPrecaching) && _selection == null)
           Align(alignment: Alignment.center, child: const ProgressStatusCard()),
       ],
+    ),
     );
   }
 
@@ -5231,16 +5262,39 @@ class _AIProcessingOverlayState extends State<AIProcessingOverlay>
   @override
   Widget build(BuildContext context) {
     final Rect vpSel = widget.selectionRect;
-    final bool showOutside = vpSel.top > 55.0 && vpSel.left > 12.0;
+    final Rect imgRect = widget.visibleImageRect;
+    const double safePad = 8.0;
+    // Consistent gap between selection edge and text
+    const double gap = 10.0;
+    const double insetPad = 12.0;
+    // Estimated sizes for the text elements
+    const double textHeight = 16.0;
+    const double percentHeight = 16.0;
+    const double textWidth = 180.0;
+    const double percentWidth = 150.0;
 
-    final double textLeft = showOutside ? vpSel.left : vpSel.left + 12.0;
-    final double textTop = showOutside ? vpSel.top - 42.0 : vpSel.top + 12.0;
+    // Decide whether to place labels outside or inside the selection
+    final bool showOutside = vpSel.top > (gap + textHeight + safePad + 10) && vpSel.left > insetPad;
 
-    final double percentLeft = showOutside ? vpSel.left : vpSel.left + 12.0;
-    final double percentTop = showOutside ? vpSel.bottom + 8.0 : vpSel.bottom - 24.0;
+    // Status text: above selection (outside) or just inside top-left
+    double textLeft = showOutside ? vpSel.left : vpSel.left + insetPad;
+    double textTop = showOutside ? vpSel.top - gap - textHeight : vpSel.top + insetPad;
 
-    return Stack(
-      clipBehavior: Clip.none,
+    // Percentage text: below selection (outside) or just inside bottom-left
+    double percentLeft = showOutside ? vpSel.left : vpSel.left + insetPad;
+    double percentTop = showOutside ? vpSel.bottom + gap : vpSel.bottom - insetPad - percentHeight;
+
+    // Clamp text position within the visible image rect
+    textLeft = textLeft.clamp(imgRect.left + safePad, (imgRect.right - textWidth - safePad).clamp(imgRect.left + safePad, double.infinity));
+    textTop = textTop.clamp(imgRect.top + safePad, (imgRect.bottom - textHeight - safePad).clamp(imgRect.top + safePad, double.infinity));
+
+    // Clamp percentage position within the visible image rect
+    percentLeft = percentLeft.clamp(imgRect.left + safePad, (imgRect.right - percentWidth - safePad).clamp(imgRect.left + safePad, double.infinity));
+    percentTop = percentTop.clamp(imgRect.top + safePad, (imgRect.bottom - percentHeight - safePad).clamp(imgRect.top + safePad, double.infinity));
+
+    return ClipRect(
+      child: Stack(
+      clipBehavior: Clip.hardEdge,
       children: [
         Positioned.fromRect(
           rect: vpSel,
@@ -5321,6 +5375,7 @@ class _AIProcessingOverlayState extends State<AIProcessingOverlay>
           ),
         ),
       ],
+    ),
     );
   }
 }
