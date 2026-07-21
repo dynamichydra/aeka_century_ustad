@@ -441,6 +441,37 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         );
         debugPrint("✅ Edited image uploaded successfully!");
       }
+
+      final String? patternUploadUrl = res['patternUploadUrl'];
+      if (patternUploadUrl != null && patternUploadUrl.isNotEmpty) {
+        debugPrint("📡 Uploading pattern/laminate image to patternUploadUrl: $patternUploadUrl");
+        final Map<String, dynamic>? laminate = lastEdit['laminate'] as Map<String, dynamic>? ?? state.selectedPattern;
+        final String patternCoverUrl = laminate?['coverImage']?.toString() ?? laminate?['image']?.toString() ?? "";
+        
+        File? patternFileToUpload;
+        if (patternCoverUrl.startsWith('http')) {
+          final dio = Dio();
+          final tempDir = await getTemporaryDirectory();
+          final tempPath = p.join(
+            tempDir.path,
+            "temp_pattern_${DateTime.now().millisecondsSinceEpoch}.png",
+          );
+          await dio.download(patternCoverUrl, tempPath);
+          patternFileToUpload = File(tempPath);
+        } else if (patternCoverUrl.isNotEmpty) {
+          patternFileToUpload = File(patternCoverUrl);
+        }
+
+        if (patternFileToUpload != null && await patternFileToUpload.exists()) {
+          await _imageEditService.uploadEditedImage(
+            uploadUrl: patternUploadUrl,
+            imageFile: patternFileToUpload,
+          );
+          debugPrint("✅ Pattern/Laminate image uploaded successfully!");
+        } else {
+          debugPrint("⚠️ Pattern image file not found or invalid URL: $patternCoverUrl");
+        }
+      }
     } catch (e) {
       debugPrint("❌ Failed to submit feedback/upload image: $e");
     }

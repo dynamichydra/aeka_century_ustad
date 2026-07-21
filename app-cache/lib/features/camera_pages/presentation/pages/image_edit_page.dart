@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:century_ai/core/constants/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' hide SelectionRect;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
@@ -946,85 +947,85 @@ class _ImageEditPageState extends State<ImageEditPage>
             builder: (context, state) {
               return Stack(
                 children: [
-                    Column(
-                      children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.40,
-                          child: ValueListenableBuilder<List<int>>(
-                            valueListenable: _selectedIndicesNotifier,
-                            builder: (context, selectedIndices, child) {
-                              return _compareExpanded
-                                  ? _buildTopComparisonSection(selectedIndices)
-                                  : RepaintBoundary(
-                                      child: _buildImageOverlaySection(state),
-                                    );
-                            },
-                          ),
+                  Column(
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.40,
+                        child: ValueListenableBuilder<List<int>>(
+                          valueListenable: _selectedIndicesNotifier,
+                          builder: (context, selectedIndices, child) {
+                            return _compareExpanded
+                                ? _buildTopComparisonSection(selectedIndices)
+                                : RepaintBoundary(
+                                    child: _buildImageOverlaySection(state),
+                                  );
+                          },
                         ),
+                      ),
 
-                        // Collapsible Headers & Content (Accordion Style)
-                        Expanded(
-                          child: Container(
-                            color: Colors.white,
-                            child: Stack(
-                              children: [
-                                Positioned.fill(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 0),
-                                    child: _buildCollapsibleHeaders(),
-                                  ),
-                                ),
-                                // Fixed Bottom Bar Area (Edit Mode)
-                                if (_editExpanded)
-                                  Positioned(
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    child: _buildBottomBarFixed(),
-                                  ),
-                                // Fixed Bottom Bar Area (Compare Mode)
-                                if (_compareExpanded)
-                                  Positioned(
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    child: _buildBottomBarFixed2(),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // ── Full-screen upload overlay ─────────────────────────────
-                    if (_isUploading)
-                      Positioned.fill(
+                      // Collapsible Headers & Content (Accordion Style)
+                      Expanded(
                         child: Container(
-                          color: Colors.black.withOpacity(0.45),
-                          child: const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 52,
-                                  height: 52,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 3.5,
-                                    color: TColors.primary,
-                                  ),
+                          color: Colors.white,
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 0),
+                                  child: _buildCollapsibleHeaders(),
                                 ),
-                                SizedBox(height: 18),
-                              ],
-                            ),
+                              ),
+                              // Fixed Bottom Bar Area (Edit Mode)
+                              if (_editExpanded)
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: _buildBottomBarFixed(),
+                                ),
+                              // Fixed Bottom Bar Area (Compare Mode)
+                              if (_compareExpanded)
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: _buildBottomBarFixed2(),
+                                ),
+                            ],
                           ),
                         ),
                       ),
-                  ],
-                );
-              },
-            ),
+                    ],
+                  ),
+
+                  // ── Full-screen upload overlay ─────────────────────────────
+                  if (_isUploading)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withOpacity(0.45),
+                        child: const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 52,
+                                height: 52,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3.5,
+                                  color: TColors.primary,
+                                ),
+                              ),
+                              SizedBox(height: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
+        ),
       ),
     );
   }
@@ -1040,7 +1041,11 @@ class _ImageEditPageState extends State<ImageEditPage>
             isActive: _compareExpanded,
             showArrow: true,
             onTap: () {
-              final isApplying = context.read<ImageEditCubit>().state.isApplyLoading || _isPrecaching || _isUploading || context.read<ImageEditCubit>().state.isGenerating;
+              final isApplying =
+                  context.read<ImageEditCubit>().state.isApplyLoading ||
+                  _isPrecaching ||
+                  _isUploading ||
+                  context.read<ImageEditCubit>().state.isGenerating;
               if (isApplying) return;
               setState(() {
                 _compareExpanded = !_compareExpanded;
@@ -1066,7 +1071,11 @@ class _ImageEditPageState extends State<ImageEditPage>
               final bool canUndo =
                   state.generatedHistory.isNotEmpty || (_parentEditId != null);
               final bool canRedo = state.redoHistory.isNotEmpty;
-              final bool isApplying = state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating;
+              final bool isApplying =
+                  state.isApplyLoading ||
+                  _isPrecaching ||
+                  _isUploading ||
+                  state.isGenerating;
               return _buildHeaderTile(
                 title: "Edit & Design",
                 iconImg: "edit.png",
@@ -1133,9 +1142,23 @@ class _ImageEditPageState extends State<ImageEditPage>
                       const SizedBox(width: 8),
                     ],
                     Opacity(
-                      opacity: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating)) ? 1.0 : 0.4,
+                      opacity:
+                          (canUndo &&
+                              !(state.isApplyLoading ||
+                                  _isPrecaching ||
+                                  _isUploading ||
+                                  state.isGenerating))
+                          ? 1.0
+                          : 0.4,
                       child: GestureDetector(
-                        onTap: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating)) ? () => _handleUndo(state) : null,
+                        onTap:
+                            (canUndo &&
+                                !(state.isApplyLoading ||
+                                    _isPrecaching ||
+                                    _isUploading ||
+                                    state.isGenerating))
+                            ? () => _handleUndo(state)
+                            : null,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -1173,16 +1196,32 @@ class _ImageEditPageState extends State<ImageEditPage>
                     ),
                     const SizedBox(width: 8),
                     Opacity(
-                      opacity: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating)) ? 1.0 : 0.4,
+                      opacity:
+                          (canUndo &&
+                              !(state.isApplyLoading ||
+                                  _isPrecaching ||
+                                  _isUploading ||
+                                  state.isGenerating))
+                          ? 1.0
+                          : 0.4,
                       child: GestureDetector(
-                        onTap: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating))
+                        onTap:
+                            (canUndo &&
+                                !(state.isApplyLoading ||
+                                    _isPrecaching ||
+                                    _isUploading ||
+                                    state.isGenerating))
                             ? () {
-                                final newVal = (_feedbackLiked == true) ? null : true;
+                                final newVal = (_feedbackLiked == true)
+                                    ? null
+                                    : true;
                                 setState(() {
                                   _feedbackLiked = newVal;
                                 });
                                 if (newVal == true) {
-                                  context.read<ImageEditCubit>().submitFeedback("THUMBS_UP");
+                                  context.read<ImageEditCubit>().submitFeedback(
+                                    "THUMBS_UP",
+                                  );
                                 }
                               }
                             : null,
@@ -1218,16 +1257,32 @@ class _ImageEditPageState extends State<ImageEditPage>
 
                     const SizedBox(width: 6),
                     Opacity(
-                      opacity: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating)) ? 1.0 : 0.4,
+                      opacity:
+                          (canUndo &&
+                              !(state.isApplyLoading ||
+                                  _isPrecaching ||
+                                  _isUploading ||
+                                  state.isGenerating))
+                          ? 1.0
+                          : 0.4,
                       child: GestureDetector(
-                        onTap: (canUndo && !(state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating))
+                        onTap:
+                            (canUndo &&
+                                !(state.isApplyLoading ||
+                                    _isPrecaching ||
+                                    _isUploading ||
+                                    state.isGenerating))
                             ? () {
-                                final newVal = (_feedbackLiked == false) ? null : false;
+                                final newVal = (_feedbackLiked == false)
+                                    ? null
+                                    : false;
                                 setState(() {
                                   _feedbackLiked = newVal;
                                 });
                                 if (newVal == false) {
-                                  context.read<ImageEditCubit>().submitFeedback("THUMBS_DOWN");
+                                  context.read<ImageEditCubit>().submitFeedback(
+                                    "THUMBS_DOWN",
+                                  );
                                 }
                               }
                             : null,
@@ -2068,421 +2123,814 @@ class _ImageEditPageState extends State<ImageEditPage>
   Widget _buildImageOverlaySection(ImageEditState state) {
     return ClipRect(
       child: Stack(
-      children: [
-        Listener(
-          behavior: HitTestBehavior.opaque,
-          onPointerDown: (event) {
-            _activePointers[event.pointer] = event.position;
-
-            if (_activePointers.length == 1) {
-              _backupSelection = _selection;
-            }
-
-            if (_activePointers.length >= 2) {
-              setState(() {
-                _selection = _backupSelection;
-                _mode = SelectionMode.none;
-                _isPanning = true;
-
-                // Initialize pinch baseline
-                final keys = _activePointers.keys.toList();
-                final p1 = _activePointers[keys[0]]!;
-                final p2 = _activePointers[keys[1]]!;
-                _initialPointerDistance = (p1 - p2).distance;
-                if (_initialPointerDistance < 1.0) {
-                  _initialPointerDistance = 1.0;
-                }
-                _initialScale = _transformationController.value
-                    .getMaxScaleOnAxis();
-              });
-              return;
-            }
-
-            final Matrix4 matrix = _transformationController.value;
-            final Matrix4 inverse = Matrix4.inverted(matrix);
-            final Offset localPos = MatrixUtils.transformPoint(
-              inverse,
-              event.localPosition,
-            );
-            _dragStart = localPos;
-            final Rect imageRect = _getImageRect(context);
-            final double imgL = imageRect.left;
-            final double imgR = imageRect.right;
-            final double imgT = imageRect.top;
-            final double imgB = imageRect.bottom;
-            final Size viewSize = _getViewSize(context);
-
-            final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
-
-            // Get current zoom scale for touch target sizing
-            final double zoomScale = _transformationController.value
-                .getMaxScaleOnAxis();
-
-            // 1. High Priority: Check if tap hit a resize handle or selection body
-            SelectionMode detectedMode = SelectionMode.none;
-            if (_selection != null) {
-              detectedMode = _selectionController.hitTestHandles(
-                selection: _selection,
-                localPosition: localPos,
-                imageRect: imageRect,
-                zoomScale: zoomScale,
-              );
-            }
-
-            if (detectedMode != SelectionMode.none) {
-              setState(() {
-                _mode = detectedMode;
-              });
-              return;
-            }
-
-            // 2. Medium Priority: Check if tap is on an overlay widget or measurement lines.
-            // If so, let the overlay handle the event and skip all selection logic
-            if (_selection != null) {
-              final Offset vpTopLeft = MatrixUtils.transformPoint(
-                matrix,
-                Offset(_selection!.left, _selection!.top),
-              );
-              final Offset vpBottomRight = MatrixUtils.transformPoint(
-                matrix,
-                Offset(
-                  _selection!.left + _selection!.width,
-                  _selection!.top + _selection!.height,
-                ),
-              );
-              final Rect vpSelection = Rect.fromPoints(
-                vpTopLeft,
-                vpBottomRight,
-              );
-
-              final double widthCardW = _editingWidth ? 110.0 : 60.0;
-              final Rect visibleImgRect = _getVisibleImageRect(context);
-              final Offset widthCardPos = _getWidthCardPosition(
-                vpSelection: vpSelection,
-                cardW: widthCardW,
-                cardH: 40.0,
-                vpW: viewSize.width,
-                vpH: viewSize.height,
-                visibleImageRect: visibleImgRect,
-              );
-              final Rect widthCardRect = Rect.fromLTWH(
-                widthCardPos.dx,
-                widthCardPos.dy,
-                widthCardW,
-                40.0,
-              ).inflate(12.0);
-
-              final double heightCardW = _editingHeight ? 110.0 : 60.0;
-              final Offset heightCardPos = _getHeightCardPosition(
-                vpSelection: vpSelection,
-                cardW: heightCardW,
-                cardH: 40.0,
-                vpW: viewSize.width,
-                vpH: viewSize.height,
-                visibleImageRect: visibleImgRect,
-              );
-              final Rect heightCardRect = Rect.fromLTWH(
-                heightCardPos.dx,
-                heightCardPos.dy,
-                heightCardW,
-                40.0,
-              ).inflate(12.0);
-
-              final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
-              final double horizontalArrowTop = widthAxisAtTop
-                  ? vpSelection.top - 18
-                  : vpSelection.bottom + 8;
-              final bool inWidthAxis =
-                  vpPos.dx >= vpSelection.left - 12.0 &&
-                  vpPos.dx <= vpSelection.right + 12.0 &&
-                  (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
-
-              final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
-              final double verticalArrowLeft = heightAxisAtLeft
-                  ? vpSelection.left - 18
-                  : vpSelection.right + 8;
-              final bool inHeightAxis =
-                  vpPos.dy >= vpSelection.top - 12.0 &&
-                  vpPos.dy <= vpSelection.bottom + 12.0 &&
-                  (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
-
-              if (widthCardRect.contains(vpPos) ||
-                  heightCardRect.contains(vpPos) ||
-                  inWidthAxis ||
-                  inHeightAxis) {
-                _interactingWithOverlay = true;
-                return;
-              }
-            }
-
-            // 3. Low Priority: Tapped elsewhere inside the image viewport canvas.
-            // Prepare for creating a new selection if they drag, but do not clear selection immediately.
-            setState(() {
-              _dragStart = localPos;
-              _mode = SelectionMode.creating;
-              _isDrawingNewSelection = false;
-            });
-          },
-          onPointerMove: (event) {
-            if (_activePointers.length >= 2 || _isPanning) {
-              final Offset? oldPos = _activePointers[event.pointer];
+        children: [
+          Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) {
               _activePointers[event.pointer] = event.position;
 
-              if (oldPos != null && oldPos != event.position) {
+              if (_activePointers.length == 1) {
+                _backupSelection = _selection;
+              }
+
+              if (_activePointers.length >= 2) {
+                setState(() {
+                  _selection = _backupSelection;
+                  _mode = SelectionMode.none;
+                  _isPanning = true;
+
+                  // Initialize pinch baseline
+                  final keys = _activePointers.keys.toList();
+                  final p1 = _activePointers[keys[0]]!;
+                  final p2 = _activePointers[keys[1]]!;
+                  _initialPointerDistance = (p1 - p2).distance;
+                  if (_initialPointerDistance < 1.0) {
+                    _initialPointerDistance = 1.0;
+                  }
+                  _initialScale = _transformationController.value
+                      .getMaxScaleOnAxis();
+                });
+                return;
+              }
+
+              final Matrix4 matrix = _transformationController.value;
+              final Matrix4 inverse = Matrix4.inverted(matrix);
+              final Offset localPos = MatrixUtils.transformPoint(
+                inverse,
+                event.localPosition,
+              );
+              _dragStart = localPos;
+              final Rect imageRect = _getImageRect(context);
+              final double imgL = imageRect.left;
+              final double imgR = imageRect.right;
+              final double imgT = imageRect.top;
+              final double imgB = imageRect.bottom;
+              final Size viewSize = _getViewSize(context);
+
+              final Offset vpPos = MatrixUtils.transformPoint(matrix, localPos);
+
+              // Get current zoom scale for touch target sizing
+              final double zoomScale = _transformationController.value
+                  .getMaxScaleOnAxis();
+
+              // 1. High Priority: Check if tap hit a resize handle or selection body
+              SelectionMode detectedMode = SelectionMode.none;
+              if (_selection != null) {
+                detectedMode = _selectionController.hitTestHandles(
+                  selection: _selection,
+                  localPosition: localPos,
+                  imageRect: imageRect,
+                  zoomScale: zoomScale,
+                );
+              }
+
+              if (detectedMode != SelectionMode.none) {
+                setState(() {
+                  _mode = detectedMode;
+                });
+                return;
+              }
+
+              // 2. Medium Priority: Check if tap is on an overlay widget or measurement lines.
+              // If so, let the overlay handle the event and skip all selection logic
+              if (_selection != null) {
+                final Offset vpTopLeft = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(_selection!.left, _selection!.top),
+                );
+                final Offset vpBottomRight = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(
+                    _selection!.left + _selection!.width,
+                    _selection!.top + _selection!.height,
+                  ),
+                );
+                final Rect vpSelection = Rect.fromPoints(
+                  vpTopLeft,
+                  vpBottomRight,
+                );
+
+                final double widthCardW = _editingWidth ? 110.0 : 60.0;
+                final Rect visibleImgRect = _getVisibleImageRect(context);
+                final Offset widthCardPos = _getWidthCardPosition(
+                  vpSelection: vpSelection,
+                  cardW: widthCardW,
+                  cardH: 40.0,
+                  vpW: viewSize.width,
+                  vpH: viewSize.height,
+                  visibleImageRect: visibleImgRect,
+                );
+                final Rect widthCardRect = Rect.fromLTWH(
+                  widthCardPos.dx,
+                  widthCardPos.dy,
+                  widthCardW,
+                  40.0,
+                ).inflate(12.0);
+
+                final double heightCardW = _editingHeight ? 110.0 : 60.0;
+                final Offset heightCardPos = _getHeightCardPosition(
+                  vpSelection: vpSelection,
+                  cardW: heightCardW,
+                  cardH: 40.0,
+                  vpW: viewSize.width,
+                  vpH: viewSize.height,
+                  visibleImageRect: visibleImgRect,
+                );
+                final Rect heightCardRect = Rect.fromLTWH(
+                  heightCardPos.dx,
+                  heightCardPos.dy,
+                  heightCardW,
+                  40.0,
+                ).inflate(12.0);
+
+                final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+                final double horizontalArrowTop = widthAxisAtTop
+                    ? vpSelection.top - 18
+                    : vpSelection.bottom + 8;
+                final bool inWidthAxis =
+                    vpPos.dx >= vpSelection.left - 12.0 &&
+                    vpPos.dx <= vpSelection.right + 12.0 &&
+                    (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+                final bool heightAxisAtLeft =
+                    heightCardPos.dx < vpSelection.left;
+                final double verticalArrowLeft = heightAxisAtLeft
+                    ? vpSelection.left - 18
+                    : vpSelection.right + 8;
+                final bool inHeightAxis =
+                    vpPos.dy >= vpSelection.top - 12.0 &&
+                    vpPos.dy <= vpSelection.bottom + 12.0 &&
+                    (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+                if (widthCardRect.contains(vpPos) ||
+                    heightCardRect.contains(vpPos) ||
+                    inWidthAxis ||
+                    inHeightAxis) {
+                  _interactingWithOverlay = true;
+                  return;
+                }
+              }
+
+              // 3. Low Priority: Tapped elsewhere inside the image viewport canvas.
+              // Prepare for creating a new selection if they drag, but do not clear selection immediately.
+              setState(() {
+                _dragStart = localPos;
+                _mode = SelectionMode.creating;
+                _isDrawingNewSelection = false;
+              });
+            },
+            onPointerMove: (event) {
+              if (_activePointers.length >= 2 || _isPanning) {
+                final Offset? oldPos = _activePointers[event.pointer];
+                _activePointers[event.pointer] = event.position;
+
+                if (oldPos != null && oldPos != event.position) {
+                  final viewSize = Size(
+                    MediaQuery.of(context).size.width,
+                    MediaQuery.of(context).size.height * 0.40,
+                  );
+
+                  _transformationController.value =
+                      ZoomController.calculatePinchPan(
+                        currentMatrix: _transformationController.value,
+                        activePointers: _activePointers,
+                        eventPosition: event.position,
+                        oldPos: oldPos,
+                        viewSize: viewSize,
+                        originalImageWidth: _originalImageWidth,
+                        originalImageHeight: _originalImageHeight,
+                        displayScale: _currentDisplayScale,
+                        initialPointerDistance: _initialPointerDistance,
+                        initialScale: _initialScale,
+                        minZoomLimit: _currentMinZoomLimit,
+                        maxScale: 4.0,
+                      );
+                }
+                return;
+              }
+
+              final Matrix4 matrix = _transformationController.value;
+              final Matrix4 inverse = Matrix4.inverted(matrix);
+              final Offset localPos = MatrixUtils.transformPoint(
+                inverse,
+                event.localPosition,
+              );
+              final Rect imageRect = _getImageRect(context);
+
+              if (_mode == SelectionMode.creating && _dragStart != null) {
+                if (!_isDrawingNewSelection) {
+                  final double dragDistance = (localPos - _dragStart!).distance;
+                  if (dragDistance >= 5.0) {
+                    final double imgL = imageRect.left;
+                    final double imgR = imageRect.right;
+                    final double imgT = imageRect.top;
+                    final double imgB = imageRect.bottom;
+                    setState(() {
+                      _isDrawingNewSelection = true;
+                      // Clamp the drag start point to the image bounds when drawing starts
+                      final Offset clampedStart = Offset(
+                        _dragStart!.dx.clamp(imgL, imgR),
+                        _dragStart!.dy.clamp(imgT, imgB),
+                      );
+                      _dragStart = clampedStart;
+                      _selection = SelectionRect(
+                        left: clampedStart.dx,
+                        top: clampedStart.dy,
+                        width: 0,
+                        height: 0,
+                      );
+                      _editingWidth = false;
+                      _editingHeight = false;
+                    });
+                    context.read<ImageEditCubit>().clearSelection();
+                  }
+                }
+
+                if (_isDrawingNewSelection) {
+                  setState(() {
+                    _selection = _selectionController.createSelection(
+                      dragStart: _dragStart!,
+                      currentPos: localPos,
+                      imageRect: imageRect,
+                    );
+                  });
+                }
+              } else if (_mode == SelectionMode.moving && _selection != null) {
+                setState(() {
+                  _selection = _selectionController.moveSelection(
+                    selection: _selection!,
+                    delta: event.delta,
+                    imageRect: imageRect,
+                  );
+                });
+              } else if (_selection != null && _mode != SelectionMode.none) {
+                setState(() {
+                  _selection = _selectionController.resizeSelection(
+                    selection: _selection!,
+                    mode: _mode,
+                    localPos: localPos,
+                    imageRect: imageRect,
+                  );
+                });
+              }
+            },
+            onPointerUp: (event) {
+              // If we were interacting with an overlay (label/editor),
+              // skip all selection logic on pointer up
+              if (_interactingWithOverlay) {
+                _interactingWithOverlay = false;
+                _activePointers.remove(event.pointer);
+                if (_activePointers.isEmpty) {
+                  _backupSelection = null;
+                }
+                return;
+              }
+              if (_justSaved) {
+                _justSaved = false;
+                _activePointers.remove(event.pointer);
+                if (_activePointers.isEmpty) {
+                  _backupSelection = null;
+                }
+                return;
+              }
+              final Matrix4 matrix = _transformationController.value;
+              final Matrix4 inverse = Matrix4.inverted(matrix);
+              final Offset localPos = MatrixUtils.transformPoint(
+                inverse,
+                event.localPosition,
+              );
+              final Size viewSize = _getViewSize(context);
+
+              // 1. If we were preparing to create a selection but never actually dragged (simple tap)
+              if (_mode == SelectionMode.creating) {
+                final double dragDistance = _dragStart != null
+                    ? (localPos - _dragStart!).distance
+                    : 0.0;
+                if (!_isDrawingNewSelection || dragDistance < 5.0) {
+                  final Matrix4 matrix = _transformationController.value;
+                  final Offset vpPos = MatrixUtils.transformPoint(
+                    matrix,
+                    localPos,
+                  );
+
+                  bool clickedOverlay = false;
+                  if (_backupSelection != null) {
+                    final Offset vpTopLeft = MatrixUtils.transformPoint(
+                      matrix,
+                      Offset(_backupSelection!.left, _backupSelection!.top),
+                    );
+                    final Offset vpBottomRight = MatrixUtils.transformPoint(
+                      matrix,
+                      Offset(
+                        _backupSelection!.left + _backupSelection!.width,
+                        _backupSelection!.top + _backupSelection!.height,
+                      ),
+                    );
+                    final Rect vpSelection = Rect.fromPoints(
+                      vpTopLeft,
+                      vpBottomRight,
+                    );
+
+                    final double widthCardW = _editingWidth ? 110.0 : 60.0;
+                    final Rect visibleImgRect2 = _getVisibleImageRect(context);
+                    final Offset widthCardPos = _getWidthCardPosition(
+                      vpSelection: vpSelection,
+                      cardW: widthCardW,
+                      cardH: 40.0,
+                      vpW: viewSize.width,
+                      vpH: viewSize.height,
+                      visibleImageRect: visibleImgRect2,
+                    );
+                    final Rect widthCardRect = Rect.fromLTWH(
+                      widthCardPos.dx,
+                      widthCardPos.dy,
+                      widthCardW,
+                      40.0,
+                    ).inflate(12.0);
+
+                    final double heightCardW = _editingHeight ? 110.0 : 60.0;
+                    final Offset heightCardPos = _getHeightCardPosition(
+                      vpSelection: vpSelection,
+                      cardW: heightCardW,
+                      cardH: 40.0,
+                      vpW: viewSize.width,
+                      vpH: viewSize.height,
+                      visibleImageRect: visibleImgRect2,
+                    );
+                    final Rect heightCardRect = Rect.fromLTWH(
+                      heightCardPos.dx,
+                      heightCardPos.dy,
+                      heightCardW,
+                      40.0,
+                    ).inflate(12.0);
+
+                    final bool widthAxisAtTop =
+                        widthCardPos.dy < vpSelection.top;
+                    final double horizontalArrowTop = widthAxisAtTop
+                        ? vpSelection.top - 18
+                        : vpSelection.bottom + 8;
+                    final bool inWidthAxis =
+                        vpPos.dx >= vpSelection.left - 12.0 &&
+                        vpPos.dx <= vpSelection.right + 12.0 &&
+                        (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+                    final bool heightAxisAtLeft =
+                        heightCardPos.dx < vpSelection.left;
+                    final double verticalArrowLeft = heightAxisAtLeft
+                        ? vpSelection.left - 18
+                        : vpSelection.right + 8;
+                    final bool inHeightAxis =
+                        vpPos.dy >= vpSelection.top - 12.0 &&
+                        vpPos.dy <= vpSelection.bottom + 12.0 &&
+                        (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+                    if (widthCardRect.contains(vpPos) ||
+                        heightCardRect.contains(vpPos) ||
+                        inWidthAxis ||
+                        inHeightAxis) {
+                      clickedOverlay = true;
+                    }
+                  }
+
+                  if (clickedOverlay) {
+                    // Tap on overlay: keep the selection!
+                    setState(() {
+                      _selection = _backupSelection;
+                      _mode = SelectionMode.none;
+                    });
+                  } else {
+                    // Tap anywhere else (outside selection, handles, and overlays): keep selection!
+                    setState(() {
+                      if (_backupSelection != null) {
+                        _selection = _backupSelection;
+                      }
+                      _mode = SelectionMode.none;
+                    });
+                  }
+
+                  _activePointers.remove(event.pointer);
+                  _backupSelection = null;
+                  _dragStart = null;
+                  _isDrawingNewSelection = false;
+                  return;
+                }
+              }
+
+              // 2. If a resize/move gesture finished or a tap on an active handle/body occurred
+              if (_backupSelection != null &&
+                  _dragStart != null &&
+                  _mode != SelectionMode.creating) {
+                final double dragDistance = (localPos - _dragStart!).distance;
+                if (dragDistance < 5.0) {
+                  final Matrix4 matrix = _transformationController.value;
+                  final Offset vpPos = MatrixUtils.transformPoint(
+                    matrix,
+                    localPos,
+                  );
+                  final double zoomScale = matrix.getMaxScaleOnAxis();
+
+                  final Rect imageRect = _getImageRect(context);
+                  // Check if tap hit a resize handle or selection body
+                  final SelectionMode mode = _selectionController
+                      .hitTestHandles(
+                        selection: _backupSelection,
+                        localPosition: localPos,
+                        imageRect: imageRect,
+                        zoomScale: zoomScale,
+                      );
+
+                  bool clickedOverlay = false;
+                  if (_selection != null) {
+                    final Offset vpTopLeft = MatrixUtils.transformPoint(
+                      matrix,
+                      Offset(_selection!.left, _selection!.top),
+                    );
+                    final Offset vpBottomRight = MatrixUtils.transformPoint(
+                      matrix,
+                      Offset(
+                        _selection!.left + _selection!.width,
+                        _selection!.top + _selection!.height,
+                      ),
+                    );
+                    final Rect vpSelection = Rect.fromPoints(
+                      vpTopLeft,
+                      vpBottomRight,
+                    );
+
+                    final double widthCardW = _editingWidth ? 110.0 : 60.0;
+                    final Rect visibleImgRect2 = _getVisibleImageRect(context);
+                    final Offset widthCardPos = _getWidthCardPosition(
+                      vpSelection: vpSelection,
+                      cardW: widthCardW,
+                      cardH: 40.0,
+                      vpW: viewSize.width,
+                      vpH: viewSize.height,
+                      visibleImageRect: visibleImgRect2,
+                    );
+                    final Rect widthCardRect = Rect.fromLTWH(
+                      widthCardPos.dx,
+                      widthCardPos.dy,
+                      widthCardW,
+                      40.0,
+                    ).inflate(12.0);
+
+                    final double heightCardW = _editingHeight ? 110.0 : 60.0;
+                    final Offset heightCardPos = _getHeightCardPosition(
+                      vpSelection: vpSelection,
+                      cardW: heightCardW,
+                      cardH: 40.0,
+                      vpW: viewSize.width,
+                      vpH: viewSize.height,
+                      visibleImageRect: visibleImgRect2,
+                    );
+                    final Rect heightCardRect = Rect.fromLTWH(
+                      heightCardPos.dx,
+                      heightCardPos.dy,
+                      heightCardW,
+                      40.0,
+                    ).inflate(12.0);
+
+                    final bool widthAxisAtTop =
+                        widthCardPos.dy < vpSelection.top;
+                    final double horizontalArrowTop = widthAxisAtTop
+                        ? vpSelection.top - 18
+                        : vpSelection.bottom + 8;
+                    final bool inWidthAxis =
+                        vpPos.dx >= vpSelection.left - 12.0 &&
+                        vpPos.dx <= vpSelection.right + 12.0 &&
+                        (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
+
+                    final bool heightAxisAtLeft =
+                        heightCardPos.dx < vpSelection.left;
+                    final double verticalArrowLeft = heightAxisAtLeft
+                        ? vpSelection.left - 18
+                        : vpSelection.right + 8;
+                    final bool inHeightAxis =
+                        vpPos.dy >= vpSelection.top - 12.0 &&
+                        vpPos.dy <= vpSelection.bottom + 12.0 &&
+                        (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
+
+                    if (widthCardRect.contains(vpPos) ||
+                        heightCardRect.contains(vpPos) ||
+                        inWidthAxis ||
+                        inHeightAxis) {
+                      clickedOverlay = true;
+                    }
+                  }
+
+                  // Keep the selection if tapped outside selection body/handles/overlays
+                  if (mode == SelectionMode.none && !clickedOverlay) {
+                    setState(() {
+                      if (_backupSelection != null) {
+                        _selection = _backupSelection;
+                      }
+                      _mode = SelectionMode.none;
+                    });
+                    _activePointers.remove(event.pointer);
+                    _backupSelection = null;
+                    _dragStart = null;
+                    _isDrawingNewSelection = false;
+                    return;
+                  }
+                }
+              }
+
+              _activePointers.remove(event.pointer);
+
+              if (_activePointers.isEmpty) {
+                _backupSelection = null;
+              }
+
+              _isDrawingNewSelection = false;
+
+              if (_isPanning) {
+                if (_activePointers.isEmpty) {
+                  setState(() {
+                    _isPanning = false;
+                  });
+                }
+                return;
+              }
+
+              if (_selection != null) {
+                if (_selection!.width < 10.0 || _selection!.height < 10.0) {
+                  setState(() {
+                    _selection = null;
+                    _mode = SelectionMode.none;
+                    _editingWidth = false;
+                    _editingHeight = false;
+                  });
+                  context.read<ImageEditCubit>().clearSelection();
+                  return;
+                }
+              }
+
+              final SelectionMode finishedMode = _mode;
+              setState(() {
+                _mode = SelectionMode.none;
+              });
+
+              if (_selection != null && finishedMode != SelectionMode.none) {
+                final double calculatedW =
+                    MeasurementService.calculateWidthInchesFromPixelWidth(
+                      _selection!.width,
+                    );
+                final double calculatedH =
+                    MeasurementService.calculateHeightInchesFromPixelHeight(
+                      _selection!.height,
+                    );
+
+                double newW = _customWidthInches;
+                double newH = _customHeightInches;
+                if (finishedMode == SelectionMode.resizeLeft ||
+                    finishedMode == SelectionMode.resizeRight) {
+                  newW = calculatedW;
+                } else if (finishedMode == SelectionMode.resizeTop ||
+                    finishedMode == SelectionMode.resizeBottom) {
+                  newH = calculatedH;
+                } else {
+                  // Corner resize, moving, or creating updates both
+                  newW = calculatedW;
+                  newH = calculatedH;
+                }
+
+                final double systemVal = MeasurementService.calculateAreaInSqFt(
+                  newW,
+                  newH,
+                );
+
+                setState(() {
+                  _customWidthInches = newW;
+                  _customHeightInches = newH;
+                  _systemArea = systemVal;
+                  _areaController.text = systemVal.toString();
+                  _editingWidth = false;
+                  _editingHeight = false;
+                });
+
                 final viewSize = Size(
                   MediaQuery.of(context).size.width,
                   MediaQuery.of(context).size.height * 0.40,
                 );
 
-                _transformationController.value =
-                    ZoomController.calculatePinchPan(
-                      currentMatrix: _transformationController.value,
-                      activePointers: _activePointers,
-                      eventPosition: event.position,
-                      oldPos: oldPos,
-                      viewSize: viewSize,
-                      originalImageWidth: _originalImageWidth,
-                      originalImageHeight: _originalImageHeight,
-                      displayScale: _currentDisplayScale,
-                      initialPointerDistance: _initialPointerDistance,
-                      initialScale: _initialScale,
-                      minZoomLimit: _currentMinZoomLimit,
-                      maxScale: 4.0,
-                    );
+                final Offset localTopLeft = Offset(
+                  _selection!.left,
+                  _selection!.top,
+                );
+                final Offset localBottomRight = Offset(
+                  _selection!.left + _selection!.width,
+                  _selection!.top + _selection!.height,
+                );
+
+                final Offset originalTopLeft = _mapLocalToOriginal(
+                  localTopLeft,
+                  viewSize,
+                );
+                final Offset originalBottomRight = _mapLocalToOriginal(
+                  localBottomRight,
+                  viewSize,
+                );
+
+                final int originalLeft = originalTopLeft.dx.round();
+                final int originalTop = originalTopLeft.dy.round();
+                final int originalRight = originalBottomRight.dx.round();
+                final int originalBottom = originalBottomRight.dy.round();
+
+                final areaData = {
+                  "left": originalLeft,
+                  "top": originalTop,
+                  "right": originalRight,
+                  "bottom": originalBottom,
+                  "obj_w": _customWidthInches,
+                  "obj_h": _customHeightInches,
+                };
+
+                debugPrint(
+                  "Selected Area (Original Coordinates): $areaData | System Area prediction: $systemVal",
+                );
+                context.read<ImageEditCubit>().selectArea(areaData);
               }
-              return;
-            }
-
-            final Matrix4 matrix = _transformationController.value;
-            final Matrix4 inverse = Matrix4.inverted(matrix);
-            final Offset localPos = MatrixUtils.transformPoint(
-              inverse,
-              event.localPosition,
-            );
-            final Rect imageRect = _getImageRect(context);
-
-            if (_mode == SelectionMode.creating && _dragStart != null) {
-              if (!_isDrawingNewSelection) {
-                final double dragDistance = (localPos - _dragStart!).distance;
-                if (dragDistance >= 5.0) {
-                  final double imgL = imageRect.left;
-                  final double imgR = imageRect.right;
-                  final double imgT = imageRect.top;
-                  final double imgB = imageRect.bottom;
-                  setState(() {
-                    _isDrawingNewSelection = true;
-                    // Clamp the drag start point to the image bounds when drawing starts
-                    final Offset clampedStart = Offset(
-                      _dragStart!.dx.clamp(imgL, imgR),
-                      _dragStart!.dy.clamp(imgT, imgB),
-                    );
-                    _dragStart = clampedStart;
-                    _selection = SelectionRect(
-                      left: clampedStart.dx,
-                      top: clampedStart.dy,
-                      width: 0,
-                      height: 0,
-                    );
-                    _editingWidth = false;
-                    _editingHeight = false;
-                  });
-                  context.read<ImageEditCubit>().clearSelection();
-                }
-              }
-
-              if (_isDrawingNewSelection) {
+            },
+            onPointerCancel: (event) {
+              _activePointers.remove(event.pointer);
+              if (_activePointers.isEmpty) {
                 setState(() {
-                  _selection = _selectionController.createSelection(
-                    dragStart: _dragStart!,
-                    currentPos: localPos,
-                    imageRect: imageRect,
-                  );
+                  _isPanning = false;
+                  _mode = SelectionMode.none;
+                  _backupSelection = null;
                 });
               }
-            } else if (_mode == SelectionMode.moving && _selection != null) {
-              setState(() {
-                _selection = _selectionController.moveSelection(
-                  selection: _selection!,
-                  delta: event.delta,
-                  imageRect: imageRect,
-                );
-              });
-            } else if (_selection != null && _mode != SelectionMode.none) {
-              setState(() {
-                _selection = _selectionController.resizeSelection(
-                  selection: _selection!,
-                  mode: _mode,
-                  localPos: localPos,
-                  imageRect: imageRect,
-                );
-              });
-            }
-          },
-          onPointerUp: (event) {
-            // If we were interacting with an overlay (label/editor),
-            // skip all selection logic on pointer up
-            if (_interactingWithOverlay) {
-              _interactingWithOverlay = false;
-              _activePointers.remove(event.pointer);
-              if (_activePointers.isEmpty) {
-                _backupSelection = null;
-              }
-              return;
-            }
-            if (_justSaved) {
-              _justSaved = false;
-              _activePointers.remove(event.pointer);
-              if (_activePointers.isEmpty) {
-                _backupSelection = null;
-              }
-              return;
-            }
-            final Matrix4 matrix = _transformationController.value;
-            final Matrix4 inverse = Matrix4.inverted(matrix);
-            final Offset localPos = MatrixUtils.transformPoint(
-              inverse,
-              event.localPosition,
-            );
-            final Size viewSize = _getViewSize(context);
+            },
+            child: InteractiveViewer(
+              clipBehavior: Clip.none,
+              transformationController: _transformationController,
+              minScale: _currentMinZoomLimit,
+              maxScale: 4.0,
+              boundaryMargin: EdgeInsets.zero,
+              panEnabled: false,
+              scaleEnabled: false,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Base Image — rendered via OverflowBox so the full
+                  // BoxFit.cover-equivalent display size overflows the Stack
+                  // bounds. ClipRect (outermost) clips to the viewport.
+                  // This lets users pan to reveal landscape/portrait overflow
+                  // WITHOUT changing the coordinate system: OverflowBox centres
+                  // the child at (vpW/2, vpH/2) in Stack space — identical to
+                  // where BoxFit.cover would render it — so _mapLocalToOriginal
+                  // with viewSize=(vpW, vpH) stays mathematically correct.
+                  if (_originalImageWidth != null)
+                    OverflowBox(
+                      alignment: Alignment.center,
+                      maxWidth: double.infinity,
+                      maxHeight: double.infinity,
+                      child: _baseImage.startsWith('http')
+                          ? Image.network(
+                              _baseImage,
+                              width:
+                                  _originalImageWidth! * _currentDisplayScale,
+                              height:
+                                  _originalImageHeight! * _currentDisplayScale,
+                              fit: BoxFit.fill,
+                              gaplessPlayback: true,
+                              cacheWidth: 800,
+                            )
+                          : Image.file(
+                              File(_baseImage),
+                              width:
+                                  _originalImageWidth! * _currentDisplayScale,
+                              height:
+                                  _originalImageHeight! * _currentDisplayScale,
+                              fit: BoxFit.fill,
+                              gaplessPlayback: true,
+                              cacheWidth: 800,
+                            ),
+                    )
+                  else
+                    // Fallback before dimensions load: BoxFit.cover fills viewport
+                    _baseImage.startsWith('http')
+                        ? Image.network(
+                            _baseImage,
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: 800,
+                          )
+                        : Image.file(
+                            File(_baseImage),
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.40,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: 800,
+                          ),
 
-            // 1. If we were preparing to create a selection but never actually dragged (simple tap)
-            if (_mode == SelectionMode.creating) {
-              final double dragDistance = _dragStart != null
-                  ? (localPos - _dragStart!).distance
-                  : 0.0;
-              if (!_isDrawingNewSelection || dragDistance < 5.0) {
-                final Matrix4 matrix = _transformationController.value;
-                final Offset vpPos = MatrixUtils.transformPoint(
-                  matrix,
-                  localPos,
-                );
+                  // Applied Design Layer — same OverflowBox treatment
+                  if (_currentAssetPreview != null &&
+                      _currentAssetPreview!.isNotEmpty)
+                    if (_originalImageWidth != null)
+                      OverflowBox(
+                        alignment: Alignment.center,
+                        maxWidth: double.infinity,
+                        maxHeight: double.infinity,
+                        child: _currentAssetPreview!.startsWith('http')
+                            ? Image.network(
+                                _currentAssetPreview!,
+                                width:
+                                    _originalImageWidth! * _currentDisplayScale,
+                                height:
+                                    _originalImageHeight! *
+                                    _currentDisplayScale,
+                                fit: BoxFit.fill,
+                                gaplessPlayback: true,
+                                cacheWidth: 800,
+                              )
+                            : (_currentAssetPreview!.startsWith('/') ||
+                                  _currentAssetPreview!.contains(
+                                    'tryon_result',
+                                  ))
+                            ? Image.file(
+                                File(_currentAssetPreview!),
+                                width:
+                                    _originalImageWidth! * _currentDisplayScale,
+                                height:
+                                    _originalImageHeight! *
+                                    _currentDisplayScale,
+                                fit: BoxFit.fill,
+                                gaplessPlayback: true,
+                                cacheWidth: 800,
+                              )
+                            : Image.asset(
+                                _currentAssetPreview!,
+                                width:
+                                    _originalImageWidth! * _currentDisplayScale,
+                                height:
+                                    _originalImageHeight! *
+                                    _currentDisplayScale,
+                                fit: BoxFit.fill,
+                                gaplessPlayback: true,
+                              ),
+                      )
+                    else
+                      // Fallback before dimensions load
+                      _currentAssetPreview!.startsWith('http')
+                          ? Image.network(
+                              _currentAssetPreview!,
+                              width: double.infinity,
+                              height: MediaQuery.of(context).size.height * 0.40,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              cacheWidth: 800,
+                            )
+                          : (_currentAssetPreview!.startsWith('/') ||
+                                _currentAssetPreview!.contains('tryon_result'))
+                          ? Image.file(
+                              File(_currentAssetPreview!),
+                              width: double.infinity,
+                              height: MediaQuery.of(context).size.height * 0.40,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              cacheWidth: 800,
+                            )
+                          : Image.asset(
+                              _currentAssetPreview!,
+                              width: double.infinity,
+                              height: MediaQuery.of(context).size.height * 0.40,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                            ),
 
-                bool clickedOverlay = false;
-                if (_backupSelection != null) {
-                  final Offset vpTopLeft = MatrixUtils.transformPoint(
-                    matrix,
-                    Offset(_backupSelection!.left, _backupSelection!.top),
-                  );
-                  final Offset vpBottomRight = MatrixUtils.transformPoint(
-                    matrix,
-                    Offset(
-                      _backupSelection!.left + _backupSelection!.width,
-                      _backupSelection!.top + _backupSelection!.height,
+                  if (!(state.isApplyLoading || _isPrecaching))
+                    Builder(
+                      builder: (context) {
+                        return Positioned.fill(
+                          child: RepaintBoundary(
+                            child: CustomPaint(
+                              painter: SelectionPainter(
+                                selection: _selection?.rect,
+                                imageRect: _getImageRect(context),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                  final Rect vpSelection = Rect.fromPoints(
-                    vpTopLeft,
-                    vpBottomRight,
-                  );
+                ],
+              ),
+            ),
+          ),
+          if (state.isApplyLoading || _isPrecaching) ...[
+            // Viewport-bounded blur overlay
+            Builder(
+              builder: (context) {
+                final Size viewSize = _getViewSize(context);
+                final Rect visibleImgRect = _getVisibleImageRect(context);
 
-                  final double widthCardW = _editingWidth ? 110.0 : 60.0;
-                  final Rect visibleImgRect2 = _getVisibleImageRect(context);
-                  final Offset widthCardPos = _getWidthCardPosition(
-                    vpSelection: vpSelection,
-                    cardW: widthCardW,
-                    cardH: 40.0,
-                    vpW: viewSize.width,
-                    vpH: viewSize.height,
-                    visibleImageRect: visibleImgRect2,
-                  );
-                  final Rect widthCardRect = Rect.fromLTWH(
-                    widthCardPos.dx,
-                    widthCardPos.dy,
-                    widthCardW,
-                    40.0,
-                  ).inflate(12.0);
-
-                  final double heightCardW = _editingHeight ? 110.0 : 60.0;
-                  final Offset heightCardPos = _getHeightCardPosition(
-                    vpSelection: vpSelection,
-                    cardW: heightCardW,
-                    cardH: 40.0,
-                    vpW: viewSize.width,
-                    vpH: viewSize.height,
-                    visibleImageRect: visibleImgRect2,
-                  );
-                  final Rect heightCardRect = Rect.fromLTWH(
-                    heightCardPos.dx,
-                    heightCardPos.dy,
-                    heightCardW,
-                    40.0,
-                  ).inflate(12.0);
-
-                  final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
-                  final double horizontalArrowTop = widthAxisAtTop
-                      ? vpSelection.top - 18
-                      : vpSelection.bottom + 8;
-                  final bool inWidthAxis =
-                      vpPos.dx >= vpSelection.left - 12.0 &&
-                      vpPos.dx <= vpSelection.right + 12.0 &&
-                      (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
-
-                  final bool heightAxisAtLeft =
-                      heightCardPos.dx < vpSelection.left;
-                  final double verticalArrowLeft = heightAxisAtLeft
-                      ? vpSelection.left - 18
-                      : vpSelection.right + 8;
-                  final bool inHeightAxis =
-                      vpPos.dy >= vpSelection.top - 12.0 &&
-                      vpPos.dy <= vpSelection.bottom + 12.0 &&
-                      (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
-
-                  if (widthCardRect.contains(vpPos) ||
-                      heightCardRect.contains(vpPos) ||
-                      inWidthAxis ||
-                      inHeightAxis) {
-                    clickedOverlay = true;
-                  }
-                }
-
-                if (clickedOverlay) {
-                  // Tap on overlay: keep the selection!
-                  setState(() {
-                    _selection = _backupSelection;
-                    _mode = SelectionMode.none;
-                  });
-                } else {
-                  // Tap anywhere else (outside selection, handles, and overlays): keep selection!
-                  setState(() {
-                    if (_backupSelection != null) {
-                      _selection = _backupSelection;
-                    }
-                    _mode = SelectionMode.none;
-                  });
-                }
-
-                _activePointers.remove(event.pointer);
-                _backupSelection = null;
-                _dragStart = null;
-                _isDrawingNewSelection = false;
-                return;
-              }
-            }
-
-            // 2. If a resize/move gesture finished or a tap on an active handle/body occurred
-            if (_backupSelection != null &&
-                _dragStart != null &&
-                _mode != SelectionMode.creating) {
-              final double dragDistance = (localPos - _dragStart!).distance;
-              if (dragDistance < 5.0) {
-                final Matrix4 matrix = _transformationController.value;
-                final Offset vpPos = MatrixUtils.transformPoint(
-                  matrix,
-                  localPos,
-                );
-                final double zoomScale = matrix.getMaxScaleOnAxis();
-
-                final Rect imageRect = _getImageRect(context);
-                // Check if tap hit a resize handle or selection body
-                final SelectionMode mode = _selectionController.hitTestHandles(
-                  selection: _backupSelection,
-                  localPosition: localPos,
-                  imageRect: imageRect,
-                  zoomScale: zoomScale,
-                );
-
-                bool clickedOverlay = false;
+                Rect? vpSel;
                 if (_selection != null) {
+                  final Matrix4 matrix = _transformationController.value;
                   final Offset vpTopLeft = MatrixUtils.transformPoint(
                     matrix,
                     Offset(_selection!.left, _selection!.top),
@@ -2494,667 +2942,291 @@ class _ImageEditPageState extends State<ImageEditPage>
                       _selection!.top + _selection!.height,
                     ),
                   );
-                  final Rect vpSelection = Rect.fromPoints(
-                    vpTopLeft,
-                    vpBottomRight,
-                  );
-
-                  final double widthCardW = _editingWidth ? 110.0 : 60.0;
-                  final Rect visibleImgRect2 = _getVisibleImageRect(context);
-                  final Offset widthCardPos = _getWidthCardPosition(
-                    vpSelection: vpSelection,
-                    cardW: widthCardW,
-                    cardH: 40.0,
-                    vpW: viewSize.width,
-                    vpH: viewSize.height,
-                    visibleImageRect: visibleImgRect2,
-                  );
-                  final Rect widthCardRect = Rect.fromLTWH(
-                    widthCardPos.dx,
-                    widthCardPos.dy,
-                    widthCardW,
-                    40.0,
-                  ).inflate(12.0);
-
-                  final double heightCardW = _editingHeight ? 110.0 : 60.0;
-                  final Offset heightCardPos = _getHeightCardPosition(
-                    vpSelection: vpSelection,
-                    cardW: heightCardW,
-                    cardH: 40.0,
-                    vpW: viewSize.width,
-                    vpH: viewSize.height,
-                    visibleImageRect: visibleImgRect2,
-                  );
-                  final Rect heightCardRect = Rect.fromLTWH(
-                    heightCardPos.dx,
-                    heightCardPos.dy,
-                    heightCardW,
-                    40.0,
-                  ).inflate(12.0);
-
-                  final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
-                  final double horizontalArrowTop = widthAxisAtTop
-                      ? vpSelection.top - 18
-                      : vpSelection.bottom + 8;
-                  final bool inWidthAxis =
-                      vpPos.dx >= vpSelection.left - 12.0 &&
-                      vpPos.dx <= vpSelection.right + 12.0 &&
-                      (vpPos.dy - (horizontalArrowTop + 5)).abs() <= 20.0;
-
-                  final bool heightAxisAtLeft =
-                      heightCardPos.dx < vpSelection.left;
-                  final double verticalArrowLeft = heightAxisAtLeft
-                      ? vpSelection.left - 18
-                      : vpSelection.right + 8;
-                  final bool inHeightAxis =
-                      vpPos.dy >= vpSelection.top - 12.0 &&
-                      vpPos.dy <= vpSelection.bottom + 12.0 &&
-                      (vpPos.dx - (verticalArrowLeft + 5)).abs() <= 20.0;
-
-                  if (widthCardRect.contains(vpPos) ||
-                      heightCardRect.contains(vpPos) ||
-                      inWidthAxis ||
-                      inHeightAxis) {
-                    clickedOverlay = true;
-                  }
+                  vpSel = Rect.fromPoints(vpTopLeft, vpBottomRight);
                 }
 
-                // Keep the selection if tapped outside selection body/handles/overlays
-                if (mode == SelectionMode.none && !clickedOverlay) {
-                  setState(() {
-                    if (_backupSelection != null) {
-                      _selection = _backupSelection;
-                    }
-                    _mode = SelectionMode.none;
-                  });
-                  _activePointers.remove(event.pointer);
-                  _backupSelection = null;
-                  _dragStart = null;
-                  _isDrawingNewSelection = false;
-                  return;
-                }
-              }
-            }
-
-            _activePointers.remove(event.pointer);
-
-            if (_activePointers.isEmpty) {
-              _backupSelection = null;
-            }
-
-            _isDrawingNewSelection = false;
-
-            if (_isPanning) {
-              if (_activePointers.isEmpty) {
-                setState(() {
-                  _isPanning = false;
-                });
-              }
-              return;
-            }
-
-            if (_selection != null) {
-              if (_selection!.width < 10.0 || _selection!.height < 10.0) {
-                setState(() {
-                  _selection = null;
-                  _mode = SelectionMode.none;
-                  _editingWidth = false;
-                  _editingHeight = false;
-                });
-                context.read<ImageEditCubit>().clearSelection();
-                return;
-              }
-            }
-
-            final SelectionMode finishedMode = _mode;
-            setState(() {
-              _mode = SelectionMode.none;
-            });
-
-            if (_selection != null && finishedMode != SelectionMode.none) {
-              final double calculatedW =
-                  MeasurementService.calculateWidthInchesFromPixelWidth(
-                    _selection!.width,
-                  );
-              final double calculatedH =
-                  MeasurementService.calculateHeightInchesFromPixelHeight(
-                    _selection!.height,
-                  );
-
-              double newW = _customWidthInches;
-              double newH = _customHeightInches;
-              if (finishedMode == SelectionMode.resizeLeft ||
-                  finishedMode == SelectionMode.resizeRight) {
-                newW = calculatedW;
-              } else if (finishedMode == SelectionMode.resizeTop ||
-                  finishedMode == SelectionMode.resizeBottom) {
-                newH = calculatedH;
-              } else {
-                // Corner resize, moving, or creating updates both
-                newW = calculatedW;
-                newH = calculatedH;
-              }
-
-              final double systemVal = MeasurementService.calculateAreaInSqFt(
-                newW,
-                newH,
-              );
-
-              setState(() {
-                _customWidthInches = newW;
-                _customHeightInches = newH;
-                _systemArea = systemVal;
-                _areaController.text = systemVal.toString();
-                _editingWidth = false;
-                _editingHeight = false;
-              });
-
-              final viewSize = Size(
-                MediaQuery.of(context).size.width,
-                MediaQuery.of(context).size.height * 0.40,
-              );
-
-              final Offset localTopLeft = Offset(
-                _selection!.left,
-                _selection!.top,
-              );
-              final Offset localBottomRight = Offset(
-                _selection!.left + _selection!.width,
-                _selection!.top + _selection!.height,
-              );
-
-              final Offset originalTopLeft = _mapLocalToOriginal(
-                localTopLeft,
-                viewSize,
-              );
-              final Offset originalBottomRight = _mapLocalToOriginal(
-                localBottomRight,
-                viewSize,
-              );
-
-              final int originalLeft = originalTopLeft.dx.round();
-              final int originalTop = originalTopLeft.dy.round();
-              final int originalRight = originalBottomRight.dx.round();
-              final int originalBottom = originalBottomRight.dy.round();
-
-              final areaData = {
-                "left": originalLeft,
-                "top": originalTop,
-                "right": originalRight,
-                "bottom": originalBottom,
-                "obj_w": _customWidthInches,
-                "obj_h": _customHeightInches,
-              };
-
-              debugPrint(
-                "Selected Area (Original Coordinates): $areaData | System Area prediction: $systemVal",
-              );
-              context.read<ImageEditCubit>().selectArea(areaData);
-            }
-          },
-          onPointerCancel: (event) {
-            _activePointers.remove(event.pointer);
-            if (_activePointers.isEmpty) {
-              setState(() {
-                _isPanning = false;
-                _mode = SelectionMode.none;
-                _backupSelection = null;
-              });
-            }
-          },
-          child: InteractiveViewer(
-            clipBehavior: Clip.none,
-            transformationController: _transformationController,
-            minScale: _currentMinZoomLimit,
-            maxScale: 4.0,
-            boundaryMargin: EdgeInsets.zero,
-            panEnabled: false,
-            scaleEnabled: false,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Base Image — rendered via OverflowBox so the full
-                // BoxFit.cover-equivalent display size overflows the Stack
-                // bounds. ClipRect (outermost) clips to the viewport.
-                // This lets users pan to reveal landscape/portrait overflow
-                // WITHOUT changing the coordinate system: OverflowBox centres
-                // the child at (vpW/2, vpH/2) in Stack space — identical to
-                // where BoxFit.cover would render it — so _mapLocalToOriginal
-                // with viewSize=(vpW, vpH) stays mathematically correct.
-                if (_originalImageWidth != null)
-                  OverflowBox(
-                    alignment: Alignment.center,
-                    maxWidth: double.infinity,
-                    maxHeight: double.infinity,
-                    child: _baseImage.startsWith('http')
-                        ? Image.network(
-                            _baseImage,
-                            width: _originalImageWidth! * _currentDisplayScale,
-                            height:
-                                _originalImageHeight! * _currentDisplayScale,
-                            fit: BoxFit.fill,
-                            gaplessPlayback: true,
-                            cacheWidth: 800,
-                          )
-                        : Image.file(
-                            File(_baseImage),
-                            width: _originalImageWidth! * _currentDisplayScale,
-                            height:
-                                _originalImageHeight! * _currentDisplayScale,
-                            fit: BoxFit.fill,
-                            gaplessPlayback: true,
-                            cacheWidth: 800,
-                          ),
-                  )
-                else
-                  // Fallback before dimensions load: BoxFit.cover fills viewport
-                  _baseImage.startsWith('http')
-                      ? Image.network(
-                          _baseImage,
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.40,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                          cacheWidth: 800,
-                        )
-                      : Image.file(
-                          File(_baseImage),
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.40,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                          cacheWidth: 800,
-                        ),
-
-                // Applied Design Layer — same OverflowBox treatment
-                if (_currentAssetPreview != null &&
-                    _currentAssetPreview!.isNotEmpty)
-                  if (_originalImageWidth != null)
-                    OverflowBox(
-                      alignment: Alignment.center,
-                      maxWidth: double.infinity,
-                      maxHeight: double.infinity,
-                      child: _currentAssetPreview!.startsWith('http')
-                          ? Image.network(
-                              _currentAssetPreview!,
-                              width:
-                                  _originalImageWidth! * _currentDisplayScale,
-                              height:
-                                  _originalImageHeight! * _currentDisplayScale,
-                              fit: BoxFit.fill,
-                              gaplessPlayback: true,
-                              cacheWidth: 800,
-                            )
-                          : (_currentAssetPreview!.startsWith('/') ||
-                                _currentAssetPreview!.contains('tryon_result'))
-                          ? Image.file(
-                              File(_currentAssetPreview!),
-                              width:
-                                  _originalImageWidth! * _currentDisplayScale,
-                              height:
-                                  _originalImageHeight! * _currentDisplayScale,
-                              fit: BoxFit.fill,
-                              gaplessPlayback: true,
-                              cacheWidth: 800,
-                            )
-                          : Image.asset(
-                              _currentAssetPreview!,
-                              width:
-                                  _originalImageWidth! * _currentDisplayScale,
-                              height:
-                                  _originalImageHeight! * _currentDisplayScale,
-                              fit: BoxFit.fill,
-                              gaplessPlayback: true,
-                            ),
-                    )
-                  else
-                    // Fallback before dimensions load
-                    _currentAssetPreview!.startsWith('http')
-                        ? Image.network(
-                            _currentAssetPreview!,
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            cacheWidth: 800,
-                          )
-                        : (_currentAssetPreview!.startsWith('/') ||
-                              _currentAssetPreview!.contains('tryon_result'))
-                        ? Image.file(
-                            File(_currentAssetPreview!),
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            cacheWidth: 800,
-                          )
-                        : Image.asset(
-                            _currentAssetPreview!,
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height * 0.40,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                          ),
-
-                if (!(state.isApplyLoading || _isPrecaching))
-                  Builder(
-                    builder: (context) {
-                      return Positioned.fill(
-                        child: RepaintBoundary(
-                          child: CustomPaint(
-                            painter: SelectionPainter(
-                              selection: _selection?.rect,
-                              imageRect: _getImageRect(context),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ),
-        if (state.isApplyLoading || _isPrecaching) ...[
-          // Viewport-bounded blur overlay
-          Builder(
-            builder: (context) {
-              final Size viewSize = _getViewSize(context);
-              final Rect visibleImgRect = _getVisibleImageRect(context);
-
-              Rect? vpSel;
-              if (_selection != null) {
-                final Matrix4 matrix = _transformationController.value;
-                final Offset vpTopLeft = MatrixUtils.transformPoint(
-                  matrix,
-                  Offset(_selection!.left, _selection!.top),
-                );
-                final Offset vpBottomRight = MatrixUtils.transformPoint(
-                  matrix,
-                  Offset(
-                    _selection!.left + _selection!.width,
-                    _selection!.top + _selection!.height,
-                  ),
-                );
-                vpSel = Rect.fromPoints(vpTopLeft, vpBottomRight);
-              }
-
-              return Positioned.fill(
-                child: ClipRect(
-                  child: ClipPath(
-                    clipper: InvertedRectClipper(
-                      selection: vpSel,
-                      imageRect: visibleImgRect,
-                    ),
-                    child: BackdropFilter(
-                      filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: Container(color: Colors.black.withOpacity(0.4)),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-          if (_selection != null)
-            Builder(
-              builder: (context) {
-                final Matrix4 matrix = _transformationController.value;
-                final Offset vpTopLeft = MatrixUtils.transformPoint(
-                  matrix,
-                  Offset(_selection!.left, _selection!.top),
-                );
-                final Offset vpBottomRight = MatrixUtils.transformPoint(
-                  matrix,
-                  Offset(
-                    _selection!.left + _selection!.width,
-                    _selection!.top + _selection!.height,
-                  ),
-                );
-                final Rect vpSel = Rect.fromPoints(vpTopLeft, vpBottomRight);
                 return Positioned.fill(
-                  child: AIProcessingOverlay(
-                    selectionRect: vpSel,
-                    visibleImageRect: _getVisibleImageRect(context),
+                  child: ClipRect(
+                    child: ClipPath(
+                      clipper: InvertedRectClipper(
+                        selection: vpSel,
+                        imageRect: visibleImgRect,
+                      ),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        child: Container(color: Colors.black.withOpacity(0.4)),
+                      ),
+                    ),
                   ),
                 );
               },
             ),
-        ],
-
-        if (_selection != null && !(state.isApplyLoading || _isPrecaching))
-          Builder(
-            builder: (context) {
-              final Size viewSize = _getViewSize(context);
-              final double vpW = viewSize.width;
-              final double vpH = viewSize.height;
-              final Matrix4 matrix = _transformationController.value;
-
-              final Offset vpTopLeft = MatrixUtils.transformPoint(
-                matrix,
-                Offset(_selection!.left, _selection!.top),
-              );
-              final Offset vpBottomRight = MatrixUtils.transformPoint(
-                matrix,
-                Offset(
-                  _selection!.left + _selection!.width,
-                  _selection!.top + _selection!.height,
-                ),
-              );
-              final Rect vpSelection = Rect.fromPoints(
-                vpTopLeft,
-                vpBottomRight,
-              );
-
-              // Calculate positions for Width and Height cards using priorities
-              final double widthCardW = _editingWidth ? 110.0 : 80.0;
-              final double widthCardH = 40.0;
-              final Rect visibleImgRectOverlay = _getVisibleImageRect(context);
-              final Offset widthCardPos = _getWidthCardPosition(
-                vpSelection: vpSelection,
-                cardW: widthCardW,
-                cardH: widthCardH,
-                vpW: vpW,
-                vpH: vpH,
-                visibleImageRect: visibleImgRectOverlay,
-              );
-
-              final double heightCardW = _editingHeight ? 110.0 : 80.0;
-              final double heightCardH = 40.0;
-              final Offset heightCardPos = _getHeightCardPosition(
-                vpSelection: vpSelection,
-                cardW: heightCardW,
-                cardH: heightCardH,
-                vpW: vpW,
-                vpH: vpH,
-                visibleImageRect: visibleImgRectOverlay,
-              );
-
-              // Decide whether dashed lines (measurement axes) should be Top/Bottom or Left/Right
-              // Width dashed line is top or bottom of the selection based on chosen card position
-              final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
-              final double horizontalArrowTop = widthAxisAtTop
-                  ? vpSelection.top - 18
-                  : vpSelection.bottom + 8;
-
-              // Height dashed line is left or right of the selection based on chosen card position
-              final bool heightAxisAtLeft = heightCardPos.dx < vpSelection.left;
-              final double verticalArrowLeft = heightAxisAtLeft
-                  ? vpSelection.left - 18
-                  : vpSelection.right + 8;
-
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Horizontal double arrow line
-                  Positioned(
-                    left: vpSelection.left,
-                    top: horizontalArrowTop,
-                    width: vpSelection.width,
-                    height: 10,
-                    child: CustomPaint(
-                      painter: DashedLinePainter(axis: Axis.horizontal),
+            if (_selection != null)
+              Builder(
+                builder: (context) {
+                  final Matrix4 matrix = _transformationController.value;
+                  final Offset vpTopLeft = MatrixUtils.transformPoint(
+                    matrix,
+                    Offset(_selection!.left, _selection!.top),
+                  );
+                  final Offset vpBottomRight = MatrixUtils.transformPoint(
+                    matrix,
+                    Offset(
+                      _selection!.left + _selection!.width,
+                      _selection!.top + _selection!.height,
                     ),
-                  ),
-                  // Vertical double arrow line
-                  Positioned(
-                    left: verticalArrowLeft,
-                    top: vpSelection.top,
-                    width: 10,
-                    height: vpSelection.height,
-                    child: CustomPaint(
-                      painter: DashedLinePainter(axis: Axis.vertical),
+                  );
+                  final Rect vpSel = Rect.fromPoints(vpTopLeft, vpBottomRight);
+                  return Positioned.fill(
+                    child: AIProcessingOverlay(
+                      selectionRect: vpSel,
+                      visibleImageRect: _getVisibleImageRect(context),
                     ),
-                  ),
-                  // Horizontal dimension label / inline editor
-                  Positioned(
-                    left: widthCardPos.dx,
-                    top: widthCardPos.dy,
-                    width: widthCardW,
-                    child: Listener(
-                      behavior: HitTestBehavior.opaque,
-                      onPointerDown: (e) {
-                        _interactingWithOverlay = true;
-                      },
-                      child: Center(
-                        child: _editingWidth
-                            ? _buildInlineEditor(
-                                controller: _widthEditController,
-                                onSave: () {
-                                  _justSaved = true;
-                                  setState(() {
-                                    final parsedW = double.tryParse(
-                                      _widthEditController.text,
-                                    );
-                                    if (parsedW != null && parsedW > 0) {
-                                      _customWidthInches = parsedW;
-                                    }
-                                    _recalculateArea();
-                                    _notifyCubitOfSelection();
-                                  });
-
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    if (mounted) {
-                                      setState(() {
-                                        _editingWidth = false;
-                                      });
-                                    }
-                                  });
-                                },
-                              )
-                            : _buildDisplayLabel(
-                                value: _customWidthInches,
-                                onTap: () {
-                                  setState(() {
-                                    _widthEditController.text =
-                                        _customWidthInches.round().toString();
-                                    _editingWidth = true;
-                                  });
-                                },
-                              ),
-                      ),
-                    ),
-                  ),
-                  // Vertical dimension label / inline editor
-                  Positioned(
-                    left: heightCardPos.dx,
-                    top: heightCardPos.dy,
-                    width: heightCardW,
-                    child: Listener(
-                      behavior: HitTestBehavior.opaque,
-                      onPointerDown: (e) {
-                        _interactingWithOverlay = true;
-                      },
-                      child: Center(
-                        child: _editingHeight
-                            ? _buildInlineEditor(
-                                controller: _heightEditController,
-                                onSave: () {
-                                  _justSaved = true;
-                                  setState(() {
-                                    final parsedH = double.tryParse(
-                                      _heightEditController.text,
-                                    );
-                                    if (parsedH != null && parsedH > 0) {
-                                      _customHeightInches = parsedH;
-                                    }
-                                    _recalculateArea();
-                                    _notifyCubitOfSelection();
-                                  });
-
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    if (mounted) {
-                                      setState(() {
-                                        _editingHeight = false;
-                                      });
-                                    }
-                                  });
-                                },
-                              )
-                            : _buildDisplayLabel(
-                                value: _customHeightInches,
-                                onTap: () {
-                                  setState(() {
-                                    _heightEditController.text =
-                                        _customHeightInches.round().toString();
-                                    _editingHeight = true;
-                                  });
-                                },
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        // Zoom Controls
-        Positioned(
-          bottom: 24,
-          right: 16,
-          child: Row(
-            children: [
-              _buildZoomButton(icon: Icons.zoom_out, onTap: _zoomOut),
-              const SizedBox(width: 8),
-              _buildZoomButton(icon: Icons.zoom_in, onTap: _zoomIn),
-            ],
-          ),
-        ),
-        // Preview Full Image Button (Eye Button)
-        Positioned(
-          bottom: 24,
-          left: 16,
-          child: GestureDetector(
-            onTap: () => _showFullImagePopup(context),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.45),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 4,
-                    spreadRadius: 0,
-                  ),
-                ],
+                  );
+                },
               ),
-              child: const Icon(
-                Icons.visibility,
-                color: Colors.white,
-                size: 24,
+          ],
+
+          if (_selection != null && !(state.isApplyLoading || _isPrecaching))
+            Builder(
+              builder: (context) {
+                final Size viewSize = _getViewSize(context);
+                final double vpW = viewSize.width;
+                final double vpH = viewSize.height;
+                final Matrix4 matrix = _transformationController.value;
+
+                final Offset vpTopLeft = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(_selection!.left, _selection!.top),
+                );
+                final Offset vpBottomRight = MatrixUtils.transformPoint(
+                  matrix,
+                  Offset(
+                    _selection!.left + _selection!.width,
+                    _selection!.top + _selection!.height,
+                  ),
+                );
+                final Rect vpSelection = Rect.fromPoints(
+                  vpTopLeft,
+                  vpBottomRight,
+                );
+
+                // Calculate positions for Width and Height cards using priorities
+                final double widthCardW = _editingWidth ? 110.0 : 80.0;
+                final double widthCardH = 40.0;
+                final Rect visibleImgRectOverlay = _getVisibleImageRect(
+                  context,
+                );
+                final Offset widthCardPos = _getWidthCardPosition(
+                  vpSelection: vpSelection,
+                  cardW: widthCardW,
+                  cardH: widthCardH,
+                  vpW: vpW,
+                  vpH: vpH,
+                  visibleImageRect: visibleImgRectOverlay,
+                );
+
+                final double heightCardW = _editingHeight ? 110.0 : 80.0;
+                final double heightCardH = 40.0;
+                final Offset heightCardPos = _getHeightCardPosition(
+                  vpSelection: vpSelection,
+                  cardW: heightCardW,
+                  cardH: heightCardH,
+                  vpW: vpW,
+                  vpH: vpH,
+                  visibleImageRect: visibleImgRectOverlay,
+                );
+
+                // Decide whether dashed lines (measurement axes) should be Top/Bottom or Left/Right
+                // Width dashed line is top or bottom of the selection based on chosen card position
+                final bool widthAxisAtTop = widthCardPos.dy < vpSelection.top;
+                final double horizontalArrowTop = widthAxisAtTop
+                    ? vpSelection.top - 18
+                    : vpSelection.bottom + 8;
+
+                // Height dashed line is left or right of the selection based on chosen card position
+                final bool heightAxisAtLeft =
+                    heightCardPos.dx < vpSelection.left;
+                final double verticalArrowLeft = heightAxisAtLeft
+                    ? vpSelection.left - 18
+                    : vpSelection.right + 8;
+
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Horizontal double arrow line
+                    Positioned(
+                      left: vpSelection.left,
+                      top: horizontalArrowTop,
+                      width: vpSelection.width,
+                      height: 10,
+                      child: CustomPaint(
+                        painter: DashedLinePainter(axis: Axis.horizontal),
+                      ),
+                    ),
+                    // Vertical double arrow line
+                    Positioned(
+                      left: verticalArrowLeft,
+                      top: vpSelection.top,
+                      width: 10,
+                      height: vpSelection.height,
+                      child: CustomPaint(
+                        painter: DashedLinePainter(axis: Axis.vertical),
+                      ),
+                    ),
+                    // Horizontal dimension label / inline editor
+                    Positioned(
+                      left: widthCardPos.dx,
+                      top: widthCardPos.dy,
+                      width: widthCardW,
+                      child: Listener(
+                        behavior: HitTestBehavior.opaque,
+                        onPointerDown: (e) {
+                          _interactingWithOverlay = true;
+                        },
+                        child: Center(
+                          child: _editingWidth
+                              ? _buildInlineEditor(
+                                  controller: _widthEditController,
+                                  onSave: () {
+                                    _justSaved = true;
+                                    setState(() {
+                                      final parsedW = double.tryParse(
+                                        _widthEditController.text,
+                                      );
+                                      if (parsedW != null && parsedW > 0) {
+                                        _customWidthInches = parsedW;
+                                      }
+                                      _recalculateArea();
+                                      _notifyCubitOfSelection();
+                                    });
+
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                          if (mounted) {
+                                            setState(() {
+                                              _editingWidth = false;
+                                            });
+                                          }
+                                        });
+                                  },
+                                )
+                              : _buildDisplayLabel(
+                                  value: _customWidthInches,
+                                  onTap: () {
+                                    setState(() {
+                                      _widthEditController.text =
+                                          _customWidthInches.round().toString();
+                                      _editingWidth = true;
+                                    });
+                                  },
+                                ),
+                        ),
+                      ),
+                    ),
+                    // Vertical dimension label / inline editor
+                    Positioned(
+                      left: heightCardPos.dx,
+                      top: heightCardPos.dy,
+                      width: heightCardW,
+                      child: Listener(
+                        behavior: HitTestBehavior.opaque,
+                        onPointerDown: (e) {
+                          _interactingWithOverlay = true;
+                        },
+                        child: Center(
+                          child: _editingHeight
+                              ? _buildInlineEditor(
+                                  controller: _heightEditController,
+                                  onSave: () {
+                                    _justSaved = true;
+                                    setState(() {
+                                      final parsedH = double.tryParse(
+                                        _heightEditController.text,
+                                      );
+                                      if (parsedH != null && parsedH > 0) {
+                                        _customHeightInches = parsedH;
+                                      }
+                                      _recalculateArea();
+                                      _notifyCubitOfSelection();
+                                    });
+
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                          if (mounted) {
+                                            setState(() {
+                                              _editingHeight = false;
+                                            });
+                                          }
+                                        });
+                                  },
+                                )
+                              : _buildDisplayLabel(
+                                  value: _customHeightInches,
+                                  onTap: () {
+                                    setState(() {
+                                      _heightEditController.text =
+                                          _customHeightInches
+                                              .round()
+                                              .toString();
+                                      _editingHeight = true;
+                                    });
+                                  },
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          // Zoom Controls
+          Positioned(
+            bottom: 24,
+            right: 16,
+            child: Row(
+              children: [
+                _buildZoomButton(icon: Icons.zoom_out, onTap: _zoomOut),
+                const SizedBox(width: 8),
+                _buildZoomButton(icon: Icons.zoom_in, onTap: _zoomIn),
+              ],
+            ),
+          ),
+          // Preview Full Image Button (Eye Button)
+          Positioned(
+            bottom: 24,
+            left: 16,
+            child: GestureDetector(
+              onTap: () => _showFullImagePopup(context),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.45),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 4,
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.visibility,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
             ),
           ),
-        ),
-        // Progress status card showing lamination steps during API generation
-        if ((state.isApplyLoading || _isPrecaching) && _selection == null)
-          Align(alignment: Alignment.center, child: const ProgressStatusCard()),
-      ],
-    ),
+          // Progress status card showing lamination steps during API generation
+          if ((state.isApplyLoading || _isPrecaching) && _selection == null)
+            Align(
+              alignment: Alignment.center,
+              child: const ProgressStatusCard(),
+            ),
+        ],
+      ),
     );
   }
 
@@ -3871,10 +3943,539 @@ class _ImageEditPageState extends State<ImageEditPage>
     );
   }
 
+  Future<void> _showDimensionInputDialog(
+    BuildContext context,
+    dynamic texture,
+  ) async {
+    final cubit = context.read<ImageEditCubit>();
+    final lengthController = TextEditingController();
+    final breadthController = TextEditingController();
+    String selectedUnit = 'ft'; // Default unit: Feet
+    String? errorMessage;
+
+    final String skuName =
+        texture["sku"] ?? texture["name"] ?? texture["title"] ?? "Laminate";
+
+    void convertInputs(String oldUnit, String newUnit) {
+      final lText = lengthController.text.trim();
+      final bText = breadthController.text.trim();
+      if (lText.isNotEmpty) {
+        final double? val = double.tryParse(lText);
+        if (val != null && val > 0) {
+          if (oldUnit == 'ft' && newUnit == 'in') {
+            lengthController.text = (val * 12).round().toString();
+          } else if (oldUnit == 'in' && newUnit == 'ft') {
+            final converted = val / 12.0;
+            lengthController.text = converted % 1 == 0
+                ? converted.toInt().toString()
+                : converted.toStringAsFixed(1);
+          }
+        }
+      }
+      if (bText.isNotEmpty) {
+        final double? val = double.tryParse(bText);
+        if (val != null && val > 0) {
+          if (oldUnit == 'ft' && newUnit == 'in') {
+            breadthController.text = (val * 12).round().toString();
+          } else if (oldUnit == 'in' && newUnit == 'ft') {
+            final converted = val / 12.0;
+            breadthController.text = converted % 1 == 0
+                ? converted.toInt().toString()
+                : converted.toStringAsFixed(1);
+          }
+        }
+      }
+    }
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // Mandatory modal
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 8,
+              backgroundColor: Colors.white,
+              clipBehavior: Clip.antiAlias,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 380),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header Banner
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFEA202C), Color(0xFFC01520)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.square_foot_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Enter Area Dimensions",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  skuName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Dialog Body
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Exact dimensions are required before applying this laminate.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Error Banner
+                          if (errorMessage != null) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF2F2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFFFCDD2)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline_rounded,
+                                    color: Color(0xFFD32F2F),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      errorMessage!,
+                                      style: const TextStyle(
+                                        color: Color(0xFFD32F2F),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // Unit Toggle Header & Selector
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Select Unit",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF2F2F7),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        if (selectedUnit != 'ft') {
+                                          setDialogState(() {
+                                            convertInputs(selectedUnit, 'ft');
+                                            selectedUnit = 'ft';
+                                            errorMessage = null;
+                                          });
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: selectedUnit == 'ft'
+                                              ? Colors.white
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(8),
+                                          boxShadow: selectedUnit == 'ft'
+                                              ? [
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.08),
+                                                    blurRadius: 4,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ]
+                                              : null,
+                                        ),
+                                        child: Text(
+                                          "Feet (ft)",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: selectedUnit == 'ft'
+                                                ? FontWeight.bold
+                                                : FontWeight.w500,
+                                            color: selectedUnit == 'ft'
+                                                ? const Color(0xFFEA202C)
+                                                : Colors.black54,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        if (selectedUnit != 'in') {
+                                          setDialogState(() {
+                                            convertInputs(selectedUnit, 'in');
+                                            selectedUnit = 'in';
+                                            errorMessage = null;
+                                          });
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: selectedUnit == 'in'
+                                              ? Colors.white
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(8),
+                                          boxShadow: selectedUnit == 'in'
+                                              ? [
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.08),
+                                                    blurRadius: 4,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ]
+                                              : null,
+                                        ),
+                                        child: Text(
+                                          "Inches (in)",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: selectedUnit == 'in'
+                                                ? FontWeight.bold
+                                                : FontWeight.w500,
+                                            color: selectedUnit == 'in'
+                                                ? const Color(0xFFEA202C)
+                                                : Colors.black54,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Length Input
+                          TextField(
+                            controller: lengthController,
+                            keyboardType: selectedUnit == 'in'
+                                ? TextInputType.number
+                                : const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: selectedUnit == 'in'
+                                ? [FilteringTextInputFormatter.digitsOnly]
+                                : null,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: "Length ($selectedUnit)*",
+                              hintText: selectedUnit == 'in' ? "e.g. 102" : "e.g. 8.5",
+                              prefixIcon: const Icon(Icons.height_rounded, size: 18),
+                              suffixText: selectedUnit,
+                              suffixStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black45,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF9F9FB),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFEA202C),
+                                  width: 1.5,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Breadth Input
+                          TextField(
+                            controller: breadthController,
+                            keyboardType: selectedUnit == 'in'
+                                ? TextInputType.number
+                                : const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: selectedUnit == 'in'
+                                ? [FilteringTextInputFormatter.digitsOnly]
+                                : null,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: "Breadth ($selectedUnit)*",
+                              hintText: selectedUnit == 'in' ? "e.g. 48" : "e.g. 4.0",
+                              prefixIcon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                              suffixText: selectedUnit,
+                              suffixStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black45,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF9F9FB),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFEA202C),
+                                  width: 1.5,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Action Buttons
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    side: const BorderSide(color: Color(0xFFD1D1D6)),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(dialogContext).pop();
+                                  },
+                                  child: const Text(
+                                    "Cancel",
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    backgroundColor: const Color(0xFFEA202C),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    final lengthText = lengthController.text.trim();
+                                    final breadthText = breadthController.text.trim();
+
+                                    if (lengthText.isEmpty || breadthText.isEmpty) {
+                                      setDialogState(() {
+                                        errorMessage = "Both Length and Breadth are required.";
+                                      });
+                                      return;
+                                    }
+
+                                    if (selectedUnit == 'in') {
+                                      if (lengthText.contains('.') || breadthText.contains('.')) {
+                                        setDialogState(() {
+                                          errorMessage = "Decimal numbers are not allowed for Inches. Please enter whole numbers.";
+                                        });
+                                        return;
+                                      }
+                                    }
+
+                                    final double? lengthVal = double.tryParse(lengthText);
+                                    final double? breadthVal = double.tryParse(breadthText);
+
+                                    if (lengthVal == null ||
+                                        lengthVal <= 0 ||
+                                        breadthVal == null ||
+                                        breadthVal <= 0) {
+                                      setDialogState(() {
+                                        errorMessage = "Please enter valid positive numbers (> 0). Zero and negative values are not allowed.";
+                                      });
+                                      return;
+                                    }
+
+                                    // Convert final measurements to whole positive numbers (round to nearest whole number)
+                                    int finalLengthInches;
+                                    int finalBreadthInches;
+
+                                    if (selectedUnit == 'in') {
+                                      finalLengthInches = lengthVal.round();
+                                      finalBreadthInches = breadthVal.round();
+                                    } else {
+                                      finalLengthInches = (lengthVal * 12.0).round();
+                                      finalBreadthInches = (breadthVal * 12.0).round();
+                                    }
+
+                                    if (finalLengthInches <= 0 || finalBreadthInches <= 0) {
+                                      setDialogState(() {
+                                        errorMessage = "Calculated dimensions must be positive integers.";
+                                      });
+                                      return;
+                                    }
+
+                                    final int finalAreaSqInches = finalLengthInches * finalBreadthInches;
+                                    final double areaSqFt = finalAreaSqInches / 144.0;
+
+                                    // Print final whole positive number results to console
+                                    debugPrint("==================================================");
+                                    debugPrint("📐 DIMENSIONS CONFIRMED FOR: $skuName");
+                                    debugPrint("   Input Unit: $selectedUnit");
+                                    debugPrint("   Raw Input: Length=$lengthText, Breadth=$breadthText");
+                                    debugPrint("   Final Length: $finalLengthInches in (whole positive number)");
+                                    debugPrint("   Final Breadth: $finalBreadthInches in (whole positive number)");
+                                    debugPrint("   Final Area: $areaSqFt sq. ft. ($finalAreaSqInches sq. in.)");
+                                    debugPrint("==================================================");
+
+                                    Navigator.of(dialogContext).pop();
+
+                                    // Apply the laminate with calculated area and updated dimensions
+                                    setState(() {
+                                      _selectedTexture = texture;
+                                      _customWidthInches = finalLengthInches.toDouble();
+                                      _customHeightInches = finalBreadthInches.toDouble();
+                                      _areaController.text = areaSqFt.toStringAsFixed(2);
+                                    });
+
+                                    // Explicitly update Cubit area payload with new obj_w and obj_h
+                                    if (_selection != null) {
+                                      _notifyCubitOfSelection();
+                                    }
+
+                                    // Set pattern and trigger API generation with user inputs
+                                    cubit.selectPattern(texture);
+                                    if (cubit.state.selectedArea != null && !cubit.state.isGenerating) {
+                                      cubit.generateAIImage();
+                                    }
+                                  },
+                                  child: const Text(
+                                    "Continue",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildTextureThumbnail(dynamic texture, {required bool isGrid}) {
     final isSelected = _selectedTexture?["id"] == texture["id"];
     final imageUrl = texture["coverImage"] ?? "";
-    final label = texture["sku"] ?? texture["name"] ?? "";
+    final label =
+        (texture["sku"] != null && texture["sku"].toString().isNotEmpty)
+        ? texture["sku"].toString()
+        : (texture["name"] ?? "");
 
     final imageWidget = Padding(
       padding: const EdgeInsets.all(5),
@@ -3950,7 +4551,11 @@ class _ImageEditPageState extends State<ImageEditPage>
 
     return GestureDetector(
       onTap: () {
-        final isApplying = context.read<ImageEditCubit>().state.isApplyLoading || _isPrecaching || _isUploading || context.read<ImageEditCubit>().state.isGenerating;
+        final isApplying =
+            context.read<ImageEditCubit>().state.isApplyLoading ||
+            _isPrecaching ||
+            _isUploading ||
+            context.read<ImageEditCubit>().state.isGenerating;
         if (isApplying) return;
         if (_selection == null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -3962,9 +4567,8 @@ class _ImageEditPageState extends State<ImageEditPage>
           );
           return;
         }
-        setState(() => _selectedTexture = texture);
-        // Automatically trigger pattern selection in Cubit
-        context.read<ImageEditCubit>().selectPattern(texture);
+        // Mandatory dimension prompt before applying laminate
+        _showDimensionInputDialog(context, texture);
       },
       child: SizedBox(
         width: isGrid ? null : widget.textureThumbWidth,
@@ -4504,7 +5108,11 @@ class _ImageEditPageState extends State<ImageEditPage>
                 height: 40,
                 child: BlocBuilder<ImageEditCubit, ImageEditState>(
                   builder: (context, state) {
-                    final bool isApplying = state.isApplyLoading || _isPrecaching || _isUploading || state.isGenerating;
+                    final bool isApplying =
+                        state.isApplyLoading ||
+                        _isPrecaching ||
+                        _isUploading ||
+                        state.isGenerating;
                     final bool hasResult =
                         state.currentGeneratedImage != null &&
                         _hasNewUnappliedEdit;
@@ -5190,7 +5798,7 @@ class _AIProcessingOverlayState extends State<AIProcessingOverlay>
   void initState() {
     super.initState();
     _stopwatch = Stopwatch()..start();
-    
+
     // Generate randomized durations between 4.0 and 7.0 seconds for each stage
     final random = math.Random();
     final double d0 = 4.5 + random.nextDouble() * 2.5;
@@ -5212,7 +5820,7 @@ class _AIProcessingOverlayState extends State<AIProcessingOverlay>
     _t4End = _t4Start + d3;
 
     _t5Start = _t4End;
-    
+
     // Repeating 60fps trigger to keep repainting continuously
     _animationController = AnimationController(
       vsync: this,
@@ -5223,10 +5831,14 @@ class _AIProcessingOverlayState extends State<AIProcessingOverlay>
       if (mounted) {
         double elapsed = _stopwatch.elapsedMilliseconds / 1000.0;
         int newStep = 0;
-        if (elapsed >= _t5Start) newStep = 4;
-        else if (elapsed >= _t4Start) newStep = 3;
-        else if (elapsed >= _t3Start) newStep = 2;
-        else if (elapsed >= _t2Start) newStep = 1;
+        if (elapsed >= _t5Start)
+          newStep = 4;
+        else if (elapsed >= _t4Start)
+          newStep = 3;
+        else if (elapsed >= _t3Start)
+          newStep = 2;
+        else if (elapsed >= _t2Start)
+          newStep = 1;
 
         // Wave-like random speeds: some periods fast surge, some slow stall
         final int phase = (elapsed.toInt()) % 5;
@@ -5280,108 +5892,137 @@ class _AIProcessingOverlayState extends State<AIProcessingOverlay>
     const double percentWidth = 150.0;
 
     // Decide whether to place labels outside or inside the selection
-    final bool showOutside = vpSel.top > (gap + textHeight + safePad + 10) && vpSel.left > insetPad;
+    final bool showOutside =
+        vpSel.top > (gap + textHeight + safePad + 10) && vpSel.left > insetPad;
 
     // Status text: above selection (outside) or just inside top-left
     double textLeft = showOutside ? vpSel.left : vpSel.left + insetPad;
-    double textTop = showOutside ? vpSel.top - gap - textHeight : vpSel.top + insetPad;
+    double textTop = showOutside
+        ? vpSel.top - gap - textHeight
+        : vpSel.top + insetPad;
 
     // Percentage text: below selection (outside) or just inside bottom-left
     double percentLeft = showOutside ? vpSel.left : vpSel.left + insetPad;
-    double percentTop = showOutside ? vpSel.bottom + gap : vpSel.bottom - insetPad - percentHeight;
+    double percentTop = showOutside
+        ? vpSel.bottom + gap
+        : vpSel.bottom - insetPad - percentHeight;
 
     // Clamp text position within the visible image rect
-    textLeft = textLeft.clamp(imgRect.left + safePad, (imgRect.right - textWidth - safePad).clamp(imgRect.left + safePad, double.infinity));
-    textTop = textTop.clamp(imgRect.top + safePad, (imgRect.bottom - textHeight - safePad).clamp(imgRect.top + safePad, double.infinity));
+    textLeft = textLeft.clamp(
+      imgRect.left + safePad,
+      (imgRect.right - textWidth - safePad).clamp(
+        imgRect.left + safePad,
+        double.infinity,
+      ),
+    );
+    textTop = textTop.clamp(
+      imgRect.top + safePad,
+      (imgRect.bottom - textHeight - safePad).clamp(
+        imgRect.top + safePad,
+        double.infinity,
+      ),
+    );
 
     // Clamp percentage position within the visible image rect
-    percentLeft = percentLeft.clamp(imgRect.left + safePad, (imgRect.right - percentWidth - safePad).clamp(imgRect.left + safePad, double.infinity));
-    percentTop = percentTop.clamp(imgRect.top + safePad, (imgRect.bottom - percentHeight - safePad).clamp(imgRect.top + safePad, double.infinity));
+    percentLeft = percentLeft.clamp(
+      imgRect.left + safePad,
+      (imgRect.right - percentWidth - safePad).clamp(
+        imgRect.left + safePad,
+        double.infinity,
+      ),
+    );
+    percentTop = percentTop.clamp(
+      imgRect.top + safePad,
+      (imgRect.bottom - percentHeight - safePad).clamp(
+        imgRect.top + safePad,
+        double.infinity,
+      ),
+    );
 
     return ClipRect(
       child: Stack(
-      clipBehavior: Clip.hardEdge,
-      children: [
-        Positioned.fromRect(
-          rect: vpSel,
-          child: ClipRect(
-            child: CustomPaint(
-              size: Size(vpSel.width, vpSel.height),
-              painter: StepSpecificPainter(
-                animation: _animationController,
-                stopwatch: _stopwatch,
-                t1Start: _t1Start,
-                t1End: _t1End,
-                t2Start: _t2Start,
-                t2End: _t2End,
-                t3Start: _t3Start,
-                t3End: _t3End,
-                t4Start: _t4Start,
-                t4End: _t4End,
-                t5Start: _t5Start,
+        clipBehavior: Clip.hardEdge,
+        children: [
+          Positioned.fromRect(
+            rect: vpSel,
+            child: ClipRect(
+              child: CustomPaint(
+                size: Size(vpSel.width, vpSel.height),
+                painter: StepSpecificPainter(
+                  animation: _animationController,
+                  stopwatch: _stopwatch,
+                  t1Start: _t1Start,
+                  t1End: _t1End,
+                  t2Start: _t2Start,
+                  t2End: _t2End,
+                  t3Start: _t3Start,
+                  t3End: _t3End,
+                  t4Start: _t4Start,
+                  t4End: _t4End,
+                  t5Start: _t5Start,
+                ),
               ),
             ),
           ),
-        ),
-        Positioned(
-          left: textLeft,
-          top: textTop,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: Row(
-              key: ValueKey<int>(_currentTextStep),
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 1.8,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          Positioned(
+            left: textLeft,
+            top: textTop,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: Row(
+                key: ValueKey<int>(_currentTextStep),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.8,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _steps[_currentTextStep],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black87,
-                        blurRadius: 4,
-                        offset: Offset(1, 1),
-                      ),
-                    ],
+                  const SizedBox(width: 8),
+                  Text(
+                    _steps[_currentTextStep],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black87,
+                          blurRadius: 4,
+                          offset: Offset(1, 1),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        // Progress percentage indicator at the bottom right of the selection
-        Positioned(
-          left: percentLeft,
-          top: percentTop,
-          child: Text(
-            "Rendering... $_fakeProgress%",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              shadows: [
-                Shadow(
-                  color: Colors.black87,
-                  blurRadius: 4,
-                  offset: Offset(1, 1),
-                ),
-              ],
+          // Progress percentage indicator at the bottom right of the selection
+          Positioned(
+            left: percentLeft,
+            top: percentTop,
+            child: Text(
+              "Rendering... $_fakeProgress%",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    color: Colors.black87,
+                    blurRadius: 4,
+                    offset: Offset(1, 1),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 }
@@ -5417,9 +6058,9 @@ class StepSpecificPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height);
     canvas.clipRect(rect);
-    
+
     double elapsed = stopwatch.elapsedMilliseconds / 1000.0;
-    
+
     // Constant base dimming overlay
     double baseOpacity = 0.6;
     if (baseOpacity > 0) {
@@ -5608,7 +6249,7 @@ class StepSpecificPainter extends CustomPainter {
   void _drawFinalRender(Canvas canvas, Size size, double stageElapsed) {
     // Loop the wave sweep continuously every 2.0 seconds based on stageElapsed
     double animationValue = (stageElapsed / 2.0) % 1.0;
-    
+
     // Restrict drawing strictly to selection boundaries
     canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
