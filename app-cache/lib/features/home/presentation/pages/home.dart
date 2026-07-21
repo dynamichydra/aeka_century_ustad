@@ -26,7 +26,6 @@ import 'package:century_ai/features/home/presentation/widgets/search_bar.dart';
 import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/cubit/upload/upload_cubit.dart';
 
-
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -426,19 +425,21 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     try {
       final bytes = await imageFile.readAsBytes();
       final decoded = img.decodeImage(bytes);
-      if (decoded != null &&
-          (decoded.width > 1024 || decoded.height > 1024)) {
+      if (decoded != null && (decoded.width > 1024 || decoded.height > 1024)) {
         // copyResize keeps aspect ratio when only one dimension is given.
         final resized = img.copyResize(
           decoded,
           width: decoded.width > decoded.height ? 1024 : -1,
           height: decoded.height >= decoded.width ? 1024 : -1,
         );
-        final isJpeg = lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg');
+        final isJpeg =
+            lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg');
         final encoded = isJpeg
             ? img.encodeJpg(resized, quality: 90)
             : img.encodePng(resized);
-        final resizedFile = File('${imageFile.parent.path}/resized_${image.name}');
+        final resizedFile = File(
+          '${imageFile.parent.path}/resized_${image.name}',
+        );
         await resizedFile.writeAsBytes(encoded);
         imageFile = resizedFile;
         debugPrint(
@@ -574,12 +575,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 _scrollToTop();
                 _searchController.clear();
                 context.read<HomeCubit>().clearSearch();
-                context
-                    .read<ProductsCubit>()
-                    .fetchFeaturedProducts(
-                      ownerId: "user13@gmail.com",
-                      isExterior: true,
-                    );
+                context.read<ProductsCubit>().fetchFeaturedProducts(
+                  ownerId: "user13@gmail.com",
+                  isExterior: true,
+                );
               } else {
                 homeCubit.setSelectedIndex(0);
                 setState(() {
@@ -590,12 +589,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 _scrollToTop();
                 _searchController.clear();
                 context.read<HomeCubit>().clearSearch();
-                context
-                    .read<ProductsCubit>()
-                    .fetchFeaturedProducts(
-                      ownerId: "user13@gmail.com",
-                      isExterior: false,
-                    );
+                context.read<ProductsCubit>().fetchFeaturedProducts(
+                  ownerId: "user13@gmail.com",
+                  isExterior: false,
+                );
               }
             },
           ),
@@ -639,22 +636,18 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 _selectedNestedSubCategory = "";
 
                 // Trigger product fetch for the matched category
-                context
-                    .read<ProductsCubit>()
-                    .fetchProductsByCategory(
-                      matchingCategory,
-                      isInterior: homeState.selectedIndex == 0,
-                      ownerId: "user13@gmail.com",
-                    );
+                context.read<ProductsCubit>().fetchProductsByCategory(
+                  matchingCategory,
+                  isInterior: homeState.selectedIndex == 0,
+                  ownerId: "user13@gmail.com",
+                );
               } else {
                 _selectedCategory = null;
                 _selectedSubCategory = "All";
                 _selectedNestedSubCategory = "";
 
                 // Trigger search API if no category matched
-                context.read<ProductsCubit>().searchProducts(
-                  query,
-                );
+                context.read<ProductsCubit>().searchProducts(query);
               }
             });
             _scrollToTop();
@@ -673,10 +666,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   padding: const EdgeInsets.only(bottom: 2),
                   decoration: const BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFF5D5D5D),
-                        width: 1.5,
-                      ),
+                      bottom: BorderSide(color: Color(0xFF5D5D5D), width: 1.5),
                     ),
                   ),
                   child: const Text(
@@ -695,9 +685,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   child: TabBar(
                     isScrollable: true,
                     padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.only(
-                      right: 16,
-                    ),
+                    labelPadding: const EdgeInsets.only(right: 16),
                     tabAlignment: TabAlignment.start,
                     indicator: const UnderlineTabIndicator(
                       borderSide: BorderSide(
@@ -729,12 +717,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       _scrollToTop();
                       _searchController.clear();
                       context.read<HomeCubit>().clearSearch();
-                      context
-                          .read<ProductsCubit>()
-                          .fetchFeaturedProducts(
-                            ownerId: "user13@gmail.com",
-                            isExterior: false,
-                          );
+                      context.read<ProductsCubit>().fetchFeaturedProducts(
+                        ownerId: "user13@gmail.com",
+                        isExterior: false,
+                      );
                     },
                   ),
                 ),
@@ -768,21 +754,17 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           final isNowTrending = !wasTrending;
 
                           if (isNowTrending) {
-                            context
-                                .read<ProductsCubit>()
-                                .fetchTrendingProducts(
-                                  ownerId: "user13@gmail.com",
-                                  applicationType: homeState.isExterior
-                                      ? "EXTERIOR"
-                                      : "INTERIOR",
-                                );
+                            context.read<ProductsCubit>().fetchTrendingProducts(
+                              ownerId: "user13@gmail.com",
+                              applicationType: homeState.isExterior
+                                  ? "EXTERIOR"
+                                  : "INTERIOR",
+                            );
                           } else {
-                            context
-                                .read<ProductsCubit>()
-                                .fetchFeaturedProducts(
-                                  ownerId: "user13@gmail.com",
-                                  isExterior: homeState.isExterior,
-                                );
+                            context.read<ProductsCubit>().fetchFeaturedProducts(
+                              ownerId: "user13@gmail.com",
+                              isExterior: homeState.isExterior,
+                            );
                           }
                         },
                         child: Padding(
@@ -827,18 +809,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           final isNowLiked = !wasLiked;
 
                           if (isNowLiked) {
-                            context
-                                .read<ProductsCubit>()
-                                .fetchFavoriteProducts(
-                                  ownerId: "user13@gmail.com",
-                                );
+                            context.read<ProductsCubit>().fetchFavoriteProducts(
+                              ownerId: "user13@gmail.com",
+                            );
                           } else {
-                            context
-                                .read<ProductsCubit>()
-                                .fetchFeaturedProducts(
-                                  ownerId: "user13@gmail.com",
-                                  isExterior: homeState.isExterior,
-                                );
+                            context.read<ProductsCubit>().fetchFeaturedProducts(
+                              ownerId: "user13@gmail.com",
+                              isExterior: homeState.isExterior,
+                            );
                           }
                         },
                         child: Padding(
@@ -899,7 +877,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
         const SizedBox(height: 16),
         if (!homeState.isExterior) ...[
           SizedBox(
-            height: 90,
+            height: 80,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -910,9 +888,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       label: product.name,
                       isSelected: _selectedCategory == product.name,
                       useUnderline: false,
-                      selectedBorderColor: const Color(
-                        0xFFEEEEEE,
-                      ),
+                      selectedBorderColor: const Color(0xFFEEEEEE),
                       onTap: () {
                         // Tap again to deselect; tap new to select
                         if (_selectedCategory == product.name) {
@@ -926,11 +902,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           _searchController.clear();
                           context.read<HomeCubit>().clearSearch();
                           // Fetch featured products when category is deselected
-                          context
-                              .read<ProductsCubit>()
-                              .fetchFeaturedProducts(
-                                ownerId: "user13@gmail.com",
-                              );
+                          context.read<ProductsCubit>().fetchFeaturedProducts(
+                            ownerId: "user13@gmail.com",
+                          );
                         } else {
                           setState(() {
                             _selectedCategory = product.name;
@@ -941,20 +915,15 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           // Clear search when category is selected
                           _searchController.clear();
                           context.read<HomeCubit>().clearSearch();
-                          context
-                              .read<ProductsCubit>()
-                              .fetchProductsByCategory(
-                                product.name,
-                                isInterior: homeState.selectedIndex == 0,
-                                ownerId: "user13@gmail.com",
-                              );
+                          context.read<ProductsCubit>().fetchProductsByCategory(
+                            product.name,
+                            isInterior: homeState.selectedIndex == 0,
+                            ownerId: "user13@gmail.com",
+                          );
                         }
                       },
                       child: ClipOval(
-                        child: Image.asset(
-                          product.image,
-                          fit: BoxFit.cover,
-                        ),
+                        child: Image.asset(product.image, fit: BoxFit.cover),
                       ),
                     ),
                   );
@@ -962,7 +931,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 1),
         ],
       ],
     );
@@ -974,16 +943,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             ? GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // 👈 4 images per row
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1, // square images
-                    ),
-                itemCount: productsState.isLoading
-                    ? 6
-                    : displayProducts.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // 👈 4 images per row
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1, // square images
+                ),
+                itemCount: productsState.isLoading ? 6 : displayProducts.length,
                 itemBuilder: (context, index) {
                   if (productsState.isLoading) {
                     return Shimmer.fromColors(
@@ -994,9 +960,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              4,
-                            ),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),
@@ -1017,15 +981,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         isNetwork: product.isNetworkImage,
                         id: product.id,
                         onFavoriteToggle: () {
-                          context
-                              .read<ProductsCubit>()
-                              .toggleFavorite(
-                                itemId:
-                                    product.itemId ??
-                                    product.furnitureId ??
-                                    product.id,
-                                ownerId: "user13@gmail.com",
-                              );
+                          context.read<ProductsCubit>().toggleFavorite(
+                            itemId:
+                                product.itemId ??
+                                product.furnitureId ??
+                                product.id,
+                            ownerId: "user13@gmail.com",
+                          );
                         },
                       ),
                     ),
@@ -1035,11 +997,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             : ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: productsState.isLoading
-                    ? 5
-                    : displayProducts.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: 16),
+                itemCount: productsState.isLoading ? 5 : displayProducts.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   if (productsState.isLoading) {
                     return Shimmer.fromColors(
@@ -1050,9 +1009,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              12,
-                            ),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
@@ -1073,15 +1030,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         isNetwork: product.isNetworkImage,
                         id: product.id,
                         onFavoriteToggle: () {
-                          context
-                              .read<ProductsCubit>()
-                              .toggleFavorite(
-                                itemId:
-                                    product.itemId ??
-                                    product.furnitureId ??
-                                    product.id,
-                                ownerId: "user13@gmail.com",
-                              );
+                          context.read<ProductsCubit>().toggleFavorite(
+                            itemId:
+                                product.itemId ??
+                                product.furnitureId ??
+                                product.id,
+                            ownerId: "user13@gmail.com",
+                          );
                         },
                       ),
                     ),
@@ -1127,10 +1082,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       });
                       context.read<HomeCubit>().clearSearch();
                       context.read<HomeCubit>().resetFilters();
-                      return context.read<ProductsCubit>().fetchFeaturedProducts(
-                        ownerId: "user13@gmail.com",
-                        isExterior: homeState.isExterior,
-                      );
+                      return context
+                          .read<ProductsCubit>()
+                          .fetchFeaturedProducts(
+                            ownerId: "user13@gmail.com",
+                            isExterior: homeState.isExterior,
+                          );
                     },
                     child: NotificationListener<ScrollNotification>(
                       onNotification: (ScrollNotification scrollInfo) {
@@ -1156,7 +1113,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 const SizedBox(height: 10),
                               ],
                               productsWidget,
-                              SizedBox(height: _bottomCtaReservedSpace(context)),
+                              SizedBox(
+                                height: _bottomCtaReservedSpace(context),
+                              ),
                             ],
                           ),
                         ),

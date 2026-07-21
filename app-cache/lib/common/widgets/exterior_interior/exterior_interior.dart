@@ -18,12 +18,12 @@ class ExteriorInteriorSwitchSlider extends StatelessWidget {
         print('value = $value');
       },
       child: Container(
-        width: 140, // smaller width to fit row
-        height: 36, // smaller height
+        width: 130, // smaller width to fit row
+        height: 28, // lower height
         padding: const EdgeInsets.all(0.2),
         decoration: BoxDecoration(
           color: const Color(0xFFCCCCCC), // background color
-          borderRadius: BorderRadius.circular(18), // half height for pill
+          borderRadius: BorderRadius.circular(14), // half height for pill
           border: Border.all(color: const Color(0xFFD9D9D9), width: 0),
         ),
         child: Stack(
@@ -31,7 +31,7 @@ class ExteriorInteriorSwitchSlider extends StatelessWidget {
             // Inner outline and true soft inset shadow
             Positioned.fill(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(14),
                 child: Container(
                   decoration: BoxDecoration(
                     boxShadow: [
@@ -56,7 +56,7 @@ class ExteriorInteriorSwitchSlider extends StatelessWidget {
                     ],
                   ),
                   foregroundDecoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: const Color(0xFFEEEEEE),
                       width: 1,
@@ -70,11 +70,11 @@ class ExteriorInteriorSwitchSlider extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               alignment: value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
-                width: 70, // half of container width
-                height: 36,
+                width: 65, // half of container width
+                height: 28,
                 decoration: BoxDecoration(
                   color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),

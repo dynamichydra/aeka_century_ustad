@@ -559,7 +559,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     final File imageFile = File(image.path);
 
     // Show loading dialog
-   showDialog(
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const UploadLoaderDialog(),
@@ -719,12 +719,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 _scrollToTop();
                 _searchController.clear();
                 context.read<HomeCubit>().clearSearch();
-                context
-                    .read<ProductsCubit>()
-                    .fetchFeaturedProducts(
-                      ownerId: "user13@gmail.com",
-                      isExterior: true,
-                    );
+                context.read<ProductsCubit>().fetchFeaturedProducts(
+                  ownerId: "user13@gmail.com",
+                  isExterior: true,
+                );
               } else {
                 homeCubit.setSelectedIndex(0);
                 setState(() {
@@ -735,17 +733,15 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 _scrollToTop();
                 _searchController.clear();
                 context.read<HomeCubit>().clearSearch();
-                context
-                    .read<ProductsCubit>()
-                    .fetchFeaturedProducts(
-                      ownerId: "user13@gmail.com",
-                      isExterior: false,
-                    );
+                context.read<ProductsCubit>().fetchFeaturedProducts(
+                  ownerId: "user13@gmail.com",
+                  isExterior: false,
+                );
               }
             },
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         // SearchInput(),
         HomeSearchBar(
           isExterior: homeState.isExterior,
@@ -784,28 +780,24 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 _selectedNestedSubCategory = "";
 
                 // Trigger product fetch for the matched category
-                context
-                    .read<ProductsCubit>()
-                    .fetchProductsByCategory(
-                      matchingCategory,
-                      isInterior: homeState.selectedIndex == 0,
-                      ownerId: "user13@gmail.com",
-                    );
+                context.read<ProductsCubit>().fetchProductsByCategory(
+                  matchingCategory,
+                  isInterior: homeState.selectedIndex == 0,
+                  ownerId: "user13@gmail.com",
+                );
               } else {
                 _selectedCategory = null;
                 _selectedSubCategory = "All";
                 _selectedNestedSubCategory = "";
 
                 // Trigger search API if no category matched
-                context.read<ProductsCubit>().searchProducts(
-                  query,
-                );
+                context.read<ProductsCubit>().searchProducts(query);
               }
             });
             _scrollToTop();
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         DefaultTabController(
           length: 2,
           initialIndex: homeState.selectedIndex,
@@ -818,10 +810,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   padding: const EdgeInsets.only(bottom: 2),
                   decoration: const BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFF5D5D5D),
-                        width: 1.5,
-                      ),
+                      bottom: BorderSide(color: Color(0xFF5D5D5D), width: 1.5),
                     ),
                   ),
                   child: const Text(
@@ -840,9 +829,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                   child: TabBar(
                     isScrollable: true,
                     padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.only(
-                      right: 16,
-                    ),
+                    labelPadding: const EdgeInsets.only(right: 16),
                     tabAlignment: TabAlignment.start,
                     indicator: const UnderlineTabIndicator(
                       borderSide: BorderSide(
@@ -874,11 +861,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       _scrollToTop();
                       _searchController.clear();
                       context.read<HomeCubit>().clearSearch();
-                      context
-                          .read<ProductsCubit>()
-                          .fetchFeaturedProducts(
-                            ownerId: "user13@gmail.com",
-                          );
+                      context.read<ProductsCubit>().fetchFeaturedProducts(
+                        ownerId: "user13@gmail.com",
+                      );
                     },
                   ),
                 ),
@@ -912,21 +897,17 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           final isNowTrending = !wasTrending;
 
                           if (isNowTrending) {
-                            context
-                                .read<ProductsCubit>()
-                                .fetchTrendingProducts(
-                                  ownerId: "user13@gmail.com",
-                                  applicationType: homeState.isExterior
-                                      ? "EXTERIOR"
-                                      : "INTERIOR",
-                                );
+                            context.read<ProductsCubit>().fetchTrendingProducts(
+                              ownerId: "user13@gmail.com",
+                              applicationType: homeState.isExterior
+                                  ? "EXTERIOR"
+                                  : "INTERIOR",
+                            );
                           } else {
-                            context
-                                .read<ProductsCubit>()
-                                .fetchFeaturedProducts(
-                                  ownerId: "user13@gmail.com",
-                                  isExterior: homeState.isExterior,
-                                );
+                            context.read<ProductsCubit>().fetchFeaturedProducts(
+                              ownerId: "user13@gmail.com",
+                              isExterior: homeState.isExterior,
+                            );
                           }
                         },
                         child: Padding(
@@ -971,18 +952,14 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           final isNowLiked = !wasLiked;
 
                           if (isNowLiked) {
-                            context
-                                .read<ProductsCubit>()
-                                .fetchFavoriteProducts(
-                                  ownerId: "user13@gmail.com",
-                                );
+                            context.read<ProductsCubit>().fetchFavoriteProducts(
+                              ownerId: "user13@gmail.com",
+                            );
                           } else {
-                            context
-                                .read<ProductsCubit>()
-                                .fetchFeaturedProducts(
-                                  ownerId: "user13@gmail.com",
-                                  isExterior: homeState.isExterior,
-                                );
+                            context.read<ProductsCubit>().fetchFeaturedProducts(
+                              ownerId: "user13@gmail.com",
+                              isExterior: homeState.isExterior,
+                            );
                           }
                         },
                         child: Padding(
@@ -1040,13 +1017,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         if (!homeState.isExterior) ...[
-          _buildSplitCategoryMenu(
-            quickProducts,
-            homeState.selectedIndex,
-          ),
-          const SizedBox(height: 10),
+          _buildSplitCategoryMenu(quickProducts, homeState.selectedIndex),
+          const SizedBox(height: 4),
         ],
       ],
     );
@@ -1058,16 +1032,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             ? GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // 👈 4 images per row
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1, // square images
-                    ),
-                itemCount: productsState.isLoading
-                    ? 6
-                    : displayProducts.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // 👈 4 images per row
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1, // square images
+                ),
+                itemCount: productsState.isLoading ? 6 : displayProducts.length,
                 itemBuilder: (context, index) {
                   if (productsState.isLoading) {
                     return Shimmer.fromColors(
@@ -1078,9 +1049,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              4,
-                            ),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),
@@ -1101,15 +1070,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         isNetwork: product.isNetworkImage,
                         id: product.id,
                         onFavoriteToggle: () {
-                          context
-                              .read<ProductsCubit>()
-                              .toggleFavorite(
-                                itemId:
-                                    product.itemId ??
-                                    product.furnitureId ??
-                                    product.id,
-                                ownerId: "user13@gmail.com",
-                              );
+                          context.read<ProductsCubit>().toggleFavorite(
+                            itemId:
+                                product.itemId ??
+                                product.furnitureId ??
+                                product.id,
+                            ownerId: "user13@gmail.com",
+                          );
                         },
                       ),
                     ),
@@ -1119,11 +1086,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             : ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: productsState.isLoading
-                    ? 5
-                    : displayProducts.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: 16),
+                itemCount: productsState.isLoading ? 5 : displayProducts.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   if (productsState.isLoading) {
                     return Shimmer.fromColors(
@@ -1134,9 +1098,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              12,
-                            ),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
@@ -1157,15 +1119,13 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         isNetwork: product.isNetworkImage,
                         id: product.id,
                         onFavoriteToggle: () {
-                          context
-                              .read<ProductsCubit>()
-                              .toggleFavorite(
-                                itemId:
-                                    product.itemId ??
-                                    product.furnitureId ??
-                                    product.id,
-                                ownerId: "user13@gmail.com",
-                              );
+                          context.read<ProductsCubit>().toggleFavorite(
+                            itemId:
+                                product.itemId ??
+                                product.furnitureId ??
+                                product.id,
+                            ownerId: "user13@gmail.com",
+                          );
                         },
                       ),
                     ),
@@ -1212,9 +1172,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       context.read<HomeCubit>().clearSearch();
                       context.read<HomeCubit>().resetFilters();
                       // Fetch featured products
-                      return context.read<ProductsCubit>().fetchFeaturedProducts(
-                        ownerId: "user13@gmail.com",
-                      );
+                      return context
+                          .read<ProductsCubit>()
+                          .fetchFeaturedProducts(ownerId: "user13@gmail.com");
                     },
                     child: NotificationListener<ScrollNotification>(
                       onNotification: (ScrollNotification scrollInfo) {
@@ -1237,10 +1197,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                             children: [
                               if (!homeState.isExterior) ...[
                                 _buildSubCategoryMenu(),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: 4),
                               ],
                               productsWidget,
-                              SizedBox(height: _bottomCtaReservedSpace(context)),
+                              SizedBox(
+                                height: _bottomCtaReservedSpace(context),
+                              ),
                             ],
                           ),
                         ),

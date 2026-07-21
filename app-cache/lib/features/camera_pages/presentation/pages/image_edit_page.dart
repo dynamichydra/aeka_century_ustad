@@ -3051,133 +3051,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                     ? vpSelection.left - 18
                     : vpSelection.right + 8;
 
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Horizontal double arrow line
-                    Positioned(
-                      left: vpSelection.left,
-                      top: horizontalArrowTop,
-                      width: vpSelection.width,
-                      height: 10,
-                      child: CustomPaint(
-                        painter: DashedLinePainter(axis: Axis.horizontal),
-                      ),
-                    ),
-                    // Vertical double arrow line
-                    Positioned(
-                      left: verticalArrowLeft,
-                      top: vpSelection.top,
-                      width: 10,
-                      height: vpSelection.height,
-                      child: CustomPaint(
-                        painter: DashedLinePainter(axis: Axis.vertical),
-                      ),
-                    ),
-                    // Horizontal dimension label / inline editor
-                    Positioned(
-                      left: widthCardPos.dx,
-                      top: widthCardPos.dy,
-                      width: widthCardW,
-                      child: Listener(
-                        behavior: HitTestBehavior.opaque,
-                        onPointerDown: (e) {
-                          _interactingWithOverlay = true;
-                        },
-                        child: Center(
-                          child: _editingWidth
-                              ? _buildInlineEditor(
-                                  controller: _widthEditController,
-                                  onSave: () {
-                                    _justSaved = true;
-                                    setState(() {
-                                      final parsedW = double.tryParse(
-                                        _widthEditController.text,
-                                      );
-                                      if (parsedW != null && parsedW > 0) {
-                                        _customWidthInches = parsedW;
-                                      }
-                                      _recalculateArea();
-                                      _notifyCubitOfSelection();
-                                    });
-
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                          if (mounted) {
-                                            setState(() {
-                                              _editingWidth = false;
-                                            });
-                                          }
-                                        });
-                                  },
-                                )
-                              : _buildDisplayLabel(
-                                  value: _customWidthInches,
-                                  onTap: () {
-                                    setState(() {
-                                      _widthEditController.text =
-                                          _customWidthInches.round().toString();
-                                      _editingWidth = true;
-                                    });
-                                  },
-                                ),
-                        ),
-                      ),
-                    ),
-                    // Vertical dimension label / inline editor
-                    Positioned(
-                      left: heightCardPos.dx,
-                      top: heightCardPos.dy,
-                      width: heightCardW,
-                      child: Listener(
-                        behavior: HitTestBehavior.opaque,
-                        onPointerDown: (e) {
-                          _interactingWithOverlay = true;
-                        },
-                        child: Center(
-                          child: _editingHeight
-                              ? _buildInlineEditor(
-                                  controller: _heightEditController,
-                                  onSave: () {
-                                    _justSaved = true;
-                                    setState(() {
-                                      final parsedH = double.tryParse(
-                                        _heightEditController.text,
-                                      );
-                                      if (parsedH != null && parsedH > 0) {
-                                        _customHeightInches = parsedH;
-                                      }
-                                      _recalculateArea();
-                                      _notifyCubitOfSelection();
-                                    });
-
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                          if (mounted) {
-                                            setState(() {
-                                              _editingHeight = false;
-                                            });
-                                          }
-                                        });
-                                  },
-                                )
-                              : _buildDisplayLabel(
-                                  value: _customHeightInches,
-                                  onTap: () {
-                                    setState(() {
-                                      _heightEditController.text =
-                                          _customHeightInches
-                                              .round()
-                                              .toString();
-                                      _editingHeight = true;
-                                    });
-                                  },
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
+                return const SizedBox.shrink();
               },
             ),
           // Zoom Controls
@@ -3953,8 +3827,11 @@ class _ImageEditPageState extends State<ImageEditPage>
     String selectedUnit = 'ft'; // Default unit: Feet
     String? errorMessage;
 
-    final String skuName =
-        texture["sku"] ?? texture["name"] ?? texture["title"] ?? "Laminate";
+    final String nameStr = (texture["name"] ?? texture["title"] ?? "").toString().trim();
+    final String skuStr = (texture["sku"] ?? "").toString().trim();
+    final String displayName = (nameStr.isNotEmpty && skuStr.isNotEmpty)
+        ? "$nameStr | $skuStr"
+        : (nameStr.isNotEmpty ? nameStr : (skuStr.isNotEmpty ? skuStr : "Laminate"));
 
     void convertInputs(String oldUnit, String newUnit) {
       final lText = lengthController.text.trim();
@@ -4010,7 +3887,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFFEA202C), Color(0xFFC01520)],
+                          colors: [Color(0xFF374151), Color(0xFF1F2937)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -4044,7 +3921,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  skuName,
+                                  displayName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -4082,15 +3959,15 @@ class _ImageEditPageState extends State<ImageEditPage>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFF2F2),
+                                color: const Color(0xFFF3F4F6),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFFFCDD2)),
+                                border: Border.all(color: const Color(0xFFD1D5DB)),
                               ),
                               child: Row(
                                 children: [
                                   const Icon(
                                     Icons.error_outline_rounded,
-                                    color: Color(0xFFD32F2F),
+                                    color: Color(0xFF4B5563),
                                     size: 18,
                                   ),
                                   const SizedBox(width: 8),
@@ -4098,7 +3975,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                                     child: Text(
                                       errorMessage!,
                                       style: const TextStyle(
-                                        color: Color(0xFFD32F2F),
+                                        color: Color(0xFF374151),
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -4169,7 +4046,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                                                 ? FontWeight.bold
                                                 : FontWeight.w500,
                                             color: selectedUnit == 'ft'
-                                                ? const Color(0xFFEA202C)
+                                                ? const Color(0xFF374151)
                                                 : Colors.black54,
                                           ),
                                         ),
@@ -4213,7 +4090,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                                                 ? FontWeight.bold
                                                 : FontWeight.w500,
                                             color: selectedUnit == 'in'
-                                                ? const Color(0xFFEA202C)
+                                                ? const Color(0xFF374151)
                                                 : Colors.black54,
                                           ),
                                         ),
@@ -4262,7 +4139,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                  color: Color(0xFFEA202C),
+                                  color: Color(0xFF4B5563),
                                   width: 1.5,
                                 ),
                               ),
@@ -4310,7 +4187,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                  color: Color(0xFFEA202C),
+                                  color: Color(0xFF4B5563),
                                   width: 1.5,
                                 ),
                               ),
@@ -4329,10 +4206,13 @@ class _ImageEditPageState extends State<ImageEditPage>
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE5E5EA),
+                                      width: 1,
                                     ),
-                                    side: const BorderSide(color: Color(0xFFD1D1D6)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(25),
+                                    ),
                                   ),
                                   onPressed: () {
                                     Navigator.of(dialogContext).pop();
@@ -4340,9 +4220,9 @@ class _ImageEditPageState extends State<ImageEditPage>
                                   child: const Text(
                                     "Cancel",
                                     style: TextStyle(
-                                      color: Colors.black87,
+                                      color: Colors.black54,
                                       fontSize: 13,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
@@ -4352,10 +4232,15 @@ class _ImageEditPageState extends State<ImageEditPage>
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(vertical: 12),
-                                    backgroundColor: const Color(0xFFEA202C),
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
                                     elevation: 0,
+                                    side: const BorderSide(
+                                      color: Colors.black12,
+                                      width: 1,
+                                    ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(25),
                                     ),
                                   ),
                                   onPressed: () {
@@ -4415,7 +4300,7 @@ class _ImageEditPageState extends State<ImageEditPage>
 
                                     // Print final whole positive number results to console
                                     debugPrint("==================================================");
-                                    debugPrint("📐 DIMENSIONS CONFIRMED FOR: $skuName");
+                                    debugPrint("📐 DIMENSIONS CONFIRMED FOR: $displayName");
                                     debugPrint("   Input Unit: $selectedUnit");
                                     debugPrint("   Raw Input: Length=$lengthText, Breadth=$breadthText");
                                     debugPrint("   Final Length: $finalLengthInches in (whole positive number)");
@@ -4447,9 +4332,9 @@ class _ImageEditPageState extends State<ImageEditPage>
                                   child: const Text(
                                     "Continue",
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: Colors.black,
                                       fontSize: 13,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -4472,10 +4357,8 @@ class _ImageEditPageState extends State<ImageEditPage>
   Widget _buildTextureThumbnail(dynamic texture, {required bool isGrid}) {
     final isSelected = _selectedTexture?["id"] == texture["id"];
     final imageUrl = texture["coverImage"] ?? "";
-    final label =
-        (texture["sku"] != null && texture["sku"].toString().isNotEmpty)
-        ? texture["sku"].toString()
-        : (texture["name"] ?? "");
+    final String nameStr = (texture["name"] ?? texture["title"] ?? "").toString().trim();
+    final String skuStr = (texture["sku"] ?? "").toString().trim();
 
     final imageWidget = Padding(
       padding: const EdgeInsets.all(5),
@@ -4583,21 +4466,37 @@ class _ImageEditPageState extends State<ImageEditPage>
                 width: widget.textureThumbWidth,
                 child: imageWidget,
               ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: double.infinity,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isSelected ? Colors.black : const Color(0xFF5D5D5D),
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+            const SizedBox(height: 4),
+            if (nameStr.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Text(
+                  nameStr,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isSelected ? Colors.black : const Color(0xFF222222),
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
+            if (skuStr.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Text(
+                  skuStr,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: isSelected ? const Color(0xFF374151) : const Color(0xFF666666),
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -4612,7 +4511,11 @@ class _ImageEditPageState extends State<ImageEditPage>
       context: context,
       builder: (context) {
         final imageUrl = texture["coverImage"] ?? "";
-        final label = texture["sku"] ?? texture["name"] ?? "";
+        final String nameStr = (texture["name"] ?? texture["title"] ?? "").toString().trim();
+        final String skuStr = (texture["sku"] ?? "").toString().trim();
+        final String label = (nameStr.isNotEmpty && skuStr.isNotEmpty)
+            ? "$nameStr | $skuStr"
+            : (nameStr.isNotEmpty ? nameStr : (skuStr.isNotEmpty ? skuStr : "Laminate"));
 
         return Dialog(
           backgroundColor: Colors.transparent,
