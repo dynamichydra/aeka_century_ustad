@@ -6,6 +6,9 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:century_ai/features/camera_pages/presentation/widgets/camera_tips_bottom_sheet.dart';
+import 'package:century_ai/router/app_routes.dart';
 
 class ImageColorPickerPage extends StatefulWidget {
   final File imageFile;
@@ -40,7 +43,9 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
 
   void _resolveImageSize() {
     final ImageProvider imageProvider = FileImage(_currentImage);
-    final ImageStream stream = imageProvider.resolve(const ImageConfiguration());
+    final ImageStream stream = imageProvider.resolve(
+      const ImageConfiguration(),
+    );
     ImageStreamListener? listener;
     listener = ImageStreamListener(
       (ImageInfo info, bool synchronousCall) {
@@ -70,7 +75,7 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
     super.initState();
     _currentImage = widget.imageFile;
     _resolveImageSize();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final size = MediaQuery.of(context).size;
       setState(() {
@@ -85,6 +90,13 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    if (source == ImageSource.camera) {
+      final box = GetStorage();
+      final bool dontShow = box.read<bool>('dont_show_camera_tips') ?? false;
+      if (!dontShow) {
+        await CameraTipsBottomSheet.show(context);
+      }
+    }
     try {
       final XFile? pickedFile = await _picker.pickImage(source: source);
       if (pickedFile != null) {
@@ -215,7 +227,8 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                         onPanStart: (details) {
                           _cachedImage = null;
                           _pixelData = null;
-                          final distance = (details.localPosition - _touchPos).distance;
+                          final distance =
+                              (details.localPosition - _touchPos).distance;
                           if (distance < 40.0) {
                             isDraggingTarget = true;
                           } else {
@@ -231,9 +244,15 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                           } else {
                             setState(() {
                               if (isLandscape) {
-                                _dragX = (_dragX + details.delta.dx).clamp(-maxDragX, maxDragX);
+                                _dragX = (_dragX + details.delta.dx).clamp(
+                                  -maxDragX,
+                                  maxDragX,
+                                );
                               } else {
-                                _dragY = (_dragY + details.delta.dy).clamp(-maxDragY, maxDragY);
+                                _dragY = (_dragY + details.delta.dy).clamp(
+                                  -maxDragY,
+                                  maxDragY,
+                                );
                               }
                             });
                             _pickColor(_touchPos);
@@ -449,7 +468,15 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                         border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: IconButton(
-                        onPressed: () => _pickImage(ImageSource.camera),
+                        onPressed: () {
+                          context.push(
+                            AppRoutes.camera,
+                            extra: {
+                              'fromColorPicker': true,
+                              'originalImage': widget.originalImage ?? widget.imageFile,
+                            },
+                          );
+                        },
                         icon: const Icon(Icons.camera_alt_outlined),
                       ),
                     ),
@@ -493,10 +520,13 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
+                      side: BorderSide.none,
                     ),
                     child: const Text("Done"),
                   ),

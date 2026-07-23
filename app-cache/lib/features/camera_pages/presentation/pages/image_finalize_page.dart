@@ -657,7 +657,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                         child: Container(
                                           height: 96,
                                           width: 1.0,
-                                          color: Colors.red.shade400,
+                                          color: Color(0xFF8C8C8C),
                                           margin: const EdgeInsets.symmetric(horizontal: 8),
                                         ),
                                       ),

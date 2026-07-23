@@ -3822,8 +3822,8 @@ class _ImageEditPageState extends State<ImageEditPage>
     dynamic texture,
   ) async {
     final cubit = context.read<ImageEditCubit>();
-    final lengthController = TextEditingController();
-    final breadthController = TextEditingController();
+    final heightController = TextEditingController();
+    final widthController = TextEditingController();
     String selectedUnit = 'ft'; // Default unit: Feet
     String? errorMessage;
 
@@ -3831,32 +3831,34 @@ class _ImageEditPageState extends State<ImageEditPage>
     final String skuStr = (texture["sku"] ?? "").toString().trim();
     final String displayName = (nameStr.isNotEmpty && skuStr.isNotEmpty)
         ? "$nameStr | $skuStr"
-        : (nameStr.isNotEmpty ? nameStr : (skuStr.isNotEmpty ? skuStr : "Laminate"));
+        : (nameStr.isNotEmpty
+              ? nameStr
+              : (skuStr.isNotEmpty ? skuStr : "Laminate"));
 
     void convertInputs(String oldUnit, String newUnit) {
-      final lText = lengthController.text.trim();
-      final bText = breadthController.text.trim();
-      if (lText.isNotEmpty) {
-        final double? val = double.tryParse(lText);
+      final hText = heightController.text.trim();
+      final wText = widthController.text.trim();
+      if (hText.isNotEmpty) {
+        final double? val = double.tryParse(hText);
         if (val != null && val > 0) {
           if (oldUnit == 'ft' && newUnit == 'in') {
-            lengthController.text = (val * 12).round().toString();
+            heightController.text = (val * 12).round().toString();
           } else if (oldUnit == 'in' && newUnit == 'ft') {
             final converted = val / 12.0;
-            lengthController.text = converted % 1 == 0
+            heightController.text = converted % 1 == 0
                 ? converted.toInt().toString()
                 : converted.toStringAsFixed(1);
           }
         }
       }
-      if (bText.isNotEmpty) {
-        final double? val = double.tryParse(bText);
+      if (wText.isNotEmpty) {
+        final double? val = double.tryParse(wText);
         if (val != null && val > 0) {
           if (oldUnit == 'ft' && newUnit == 'in') {
-            breadthController.text = (val * 12).round().toString();
+            widthController.text = (val * 12).round().toString();
           } else if (oldUnit == 'in' && newUnit == 'ft') {
             final converted = val / 12.0;
-            breadthController.text = converted % 1 == 0
+            widthController.text = converted % 1 == 0
                 ? converted.toInt().toString()
                 : converted.toStringAsFixed(1);
           }
@@ -3884,14 +3886,11 @@ class _ImageEditPageState extends State<ImageEditPage>
                   children: [
                     // Header Banner
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF374151), Color(0xFF1F2937)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
                       ),
+                      decoration: const BoxDecoration(color: Color(0xff8c8c8c)),
                       child: Row(
                         children: [
                           Container(
@@ -3945,7 +3944,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Exact dimensions are required before applying this laminate.",
+                            "Enter the exact dimensions of the selected area to generate an accurate laminate visualisation and estimate the required number of laminate sheets.",
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
@@ -3957,11 +3956,16 @@ class _ImageEditPageState extends State<ImageEditPage>
                           // Error Banner
                           if (errorMessage != null) ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF3F4F6),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFD1D5DB)),
+                                border: Border.all(
+                                  color: const Color(0xFFD1D5DB),
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -4027,11 +4031,14 @@ class _ImageEditPageState extends State<ImageEditPage>
                                           color: selectedUnit == 'ft'
                                               ? Colors.white
                                               : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                           boxShadow: selectedUnit == 'ft'
                                               ? [
                                                   BoxShadow(
-                                                    color: Colors.black.withOpacity(0.08),
+                                                    color: Colors.black
+                                                        .withOpacity(0.08),
                                                     blurRadius: 4,
                                                     offset: const Offset(0, 2),
                                                   ),
@@ -4071,11 +4078,14 @@ class _ImageEditPageState extends State<ImageEditPage>
                                           color: selectedUnit == 'in'
                                               ? Colors.white
                                               : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                           boxShadow: selectedUnit == 'in'
                                               ? [
                                                   BoxShadow(
-                                                    color: Colors.black.withOpacity(0.08),
+                                                    color: Colors.black
+                                                        .withOpacity(0.08),
                                                     blurRadius: 4,
                                                     offset: const Offset(0, 2),
                                                   ),
@@ -4103,12 +4113,14 @@ class _ImageEditPageState extends State<ImageEditPage>
                           ),
                           const SizedBox(height: 16),
 
-                          // Length Input
+                          // Height Input
                           TextField(
-                            controller: lengthController,
+                            controller: heightController,
                             keyboardType: selectedUnit == 'in'
                                 ? TextInputType.number
-                                : const TextInputType.numberWithOptions(decimal: true),
+                                : const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                             inputFormatters: selectedUnit == 'in'
                                 ? [FilteringTextInputFormatter.digitsOnly]
                                 : null,
@@ -4117,24 +4129,38 @@ class _ImageEditPageState extends State<ImageEditPage>
                               fontWeight: FontWeight.w600,
                             ),
                             decoration: InputDecoration(
-                              labelText: "Length ($selectedUnit)*",
-                              hintText: selectedUnit == 'in' ? "e.g. 102" : "e.g. 8.5",
-                              prefixIcon: const Icon(Icons.height_rounded, size: 18),
+                              labelStyle: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              labelText: "Height (vertically) ($selectedUnit)*",
+                              hintText: selectedUnit == 'in'
+                                  ? "e.g. 102"
+                                  : "e.g. 8.5",
+                              prefixIcon: const Icon(
+                                Icons.height_rounded,
+                                size: 12,
+                              ),
                               suffixText: selectedUnit,
                               suffixStyle: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black45,
                               ),
+                              hintStyle: const TextStyle(fontSize: 12),
                               filled: true,
                               fillColor: const Color(0xFFF9F9FB),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E5EA),
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E5EA),
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -4142,21 +4168,19 @@ class _ImageEditPageState extends State<ImageEditPage>
                                   color: Color(0xFF4B5563),
                                   width: 1.5,
                                 ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
                               ),
                             ),
                           ),
                           const SizedBox(height: 12),
 
-                          // Breadth Input
+                          // Width Input
                           TextField(
-                            controller: breadthController,
+                            controller: widthController,
                             keyboardType: selectedUnit == 'in'
                                 ? TextInputType.number
-                                : const TextInputType.numberWithOptions(decimal: true),
+                                : const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                             inputFormatters: selectedUnit == 'in'
                                 ? [FilteringTextInputFormatter.digitsOnly]
                                 : null,
@@ -4165,10 +4189,20 @@ class _ImageEditPageState extends State<ImageEditPage>
                               fontWeight: FontWeight.w600,
                             ),
                             decoration: InputDecoration(
-                              labelText: "Breadth ($selectedUnit)*",
-                              hintText: selectedUnit == 'in' ? "e.g. 48" : "e.g. 4.0",
-                              prefixIcon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                              labelStyle: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              labelText: "Width (horizontally) ($selectedUnit)*",
+                              hintText: selectedUnit == 'in'
+                                  ? "e.g. 48"
+                                  : "e.g. 4.0",
+                              prefixIcon: const Icon(
+                                Icons.swap_horiz_rounded,
+                                size: 12,
+                              ),
                               suffixText: selectedUnit,
+                              hintStyle: const TextStyle(fontSize: 12),
                               suffixStyle: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -4178,11 +4212,15 @@ class _ImageEditPageState extends State<ImageEditPage>
                               fillColor: const Color(0xFFF9F9FB),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E5EA),
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E5EA),
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -4190,10 +4228,6 @@ class _ImageEditPageState extends State<ImageEditPage>
                                   color: Color(0xFF4B5563),
                                   width: 1.5,
                                 ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
                               ),
                             ),
                           ),
@@ -4205,7 +4239,9 @@ class _ImageEditPageState extends State<ImageEditPage>
                               Expanded(
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                     side: const BorderSide(
                                       color: Color(0xFFE5E5EA),
                                       width: 1,
@@ -4231,7 +4267,9 @@ class _ImageEditPageState extends State<ImageEditPage>
                               Expanded(
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                     backgroundColor: Colors.white,
                                     foregroundColor: Colors.black,
                                     elevation: 0,
@@ -4244,18 +4282,18 @@ class _ImageEditPageState extends State<ImageEditPage>
                                     ),
                                   ),
                                   onPressed: () {
-                                    final lengthText = lengthController.text.trim();
-                                    final breadthText = breadthController.text.trim();
+                                    final heightText = heightController.text.trim();
+                                    final widthText = widthController.text.trim();
 
-                                    if (lengthText.isEmpty || breadthText.isEmpty) {
+                                    if (heightText.isEmpty || widthText.isEmpty) {
                                       setDialogState(() {
-                                        errorMessage = "Both Length and Breadth are required.";
+                                        errorMessage = "Both Height and Width are required.";
                                       });
                                       return;
                                     }
 
                                     if (selectedUnit == 'in') {
-                                      if (lengthText.contains('.') || breadthText.contains('.')) {
+                                      if (heightText.contains('.') || widthText.contains('.')) {
                                         setDialogState(() {
                                           errorMessage = "Decimal numbers are not allowed for Inches. Please enter whole numbers.";
                                         });
@@ -4263,13 +4301,10 @@ class _ImageEditPageState extends State<ImageEditPage>
                                       }
                                     }
 
-                                    final double? lengthVal = double.tryParse(lengthText);
-                                    final double? breadthVal = double.tryParse(breadthText);
+                                    final double? heightVal = double.tryParse(heightText);
+                                    final double? widthVal = double.tryParse(widthText);
 
-                                    if (lengthVal == null ||
-                                        lengthVal <= 0 ||
-                                        breadthVal == null ||
-                                        breadthVal <= 0) {
+                                    if (heightVal == null || heightVal <= 0 || widthVal == null || widthVal <= 0) {
                                       setDialogState(() {
                                         errorMessage = "Please enter valid positive numbers (> 0). Zero and negative values are not allowed.";
                                       });
@@ -4277,44 +4312,58 @@ class _ImageEditPageState extends State<ImageEditPage>
                                     }
 
                                     // Convert final measurements to whole positive numbers (round to nearest whole number)
-                                    int finalLengthInches;
-                                    int finalBreadthInches;
+                                    int finalHeightInches;
+                                    int finalWidthInches;
 
                                     if (selectedUnit == 'in') {
-                                      finalLengthInches = lengthVal.round();
-                                      finalBreadthInches = breadthVal.round();
+                                      finalHeightInches = heightVal.round();
+                                      finalWidthInches = widthVal.round();
                                     } else {
-                                      finalLengthInches = (lengthVal * 12.0).round();
-                                      finalBreadthInches = (breadthVal * 12.0).round();
+                                      finalHeightInches = (heightVal * 12.0).round();
+                                      finalWidthInches = (widthVal * 12.0).round();
                                     }
 
-                                    if (finalLengthInches <= 0 || finalBreadthInches <= 0) {
+                                    if (finalHeightInches <= 0 || finalWidthInches <= 0) {
                                       setDialogState(() {
                                         errorMessage = "Calculated dimensions must be positive integers.";
                                       });
                                       return;
                                     }
 
-                                    final int finalAreaSqInches = finalLengthInches * finalBreadthInches;
+                                    final int finalAreaSqInches = finalHeightInches * finalWidthInches;
                                     final double areaSqFt = finalAreaSqInches / 144.0;
 
                                     // Print final whole positive number results to console
-                                    debugPrint("==================================================");
-                                    debugPrint("📐 DIMENSIONS CONFIRMED FOR: $displayName");
+                                    debugPrint(
+                                      "==================================================",
+                                    );
+                                    debugPrint(
+                                      "📐 DIMENSIONS CONFIRMED FOR: $displayName",
+                                    );
                                     debugPrint("   Input Unit: $selectedUnit");
-                                    debugPrint("   Raw Input: Length=$lengthText, Breadth=$breadthText");
-                                    debugPrint("   Final Length: $finalLengthInches in (whole positive number)");
-                                    debugPrint("   Final Breadth: $finalBreadthInches in (whole positive number)");
-                                    debugPrint("   Final Area: $areaSqFt sq. ft. ($finalAreaSqInches sq. in.)");
-                                    debugPrint("==================================================");
+                                    debugPrint(
+                                      "   Raw Input: Height=$heightText, Width=$widthText",
+                                    );
+                                    debugPrint(
+                                      "   Final Height: $finalHeightInches in (whole positive number)",
+                                    );
+                                    debugPrint(
+                                      "   Final Width: $finalWidthInches in (whole positive number)",
+                                    );
+                                    debugPrint(
+                                      "   Final Area: $areaSqFt sq. ft. ($finalAreaSqInches sq. in.)",
+                                    );
+                                    debugPrint(
+                                      "==================================================",
+                                    );
 
                                     Navigator.of(dialogContext).pop();
 
                                     // Apply the laminate with calculated area and updated dimensions
                                     setState(() {
                                       _selectedTexture = texture;
-                                      _customWidthInches = finalLengthInches.toDouble();
-                                      _customHeightInches = finalBreadthInches.toDouble();
+                                      _customWidthInches = finalWidthInches.toDouble();
+                                      _customHeightInches = finalHeightInches.toDouble();
                                       _areaController.text = areaSqFt.toStringAsFixed(2);
                                     });
 
@@ -4444,7 +4493,7 @@ class _ImageEditPageState extends State<ImageEditPage>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text("Please select an area on the image first."),
-              backgroundColor: Colors.amber,
+              backgroundColor: TColors.primary,
               duration: Duration(seconds: 2),
             ),
           );
