@@ -4438,9 +4438,33 @@ class _ImageEditPageState extends State<ImageEditPage>
 
                                     Navigator.of(dialogContext).pop();
 
+                                    // Compute sheets specifically for THIS laminate using the
+                                    // user-entered dimensions, so each laminate gets its own value.
+                                    final int opt1sheets = rectanglesNeeded(
+                                      bigWidth: finalWidthInches.toDouble(),
+                                      bigHeight: finalHeightInches.toDouble(),
+                                      smallWidth: 96.0,
+                                      smallHeight: 48.0,
+                                    );
+                                    final int opt2sheets = rectanglesNeeded(
+                                      bigWidth: finalWidthInches.toDouble(),
+                                      bigHeight: finalHeightInches.toDouble(),
+                                      smallWidth: 48.0,
+                                      smallHeight: 96.0,
+                                    );
+                                    final int thisLaminateSheets = opt1sheets < opt2sheets
+                                        ? opt1sheets
+                                        : opt2sheets;
+
+                                    // Stamp estimatedSheets onto the texture so it is
+                                    // persisted into the DB record for this specific laminate.
+                                    final Map<String, dynamic> textureWithSheets =
+                                        Map<String, dynamic>.from(texture as Map)
+                                          ..['estimatedSheets'] = thisLaminateSheets;
+
                                     // Apply the laminate with calculated area and updated dimensions
                                     setState(() {
-                                      _selectedTexture = texture;
+                                      _selectedTexture = textureWithSheets;
                                       _customWidthInches = finalWidthInches.toDouble();
                                       _customHeightInches = finalHeightInches.toDouble();
                                       _areaController.text = areaSqFt.toStringAsFixed(2);
@@ -4452,7 +4476,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                                     }
 
                                     // Set pattern and trigger API generation with user inputs
-                                    cubit.selectPattern(texture);
+                                    cubit.selectPattern(textureWithSheets);
                                     if (cubit.state.selectedArea != null && !cubit.state.isGenerating) {
                                       cubit.generateAIImage();
                                     }
@@ -4959,7 +4983,11 @@ class _ImageEditPageState extends State<ImageEditPage>
 
         usedLaminates = usedLaminates.map((e) {
           final m = Map<String, dynamic>.from(e);
-          m['estimatedSheets'] = m['estimatedSheets'] ?? est;
+          // Only fill in estimatedSheets when the laminate doesn't already
+          // carry its own value (stamped at apply time from dimension dialog).
+          if (m['estimatedSheets'] == null) {
+            m['estimatedSheets'] = est;
+          }
           return m;
         }).toList();
       }
@@ -5001,7 +5029,11 @@ class _ImageEditPageState extends State<ImageEditPage>
 
       usedLaminates = usedLaminates.map((e) {
         final m = Map<String, dynamic>.from(e);
-        m['estimatedSheets'] = m['estimatedSheets'] ?? est;
+        // Only fill in estimatedSheets when the laminate doesn't already
+        // carry its own value (stamped at apply time from dimension dialog).
+        if (m['estimatedSheets'] == null) {
+          m['estimatedSheets'] = est;
+        }
         return m;
       }).toList();
     } else {
