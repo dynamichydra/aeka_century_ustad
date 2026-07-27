@@ -128,9 +128,10 @@ class _ImageEditPageState extends State<ImageEditPage>
 
   final ScrollController _horizontalScrollController = ScrollController();
   int _currentPage = 1;
+  int? _totalTexturesCount;
   bool _hasMoreTextures = true;
   bool _isFetchingMore = false;
-  static const int _pageSize = 25;
+  static const int _pageSize = 12;
 
   bool _compareExpanded = false;
   bool _editExpanded = true;
@@ -647,9 +648,18 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   void _onHorizontalScroll() {
-    if (_horizontalScrollController.hasClients &&
-        _horizontalScrollController.position.pixels >=
-            _horizontalScrollController.position.maxScrollExtent - 200) {
+    if (!_horizontalScrollController.hasClients) return;
+    final double maxScroll =
+        _horizontalScrollController.position.maxScrollExtent;
+    final double currentScroll =
+        _horizontalScrollController.position.pixels;
+
+    // Only trigger when the user is within 300px of the end of the list
+    if (maxScroll > 0 && currentScroll >= maxScroll - 300) {
+      debugPrint(
+        "🚀 [SCROLL NEAR END] Pixels: ${currentScroll.toStringAsFixed(0)} / "
+        "Max: ${maxScroll.toStringAsFixed(0)} → triggering _fetchMoreTextures()",
+      );
       _fetchMoreTextures();
     }
   }
@@ -657,28 +667,64 @@ class _ImageEditPageState extends State<ImageEditPage>
   Future<void> _fetchTextures() async {
     if (_selectedCategory == null) return;
 
+    debugPrint(
+      "🔍 [FETCH TEXTURES] Initial fetch for Category: '$_selectedCategory', "
+      "Subcategory: '$_selectedSubCategory'",
+    );
+
+    if (_horizontalScrollController.hasClients) {
+      _horizontalScrollController.jumpTo(0);
+    }
+
     setState(() {
       _isLoadingTextures = true;
+      _apiTextures = [];
       _currentPage = 1;
+      _totalTexturesCount = null;
       _hasMoreTextures = true;
       _isFetchingMore = false;
     });
 
     try {
-      final list = await _textureController.fetchTexturesByCategory(
+      // The controller returns ALL cached items on page 1 if cache is warm,
+      // or exactly one page of API results if cache is cold.
+      final res = await _textureController.fetchTexturesByCategory(
         category: _selectedCategory!,
         subcategory: _selectedSubCategory,
         page: 1,
         pageLimit: _pageSize,
       );
+      final List<dynamic> list = res['textures'] as List<dynamic>? ?? [];
+      final int? total = res['totalCount'] as int?;
+
       if (mounted) {
+        // Determine the effective current page from how many items were returned
+        final int loadedPages =
+            list.isEmpty ? 1 : ((list.length - 1) ~/ _pageSize) + 1;
+
         setState(() {
           _apiTextures = list;
+          _totalTexturesCount = total;
           _isLoadingTextures = false;
-          if (list.length < _pageSize) {
-            _hasMoreTextures = false;
+          // Advance _currentPage to reflect how many pages are already in the list
+          _currentPage = loadedPages;
+
+          if (total != null) {
+            _hasMoreTextures = list.length < total;
+          } else {
+            _hasMoreTextures = list.length >= _pageSize;
           }
         });
+
+        debugPrint(
+          "📊 [FETCH TEXTURES RESULT] Loaded ${list.length} items "
+          "(effective page: $loadedPages, totalCount: $total, hasMore: $_hasMoreTextures)",
+        );
+
+        // If there are still more pages and the list is not yet full, auto-load them.
+        if (_hasMoreTextures) {
+          _fetchMoreTextures();
+        }
       }
     } catch (e) {
       debugPrint("❌ Error fetching textures: $e");
@@ -692,43 +738,65 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Future<void> _fetchMoreTextures() async {
-    if (_selectedCategory == null || _isFetchingMore || !_hasMoreTextures)
+    if (_selectedCategory == null || _isFetchingMore || !_hasMoreTextures) {
+      debugPrint(
+        "⏸️ [SKIP] isFetching: $_isFetchingMore | hasMore: $_hasMoreTextures",
+      );
       return;
+    }
 
-    setState(() {
-      _isFetchingMore = true;
-    });
+    final int nextPage = _currentPage + 1;
+    debugPrint(
+      "🔄 [FETCH MORE] Page $nextPage for '$_selectedCategory' "
+      "(loaded: ${_apiTextures.length}/${_totalTexturesCount ?? '?'})",
+    );
+
+    setState(() => _isFetchingMore = true);
 
     try {
-      final nextPage = _currentPage + 1;
-      final list = await _textureController.fetchTexturesByCategory(
+      final res = await _textureController.fetchTexturesByCategory(
         category: _selectedCategory!,
         subcategory: _selectedSubCategory,
         page: nextPage,
         pageLimit: _pageSize,
       );
+      final List<dynamic> newItems = res['textures'] as List<dynamic>? ?? [];
+      final int? total = res['totalCount'] as int?;
 
       if (mounted) {
         setState(() {
-          if (list.isEmpty) {
+          if (total != null) _totalTexturesCount = total;
+
+          if (newItems.isEmpty) {
             _hasMoreTextures = false;
+            debugPrint(
+              "⏹️ [FETCH MORE END] No items on page $nextPage — all loaded.",
+            );
           } else {
-            _apiTextures.addAll(list);
+            _apiTextures.addAll(newItems);
             _currentPage = nextPage;
-            if (list.length < _pageSize) {
-              _hasMoreTextures = false;
-            }
+
+            _hasMoreTextures = _totalTexturesCount != null
+                ? _apiTextures.length < _totalTexturesCount!
+                : newItems.length >= _pageSize;
+
+            debugPrint(
+              "➕ [FETCH MORE SUCCESS] +${newItems.length} items → "
+              "${_apiTextures.length}/${_totalTexturesCount ?? '?'} total. "
+              "hasMore: $_hasMoreTextures",
+            );
           }
           _isFetchingMore = false;
         });
+
+        // Auto-cascade: if more pages exist, keep fetching without requiring scroll
+        if (_hasMoreTextures) {
+          _fetchMoreTextures();
+        }
       }
     } catch (e) {
-      debugPrint("❌ Error fetching more textures: $e");
-      if (mounted) {
-        setState(() {
-          _isFetchingMore = false;
-        });
-      }
+      debugPrint("❌ [FETCH MORE ERROR] $e");
+      if (mounted) setState(() => _isFetchingMore = false);
     }
   }
 
@@ -3806,8 +3874,19 @@ class _ImageEditPageState extends State<ImageEditPage>
       child: ListView.builder(
         controller: _horizontalScrollController,
         scrollDirection: Axis.horizontal,
-        itemCount: _apiTextures.length,
+        itemCount: _apiTextures.length + (_isFetchingMore ? 1 : 0),
         itemBuilder: (context, index) {
+          if (index == _apiTextures.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFFEA202C),
+                ),
+              ),
+            );
+          }
           return Padding(
             padding: const EdgeInsets.only(right: 6),
             child: _buildTextureThumbnail(_apiTextures[index], isGrid: false),
@@ -4851,9 +4930,9 @@ class _ImageEditPageState extends State<ImageEditPage>
           debugPrint('getCumulativeLaminates error: $e');
           usedLaminates = List.from(selectedRecord.usedLaminatesList);
         }
-        final double h = _customHeightInches;
-        final double w = _customWidthInches;
-        final double selectionAreaSqFt = (h * w) / 144.0;
+        final double hInches = _customHeightInches;
+        final double wInches = _customWidthInches;
+        final double selectionAreaSqFt = (hInches * wInches) / 144.0;
         final double area =
             selectedRecord.userArea ??
             selectedRecord.systemArea ??
@@ -4862,14 +4941,14 @@ class _ImageEditPageState extends State<ImageEditPage>
             ? (area / selectionAreaSqFt)
             : 1.0;
         final int opt1 = rectanglesNeeded(
-          bigWidth: w,
-          bigHeight: h,
+          bigWidth: wInches,
+          bigHeight: hInches,
           smallWidth: 96.0,
           smallHeight: 48.0,
         );
         final int opt2 = rectanglesNeeded(
-          bigWidth: w,
-          bigHeight: h,
+          bigWidth: wInches,
+          bigHeight: hInches,
           smallWidth: 48.0,
           smallHeight: 96.0,
         );
@@ -4895,23 +4974,23 @@ class _ImageEditPageState extends State<ImageEditPage>
         debugPrint('getCumulativeLaminates error: $e');
         usedLaminates = List.from(latestRecord.usedLaminatesList);
       }
-      final double h = _customHeightInches;
-      final double w = _customWidthInches;
-      final double selectionAreaSqFt = (h * w) / 144.0;
+      final double hInches = _customHeightInches;
+      final double wInches = _customWidthInches;
+      final double selectionAreaSqFt = (hInches * wInches) / 144.0;
       final double area =
           latestRecord.userArea ?? latestRecord.systemArea ?? selectionAreaSqFt;
       final double ratio = selectionAreaSqFt > 0
           ? (area / selectionAreaSqFt)
           : 1.0;
       final int opt1 = rectanglesNeeded(
-        bigWidth: w,
-        bigHeight: h,
+        bigWidth: wInches,
+        bigHeight: hInches,
         smallWidth: 96.0,
         smallHeight: 48.0,
       );
       final int opt2 = rectanglesNeeded(
-        bigWidth: w,
-        bigHeight: h,
+        bigWidth: wInches,
+        bigHeight: hInches,
         smallWidth: 48.0,
         smallHeight: 96.0,
       );
@@ -4929,9 +5008,9 @@ class _ImageEditPageState extends State<ImageEditPage>
       // Fallback: pull from in-memory cubit history (no DB record yet)
       final state = context.read<ImageEditCubit>().state;
       final cubit = context.read<ImageEditCubit>();
-      final double h = _customHeightInches;
-      final double w = _customWidthInches;
-      final double selectionAreaSqFt = (h * w) / 144.0;
+      final double hInches = _customHeightInches;
+      final double wInches = _customWidthInches;
+      final double selectionAreaSqFt = (hInches * wInches) / 144.0;
       final double currentArea =
           double.tryParse(_areaController.text) ??
           _systemArea ??
@@ -4940,14 +5019,14 @@ class _ImageEditPageState extends State<ImageEditPage>
           ? (currentArea / selectionAreaSqFt)
           : 1.0;
       final int opt1 = rectanglesNeeded(
-        bigWidth: w,
-        bigHeight: h,
+        bigWidth: wInches,
+        bigHeight: hInches,
         smallWidth: 96.0,
         smallHeight: 48.0,
       );
       final int opt2 = rectanglesNeeded(
-        bigWidth: w,
-        bigHeight: h,
+        bigWidth: wInches,
+        bigHeight: hInches,
         smallWidth: 48.0,
         smallHeight: 96.0,
       );

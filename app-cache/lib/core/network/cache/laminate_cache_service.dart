@@ -7,38 +7,40 @@ class LaminateCacheService {
   static const int _cacheDurationDays = 14;
 
   String _generateCategoryKey(String category, String subcategory, String itemType) {
-    return "${_keyPrefix}cat_${itemType}_${category}_${subcategory}";
+    return "${_keyPrefix}cat_${itemType}_${category}_$subcategory";
   }
 
   String _generateHexKey(String hex, String itemType) {
     return "${_keyPrefix}hex_${itemType}_${hex.replaceAll('#', '')}";
   }
 
-  void saveCategoryTextures(String category, String subcategory, List<dynamic> textures, {String itemType = "Laminates"}) {
-    _save(_generateCategoryKey(category, subcategory, itemType), textures);
+  void saveCategoryTextures(String category, String subcategory, List<dynamic> textures, {int? totalCount, String itemType = "Laminates"}) {
+    _saveData(_generateCategoryKey(category, subcategory, itemType), textures, totalCount);
   }
 
-  List<dynamic>? getCategoryTextures(String category, String subcategory, {String itemType = "Laminates"}) {
-    return _get(_generateCategoryKey(category, subcategory, itemType));
+  Map<String, dynamic>? getCategoryTextures(String category, String subcategory, {String itemType = "Laminates"}) {
+    return _getData(_generateCategoryKey(category, subcategory, itemType));
   }
 
   void saveHexTextures(String hex, List<dynamic> textures, {String itemType = "Laminates"}) {
-    _save(_generateHexKey(hex, itemType), textures);
+    _saveData(_generateHexKey(hex, itemType), textures, null);
   }
 
   List<dynamic>? getHexTextures(String hex, {String itemType = "Laminates"}) {
-    return _get(_generateHexKey(hex, itemType));
+    final res = _getData(_generateHexKey(hex, itemType));
+    return res?["textures"] as List<dynamic>?;
   }
 
-  void _save(String key, List<dynamic> textures) {
+  void _saveData(String key, List<dynamic> textures, int? totalCount) {
     final data = {
       "timestamp": DateTime.now().millisecondsSinceEpoch,
       "textures": textures,
+      "totalCount": totalCount,
     };
     _box.write(key, data);
   }
 
-  List<dynamic>? _get(String key) {
+  Map<String, dynamic>? _getData(String key) {
     try {
       final cached = _box.read(key);
       if (cached == null || cached is! Map) return null;
@@ -56,7 +58,10 @@ class LaminateCacheService {
 
       final textures = cached["textures"];
       if (textures is List) {
-        return textures;
+        return {
+          "textures": textures,
+          "totalCount": cached["totalCount"] as int?,
+        };
       }
       return null;
     } catch (e) {

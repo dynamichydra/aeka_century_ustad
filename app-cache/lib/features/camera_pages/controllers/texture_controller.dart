@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:century_ai/core/network/apis/laminate_api.dart';
 import 'package:century_ai/core/network/cache/laminate_cache_service.dart';
 
@@ -98,49 +99,117 @@ class TextureController {
     return activeCategoriesMap[category] ?? [];
   }
 
-  Future<List<dynamic>> fetchTexturesByCategory({
+  /// Fetches laminates by category with pagination support.
+  ///
+  /// - [page] = 1: Returns all laminates currently in cache (if any) plus
+  ///   fetches page 1 from API if cache is empty.
+  /// - [page] > 1: Always calls the API to fetch that specific page,
+  ///   merges new items into the cache, and returns only the NEW items
+  ///   for that page.
+  ///
+  /// Returns: `{"textures": List<dynamic>, "totalCount": int?}`
+  Future<Map<String, dynamic>> fetchTexturesByCategory({
     required String category,
     required String? subcategory,
     int? page,
     int? pageLimit,
   }) async {
-    String subCat = (subcategory == "All" || subcategory == null) ? "" : subcategory;
+    final String subCat =
+        (subcategory == "All" || subcategory == null) ? "" : subcategory;
+    final String itemType = isExterior ? "Exteria" : "Laminates";
+    final int reqPage = page ?? 1;
+    final int limit = pageLimit ?? 12;
 
-    // Try cache first - ONLY if fetching the first page (so we don't return cached page 1 for page 2)
-    if (page == null || page == 1) {
-      final cached = cacheService.getCategoryTextures(
-        category,
-        subCat,
-        itemType: isExterior ? "Exteria" : "Laminates",
+    // Load existing cache for this category
+    final cachedData = cacheService.getCategoryTextures(
+      category,
+      subCat,
+      itemType: itemType,
+    );
+    final List<dynamic> cachedTextures =
+        (cachedData?["textures"] as List<dynamic>?) ?? [];
+    final int? cachedTotalCount = cachedData?["totalCount"] as int?;
+
+    // ── PAGE 1: Serve from cache if we have ANY cached items ──────────────────
+    if (reqPage == 1 && cachedTextures.isNotEmpty) {
+      debugPrint(
+        "📦 [CACHE HIT] Page 1 served from cache: ${cachedTextures.length} items "
+        "(totalCount: $cachedTotalCount) for '$category' / '$subCat'",
       );
-      if (cached != null && cached.isNotEmpty) {
-        return cached;
-      }
+      return {
+        "textures": cachedTextures,
+        "totalCount": cachedTotalCount,
+      };
     }
+
+    // ── PAGE > 1 OR EMPTY CACHE: Call the API ────────────────────────────────
+    debugPrint(
+      "🌐 [API CALL] Page $reqPage → category: '$category', subcategory: '$subCat', "
+      "pageLimit: $limit",
+    );
 
     final response = await laminateApi.fetchByCategory(
       category: category,
       subcategory: subCat,
-      itemType: isExterior ? "Exteria" : "Laminates",
-      page: page,
-      pageLimit: pageLimit,
+      itemType: itemType,
+      page: reqPage,
+      pageLimit: limit,
     );
 
+    debugPrint("📥 [API RESPONSE] Page $reqPage → $response");
+
     if (response != null && response is Map) {
-      final textures = (response['data'] ?? response['laminates']) as List<dynamic>?;
-      if (textures != null) {
-        if (page == null || page == 1) {
-          cacheService.saveCategoryTextures(
-            category,
-            subCat,
-            textures,
-            itemType: isExterior ? "Exteria" : "Laminates",
-          );
+      final List<dynamic> newItems =
+          (response['data'] ?? response['laminates']) as List<dynamic>? ?? [];
+      final int? totalCount =
+          (response['totalCount'] ?? response['total_count'] ?? response['count'])
+              as int?;
+
+      debugPrint(
+        "✅ [API SUCCESS] Page $reqPage → ${newItems.length} items "
+        "(totalCount: $totalCount)",
+      );
+
+      if (newItems.isNotEmpty) {
+        // Merge new items into cache (de-duplicate by id)
+        final List<dynamic> merged = List.from(cachedTextures);
+        final Set<String> existingIds =
+            merged.map((e) => e['id']?.toString() ?? e.toString()).toSet();
+
+        for (final item in newItems) {
+          final String itemId = item['id']?.toString() ?? item.toString();
+          if (!existingIds.contains(itemId)) {
+            merged.add(item);
+            existingIds.add(itemId);
+          }
         }
-        return textures;
+
+        cacheService.saveCategoryTextures(
+          category,
+          subCat,
+          merged,
+          totalCount: totalCount ?? cachedTotalCount,
+          itemType: itemType,
+        );
+
+        debugPrint(
+          "💾 [CACHE SAVED] ${merged.length} total items cached for '$category'/'$subCat'",
+        );
       }
+
+      // For page 1 with empty cache: return new items directly.
+      // For page > 1: return ONLY the new items so the caller can append.
+      return {
+        "textures": newItems,
+        "totalCount": totalCount ?? cachedTotalCount,
+      };
     }
-    return [];
+
+    debugPrint("⚠️ [API EMPTY] No response for page $reqPage");
+    return {
+      "textures": <dynamic>[],
+      "totalCount": cachedTotalCount ?? 0,
+    };
   }
 
   Future<List<dynamic>> fetchTexturesByColor(String hex) async {
@@ -162,7 +231,8 @@ class TextureController {
     if (response != null && response is Map && response.isNotEmpty) {
       if (response.containsKey('data') && response['data'] != null) {
         textures = response['data'] as List<dynamic>;
-      } else if (response.containsKey('laminates') && response['laminates'] != null) {
+      } else if (response.containsKey('laminates') &&
+          response['laminates'] != null) {
         textures = response['laminates'] as List<dynamic>;
       } else {
         final key = response.keys.first;

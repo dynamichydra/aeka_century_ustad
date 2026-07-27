@@ -174,14 +174,14 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
 
 SPEC CHECKSUMS:
-  camera_avfoundation: 281867ff09f1da66f031a184ecfbc6f2e625c9f5
-  connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
+  camera_avfoundation: 5675ca25298b6f81fa0a325188e7df62cc217741
+  connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
-  file_picker: b159e0c068aef54932bb15dc9fd1571818edaf49
+  file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be
   Firebase: 065f2bb395062046623036d8e6dc857bc2521d56
-  firebase_auth: e136983e095c69e84f3091f50d75cb0ffd95af3c
-  firebase_core: 98bcc1bd1a097bcb8b1ed6e091de3039802527c4
+  firebase_auth: 323c64eedef33fc3fdf438d16c29d2624b2ce4f4
+  firebase_core: 8e6f58412ca227827c366b92e7cee047a2148c60
   FirebaseAppCheckInterop: 4bade10286cc977e516f75d2d8312cbdfa534789
   FirebaseAuth: 3a39f6436c21ebfd7919b698228b4f89ff94c23b
   FirebaseAuthInterop: f8f6ff72dc24621906497fbe5cf3c42ee815e59c
@@ -189,19 +189,19 @@ SPEC CHECKSUMS:
   FirebaseCoreExtension: e911052d59cd0da237a45d706fc0f81654f035c1
   FirebaseCoreInternal: b321eafae5362113bc182956fafc9922cfc77b72
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_native_splash: df59bb2e1421aa0282cb2e95618af4dcb0c56c29
-  gal: 6a522c75909f1244732d4596d11d6a2f86ff37a5
+  flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
+  gal: baecd024ebfd13c441269ca7404792a7152fde89
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   GTMSessionFetcher: 127211aeec0b1e904fc49f4f6f895dcc535b0ecf
-  image_picker_ios: 4f2f91b01abdb52842a8e277617df877e40f905b
-  native_device_orientation: 42487b19c552fb5a6a2b51e61b93366f628113df
-  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
+  image_picker_ios: e0ece4aa2a75771a7de3fa735d26d90817041326
+  native_device_orientation: f3ba5f2ddbab3deee23a5f6693b4f97b02dafea2
+  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
-  share_plus: c3fef564749587fc939ef86ffb283ceac0baf9f5
-  sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
+  share_plus: de6030e33b4e106470e09322d87cf2a4258d2d1d
+  sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
 
 PODFILE CHECKSUM: 53a6aebc29ccee84c41f92f409fc20cd4ca011f1
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0
