@@ -1,4 +1,9 @@
 abstract final class AppRoutes {
+  // Auth flow (onboarding -> login -> otp -> home)
+  static const onboarding = '/onboarding';
+  static const login = '/login';
+  static const otp = '/otp';
+
   // Shell routes
   static const home = '/';
   static const home2 = '/home_2';

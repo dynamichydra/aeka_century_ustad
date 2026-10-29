@@ -41,46 +41,44 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBW-ce-P9F0GuGKCh6ZQ9Fx6Fn6yeTmvwM',
-    appId: '1:454999399231:web:306d2d13a3f45f7465918a',
-    messagingSenderId: '454999399231',
-    projectId: 'aeka-ustaad',
-    authDomain: 'aeka-ustaad.firebaseapp.com',
-    storageBucket: 'aeka-ustaad.firebasestorage.app',
+    apiKey: 'AIzaSyA7C4V3X7uhN-OiSqpsXPZJ3fEHlwz8SFE',
+    appId: '1:325745485050:web:9287b5457f2aa9bd16d543',
+    messagingSenderId: '325745485050',
+    projectId: 'contractor-visualiser-app',
+    authDomain: 'contractor-visualiser-app.firebaseapp.com',
+    storageBucket: 'contractor-visualiser-app.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC2vQFggfdHZrKFYKQ722p7reptk6ldGgs',
-    appId: '1:454999399231:android:a6b9c601ee65b74265918a',
-    messagingSenderId: '454999399231',
-    projectId: 'aeka-ustaad',
-    storageBucket: 'aeka-ustaad.firebasestorage.app',
+    apiKey: 'AIzaSyB5gfd6q6kSqQTaysYx2D9TteRlK4QSNNw',
+    appId: '1:325745485050:android:50519787d32546fd16d543',
+    messagingSenderId: '325745485050',
+    projectId: 'contractor-visualiser-app',
+    storageBucket: 'contractor-visualiser-app.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD6I8NoZ-QsaFtNeT5RNTsW2kZaTTKRkx8',
-    appId: '1:454999399231:ios:d571c5f7339e052565918a',
-    messagingSenderId: '454999399231',
-    projectId: 'aeka-ustaad',
-    storageBucket: 'aeka-ustaad.firebasestorage.app',
+    apiKey: 'AIzaSyAVOp7uOaFhX__MLONdQuBAWF7kag4AZpI',
+    appId: '1:325745485050:ios:a929dfcb6f18b2ba16d543',
+    messagingSenderId: '325745485050',
+    projectId: 'contractor-visualiser-app',
+    storageBucket: 'contractor-visualiser-app.firebasestorage.app',
     iosBundleId: 'com.example.centuryAi',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyD6I8NoZ-QsaFtNeT5RNTsW2kZaTTKRkx8',
-    appId: '1:454999399231:ios:d571c5f7339e052565918a',
-    messagingSenderId: '454999399231',
-    projectId: 'aeka-ustaad',
-    storageBucket: 'aeka-ustaad.firebasestorage.app',
+    apiKey: 'AIzaSyAVOp7uOaFhX__MLONdQuBAWF7kag4AZpI',
+    appId: '1:325745485050:ios:a929dfcb6f18b2ba16d543',
+    messagingSenderId: '325745485050',
+    projectId: 'contractor-visualiser-app',
+    storageBucket: 'contractor-visualiser-app.firebasestorage.app',
     iosBundleId: 'com.example.centuryAi',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBW-ce-P9F0GuGKCh6ZQ9Fx6Fn6yeTmvwM',
-    appId: '1:454999399231:web:d360adbc9e9841de65918a',
-    messagingSenderId: '454999399231',
-    projectId: 'aeka-ustaad',
-    authDomain: 'aeka-ustaad.firebaseapp.com',
-    storageBucket: 'aeka-ustaad.firebasestorage.app',
+    apiKey: 'AIzaSyA7C4V3X7uhN-OiSqpsXPZJ3fEHlwz8SFE',
+    appId: '1:325745485050:web:b23b2d38a625886016d543',
+    messagingSenderId: '325745485050',
+    projectId: 'contractor-visualiser-app',
+    authDomain: 'contractor-visualiser-app.firebaseapp.com',
+    storageBucket: 'contractor-visualiser-app.firebasestorage.app',
   );
 }

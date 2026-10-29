@@ -26,7 +26,7 @@ class AppDependencies {
     final api = ApiService();
     return AppDependencies._(
       apiService: api,
-      authRepository: AuthRepository(api),
+      authRepository: AuthRepository(),
       userProfileRepository: UserProfileRepository(api),
       productRepository: ProductRepository(api),
       tipsRepository: TipsRepository(api),

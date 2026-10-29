@@ -1,6 +1,11 @@
+import 'package:century_ai/core/constants/colors.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
+import 'package:century_ai/cubit/auth/auth_cubit.dart';
+import 'package:century_ai/features/auth/data/auth_storage.dart';
+import 'package:century_ai/router/app_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter/cupertino.dart';
@@ -14,147 +19,195 @@ class HomeDrawer extends StatelessWidget {
 
     return Drawer(
       backgroundColor: Colors.white,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      child: Column(
         children: [
-          // Header
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: Colors.white),
-            accountName: Text(
-              "Ramesh",
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            accountEmail: Text(
-              "Ramesh.doe@example.com",
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            currentAccountPicture: const CircleAvatar(
-              backgroundImage: AssetImage(TImages.user),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // Header
+                UserAccountsDrawerHeader(
+                  decoration: const BoxDecoration(color: Colors.white),
+                  accountName: Text(
+                    "Ramesh",
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  accountEmail: Text(
+                    "Ramesh.doe@example.com",
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  currentAccountPicture: const CircleAvatar(
+                    backgroundImage: AssetImage(TImages.user),
+                  ),
+                ),
+
+                // Menu Items
+                ListTile(
+                  leading: const Icon(Iconsax.home),
+                  title: const Text("home 1"),
+                  onTap: () {
+                    context.go("/");
+                    Scaffold.of(context).closeDrawer();
+                  },
+                ),
+
+                ListTile(
+                  leading: const Icon(Iconsax.home),
+                  title: const Text("home 2"),
+                  onTap: () {
+                    context.go("/home_2");
+                    Scaffold.of(context).closeDrawer();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Iconsax.user),
+                  title: const Text("Profile"),
+                  onTap: () => {},
+                ),
+
+                ExpansionTile(
+                  leading: const Icon(Iconsax.folder),
+                  title: const Text("My Project"),
+                  children: [
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                      leading: const Icon(Iconsax.personalcard),
+                      title: const Text("Business card"),
+                      onTap: () => {},
+                    ),
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                      leading: const Icon(Iconsax.briefcase),
+                      title: const Text("My Work"),
+                      onTap: () => {},
+                    ),
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                      leading: const Icon(Iconsax.document),
+                      title: const Text("Quotation"),
+                      onTap: () => {},
+                    ),
+                  ],
+                ),
+
+                ExpansionTile(
+                  leading: const Icon(Iconsax.lamp_on),
+                  title: const Text("Inspiration Wall"),
+                  children: [
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                      leading: const Icon(
+                        CupertinoIcons.plus_square_fill_on_square_fill,
+                      ),
+                      title: const Text("Art Gallery"),
+                      onTap: () => {},
+                    ),
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                      leading: const Icon(
+                        CupertinoIcons.plus_square_fill_on_square_fill,
+                      ),
+                      title: const Text("Color Horoscope"),
+                      onTap: () => {},
+                    ),
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(left: TSizes.xl),
+                      leading: const Icon(
+                        CupertinoIcons.plus_square_fill_on_square_fill,
+                      ),
+                      title: const Text("Blogs"),
+                      onTap: () => {},
+                    ),
+                  ],
+                ),
+                ListTile(
+                  leading: const Icon(Iconsax.info_circle),
+                  title: const Text("Tips"),
+                  onTap: () => {},
+                ),
+                ListTile(
+                  leading: const Icon(Iconsax.heart),
+                  title: const Text("Fav."),
+                  onTap: () => {},
+                ),
+                ListTile(
+                  leading: const Icon(Iconsax.security_safe),
+                  title: const Text("Tams & Condition"),
+                  onTap: () => {},
+                ),
+                ListTile(
+                  leading: const Icon(Iconsax.call),
+                  title: const Text("Contact us"),
+                  onTap: () => {},
+                ),
+                ListTile(
+                  leading: const Icon(Iconsax.star),
+                  title: const Text("Rate Our App"),
+                  onTap: () {
+                    // Rate App Logic
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Iconsax.share),
+                  title: const Text("Share The App"),
+                  onTap: () {
+                    // Share App Logic
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Iconsax.info_circle),
+                  title: const Text("About Us"),
+                  onTap: () => {},
+                ),
+              ],
             ),
           ),
 
-          // Menu Items
-          ListTile(
-            leading: const Icon(Iconsax.home),
-            title: const Text("home 1"),
-            onTap: () {
-              context.go("/");
-              Scaffold.of(context).closeDrawer();
-            },
-          ),
-          
-          ListTile(
-            leading: const Icon(Iconsax.home),
-            title: const Text("home 2"),
-            onTap: () {
-              context.go("/home_2");
-              Scaffold.of(context).closeDrawer();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Iconsax.user),
-            title: const Text("Profile"),
-            onTap: () => {},
-          ),
-
-          ExpansionTile(
-            leading: const Icon(Iconsax.folder),
-            title: const Text("My Project"),
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: TSizes.xl),
-                leading: const Icon(Iconsax.personalcard),
-                title: const Text("Business card"),
-                onTap: () => {},
+          // Logout, pinned to the bottom
+          const Divider(height: 1),
+          SafeArea(
+            top: false,
+            child: ListTile(
+              leading: const Icon(Iconsax.logout, color: TColors.vividRed),
+              title: const Text(
+                "Logout",
+                style: TextStyle(color: TColors.vividRed),
               ),
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: TSizes.xl),
-                leading: const Icon(Iconsax.briefcase),
-                title: const Text("My Work"),
-                onTap: () => {},
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: TSizes.xl),
-                leading: const Icon(Iconsax.document),
-                title: const Text("Quotation"),
-                onTap: () => {},
-              ),
-            ],
-          ),
-
-          ExpansionTile(
-            leading: const Icon(Iconsax.lamp_on),
-            title: const Text("Inspiration Wall"),
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: TSizes.xl),
-                leading: const Icon(
-                  CupertinoIcons.plus_square_fill_on_square_fill,
-                ),
-                title: const Text("Art Gallery"),
-                onTap: () => {},
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: TSizes.xl),
-                leading: const Icon(
-                  CupertinoIcons.plus_square_fill_on_square_fill,
-                ),
-                title: const Text("Color Horoscope"),
-                onTap: () => {},
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: TSizes.xl),
-                leading: const Icon(
-                  CupertinoIcons.plus_square_fill_on_square_fill,
-                ),
-                title: const Text("Blogs"),
-                onTap: () => {},
-              ),
-            ],
-          ),
-          ListTile(
-            leading: const Icon(Iconsax.info_circle),
-            title: const Text("Tips"),
-            onTap: () => {},
-          ),
-          ListTile(
-            leading: const Icon(Iconsax.heart),
-            title: const Text("Fav."),
-            onTap: () => {},
-          ),
-          ListTile(
-            leading: const Icon(Iconsax.security_safe),
-            title: const Text("Tams & Condition"),
-            onTap: () => {},
-          ),
-          ListTile(
-            leading: const Icon(Iconsax.call),
-            title: const Text("Contact us"),
-            onTap: () => {},
-          ),
-          ListTile(
-            leading: const Icon(Iconsax.star),
-            title: const Text("Rate Our App"),
-            onTap: () {
-              // Rate App Logic
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Iconsax.share),
-            title: const Text("Share The App"),
-            onTap: () {
-              // Share App Logic
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Iconsax.info_circle),
-            title: const Text("About Us"),
-            onTap: () => {},
+              onTap: () => _confirmLogout(context),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text(
+              "Logout",
+              style: TextStyle(color: TColors.vividRed),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    await context.read<AuthCubit>().logout();
+    await AuthStorage.clearSession();
+    if (context.mounted) context.go(AppRoutes.login);
   }
 }

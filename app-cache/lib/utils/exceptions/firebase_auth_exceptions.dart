@@ -91,6 +91,22 @@ class TFirebaseAuthException implements Exception {
         return 'Web storage is not supported or is disabled.';
       case 'invalid-credential':
         return 'The supplied credential is invalid. Please check the credential and try again.';
+      case 'invalid-phone-number':
+        return 'The phone number is invalid. Please check it and try again.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait a while and try again.';
+      case 'session-expired':
+        return 'The OTP has expired. Please request a new one.';
+      case 'missing-verification-code':
+        return 'Please enter the OTP sent to your phone.';
+      case 'captcha-check-failed':
+        return 'Verification check failed. Please try again.';
+      case 'web-context-cancelled':
+        return 'Verification was cancelled. Please try again.';
+      case 'billing-not-enabled':
+        return 'SMS sending is not enabled for this Firebase project.';
+      case 'network-request-failed':
+        return 'Network error. Please check your connection and try again.';
       case 'app-not-authorized':
         return 'The app is not authorized to use Firebase Authentication with the provided API key.';
       case 'keychain-error':

@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "454999399231",
-    "project_id": "aeka-ustaad",
-    "storage_bucket": "aeka-ustaad.firebasestorage.app"
+    "project_number": "325745485050",
+    "project_id": "contractor-visualiser-app",
+    "storage_bucket": "contractor-visualiser-app.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:454999399231:android:a6b9c601ee65b74265918a",
+        "mobilesdk_app_id": "1:325745485050:android:50519787d32546fd16d543",
         "android_client_info": {
           "package_name": "com.example.century_ai"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC2vQFggfdHZrKFYKQ722p7reptk6ldGgs"
+          "current_key": "AIzaSyB5gfd6q6kSqQTaysYx2D9TteRlK4QSNNw"
         }
       ],
       "services": {

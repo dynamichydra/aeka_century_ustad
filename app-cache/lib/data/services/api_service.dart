@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:century_ai/core/constants/api_constants.dart';
+import 'package:century_ai/core/network/firebase_auth_interceptor.dart';
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart' as p;
 import 'package:http_parser/http_parser.dart';
@@ -18,6 +19,9 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
       ),
     );
+
+    // Identifies the signed-in user to the backend (Firebase ID token).
+    _dio.interceptors.add(FirebaseAuthInterceptor(_dio));
 
     // Enhanced logging for API interactions
     _dio.interceptors.add(

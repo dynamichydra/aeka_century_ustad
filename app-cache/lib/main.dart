@@ -5,11 +5,13 @@ import 'package:century_ai/cubit/profile/profile_cubit.dart';
 import 'package:century_ai/cubit/tips/tips_cubit.dart';
 import 'package:century_ai/cubit/upload/upload_cubit.dart';
 import 'package:century_ai/db/db_core.dart';
+import 'package:century_ai/firebase_options.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
 import 'package:century_ai/router/router.dart';
 import 'package:century_ai/core/theme/theme.dart';
 import 'package:century_ai/data/repositories/upload_repository.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:century_ai/utils/helpers/network_manager.dart';
@@ -20,6 +22,7 @@ import 'package:get_storage/get_storage.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await GetStorage.init();
   await DbCore.database;
   await SelectedImagesRepository.initializeTable();

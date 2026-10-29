@@ -33,6 +33,27 @@
 
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Gallery access is required</string>
+	<!-- Firebase handles its reCAPTCHA redirect URL itself; without this,
+	     Flutter also routes it into go_router and shows Page Not Found. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<!-- Firebase phone auth reCAPTCHA redirect (encoded GOOGLE_APP_ID) -->
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app-1-325745485050-ios-a929dfcb6f18b2ba16d543</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Firebase phone auth receives its silent verification push here. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

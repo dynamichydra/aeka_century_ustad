@@ -1,6 +1,10 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:century_ai/features/auth/data/auth_storage.dart';
+import 'package:century_ai/features/auth/presentation/pages/login_page.dart';
+import 'package:century_ai/features/auth/presentation/pages/onboarding_page.dart';
+import 'package:century_ai/features/auth/presentation/pages/otp_page.dart';
 import 'package:century_ai/features/camera_pages/camera_pages.dart';
 import 'package:century_ai/features/home/home.dart';
 import 'package:century_ai/features/home/presentation/pages/home_2.dart';
@@ -14,7 +18,12 @@ import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/data/repositories/product_repository.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: AppRoutes.home,
+  // Signed-in users go straight home; everyone else starts on onboarding.
+  // Firebase restores the signed-in user during Firebase.initializeApp in
+  // main(), before the router is first read.
+  initialLocation: AuthStorage.isLoggedIn
+      ? AppRoutes.home
+      : AppRoutes.onboarding,
   routes: [
     GoRoute(
       path: AppRoutes.camera,
@@ -66,11 +75,21 @@ final GoRouter router = GoRouter(
     ),
 
     // Auth Pages
-    // GoRoute(
-    //   path: "/login",
-    //   name: "login",
-    //   builder: (context, state) => LoginPage(),
-    // ),
+    GoRoute(
+      path: AppRoutes.onboarding,
+      name: "onboarding",
+      builder: (context, state) => const OnboardingPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.login,
+      name: "login",
+      builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.otp,
+      name: "otp",
+      builder: (context, state) => OtpPage(phone: state.extra as String? ?? ''),
+    ),
     GoRoute(
       path: AppRoutes.imagePreview,
       name: "Image Preview",

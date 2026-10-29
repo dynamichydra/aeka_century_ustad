@@ -2,7 +2,7 @@
 
 class TApiConstants {
   static const String baseUrl =
-      'https://century-ustad-api-507497848998.asia-south1.run.app';
+      'https://decor-studio-api.centuryply.com/';
 
   // Furniture endpoints
   static const String featuredBrowse = '/browse/featured';
@@ -17,14 +17,14 @@ class TApiConstants {
   static const String searchText = '/search/text';
   static const String trendingProducts = '/product/trending';
   static const String tryOn =
-      'https://ustad-api-507497848998.asia-south1.run.app/tryon';
+      'https://decor-studio-api.centuryply.com/tryon';
   static const String tryOnV2 =
-      'https://ustad-api-507497848998.asia-south1.run.app/tryon-v2';
+      'https://decor-studio-api.centuryply.com/tryon-v2';
   static const String tryOnV3 =
-      'https://ustad-api-507497848998.asia-south1.run.app/3';
+      'https://decor-studio-api.centuryply.com/tryon-v3';
 
   static const String tryOnV4 =
-      'https://century-ustad-api-507497848998.asia-south1.run.app/tryon/generate';
+      'https://decor-studio-api.centuryply.com/tryon/generate';
 
   static const String favorites = '/me/favourites';
 

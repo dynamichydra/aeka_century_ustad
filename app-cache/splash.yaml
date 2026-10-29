@@ -2,11 +2,11 @@ flutter_native_splash:
   color: "#D0232A"
   fullscreen: true
 
-  image: assets/logos/splash_icon.png
+  image: assets/logos/CenturyDecoratives_Logo.png
 
   android_12:
     color: "#D0232A"
-    image: assets/logos/splash_icon.png
+    image: assets/logos/CenturyDecoratives_Logo.png
     icon_background_color: "#D0232A"
 
   web: false

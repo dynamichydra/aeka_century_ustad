@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:gal/gal.dart';
 
 class ImageFinalizePage extends StatefulWidget {
   final dynamic editedImage;
@@ -162,6 +163,13 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
+      // iOS has no /storage/emulated/0 and its root is read-only,
+      // so the default folder maps to the Photos library instead.
+      if (Platform.isIOS && folderPath == _defaultFolder) {
+        await _saveToPhotos();
+        return;
+      }
+
       // 1. Ensure we have permission to write outside the app sandbox
       final hasPermission = await _ensureStoragePermission();
       if (!hasPermission) {
@@ -226,6 +234,43 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _saveToPhotos() async {
+    if (!await Gal.hasAccess(toAlbum: true) &&
+        !await Gal.requestAccess(toAlbum: true)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Photos permission denied — cannot save image'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    final String? sourcePath = await _getLocalImagePath();
+    if (sourcePath == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not locate the image')),
+        );
+      }
+      return;
+    }
+
+    await Gal.putImage(sourcePath, album: 'Century Decor Studio');
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Image saved to Photos'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
   }
 
