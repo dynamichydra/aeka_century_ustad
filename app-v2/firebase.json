@@ -1,0 +1,41 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "aeka-ustaad",
+          "appId": "1:454999399231:android:a6b9c601ee65b74265918a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "aeka-ustaad",
+          "appId": "1:454999399231:ios:d571c5f7339e052565918a",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "aeka-ustaad",
+          "appId": "1:454999399231:ios:d571c5f7339e052565918a",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "aeka-ustaad",
+          "configurations": {
+            "android": "1:454999399231:android:a6b9c601ee65b74265918a",
+            "ios": "1:454999399231:ios:d571c5f7339e052565918a",
+            "macos": "1:454999399231:ios:d571c5f7339e052565918a",
+            "web": "1:454999399231:web:306d2d13a3f45f7465918a",
+            "windows": "1:454999399231:web:d360adbc9e9841de65918a"
+          }
+        }
+      }
+    }
+  }
+}
