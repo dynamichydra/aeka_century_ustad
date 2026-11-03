@@ -355,7 +355,12 @@ class ProductsCubit extends Cubit<ProductsState> {
     }
   }
 
-  Future<void> fetchFavoriteProducts({required String ownerId}) async {
+  /// [applicationType] is "INTERIOR" or "EXTERIOR", matching the section the
+  /// user is in.
+  Future<void> fetchFavoriteProducts({
+    required String ownerId,
+    String? applicationType,
+  }) async {
     emit(
       state.copyWith(
         isLoading: true,
@@ -364,6 +369,7 @@ class ProductsCubit extends Cubit<ProductsState> {
         isFavoriteView: true,
         isTrending: false,
         currentOwnerId: ownerId,
+        currentApplicationType: applicationType,
         clearQuery: true,
         clearCategory: true,
         clearRoom: true,
@@ -375,6 +381,7 @@ class ProductsCubit extends Cubit<ProductsState> {
     try {
       final products = await _productRepository.getFavoriteProducts(
         ownerId: ownerId,
+        applicationType: applicationType,
       );
       emit(
         state.copyWith(

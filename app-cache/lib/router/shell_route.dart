@@ -1,3 +1,4 @@
+import 'package:century_ai/features/auth/presentation/widgets/user_avatar.dart';
 import 'package:century_ai/features/home/presentation/widgets/home_drawer.dart';
 import 'package:century_ai/core/constants/image_strings.dart';
 import 'package:century_ai/core/constants/sizes.dart';
@@ -32,7 +33,8 @@ class NavWrapper extends StatelessWidget {
       appBar: AppBar(
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Image.asset("assets/images/content/user_profile.png", width: 30, height: 30,),
+            // The user's own profile photo (default avatar until they add one).
+            icon: const UserAvatar(size: 30),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),

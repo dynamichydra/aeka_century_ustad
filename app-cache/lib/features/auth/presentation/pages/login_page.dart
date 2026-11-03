@@ -46,7 +46,8 @@ class _LoginPageState extends State<LoginPage> {
     if (state.status == AuthStatus.authenticated && state.session != null) {
       // Android verified the number instantly, without an SMS code.
       await AuthStorage.saveSession(state.session!);
-      if (mounted) context.go(AppRoutes.home);
+      final next = await AuthStorage.routeAfterSignIn();
+      if (mounted) context.go(next);
     } else if (state.status == AuthStatus.otpSent) {
       context.push(AppRoutes.otp, extra: phone);
     } else if (state.status == AuthStatus.error) {
@@ -144,17 +145,18 @@ class _PhoneField extends StatelessWidget {
                   LengthLimitingTextInputFormatter(10),
                 ],
                 onSubmitted: onSubmitted,
-                textAlign: TextAlign.center,
                 scrollPadding: const EdgeInsets.only(bottom: 120),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
                   color: TColors.pureBlack,
                   letterSpacing: 0.5,
                 ),
                 decoration: const InputDecoration(
                   hintText: 'Enter Your Mobile Number',
                   hintStyle: TextStyle(
-                    fontSize: 14.5,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
                     color: Color(0xFF6B6B6B),
                   ),
                   border: InputBorder.none,
@@ -162,7 +164,7 @@ class _PhoneField extends StatelessWidget {
                   focusedBorder: InputBorder.none,
                   filled: false,
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                  contentPadding: EdgeInsets.only(left: 16, right: 8),
                 ),
               ),
             ),

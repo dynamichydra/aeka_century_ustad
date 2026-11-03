@@ -16,8 +16,7 @@
       "optional_all_img": "transaparent/Kitchen/Subcategories/Kitchen_cabinet.png",
       "parent_id": 1,
       "preview_type": "normal",
-      "sort_order": 1,
-      "nested_key": "kitchen_cabinet"
+      "sort_order": 1
     },
     {
       "id": 2,

@@ -177,6 +177,7 @@ class ApiService {
 
   Future<List<dynamic>> getFavoriteProducts({
     required String ownerId,
+    String? applicationType,
     int limit = 50,
     int offset = 0,
   }) async {
@@ -185,6 +186,7 @@ class ApiService {
       'limit': limit,
       'offset': offset,
     };
+    if (applicationType != null) queryParams['applicationType'] = applicationType;
     debugPrint('🛒 FETCH_FAVORITES: ${TApiConstants.baseUrl}${TApiConstants.favorites} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.favorites,

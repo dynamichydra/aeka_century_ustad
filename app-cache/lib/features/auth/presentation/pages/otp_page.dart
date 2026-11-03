@@ -102,7 +102,8 @@ class _OtpPageState extends State<OtpPage> {
     if (_signedIn || state.session == null) return;
     _signedIn = true;
     await AuthStorage.saveSession(state.session!);
-    if (mounted) context.go(AppRoutes.home);
+    final next = await AuthStorage.routeAfterSignIn();
+    if (mounted) context.go(next);
   }
 
   @override
@@ -134,7 +135,6 @@ class _OtpPageState extends State<OtpPage> {
                 controller: _otpController,
                 focusNode: _otpFocus,
                 length: _otpLength,
-                onCompleted: _verify,
               ),
               const SizedBox(height: 14),
               TextButton(
@@ -210,73 +210,119 @@ class _SentToLine extends StatelessWidget {
   }
 }
 
-/// Four underlined digit slots backed by one hidden text field, so paste
-/// and iOS one-time-code autofill keep working.
-class _OtpBoxes extends StatelessWidget {
+/// Underlined digit slots backed by one hidden text field, so paste and
+/// iOS one-time-code autofill keep working. The slot being typed in shows a
+/// blinking text cursor. Filling every slot does not verify; the user taps
+/// Verify.
+class _OtpBoxes extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final int length;
-  final VoidCallback onCompleted;
 
   const _OtpBoxes({
     required this.controller,
     required this.focusNode,
     required this.length,
-    required this.onCompleted,
   });
 
   @override
+  State<_OtpBoxes> createState() => _OtpBoxesState();
+}
+
+class _OtpBoxesState extends State<_OtpBoxes>
+    with SingleTickerProviderStateMixin {
+  // Blinks like the system text cursor (~0.5s on, 0.5s off).
+  late final AnimationController _blink = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1000),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _blink.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final text = controller.text;
+    final text = widget.controller.text;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: focusNode.requestFocus,
+      onTap: widget.focusNode.requestFocus,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(length, (i) {
-              return Container(
-                width: 34,
-                height: 46,
-                margin: const EdgeInsets.symmetric(horizontal: 5),
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Color(0xFF555555), width: 1.5),
+          // Rebuilds on focus change so the cursor shows only while typing.
+          ListenableBuilder(
+            listenable: widget.focusNode,
+            builder: (context, _) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(widget.length, (i) {
+                final active = widget.focusNode.hasFocus && i == text.length;
+                final filled = i < text.length;
+                return Container(
+                  width: 38,
+                  height: 46,
+                  margin: const EdgeInsets.symmetric(horizontal: 5),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: filled
+                            ? TColors.pureBlack
+                            : const Color(0xFF9E9E9E),
+                        width: 1.5,
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  i < text.length ? text[i] : '',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: TColors.pureBlack,
-                  ),
-                ),
-              );
-            }),
+                  child: active
+                      ? FadeTransition(
+                          opacity: _blink.drive(
+                            TweenSequence([
+                              TweenSequenceItem(
+                                tween: ConstantTween(1.0),
+                                weight: 1,
+                              ),
+                              TweenSequenceItem(
+                                tween: ConstantTween(0.0),
+                                weight: 1,
+                              ),
+                            ]),
+                          ),
+                          child: Container(
+                            width: 2,
+                            height: 26,
+                            color: TColors.pureBlack,
+                          ),
+                        )
+                      : Text(
+                          filled ? text[i] : '',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: TColors.pureBlack,
+                          ),
+                        ),
+                );
+              }),
+            ),
           ),
           Positioned.fill(
             child: Opacity(
               opacity: 0,
               child: TextField(
-                controller: controller,
-                focusNode: focusNode,
+                controller: widget.controller,
+                focusNode: widget.focusNode,
                 keyboardType: TextInputType.number,
                 autofillHints: const [AutofillHints.oneTimeCode],
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(length),
+                  LengthLimitingTextInputFormatter(widget.length),
                 ],
                 showCursor: false,
                 enableInteractiveSelection: false,
                 scrollPadding: const EdgeInsets.only(bottom: 160),
-                onChanged: (value) {
-                  if (value.length == length) onCompleted();
-                },
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,

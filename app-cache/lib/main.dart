@@ -8,6 +8,7 @@ import 'package:century_ai/db/db_core.dart';
 import 'package:century_ai/firebase_options.dart';
 import 'package:century_ai/db/repositories/selected_images_repository.dart';
 import 'package:century_ai/db/repositories/edit_history_repository.dart';
+import 'package:century_ai/db/repositories/local_user_profile_repository.dart';
 import 'package:century_ai/router/router.dart';
 import 'package:century_ai/core/theme/theme.dart';
 import 'package:century_ai/data/repositories/upload_repository.dart';
@@ -27,6 +28,9 @@ void main() async{
   await DbCore.database;
   await SelectedImagesRepository.initializeTable();
   await EditHistoryRepository.initializeTable();
+  await LocalUserProfileRepository.initializeTable();
+  // Lets the router send signed-in users without a profile to profile setup.
+  await LocalUserProfileRepository.loadForCurrentUser();
   runApp(
     Portal(
       child:  MyApp(),

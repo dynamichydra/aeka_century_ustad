@@ -1162,52 +1162,45 @@ class _ImageEditPageState extends State<ImageEditPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_selection != null) ...[
-                      GestureDetector(
-                        onTap: () {
-                          if (isApplying) return;
-                          setState(() {
-                            _selection = null;
-                            _mode = SelectionMode.none;
-                            _editingWidth = false;
-                            _editingHeight = false;
-                          });
-                          context.read<ImageEditCubit>().clearSelection();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.grey.shade300,
-                              width: 0.8,
+                      Flexible(
+                        child: GestureDetector(
+                          onTap: () {
+                            if (isApplying) return;
+                            setState(() {
+                              _selection = null;
+                              _mode = SelectionMode.none;
+                              _editingWidth = false;
+                              _editingHeight = false;
+                            });
+                            context.read<ImageEditCubit>().clearSelection();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Icon(
-                              //   Icons.clear,
-                              //   color: Colors.black.withOpacity(0.7),
-                              //   size: 12,
-                              // ),
-                              // const SizedBox(width: 4),
-                              Text(
-                                "Clear Selection",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black.withOpacity(0.7),
-                                ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
+                                width: 0.8,
                               ),
-                            ],
+                            ),
+                            child: Text(
+                              "Clear Selection",
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black.withOpacity(0.7),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                     ],
                     Opacity(
                       opacity:
@@ -1262,7 +1255,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Opacity(
                       opacity:
                           (canUndo &&
@@ -1460,17 +1453,20 @@ class _ImageEditPageState extends State<ImageEditPage>
                 color: Colors.black,
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             if (trailing != null)
-              trailing
-            else if (showArrow)
-              Icon(
-                isActive
-                    ? Icons.keyboard_arrow_down
-                    : Icons.keyboard_arrow_right,
-                color: Colors.black,
-                size: 20,
-              ),
+              Flexible(child: Align(alignment: Alignment.centerRight, child: trailing))
+            else ...[
+              const Spacer(),
+              if (showArrow)
+                Icon(
+                  isActive
+                      ? Icons.keyboard_arrow_down
+                      : Icons.keyboard_arrow_right,
+                  color: Colors.black,
+                  size: 20,
+                ),
+            ],
           ],
         ),
       ),
@@ -4882,7 +4878,21 @@ class _ImageEditPageState extends State<ImageEditPage>
       }
 
       // 2. SAVE TO LOCAL DATABASE WITH RESPONSE ID AS THE SESSION ID
-      final String newEditId = responseId ?? const Uuid().v4();
+      // Every Apply must be its own row. The server can return the same
+      // record ID again for the same furniture; saving under an ID that
+      // already exists would overwrite (INSERT OR REPLACE) the earlier edit,
+      // so fall back to a fresh ID in that case.
+      String newEditId = const Uuid().v4();
+      if (responseId != null &&
+          responseId != widget.image_id &&
+          await EditHistoryRepository.getEditById(responseId) == null) {
+        newEditId = responseId;
+      } else if (responseId != null) {
+        debugPrint(
+          '⚠️ Server returned an existing edit ID ($responseId); saving this '
+          'edit under a new local ID ($newEditId) so earlier edits are kept.',
+        );
+      }
       if (widget.image_id != null) {
         try {
           final cubit = context.read<ImageEditCubit>();

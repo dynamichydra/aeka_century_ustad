@@ -954,6 +954,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           if (isNowLiked) {
                             context.read<ProductsCubit>().fetchFavoriteProducts(
                               ownerId: "user13@gmail.com",
+                              applicationType: homeState.isExterior
+                                  ? "EXTERIOR"
+                                  : "INTERIOR",
                             );
                           } else {
                             context.read<ProductsCubit>().fetchFeaturedProducts(

@@ -1,4 +1,6 @@
 import 'package:century_ai/data/models/auth_session.dart';
+import 'package:century_ai/db/repositories/local_user_profile_repository.dart';
+import 'package:century_ai/router/app_routes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -13,6 +15,13 @@ class AuthStorage {
 
   /// Firebase keeps the signed-in user across launches.
   static bool get isLoggedIn => FirebaseAuth.instance.currentUser != null;
+
+  /// Where to go right after a sign-in: profile setup for new users and for
+  /// users without a name or email yet, otherwise home.
+  static Future<String> routeAfterSignIn() async {
+    final complete = await LocalUserProfileRepository.loadForCurrentUser();
+    return complete ? AppRoutes.home : AppRoutes.profileSetup;
+  }
 
   static Future<void> saveSession(AuthSession session) async {
     await _box.write(_tokenKey, session.token);

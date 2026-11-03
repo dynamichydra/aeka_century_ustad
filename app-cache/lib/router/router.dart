@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:century_ai/db/repositories/local_user_profile_repository.dart';
 import 'package:century_ai/features/auth/data/auth_storage.dart';
 import 'package:century_ai/features/auth/presentation/pages/login_page.dart';
 import 'package:century_ai/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:century_ai/features/auth/presentation/pages/otp_page.dart';
+import 'package:century_ai/features/auth/presentation/pages/profile_setup_page.dart';
 import 'package:century_ai/features/camera_pages/camera_pages.dart';
 import 'package:century_ai/features/home/home.dart';
 import 'package:century_ai/features/home/presentation/pages/home_2.dart';
@@ -18,12 +20,17 @@ import 'package:century_ai/cubit/products/products_cubit.dart';
 import 'package:century_ai/data/repositories/product_repository.dart';
 
 final GoRouter router = GoRouter(
-  // Signed-in users go straight home; everyone else starts on onboarding.
+  // Signed-in users go straight home; everyone else to login. Onboarding is
+  // switched off for now (its route still exists).
   // Firebase restores the signed-in user during Firebase.initializeApp in
   // main(), before the router is first read.
-  initialLocation: AuthStorage.isLoggedIn
+  // Signed-in users without a complete profile go to profile setup first;
+  // main() loads that flag before the router is read.
+  initialLocation: !AuthStorage.isLoggedIn
+      ? AppRoutes.login
+      : LocalUserProfileRepository.currentUserComplete
       ? AppRoutes.home
-      : AppRoutes.onboarding,
+      : AppRoutes.profileSetup,
   routes: [
     GoRoute(
       path: AppRoutes.camera,
@@ -91,6 +98,16 @@ final GoRouter router = GoRouter(
       builder: (context, state) => OtpPage(phone: state.extra as String? ?? ''),
     ),
     GoRoute(
+      path: AppRoutes.profileSetup,
+      name: "profile setup",
+      builder: (context, state) => const ProfileSetupPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.profile,
+      name: "profile",
+      builder: (context, state) => const ProfileSetupPage(viewMode: true),
+    ),
+    GoRoute(
       path: AppRoutes.imagePreview,
       name: "Image Preview",
       builder: (context, state) {
@@ -136,7 +153,7 @@ final GoRouter router = GoRouter(
             originalImageUrl: originalImageUrl,
             imageUrl: imageUrl,
             applicationType: applicationType,
-          ), 
+          ),
         );
       },
     ),

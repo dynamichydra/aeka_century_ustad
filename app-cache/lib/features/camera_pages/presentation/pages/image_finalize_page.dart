@@ -1,4 +1,7 @@
-import 'package:century_ai/core/constants/image_strings.dart';
+import 'package:century_ai/db/models/user_profile_data.dart';
+import 'package:century_ai/db/repositories/local_user_profile_repository.dart';
+import 'package:century_ai/features/auth/presentation/widgets/user_avatar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
@@ -58,6 +61,19 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       }
     }
     return null;
+  }
+
+  /// Captures the full page (image + laminates + user card) via the
+  /// [RepaintBoundary] and returns the PNG bytes, or null on failure.
+  Future<Uint8List?> _captureFullPage() async {
+    final RenderRepaintBoundary? boundary =
+        _shareKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary == null) return null;
+
+    final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+    final ByteData? byteData =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData?.buffer.asUint8List();
   }
 
   Future<void> _handleShare(BuildContext context) async {
@@ -184,11 +200,12 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
         return;
       }
 
-      final String? sourcePath = await _getLocalImagePath();
-      if (sourcePath == null) {
+      // 2. Capture the full page (image + laminates + user card)
+      final Uint8List? pngBytes = await _captureFullPage();
+      if (pngBytes == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not locate the image')),
+            const SnackBar(content: Text('Could not capture the design')),
           );
         }
         return;
@@ -199,10 +216,12 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       if (name.isEmpty) {
         name = 'century_design_${DateTime.now().millisecondsSinceEpoch}';
       }
-      if (!name.toLowerCase().endsWith('.jpg') &&
-          !name.toLowerCase().endsWith('.jpeg') &&
-          !name.toLowerCase().endsWith('.png')) {
-        name = '$name.jpg';
+      // Always save as .png since we capture a screenshot
+      if (!name.toLowerCase().endsWith('.png')) {
+        // Strip existing image extension if any, then add .png
+        final extPattern = RegExp(r'\.(jpg|jpeg|png)$', caseSensitive: false);
+        name = name.replaceAll(extPattern, '');
+        name = '$name.png';
       }
 
       // Create the target directory if it doesn't exist
@@ -212,9 +231,8 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       }
 
       // Write the file directly
-      final bytes = await File(sourcePath).readAsBytes();
       final targetFile = File(p.join(folderPath, name));
-      await targetFile.writeAsBytes(bytes, flush: true);
+      await targetFile.writeAsBytes(pngBytes, flush: true);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -251,17 +269,27 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
       return;
     }
 
-    final String? sourcePath = await _getLocalImagePath();
-    if (sourcePath == null) {
+    // Capture the full page (image + laminates + user card)
+    final Uint8List? pngBytes = await _captureFullPage();
+    if (pngBytes == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not locate the image')),
+          const SnackBar(content: Text('Could not capture the design')),
         );
       }
       return;
     }
 
-    await Gal.putImage(sourcePath, album: 'Century Decor Studio');
+    // Write to a temp file so Gal can pick it up
+    final tempDir = await getTemporaryDirectory();
+    final tempPath = p.join(
+      tempDir.path,
+      'century_decor_studio_design_${DateTime.now().millisecondsSinceEpoch}.png',
+    );
+    final tempFile = File(tempPath);
+    await tempFile.writeAsBytes(pngBytes, flush: true);
+
+    await Gal.putImage(tempPath, album: 'Century Decor Studio');
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -668,25 +696,26 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const CircleAvatar(
-                                              radius: 28,
-                                              backgroundColor: Colors.transparent,
-                                              backgroundImage: AssetImage(TImages.user), // placeholder
-                                            ),
+                                            // Signed-in user's photo and details.
+                                            const UserAvatar(size: 56),
                                             const SizedBox(height: 8),
-                                            const Text(
-                                              "Rahul Ghosh",
-                                              style: TextStyle(
+                                            Text(
+                                              _cardUserName(),
+                                              textAlign: TextAlign.center,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 12.5,
                                                 color: Colors.black,
                                               ),
                                             ),
                                             const SizedBox(height: 2),
-                                            const Text(
-                                              "Contractor",
-                                              style: TextStyle(color: Color(0xFF5D5D5D), fontSize: 10.5),
-                                            ),
+                                            if (_cardOccupation() != null)
+                                              Text(
+                                                _cardOccupation()!,
+                                                style: const TextStyle(color: Color(0xFF5D5D5D), fontSize: 10.5),
+                                              ),
                                             const SizedBox(height: 2),
                                             const Text(
                                               "User Id:1234",
@@ -714,9 +743,9 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            _buildContactRow(Icons.phone, "+91 7654321908"),
+                                            _buildContactRow(Icons.phone, _cardPhone()),
                                             const SizedBox(height: 15),
-                                            _buildContactRow(Icons.email, "rahulG@email.com"),
+                                            _buildContactRow(Icons.email, _cardEmail()),
                                             const SizedBox(height: 15),
                                             _buildContactRow(Icons.location_on, "123 Street, Kolkata, West Bengal"),
                                           ],
@@ -791,6 +820,38 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
     ),
   );
 }
+
+  // ── Share card user details (signed-in user's saved profile) ──────────
+
+  UserProfileData? get _cardProfile => LocalUserProfileRepository.current.value;
+
+  String _cardUserName() {
+    final profile = _cardProfile;
+    final name = profile == null
+        ? (FirebaseAuth.instance.currentUser?.displayName ?? '')
+        : '${profile.firstName} ${profile.lastName}';
+    return name.trim().isEmpty ? 'Century Decor Studio' : name.trim();
+  }
+
+  String? _cardOccupation() {
+    final occupation = _cardProfile?.occupation;
+    return (occupation == null || occupation.isEmpty) ? null : occupation;
+  }
+
+  /// "+917718498921" → "+91 7718498921".
+  String _cardPhone() {
+    final phone =
+        _cardProfile?.phoneNumber ?? FirebaseAuth.instance.currentUser?.phoneNumber;
+    if (phone == null || phone.isEmpty) return '—';
+    return phone.startsWith('+91') && phone.length == 13
+        ? '+91 ${phone.substring(3)}'
+        : phone;
+  }
+
+  String _cardEmail() {
+    final email = _cardProfile?.email ?? '';
+    return email.isEmpty ? '—' : email;
+  }
 
   Widget _buildContactRow(IconData icon, String text) {
     return Row(

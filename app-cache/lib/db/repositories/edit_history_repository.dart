@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:century_ai/db/db_core.dart';
 import 'package:century_ai/db/models/edit_history_data.dart';
@@ -26,9 +29,37 @@ class EditHistoryRepository {
     )
   ''';
 
+  /// App documents folder, cached at startup for [_resolvePath].
+  static String? _docsPath;
+
   /// Initialize the edit_history table
   static Future<void> initializeTable() async {
+    _docsPath = (await getApplicationDocumentsDirectory()).path;
     await DbCore.ensureTablesExist({tableName: _createTableScript});
+  }
+
+  /// Rows store absolute paths, but the iOS app folder (`…/Application/<id>/`)
+  /// changes on reinstall and on every `flutter run`, which broke older
+  /// edits' images. Re-point anything under Documents/ to the current folder.
+  static String _resolvePath(String path) {
+    if (path.isEmpty || path.startsWith('http') || _docsPath == null) {
+      return path;
+    }
+    if (File(path).existsSync()) return path;
+    const marker = '/Documents/';
+    final i = path.indexOf(marker);
+    if (i < 0) return path;
+    final moved = p.join(_docsPath!, path.substring(i + marker.length));
+    return File(moved).existsSync() ? moved : path;
+  }
+
+  static EditHistoryData _fromRow(Map<String, Object?> row) {
+    final map = Map<String, dynamic>.from(row);
+    for (final key in const ['edited_image_path', 'original_image_path']) {
+      final value = map[key];
+      if (value is String) map[key] = _resolvePath(value);
+    }
+    return EditHistoryData.fromMap(map);
   }
 
   /// Save an edit record to the database
@@ -59,7 +90,7 @@ class EditHistoryRepository {
 
     debugPrint('Retrieved ${result.length} edits for furniture ID: $furnitureId');
 
-    return result.map((map) => EditHistoryData.fromMap(map)).toList();
+    return result.map(_fromRow).toList();
   }
 
   /// Retrieve a specific edit record by its primary ID
@@ -73,7 +104,7 @@ class EditHistoryRepository {
     );
 
     if (result.isEmpty) return null;
-    return EditHistoryData.fromMap(result.first);
+    return _fromRow(result.first);
   }
 
   /// Walk the parent chain starting from [editId] and return ALL laminates
@@ -135,7 +166,7 @@ class EditHistoryRepository {
 
     debugPrint('Retrieved ${result.length} edits for session ID: $sessionId');
 
-    return result.map((map) => EditHistoryData.fromMap(map)).toList();
+    return result.map(_fromRow).toList();
   }
 
   /// Retrieve all edits for a specific owner
@@ -151,7 +182,7 @@ class EditHistoryRepository {
 
     debugPrint('Retrieved ${result.length} edits for owner: $ownerId');
 
-    return result.map((map) => EditHistoryData.fromMap(map)).toList();
+    return result.map(_fromRow).toList();
   }
 
   /// Delete an edit record by ID

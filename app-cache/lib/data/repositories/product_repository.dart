@@ -210,18 +210,34 @@ class ProductRepository {
     }
   }
 
+  /// [applicationType] is "INTERIOR" or "EXTERIOR"; only favorites of that
+  /// section are returned.
   Future<List<ProductImageModel>> getFavoriteProducts({
     required String ownerId,
+    String? applicationType,
   }) async {
     try {
-      final data = await _apiService.getFavoriteProducts(ownerId: ownerId);
-      final products = data.map((item) {
-        final model = _mapToModel(item.cast<String, dynamic>());
-        // Since we are fetching from the favorites endpoint, we can mark them as liked
-        return model.copyWith(isFavorite: true);
-      }).toList();
+      final data = await _apiService.getFavoriteProducts(
+        ownerId: ownerId,
+        applicationType: applicationType,
+      );
+      final products = data
+          .map((item) {
+            final model = _mapToModel(item.cast<String, dynamic>());
+            // Since we are fetching from the favorites endpoint, we can mark them as liked
+            return model.copyWith(isFavorite: true);
+          })
+          // Also filter here in case the endpoint ignores applicationType.
+          .where(
+            (p) =>
+                applicationType == null ||
+                p.applicationType == null ||
+                p.applicationType!.toUpperCase() ==
+                    applicationType.toUpperCase(),
+          )
+          .toList();
       debugPrint(
-        '📦 REPO_LOG: Fetched ${products.length} favorite products for owner: $ownerId',
+        '📦 REPO_LOG: Fetched ${products.length} favorite products for owner: $ownerId (${applicationType ?? 'ALL'})',
       );
       return products;
     } catch (e) {

@@ -340,12 +340,13 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         sessionLaminates.add(laminate);
       }
 
+      final editId = customSessionId ?? const Uuid().v4();
       final editData = EditHistoryData(
-        id: customSessionId ?? const Uuid().v4(),
+        id: editId,
         furnitureId: state.furnitureId!,
         sessionId: customSessionId ?? state.sessionId ?? "default_session",
         originalImagePath: state.originalImage!,
-        editedImagePath: imgPath,
+        editedImagePath: await _persistEditedImage(imgPath, editId),
         editedAt: DateTime.now(),
         ownerId: state.ownerId ?? "user13@gmail.com",
         usedLaminates: sessionLaminates.isNotEmpty
@@ -364,6 +365,27 @@ class ImageEditCubit extends Cubit<ImageEditState> {
       );
     } catch (e) {
       debugPrint('❌ Error saving to SQLite: $e');
+    }
+  }
+
+  /// Copies an applied edit out of the temp folder (which the OS may clear)
+  /// into app documents, so saved edits stay viewable. Returns the new path,
+  /// or [imgPath] unchanged if it is a URL or the copy fails.
+  Future<String> _persistEditedImage(String imgPath, String editId) async {
+    if (imgPath.startsWith('http')) return imgPath;
+    try {
+      final source = File(imgPath);
+      if (!await source.exists()) return imgPath;
+      final docs = await getApplicationDocumentsDirectory();
+      final dir = Directory(p.join(docs.path, 'edits'));
+      await dir.create(recursive: true);
+      final ext = p.extension(imgPath).isEmpty ? '.png' : p.extension(imgPath);
+      final target = p.join(dir.path, '$editId$ext');
+      await source.copy(target);
+      return target;
+    } catch (e) {
+      debugPrint('⚠️ Could not copy edited image to documents: $e');
+      return imgPath;
     }
   }
 

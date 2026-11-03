@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 abstract final class AuthAssets {
   static const logo = 'assets/logos/CenturyDecoratives_Logo.png';
+  static const starLogo = 'assets/auth/logo.png';
   static const topStars = 'assets/auth/top-stars.png';
   static const bottomStars = 'assets/auth/bottom-stars.png';
   static const mascot = 'assets/auth/banner-man.png';
@@ -184,61 +185,68 @@ class AuthFormLayout extends StatelessWidget {
     // Scaffold strips viewInsets from its body, so read them from the view.
     final keyboardOpen = View.of(context).viewInsets.bottom > 0;
     final screenHeight = MediaQuery.sizeOf(context).height;
-    final compact = screenHeight < 700;
+    // Gaps follow the 812pt-tall design and shrink/grow a little with the
+    // screen, so the button stays right under the field on every phone.
+    final k = (screenHeight / 812).clamp(0.7, 1.15);
+    const mascotHeight = 115.0;
 
     return AuthDecoratedBackground(
       showBottomStars: !keyboardOpen,
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: SafeArea(
-          child: CustomScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            slivers: [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      SizedBox(height: compact ? 24 : 40),
-                      CenturyLogo(width: compact ? 140 : 168),
-                      const SizedBox(height: 16),
-                      const Spacer(flex: 3),
-                      DecorStudioBadge(size: compact ? 128 : 160),
-                      const SizedBox(height: 16),
-                      const Spacer(flex: 3),
-                      const Text(
-                        'Lets Design Furnitures with Century Decor',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF555555),
-                        ),
+      child: Stack(
+        children: [
+          if (!keyboardOpen)
+            Positioned(
+              left: 0,
+              bottom: 0,
+              child: Image.asset(AuthAssets.mascot, height: mascotHeight),
+            ),
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: SafeArea(
+              child: CustomScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          SizedBox(height: 40 * k),
+                          CenturyLogo(width: k < 0.85 ? 140 : 168),
+                          SizedBox(height: 40 * k),
+                          DecorStudioBadge(size: 160 * k.clamp(0.8, 1.0)),
+                          SizedBox(height: 48 * k),
+                          const Text(
+                            'Lets Design Furnitures with Century Decor',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF555555),
+                            ),
+                          ),
+                          SizedBox(height: 44 * k),
+                          form,
+                          SizedBox(height: 52 * k),
+                          button,
+                          const Spacer(),
+                          // Room for the corner mascot so it never covers
+                          // the button on short screens.
+                          SizedBox(
+                            height: keyboardOpen ? 24 : mascotHeight + 8,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      const Spacer(flex: 2),
-                      form,
-                      const SizedBox(height: 20),
-                      const Spacer(flex: 3),
-                      if (!keyboardOpen) ...[
-                        Image.asset(
-                          AuthAssets.mascot,
-                          height: compact ? 90 : 115,
-                        ),
-                        const SizedBox(height: 12),
-                        const Spacer(flex: 2),
-                      ],
-                      button,
-                      SizedBox(height: compact ? 32 : 56),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
