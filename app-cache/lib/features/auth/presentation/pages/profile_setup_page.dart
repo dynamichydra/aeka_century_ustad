@@ -41,6 +41,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   late final _phone = TextEditingController(
     text: FirebaseAuth.instance.currentUser?.phoneNumber ?? '',
   );
+  final _address = TextEditingController();
 
   String? _motherTongue;
   String? _occupation;
@@ -79,6 +80,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         _firstName.text = profile.firstName;
         _lastName.text = profile.lastName;
         _email.text = profile.email;
+        _address.text = profile.address ?? '';
         _motherTongue = _validOption(
           profile.motherTongue,
           ProfileSetupPage.motherTongues,
@@ -176,6 +178,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         firstName: first,
         lastName: last,
         email: _email.text.trim(),
+        address: _address.text.trim(),
         motherTongue: _motherTongue,
         occupation: _occupation,
         photoFileName: photoFileName,
@@ -227,6 +230,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     _lastName.dispose();
     _email.dispose();
     _phone.dispose();
+    _address.dispose();
     super.dispose();
   }
 
@@ -328,7 +332,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                     readOnly: !_editing,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
-                    textInputAction: TextInputAction.done,
+                    textInputAction: TextInputAction.next,
                     validator: (v) {
                       final value = (v ?? '').trim();
                       if (value.isEmpty) return 'Please enter your email';
@@ -338,15 +342,24 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                       return ok ? null : 'Please enter a valid email';
                     },
                   ),
-                  if (widget.viewMode) ...[
-                    const SizedBox(height: 14),
-                    _UnderlinedField(
-                      label: 'Mobile Number',
-                      controller: _phone,
-                      readOnly: true,
-                      validator: (_) => null,
-                    ),
-                  ],
+                  const SizedBox(height: 14),
+                  _UnderlinedField(
+                    label: 'Mobile Number',
+                    controller: _phone,
+                    readOnly: true,
+                    validator: (_) => null,
+                  ),
+                  const SizedBox(height: 14),
+                  _UnderlinedField(
+                    label: 'Address',
+                    controller: _address,
+                    readOnly: !_editing,
+                    textCapitalization: TextCapitalization.words,
+                    keyboardType: TextInputType.streetAddress,
+                    autofillHints: const [AutofillHints.fullStreetAddress],
+                    textInputAction: TextInputAction.done,
+                    validator: (_) => null,
+                  ),
                   const SizedBox(height: 14),
                   const Text(
                     'Take Personalization to the next level by adding more '

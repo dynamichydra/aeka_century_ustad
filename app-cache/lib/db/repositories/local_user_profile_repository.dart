@@ -23,6 +23,7 @@ class LocalUserProfileRepository {
       first_name TEXT,
       last_name TEXT,
       email TEXT,
+      address TEXT,
       mother_tongue TEXT,
       occupation TEXT,
       photo_file_name TEXT,
@@ -43,6 +44,12 @@ class LocalUserProfileRepository {
 
   static Future<void> initializeTable() async {
     await DbCore.ensureTablesExist({tableName: _createTableScript});
+    try {
+      final db = await DbCore.database;
+      await db.execute('ALTER TABLE $tableName ADD COLUMN address TEXT');
+    } catch (_) {
+      // Column may already exist
+    }
   }
 
   static Future<UserProfileData?> getProfile(String uid) async {
@@ -126,6 +133,7 @@ class LocalUserProfileRepository {
       firstName: pick(local?.firstName, r.firstName),
       lastName: pick(local?.lastName, r.lastName),
       email: pick(local?.email, r.email),
+      address: local?.address ?? r.address,
       motherTongue: local?.motherTongue,
       occupation: local?.occupation,
       photoFileName: photoFileName,

@@ -56,7 +56,7 @@ class DbCore {
 
       _database = await openDatabase(
         path,
-        version: 3,
+        version: 4,
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
             try {
@@ -80,6 +80,16 @@ class DbCore {
               print('✅ [DbCore] Migration v3: Added system_area and user_area columns');
             } catch (e) {
               print('⚠️ [DbCore] Migration v3 note: $e');
+            }
+          }
+          if (oldVersion < 4) {
+            try {
+              await db.execute(
+                'ALTER TABLE user_profile ADD COLUMN address TEXT',
+              );
+              print('✅ [DbCore] Migration v4: Added address column to user_profile');
+            } catch (e) {
+              print('⚠️ [DbCore] Migration v4 note: $e');
             }
           }
         },

@@ -1,3 +1,4 @@
+import 'package:century_ai/core/constants/api_constants.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -14,6 +15,11 @@ class FirebaseAuthInterceptor extends QueuedInterceptor {
 
   static const _retriedKey = 'firebase_auth_retried';
 
+  static final _apiHost = Uri.parse(TApiConstants.baseUrl).host;
+
+  static bool _isApiRequest(RequestOptions options) =>
+      options.uri.host == _apiHost;
+
   FirebaseAuthInterceptor(this._dio, {FirebaseAuth? auth})
     : _auth = auth ?? FirebaseAuth.instance;
 
@@ -22,6 +28,8 @@ class FirebaseAuthInterceptor extends QueuedInterceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    // Only our API gets the token; signed storage URLs reject extra auth.
+    if (!_isApiRequest(options)) return handler.next(options);
     try {
       // Returns the cached token, refreshing it first if it is about to expire.
       final token = await _auth.currentUser?.getIdToken();
@@ -43,6 +51,7 @@ class FirebaseAuthInterceptor extends QueuedInterceptor {
     final user = _auth.currentUser;
     if (err.response?.statusCode != 401 ||
         user == null ||
+        !_isApiRequest(options) ||
         options.extra[_retriedKey] == true) {
       return handler.next(err);
     }

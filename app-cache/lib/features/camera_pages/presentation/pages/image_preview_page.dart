@@ -143,7 +143,6 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     if (id == null || id.trim().isEmpty) return;
     context.read<ProductsCubit>().fetchSimilarProducts(
       id,
-      ownerId: "user13@gmail.com",
       limit: 12,
     );
   }

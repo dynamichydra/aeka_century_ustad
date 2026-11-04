@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:century_ai/core/auth/current_user.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -142,7 +143,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   double _sliderPosition = 0.5;
 
   final UserEditsService _userEditsService = UserEditsService();
-  final String _ownerEmail = "user13@gmail.com";
+  String get _ownerEmail => CurrentUser.ownerId;
   List<EditRecord> _userEdits = [];
 
   /// ID of the edit_history row that the current session is built upon.
@@ -551,7 +552,6 @@ class _ImageEditPageState extends State<ImageEditPage>
     try {
       // 1. Fetch from Network
       final allEdits = await _userEditsService.getEdits(
-        _ownerEmail,
         furnitureId: widget.image_id,
       );
       final filteredNetwork = allEdits
@@ -4866,7 +4866,6 @@ class _ImageEditPageState extends State<ImageEditPage>
           final EditRecord? record = await _userEditsService.postEdit(
             editedFile: File(state.currentGeneratedImage!),
             furnitureId: widget.image_id!,
-            email: _ownerEmail,
           );
           if (record != null && record.id.isNotEmpty) {
             responseId = record.id;

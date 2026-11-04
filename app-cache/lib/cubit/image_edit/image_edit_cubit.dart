@@ -1,4 +1,5 @@
 import 'package:century_ai/features/camera_pages/data/services/image_edit_service.dart';
+import 'package:century_ai/core/auth/current_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'image_edit_state.dart';
@@ -348,7 +349,7 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         originalImagePath: state.originalImage!,
         editedImagePath: await _persistEditedImage(imgPath, editId),
         editedAt: DateTime.now(),
-        ownerId: state.ownerId ?? "user13@gmail.com",
+        ownerId: state.ownerId ?? CurrentUser.ownerId,
         usedLaminates: sessionLaminates.isNotEmpty
             ? jsonEncode(sessionLaminates)
             : null,
@@ -398,7 +399,6 @@ class ImageEditCubit extends Cubit<ImageEditState> {
     if (coordinate == null) return;
 
     final String furnitureId = state.furnitureId ?? "3fa85f64-5717-4562-b3fc-2c963f66afa6";
-    final String ownerId = state.ownerId ?? "user13@gmail.com";
     
     final String originalImg = state.originalImage ?? "";
     String originalImageUrl = state.originalImageUrl ?? "";
@@ -451,7 +451,6 @@ class ImageEditCubit extends Cubit<ImageEditState> {
         objW: objW,
         objH: objH,
         feedback: feedbackType,
-        ownerId: ownerId,
       );
 
       final String? uploadUrl = res['uploadUrl'];

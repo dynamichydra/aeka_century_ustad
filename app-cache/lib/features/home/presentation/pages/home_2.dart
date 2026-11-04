@@ -75,7 +75,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductsCubit>().fetchFeaturedProducts(
-        ownerId: "user13@gmail.com",
       );
     });
   }
@@ -395,7 +394,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           context.read<HomeCubit>().clearSearch();
           // Fetch featured products when category is deselected
           context.read<ProductsCubit>().fetchFeaturedProducts(
-            ownerId: "user13@gmail.com",
           );
         } else {
           setState(() {
@@ -410,7 +408,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
           context.read<ProductsCubit>().fetchProductsByCategory(
             product.name,
             isInterior: selectedIndex == 0,
-            ownerId: "user13@gmail.com",
           );
         }
       },
@@ -720,7 +717,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 _searchController.clear();
                 context.read<HomeCubit>().clearSearch();
                 context.read<ProductsCubit>().fetchFeaturedProducts(
-                  ownerId: "user13@gmail.com",
                   isExterior: true,
                 );
               } else {
@@ -734,7 +730,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 _searchController.clear();
                 context.read<HomeCubit>().clearSearch();
                 context.read<ProductsCubit>().fetchFeaturedProducts(
-                  ownerId: "user13@gmail.com",
                   isExterior: false,
                 );
               }
@@ -783,7 +778,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 context.read<ProductsCubit>().fetchProductsByCategory(
                   matchingCategory,
                   isInterior: homeState.selectedIndex == 0,
-                  ownerId: "user13@gmail.com",
                 );
               } else {
                 _selectedCategory = null;
@@ -862,7 +856,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       _searchController.clear();
                       context.read<HomeCubit>().clearSearch();
                       context.read<ProductsCubit>().fetchFeaturedProducts(
-                        ownerId: "user13@gmail.com",
                       );
                     },
                   ),
@@ -898,14 +891,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
                           if (isNowTrending) {
                             context.read<ProductsCubit>().fetchTrendingProducts(
-                              ownerId: "user13@gmail.com",
                               applicationType: homeState.isExterior
                                   ? "EXTERIOR"
                                   : "INTERIOR",
                             );
                           } else {
                             context.read<ProductsCubit>().fetchFeaturedProducts(
-                              ownerId: "user13@gmail.com",
                               isExterior: homeState.isExterior,
                             );
                           }
@@ -953,14 +944,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
 
                           if (isNowLiked) {
                             context.read<ProductsCubit>().fetchFavoriteProducts(
-                              ownerId: "user13@gmail.com",
                               applicationType: homeState.isExterior
                                   ? "EXTERIOR"
                                   : "INTERIOR",
                             );
                           } else {
                             context.read<ProductsCubit>().fetchFeaturedProducts(
-                              ownerId: "user13@gmail.com",
                               isExterior: homeState.isExterior,
                             );
                           }
@@ -1078,7 +1067,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 product.itemId ??
                                 product.furnitureId ??
                                 product.id,
-                            ownerId: "user13@gmail.com",
                           );
                         },
                       ),
@@ -1127,7 +1115,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 product.itemId ??
                                 product.furnitureId ??
                                 product.id,
-                            ownerId: "user13@gmail.com",
                           );
                         },
                       ),
@@ -1177,7 +1164,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                       // Fetch featured products
                       return context
                           .read<ProductsCubit>()
-                          .fetchFeaturedProducts(ownerId: "user13@gmail.com");
+                          .fetchFeaturedProducts();
                     },
                     child: NotificationListener<ScrollNotification>(
                       onNotification: (ScrollNotification scrollInfo) {
@@ -1339,7 +1326,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           context.read<ProductsCubit>().fetchProductsByCategory(
                             selectedCategory,
                             isInterior: selectedIndex == 0,
-                            ownerId: "user13@gmail.com",
                           );
                         } else {
                           setState(() {
@@ -1353,7 +1339,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 selectedCategory,
                                 subCat,
                                 isInterior: selectedIndex == 0,
-                                ownerId: "user13@gmail.com",
                               );
                         }
                       },
@@ -1417,7 +1402,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 _selectedCategory!,
                                 _selectedSubCategory,
                                 isInterior: selectedIndex == 0,
-                                ownerId: "user13@gmail.com",
                               );
                         } else {
                           setState(() {
@@ -1431,7 +1415,6 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                                 _selectedSubCategory,
                                 nSubCat,
                                 isInterior: selectedIndex == 0,
-                                ownerId: "user13@gmail.com",
                               );
                         }
                       },

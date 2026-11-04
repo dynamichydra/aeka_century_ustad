@@ -20,7 +20,6 @@ class ProductsState extends Equatable {
   final String? currentRoom;
   final String? currentGroup;
   final String? currentProduct;
-  final String? currentOwnerId;
   final String? currentApplicationType;
   final bool? isInterior;
   final bool isTrending;
@@ -43,7 +42,6 @@ class ProductsState extends Equatable {
     this.currentRoom,
     this.currentGroup,
     this.currentProduct,
-    this.currentOwnerId,
     this.currentApplicationType,
     this.isInterior,
     this.isTrending = false,
@@ -67,7 +65,6 @@ class ProductsState extends Equatable {
     String? currentRoom,
     String? currentGroup,
     String? currentProduct,
-    String? currentOwnerId,
     String? currentApplicationType,
     bool? isInterior,
     bool? isTrending,
@@ -97,7 +94,6 @@ class ProductsState extends Equatable {
       currentRoom: clearRoom ? null : (currentRoom ?? this.currentRoom),
       currentGroup: clearGroup ? null : (currentGroup ?? this.currentGroup),
       currentProduct: clearProduct ? null : (currentProduct ?? this.currentProduct),
-      currentOwnerId: currentOwnerId ?? this.currentOwnerId,
       currentApplicationType: currentApplicationType ?? this.currentApplicationType,
       isInterior: isInterior ?? this.isInterior,
       isTrending: isTrending ?? this.isTrending,
@@ -123,7 +119,6 @@ class ProductsState extends Equatable {
     currentRoom,
     currentGroup,
     currentProduct,
-    currentOwnerId,
     currentApplicationType,
     isInterior,
     isTrending,

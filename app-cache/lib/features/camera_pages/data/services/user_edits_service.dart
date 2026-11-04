@@ -1,18 +1,22 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:century_ai/core/constants/api_constants.dart';
+import 'package:century_ai/core/network/firebase_auth_interceptor.dart';
 import '../models/edit_record.dart';
 import '../../../../core/services/image_preprocessor.dart';
 
 class UserEditsService {
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'https://century-ustad-api-507497848998.asia-south1.run.app',
+      baseUrl: TApiConstants.baseUrl,
       connectTimeout: null,
       receiveTimeout: null,
     ),
   );
 
   UserEditsService() {
+    // The backend identifies the user from the Firebase ID token.
+    _dio.interceptors.add(FirebaseAuthInterceptor(_dio));
     _dio.interceptors.add(
       LogInterceptor(
         requestBody: true,
@@ -22,10 +26,10 @@ class UserEditsService {
     );
   }
 
-  /// Fetch all edits for a specific owner, optionally filtered by furnitureId
-  Future<List<EditRecord>> getEdits(String email, {String? furnitureId}) async {
+  /// Fetch the signed-in user's edits, optionally filtered by furnitureId
+  Future<List<EditRecord>> getEdits({String? furnitureId}) async {
     try {
-      final queryParams = <String, dynamic>{'owner': email};
+      final queryParams = <String, dynamic>{};
       if (furnitureId != null) {
         queryParams['furnitureId'] = furnitureId;
       }
@@ -48,7 +52,6 @@ class UserEditsService {
   Future<EditRecord?> postEdit({
     required File editedFile,
     required String furnitureId,
-    required String email,
   }) async {
     try {
       final processedFile = await ImagePreprocessor.preprocessImage(editedFile);
@@ -58,7 +61,6 @@ class UserEditsService {
           filename: processedFile.path.split('/').last,
         ),
         'id': furnitureId,
-        'owner': email,
       });
 
       final response = await _dio.post('/me/edits', data: formData);

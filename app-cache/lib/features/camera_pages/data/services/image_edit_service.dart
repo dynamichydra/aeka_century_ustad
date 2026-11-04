@@ -157,7 +157,6 @@ class ImageEditService {
     required double objW,
     required double objH,
     required String feedback,
-    required String ownerId,
   }) async {
     debugPrint("📡 image_edit_service.submitTryOnFeedback: imageUrl=$imageUrl, originalImageUrl=$originalImageUrl, originalImageId=$originalImageId");
     return await _apiService.submitTryOnFeedback(
@@ -171,7 +170,6 @@ class ImageEditService {
       objW: objW,
       objH: objH,
       feedback: feedback,
-      ownerId: ownerId,
     );
   }
 

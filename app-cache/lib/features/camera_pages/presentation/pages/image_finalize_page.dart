@@ -717,10 +717,10 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                                 style: const TextStyle(color: Color(0xFF5D5D5D), fontSize: 10.5),
                                               ),
                                             const SizedBox(height: 2),
-                                            const Text(
-                                              "User Id:1234",
-                                              style: TextStyle(color: Color(0xFF5D5D5D), fontSize: 10.5),
-                                            ),
+                                            // const Text(
+                                            //   "User Id:1234",
+                                            //   style: TextStyle(color: Color(0xFF5D5D5D), fontSize: 10.5),
+                                            // ),
                                           ],
                                         ),
                                       ),
@@ -747,7 +747,7 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
                                             const SizedBox(height: 15),
                                             _buildContactRow(Icons.email, _cardEmail()),
                                             const SizedBox(height: 15),
-                                            _buildContactRow(Icons.location_on, "123 Street, Kolkata, West Bengal"),
+                                            _buildContactRow(Icons.location_on, _cardAddress()),
                                           ],
                                         ),
                                       ),
@@ -851,6 +851,13 @@ class _ImageFinalizePageState extends State<ImageFinalizePage> {
   String _cardEmail() {
     final email = _cardProfile?.email ?? '';
     return email.isEmpty ? '—' : email;
+  }
+
+  String _cardAddress() {
+    final address = _cardProfile?.address?.trim();
+    return (address != null && address.isNotEmpty)
+        ? address
+        : "123 Street, Kolkata, West Bengal";
   }
 
   Widget _buildContactRow(IconData icon, String text) {

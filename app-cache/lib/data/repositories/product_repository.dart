@@ -53,9 +53,9 @@ class ProductRepository {
     );
   }
 
-  Future<List<ProductImageModel>> getFeaturedProducts({String? ownerId, int limit = 10, int offset = 0}) async {
+  Future<List<ProductImageModel>> getFeaturedProducts({int limit = 10, int offset = 0}) async {
     try {
-      final data = await _apiService.getFeaturedFurniture(ownerId: ownerId, limit: limit, offset: offset);
+      final data = await _apiService.getFeaturedFurniture(limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
       debugPrint('📦 REPO_LOG: Fetched ${products.length} featured products (Offset: $offset, Limit: $limit)');
       return products;
@@ -65,9 +65,9 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getInteriorProducts({String? ownerId, int limit = 10, int offset = 0}) async {
+  Future<List<ProductImageModel>> getInteriorProducts({int limit = 10, int offset = 0}) async {
     try {
-      final data = await _apiService.getInteriorFurniture(ownerId: ownerId, limit: limit, offset: offset);
+      final data = await _apiService.getInteriorFurniture(limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
       debugPrint('📦 REPO_LOG: Fetched ${products.length} interior products (Offset: $offset, Limit: $limit)');
       return products;
@@ -77,9 +77,9 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getExteriorProducts({String? ownerId, int limit = 10, int offset = 0}) async {
+  Future<List<ProductImageModel>> getExteriorProducts({int limit = 10, int offset = 0}) async {
     try {
-      final data = await _apiService.getExteriorFurniture(ownerId: ownerId, limit: limit, offset: offset);
+      final data = await _apiService.getExteriorFurniture(limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
       debugPrint('📦 REPO_LOG: Fetched ${products.length} exterior products (Offset: $offset, Limit: $limit)');
       return products;
@@ -89,11 +89,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByRoom(String room, {String? ownerId, int limit = 20, int offset = 0}) async {
+  Future<List<ProductImageModel>> getProductsByRoom(String room, {int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByRoom(room, ownerId: ownerId, limit: limit, offset: offset);
+      final data = await _apiService.getFurnitureByRoom(room, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for room: $room, owner: $ownerId (Offset: $offset, Limit: $limit)');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for room: $room (Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByRoom failure for $room: $e');
@@ -101,11 +101,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByGroup(String group, {String? ownerId, int limit = 20, int offset = 0}) async {
+  Future<List<ProductImageModel>> getProductsByGroup(String group, {int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByGroup(group, ownerId: ownerId, limit: limit, offset: offset);
+      final data = await _apiService.getFurnitureByGroup(group, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for group: $group, owner: $ownerId (Offset: $offset, Limit: $limit)');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for group: $group (Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByGroup failure for $group: $e');
@@ -113,11 +113,11 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> getProductsByProduct(String product, {String? subCategory, String? ownerId, int limit = 20, int offset = 0}) async {
+  Future<List<ProductImageModel>> getProductsByProduct(String product, {String? subCategory, int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.getFurnitureByProduct(product, subCategory: subCategory, ownerId: ownerId, limit: limit, offset: offset);
+      final data = await _apiService.getFurnitureByProduct(product, subCategory: subCategory, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
-      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for product: $product, owner: $ownerId (Sub: ${subCategory ?? "None"}, Offset: $offset, Limit: $limit)');
+      debugPrint('📦 REPO_LOG: Fetched ${products.length} products for product: $product (Sub: ${subCategory ?? "None"}, Offset: $offset, Limit: $limit)');
       return products;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: getProductsByProduct failure for $product/$subCategory: $e');
@@ -134,9 +134,9 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductImageModel>> searchProducts(String query, {String? ownerId, int limit = 20, int offset = 0}) async {
+  Future<List<ProductImageModel>> searchProducts(String query, {int limit = 20, int offset = 0}) async {
     try {
-      final data = await _apiService.searchFurnitureByText(query, ownerId: ownerId, limit: limit, offset: offset);
+      final data = await _apiService.searchFurnitureByText(query, limit: limit, offset: offset);
       final products = data.map((item) => _mapToModel(item.cast<String, dynamic>())).toList();
       debugPrint('🔍 SEARCH_LOG: Text search "$query" found ${products.length} results (Offset: $offset, Limit: $limit)');
       return products;
@@ -160,14 +160,12 @@ class ProductRepository {
 
   Future<List<ProductImageModel>> getSimilarProducts(
     String id, {
-    String? ownerId,
     int limit = 20,
     int offset = 0,
   }) async {
     try {
       final data = await _apiService.getSimilarProducts(
         id,
-        ownerId: ownerId,
         limit: limit,
         offset: offset,
       );
@@ -184,14 +182,12 @@ class ProductRepository {
   }
 
   Future<List<ProductImageModel>> getTrendingProducts({
-    required String ownerId,
     String? applicationType,
     int limit = 20,
     int offset = 0,
   }) async {
     try {
       final data = await _apiService.getTrendingProducts(
-        ownerId: ownerId,
         applicationType: applicationType,
         limit: limit,
         offset: offset,
@@ -201,7 +197,7 @@ class ProductRepository {
         return model.copyWith(isTrending: true);
       }).toList();
       debugPrint(
-        '📦 REPO_LOG: Fetched ${products.length} trending products for owner: $ownerId (Offset: $offset, Limit: $limit)',
+        '📦 REPO_LOG: Fetched ${products.length} trending products (Offset: $offset, Limit: $limit)',
       );
       return products;
     } catch (e) {
@@ -213,12 +209,10 @@ class ProductRepository {
   /// [applicationType] is "INTERIOR" or "EXTERIOR"; only favorites of that
   /// section are returned.
   Future<List<ProductImageModel>> getFavoriteProducts({
-    required String ownerId,
     String? applicationType,
   }) async {
     try {
       final data = await _apiService.getFavoriteProducts(
-        ownerId: ownerId,
         applicationType: applicationType,
       );
       final products = data
@@ -237,7 +231,7 @@ class ProductRepository {
           )
           .toList();
       debugPrint(
-        '📦 REPO_LOG: Fetched ${products.length} favorite products for owner: $ownerId (${applicationType ?? 'ALL'})',
+        '📦 REPO_LOG: Fetched ${products.length} favorite products (${applicationType ?? 'ALL'})',
       );
       return products;
     } catch (e) {
@@ -248,10 +242,9 @@ class ProductRepository {
 
   Future<bool> toggleFavorite({
     required String itemId,
-    required String ownerId,
-  }) async {
+    }) async {
     try {
-      await _apiService.toggleFavorite(itemId: itemId, ownerId: ownerId);
+      await _apiService.toggleFavorite(itemId: itemId);
       return true;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: toggleFavorite failure for $itemId: $e');
@@ -261,10 +254,9 @@ class ProductRepository {
 
   Future<bool> removeFavorite({
     required String itemId,
-    required String ownerId,
-  }) async {
+    }) async {
     try {
-      await _apiService.removeFavorite(itemId: itemId, ownerId: ownerId);
+      await _apiService.removeFavorite(itemId: itemId);
       return true;
     } catch (e) {
       debugPrint('❌ REPO_LOG ERROR: removeFavorite failure for $itemId: $e');

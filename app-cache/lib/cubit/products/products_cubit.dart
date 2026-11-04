@@ -11,13 +11,12 @@ class ProductsCubit extends Cubit<ProductsState> {
 
   ProductsCubit(this._productRepository) : super(const ProductsState());
 
-  Future<void> loadProducts({String? ownerId, int limit = 12}) async {
-    return fetchFeaturedProducts(ownerId: ownerId, limit: limit);
+  Future<void> loadProducts({int limit = 12}) async {
+    return fetchFeaturedProducts(limit: limit);
   }
 
   Future<void> fetchSimilarProducts(
     String imageId, {
-    String? ownerId,
     int limit = 12,
   }) async {
     if (imageId.trim().isEmpty) return;
@@ -30,7 +29,6 @@ class ProductsCubit extends Cubit<ProductsState> {
         offset: 0,
         limit: limit,
         currentSimilarImageId: imageId,
-        currentOwnerId: ownerId,
         clearQuery: true,
         clearCategory: true,
         clearRoom: true,
@@ -42,7 +40,6 @@ class ProductsCubit extends Cubit<ProductsState> {
     try {
       final products = await _productRepository.getSimilarProducts(
         imageId,
-        ownerId: ownerId,
         limit: limit,
         offset: 0,
       );
@@ -66,7 +63,6 @@ class ProductsCubit extends Cubit<ProductsState> {
   }
 
   Future<void> fetchFeaturedProducts({
-    String? ownerId,
     int limit = 12,
     bool isExterior = false,
   }) async {
@@ -83,19 +79,16 @@ class ProductsCubit extends Cubit<ProductsState> {
         clearGroup: true,
         clearProduct: true,
         clearSimilarImageId: true,
-        currentOwnerId: ownerId,
         isTrending: false,
       ),
     );
     try {
       final products = isExterior
           ? await _productRepository.getExteriorProducts(
-              ownerId: ownerId,
               limit: limit,
               offset: 0,
             )
           : await _productRepository.getInteriorProducts(
-              ownerId: ownerId,
               limit: limit,
               offset: 0,
             );
@@ -123,10 +116,8 @@ class ProductsCubit extends Cubit<ProductsState> {
   Future<void> fetchProductsByCategory(
     String category, {
     required bool isInterior,
-    String? ownerId,
     int limit = 12,
   }) async {
-    final activeOwnerId = ownerId ?? state.currentOwnerId;
     emit(
       state.copyWith(
         isLoading: true,
@@ -140,7 +131,6 @@ class ProductsCubit extends Cubit<ProductsState> {
         clearGroup: isInterior,
         clearProduct: true,
         clearSimilarImageId: true,
-        currentOwnerId: activeOwnerId,
         isTrending: false,
       ),
     );
@@ -148,13 +138,11 @@ class ProductsCubit extends Cubit<ProductsState> {
       final products = isInterior
           ? await _productRepository.getProductsByRoom(
               category,
-              ownerId: activeOwnerId,
               limit: limit,
               offset: 0,
             )
           : await _productRepository.getProductsByGroup(
               category,
-              ownerId: activeOwnerId,
               limit: limit,
               offset: 0,
             );
@@ -181,15 +169,12 @@ class ProductsCubit extends Cubit<ProductsState> {
     String category,
     String subCategory, {
     required bool isInterior,
-    String? ownerId,
     int limit = 12,
   }) async {
-    final activeOwnerId = ownerId ?? state.currentOwnerId;
     if (subCategory == "All") {
       return fetchProductsByCategory(
         category,
         isInterior: isInterior,
-        ownerId: activeOwnerId,
         limit: limit,
       );
     }
@@ -213,7 +198,6 @@ class ProductsCubit extends Cubit<ProductsState> {
         clearQuery: true,
         clearProduct: false,
         clearSimilarImageId: true,
-        currentOwnerId: activeOwnerId,
         isTrending: false,
       ),
     );
@@ -221,7 +205,6 @@ class ProductsCubit extends Cubit<ProductsState> {
       final products = await _productRepository.getProductsByProduct(
         productBase,
         subCategory: subFilter,
-        ownerId: activeOwnerId,
         limit: limit,
         offset: 0,
       );
@@ -250,10 +233,8 @@ class ProductsCubit extends Cubit<ProductsState> {
     String subCategory,
     String nestedSubCategory, {
     required bool isInterior,
-    String? ownerId,
     int limit = 12,
   }) async {
-    final activeOwnerId = ownerId ?? state.currentOwnerId;
     // When subCategory is "All" or "General", there is no real intermediate
     // subcategory (e.g. Wardrobe with direct nested items), so the product
     // path is the category itself (e.g. /browse/product/Wardrobe?subCategory=1 Door).
@@ -276,7 +257,6 @@ class ProductsCubit extends Cubit<ProductsState> {
         isInterior: isInterior,
         clearQuery: true,
         clearSimilarImageId: true,
-        currentOwnerId: activeOwnerId,
         isTrending: false,
       ),
     );
@@ -284,7 +264,6 @@ class ProductsCubit extends Cubit<ProductsState> {
       final products = await _productRepository.getProductsByProduct(
         productBase,
         subCategory: subFilter,
-        ownerId: activeOwnerId,
         limit: limit,
         offset: 0,
       );
@@ -308,7 +287,6 @@ class ProductsCubit extends Cubit<ProductsState> {
   }
 
   Future<void> fetchTrendingProducts({
-    required String ownerId,
     String? applicationType,
     int limit = 200,
   }) async {
@@ -319,7 +297,6 @@ class ProductsCubit extends Cubit<ProductsState> {
         offset: 0,
         limit: limit,
         isTrending: true,
-        currentOwnerId: ownerId,
         currentApplicationType: applicationType,
         clearQuery: true,
         clearCategory: true,
@@ -331,7 +308,6 @@ class ProductsCubit extends Cubit<ProductsState> {
     );
     try {
       final products = await _productRepository.getTrendingProducts(
-        ownerId: ownerId,
         applicationType: applicationType,
         limit: limit,
         offset: 0,
@@ -358,7 +334,6 @@ class ProductsCubit extends Cubit<ProductsState> {
   /// [applicationType] is "INTERIOR" or "EXTERIOR", matching the section the
   /// user is in.
   Future<void> fetchFavoriteProducts({
-    required String ownerId,
     String? applicationType,
   }) async {
     emit(
@@ -368,7 +343,6 @@ class ProductsCubit extends Cubit<ProductsState> {
         offset: 0,
         isFavoriteView: true,
         isTrending: false,
-        currentOwnerId: ownerId,
         currentApplicationType: applicationType,
         clearQuery: true,
         clearCategory: true,
@@ -380,7 +354,6 @@ class ProductsCubit extends Cubit<ProductsState> {
     );
     try {
       final products = await _productRepository.getFavoriteProducts(
-        ownerId: ownerId,
         applicationType: applicationType,
       );
       emit(
@@ -405,7 +378,6 @@ class ProductsCubit extends Cubit<ProductsState> {
 
   Future<void> toggleFavorite({
     required String itemId,
-    required String ownerId,
   }) async {
     // Determine current state before optimistic update
     final product = state.products.firstWhere((p) => p.id == itemId);
@@ -427,13 +399,11 @@ class ProductsCubit extends Cubit<ProductsState> {
         // Use DELETE to unfavorite
         success = await _productRepository.removeFavorite(
           itemId: itemId,
-          ownerId: ownerId,
         );
       } else {
         // Use POST to favorite
         success = await _productRepository.toggleFavorite(
           itemId: itemId,
-          ownerId: ownerId,
         );
       }
 
@@ -459,13 +429,10 @@ class ProductsCubit extends Cubit<ProductsState> {
 
   Future<void> searchProducts(
     String query, {
-    String? ownerId,
     int limit = 12,
   }) async {
-    final activeOwnerId = ownerId ?? state.currentOwnerId ?? "user13@gmail.com";
     if (query.trim().isEmpty) {
       return fetchFeaturedProducts(
-        ownerId: activeOwnerId,
         limit: limit,
         isExterior: state.isInterior == false,
       );
@@ -483,13 +450,11 @@ class ProductsCubit extends Cubit<ProductsState> {
         clearProduct: true,
         clearSimilarImageId: true,
         isTrending: false,
-        currentOwnerId: activeOwnerId,
       ),
     );
     try {
       final products = await _productRepository.searchProducts(
         query,
-        ownerId: activeOwnerId,
         limit: limit,
         offset: 0,
       );
@@ -565,12 +530,9 @@ class ProductsCubit extends Cubit<ProductsState> {
     try {
       List<ProductImageModel> newProducts = [];
 
-      if (state.isTrending && state.currentOwnerId != null) {
-        debugPrint(
-          '📈 CUBIT_LOG: Loading more trending products for owner: ${state.currentOwnerId}',
-        );
+      if (state.isTrending) {
+        debugPrint('📈 CUBIT_LOG: Loading more trending products');
         newProducts = await _productRepository.getTrendingProducts(
-          ownerId: state.currentOwnerId!,
           applicationType: state.currentApplicationType,
           limit: state.limit,
           offset: state.offset,
@@ -578,7 +540,6 @@ class ProductsCubit extends Cubit<ProductsState> {
       } else if (state.currentSimilarImageId != null) {
         newProducts = await _productRepository.getSimilarProducts(
           state.currentSimilarImageId!,
-          ownerId: state.currentOwnerId,
           limit: state.limit,
           offset: state.offset,
         );
@@ -588,7 +549,6 @@ class ProductsCubit extends Cubit<ProductsState> {
         );
         newProducts = await _productRepository.searchProducts(
           state.currentQuery!,
-          ownerId: state.currentOwnerId,
           limit: state.limit,
           offset: state.offset,
         );
@@ -598,13 +558,11 @@ class ProductsCubit extends Cubit<ProductsState> {
         );
         if (state.currentProduct == "Exterior") {
           newProducts = await _productRepository.getExteriorProducts(
-            ownerId: state.currentOwnerId,
             limit: state.limit,
             offset: state.offset,
           );
         } else if (state.currentProduct == "Interior") {
           newProducts = await _productRepository.getInteriorProducts(
-            ownerId: state.currentOwnerId,
             limit: state.limit,
             offset: state.offset,
           );
@@ -614,7 +572,6 @@ class ProductsCubit extends Cubit<ProductsState> {
             subCategory: (state.currentSubFilter == "All")
                 ? null
                 : state.currentSubFilter,
-            ownerId: state.currentOwnerId,
             limit: state.limit,
             offset: state.offset,
           );
@@ -626,20 +583,17 @@ class ProductsCubit extends Cubit<ProductsState> {
         newProducts = state.isInterior == true
             ? await _productRepository.getProductsByRoom(
                 state.currentCategory!,
-                ownerId: state.currentOwnerId,
                 limit: state.limit,
                 offset: state.offset,
               )
             : await _productRepository.getProductsByGroup(
                 state.currentCategory!,
-                ownerId: state.currentOwnerId,
                 limit: state.limit,
                 offset: state.offset,
               );
       } else {
         debugPrint('✨ CUBIT_LOG: Loading more featured products');
         newProducts = await _productRepository.getFeaturedProducts(
-          ownerId: state.currentOwnerId,
           limit: state.limit,
           offset: state.offset,
         );

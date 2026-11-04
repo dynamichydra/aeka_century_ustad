@@ -40,12 +40,10 @@ class ApiService {
   // --- Furniture API ---
 
   Future<List<dynamic>> getFeaturedFurniture({
-    String? ownerId,
     int limit = 10,
     int offset = 0,
   }) async {
     final queryParams = <String, dynamic>{'limit': limit, 'offset': offset};
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.featuredBrowse} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.featuredBrowse,
@@ -55,12 +53,10 @@ class ApiService {
   }
 
   Future<List<dynamic>> getInteriorFurniture({
-    String? ownerId,
     int limit = 10,
     int offset = 0,
   }) async {
     final queryParams = <String, dynamic>{'limit': limit, 'offset': offset};
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.interiorBrowse} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.interiorBrowse,
@@ -70,12 +66,10 @@ class ApiService {
   }
 
   Future<List<dynamic>> getExteriorFurniture({
-    String? ownerId,
     int limit = 10,
     int offset = 0,
   }) async {
     final queryParams = <String, dynamic>{'limit': limit, 'offset': offset};
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.exteriorBrowse} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.exteriorBrowse,
@@ -86,13 +80,11 @@ class ApiService {
 
   Future<List<dynamic>> getFurnitureByRoom(
     String room, {
-    String? ownerId,
     int limit = 20,
     int offset = 0,
   }) async {
     final url = '${TApiConstants.roomBrowse}/$room';
     final queryParams = <String, dynamic>{'limit': limit, 'offset': offset};
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}$url | Params: $queryParams');
     final response = await _dio.get(
       url,
@@ -103,13 +95,11 @@ class ApiService {
 
   Future<List<dynamic>> getFurnitureByGroup(
     String group, {
-    String? ownerId,
     int limit = 20,
     int offset = 0,
   }) async {
     final url = '${TApiConstants.groupBrowse}/$group';
     final queryParams = <String, dynamic>{'limit': limit, 'offset': offset};
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}$url | Params: $queryParams');
     final response = await _dio.get(
       url,
@@ -121,7 +111,6 @@ class ApiService {
   Future<List<dynamic>> getFurnitureByProduct(
     String product, {
     String? subCategory,
-    String? ownerId,
     int limit = 20,
     int offset = 0,
   }) async {
@@ -129,7 +118,6 @@ class ApiService {
     if (subCategory != null && subCategory != 'All' && subCategory.isNotEmpty) {
       queryParams['subCategory'] = subCategory;
     }
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     final url = '${TApiConstants.productBrowse}/$product';
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}$url | Params: $queryParams');
     final response = await _dio.get(
@@ -141,13 +129,11 @@ class ApiService {
 
   Future<List<dynamic>> getSimilarProducts(
     String id, {
-    String? ownerId,
     int limit = 20,
     int offset = 0,
   }) async {
     final url = '${TApiConstants.similarProducts}/$id';
     final queryParams = <String, dynamic>{'limit': limit, 'offset': offset};
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     debugPrint(
       '🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}$url | Params: $queryParams',
     );
@@ -156,7 +142,6 @@ class ApiService {
   }
   
   Future<List<dynamic>> getTrendingProducts({
-    String? ownerId,
     String? applicationType,
     int limit = 20,
     int offset = 0,
@@ -165,7 +150,6 @@ class ApiService {
       'limit': limit,
       'offset': offset,
     };
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     if (applicationType != null) queryParams['applicationType'] = applicationType;
     debugPrint('🛒 FETCH_TRENDING: ${TApiConstants.baseUrl}${TApiConstants.trendingProducts} | Params: $queryParams');
     final response = await _dio.get(
@@ -176,13 +160,11 @@ class ApiService {
   }
 
   Future<List<dynamic>> getFavoriteProducts({
-    required String ownerId,
     String? applicationType,
     int limit = 50,
     int offset = 0,
   }) async {
     final queryParams = <String, dynamic>{
-      'ownerId': ownerId,
       'limit': limit,
       'offset': offset,
     };
@@ -197,12 +179,10 @@ class ApiService {
 
   Future<dynamic> toggleFavorite({
     required String itemId,
-    required String ownerId,
     String type = "FURNITURE",
   }) async {
     final data = {
       "itemId": itemId,
-      "ownerId": ownerId,
       "itemType": type,
     };
     debugPrint('🛒 TOGGLE_FAVORITE: ${TApiConstants.baseUrl}${TApiConstants.favorites} | Data: $data');
@@ -215,15 +195,10 @@ class ApiService {
 
   Future<dynamic> removeFavorite({
     required String itemId,
-    required String ownerId,
   }) async {
     final url = '${TApiConstants.favorites}/$itemId';
-    final queryParams = {'ownerId': ownerId};
-    debugPrint('🛒 REMOVE_FAVORITE: ${TApiConstants.baseUrl}$url | Params: $queryParams');
-    final response = await _dio.delete(
-      url,
-      queryParameters: queryParams,
-    );
+    debugPrint('🛒 REMOVE_FAVORITE: ${TApiConstants.baseUrl}$url');
+    final response = await _dio.delete(url);
     return response.data;
   }
 
@@ -318,7 +293,6 @@ class ApiService {
     String? interiorCategory,
     String? subCategory,
     String? applicationType,
-    String? ownerId,
     int limit = 20,
     int offset = 0,
   }) async {
@@ -328,7 +302,6 @@ class ApiService {
     if (interiorCategory != null) queryParams['interiorCategory'] = interiorCategory;
     if (subCategory != null) queryParams['subCategory'] = subCategory;
     if (applicationType != null) queryParams['applicationType'] = applicationType;
-    if (ownerId != null) queryParams['ownerId'] = ownerId;
     debugPrint('🛒 FETCH_PRODUCT: ${TApiConstants.baseUrl}${TApiConstants.searchText} | Params: $queryParams');
     final response = await _dio.get(
       TApiConstants.searchText,
@@ -697,7 +670,6 @@ class ApiService {
     required double objW,
     required double objH,
     required String feedback,
-    required String ownerId,
   }) async {
     debugPrint("📡 api_service.submitTryOnFeedback: imageUrl=$imageUrl, originalImageUrl=$originalImageUrl, originalImageId=$originalImageId");
     final response = await _dio.post(
@@ -713,7 +685,6 @@ class ApiService {
         'objW': objW,
         'objH': objH,
         'feedback': feedback,
-        'ownerId': ownerId,
       },
     );
     return (response.data as Map).cast<String, dynamic>();

@@ -151,7 +151,6 @@ class _ImageUploadPreviewPageState extends State<ImageUploadPreviewPage> {
     if (id == null || id.trim().isEmpty || id.startsWith('image_')) return; // Skip if it's the temporary path ID
     context.read<ProductsCubit>().fetchSimilarProducts(
       id,
-      ownerId: "user13@gmail.com",
       limit: 12,
     );
   }

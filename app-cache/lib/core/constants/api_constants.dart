@@ -2,7 +2,7 @@
 
 class TApiConstants {
   static const String baseUrl =
-      'https://decor-studio-api.centuryply.com/';
+      'https://decor-studio-api.centuryply.com';
 
   // Furniture endpoints
   static const String featuredBrowse = '/browse/featured';

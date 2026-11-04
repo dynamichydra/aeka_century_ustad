@@ -5,6 +5,7 @@ class UserProfileData {
   final String firstName;
   final String lastName;
   final String email;
+  final String? address;
   final String? motherTongue;
   final String? occupation;
 
@@ -19,6 +20,7 @@ class UserProfileData {
     required this.firstName,
     required this.lastName,
     required this.email,
+    this.address,
     this.motherTongue,
     this.occupation,
     this.photoFileName,
@@ -38,6 +40,7 @@ class UserProfileData {
       'first_name': firstName,
       'last_name': lastName,
       'email': email,
+      'address': address,
       'mother_tongue': motherTongue,
       'occupation': occupation,
       'photo_file_name': photoFileName,
@@ -52,6 +55,7 @@ class UserProfileData {
       firstName: (map['first_name'] as String?) ?? '',
       lastName: (map['last_name'] as String?) ?? '',
       email: (map['email'] as String?) ?? '',
+      address: map['address'] as String?,
       motherTongue: map['mother_tongue'] as String?,
       occupation: map['occupation'] as String?,
       photoFileName: map['photo_file_name'] as String?,
