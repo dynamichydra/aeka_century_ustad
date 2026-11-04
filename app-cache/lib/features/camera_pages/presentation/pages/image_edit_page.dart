@@ -1811,13 +1811,15 @@ class _ImageEditPageState extends State<ImageEditPage>
             child: _buildCircleButton(
               icon: "edit.png",
               onTap: () {
-                final newPath = _userEdits.isNotEmpty
-                    ? _userEdits[selectedIndices[0]].editedImageUrl
-                    : widget.imageFile.path;
+                final selectedRecord = _userEdits.isNotEmpty
+                    ? _userEdits[selectedIndices[0]]
+                    : null;
+                final newPath = selectedRecord?.editedImageUrl ?? widget.imageFile.path;
 
                 setState(() {
                   _sessionId = const Uuid().v4();
                   _baseImage = newPath;
+                  _parentEditId = selectedRecord?.id;
                   _currentAssetPreview = null;
                   _selectedIndicesNotifier.value = [];
                   _hasAppliedOnce = true;
