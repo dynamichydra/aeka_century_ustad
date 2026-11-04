@@ -902,14 +902,8 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
     if (!mounted) return;
     if (widget.fromColorPicker) {
-      context.pushReplacement(
-        AppRoutes.imageColorPicker,
-        extra: {
-          'imageFile': croppedFile,
-          'image_id': context.read<UploadCubit>().state.imageId,
-          'originalImage': widget.originalImage,
-        },
-      );
+      context.pop(croppedFile);
+      return;
     } else {
       context.pushReplacement(
         AppRoutes.imageUploadPreview,
@@ -967,14 +961,8 @@ class _CameraPagesIndexState extends State<CameraPagesIndex> {
 
     if (!mounted) return;
     if (widget.fromColorPicker) {
-      context.pushReplacement(
-        AppRoutes.imageColorPicker,
-        extra: {
-          'imageFile': imageFile,
-          'image_id': context.read<UploadCubit>().state.imageId,
-          'originalImage': widget.originalImage,
-        },
-      );
+      context.pop(imageFile);
+      return;
     } else {
       context.pushReplacement(
         AppRoutes.imageUploadPreview,

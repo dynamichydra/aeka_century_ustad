@@ -67,18 +67,18 @@ class HomeDrawer extends StatelessWidget {
                       context.push(AppRoutes.profile);
                     },
                   ),
-                  _ExpandableDrawerItem(
-                    icon: const Icon(
-                      Icons.photo_library_outlined,
-                      color: _iconColor,
-                    ),
-                    label: 'My Project',
-                    children: [
-                      _DrawerSubItem(label: 'Business Card', onTap: () {}),
-                      _DrawerSubItem(label: 'My Work', onTap: () {}),
-                      _DrawerSubItem(label: 'Quotation', onTap: () {}),
-                    ],
-                  ),
+                  // _ExpandableDrawerItem(
+                  //   icon: const Icon(
+                  //     Icons.photo_library_outlined,
+                  //     color: _iconColor,
+                  //   ),
+                  //   label: 'My Project',
+                  //   children: [
+                  //     _DrawerSubItem(label: 'Business Card', onTap: () {}),
+                  //     _DrawerSubItem(label: 'My Work', onTap: () {}),
+                  //     _DrawerSubItem(label: 'Quotation', onTap: () {}),
+                  //   ],
+                  // ),
                   _DrawerItem(
                     icon: const Icon(Icons.tips_and_updates, color: _iconColor),
                     label: 'Tips',

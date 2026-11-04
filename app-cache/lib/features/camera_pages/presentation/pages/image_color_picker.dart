@@ -4,10 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:century_ai/features/camera_pages/presentation/widgets/camera_tips_bottom_sheet.dart';
 import 'package:century_ai/router/app_routes.dart';
 
 class ImageColorPickerPage extends StatefulWidget {
@@ -36,10 +33,24 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
   late File _currentImage;
   final ImagePicker _picker = ImagePicker();
   bool _isCapturing = false;
+  bool _isDraggingTarget = false;
 
   double? _imageAspectRatio;
   double _dragX = 0.0;
   double _dragY = 0.0;
+
+  void _setImage(File newImage) {
+    setState(() {
+      _currentImage = newImage;
+      _cachedImage = null;
+      _pixelData = null;
+      _imageAspectRatio = null;
+      _dragX = 0.0;
+      _dragY = 0.0;
+      _imageKey = GlobalKey();
+    });
+    _resolveImageSize();
+  }
 
   void _resolveImageSize() {
     final ImageProvider imageProvider = FileImage(_currentImage);
@@ -50,10 +61,15 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
     listener = ImageStreamListener(
       (ImageInfo info, bool synchronousCall) {
         if (mounted) {
+          final size = MediaQuery.of(context).size;
           setState(() {
             _imageAspectRatio = info.image.width / info.image.height;
+            _touchPos = Offset(size.width / 2, size.height * 0.3);
             _dragX = 0.0;
             _dragY = 0.0;
+          });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _captureBoundary();
           });
         }
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -75,112 +91,85 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
     super.initState();
     _currentImage = widget.imageFile;
     _resolveImageSize();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final size = MediaQuery.of(context).size;
-      setState(() {
-        _touchPos = Offset(size.width / 2, size.height * 0.3);
-      });
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted) {
-          _pickColor(_touchPos);
-        }
-      });
-    });
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    if (source == ImageSource.camera) {
-      final box = GetStorage();
-      final bool dontShow = box.read<bool>('dont_show_camera_tips') ?? false;
-      if (!dontShow) {
-        await CameraTipsBottomSheet.show(context);
-      }
-    }
     try {
       final XFile? pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        setState(() {
-          _currentImage = File(pickedFile.path);
-          _cachedImage = null; // Force repaint
-          _pixelData = null;
-          _imageKey = GlobalKey(); // Force new RepaintBoundary
-        });
-        _resolveImageSize();
-
-        // Reset touch pos and pick new color after image has time to render
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              final size = MediaQuery.of(context).size;
-              setState(() {
-                _touchPos = Offset(size.width / 2, size.height * 0.3);
-                _cachedImage = null;
-                _pixelData = null;
-              });
-              _pickColor(_touchPos);
-            }
-          });
-        });
+      if (pickedFile != null && mounted) {
+        _setImage(File(pickedFile.path));
       }
     } catch (e) {
       debugPrint("Error picking image: $e");
     }
   }
 
-  Future<void> _pickColor(Offset localPos) async {
+  Future<void> _captureBoundary() async {
+    if (_isCapturing) return;
+    _isCapturing = true;
     try {
-      if (_cachedImage == null) {
-        if (_isCapturing) return;
-        _isCapturing = true;
-        try {
-          RenderRepaintBoundary? boundary =
-              _imageKey.currentContext?.findRenderObject()
-                  as RenderRepaintBoundary?;
-          if (boundary == null) return;
-          _cachedImage = await boundary.toImage(pixelRatio: 1.0);
-          _pixelData = await _cachedImage!.toByteData(
-            format: ui.ImageByteFormat.rawRgba,
-          );
-        } finally {
-          _isCapturing = false;
-        }
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+
+      // Small delay to ensure image paint completed
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+
+      final RenderRepaintBoundary? boundary =
+          _imageKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null || !boundary.hasSize) return;
+
+      final ui.Image img = await boundary.toImage(pixelRatio: 1.0);
+      final ByteData? data = await img.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      );
+      if (mounted) {
+        setState(() {
+          _cachedImage = img;
+          _pixelData = data;
+        });
+        _pickColorAt(_touchPos);
       }
-
-      if (_pixelData == null || _cachedImage == null) return;
-
-      final int x = localPos.dx.toInt().clamp(0, _cachedImage!.width - 1);
-      final int y = localPos.dy.toInt().clamp(0, _cachedImage!.height - 1);
-
-      final int byteOffset = (y * _cachedImage!.width + x) * 4;
-
-      if (byteOffset + 3 >= _pixelData!.lengthInBytes) return;
-
-      final int r = _pixelData!.getUint8(byteOffset);
-      final int g = _pixelData!.getUint8(byteOffset + 1);
-      final int b = _pixelData!.getUint8(byteOffset + 2);
-      final int a = _pixelData!.getUint8(byteOffset + 3);
-
-      setState(() {
-        _primaryColor = Color.fromARGB(a, r, g, b);
-        // Simple complimentary logic for demonstration
-        _complimentaryColor1 = Color.fromARGB(
-          a,
-          (255 - r).clamp(0, 255),
-          (255 - g).clamp(0, 255),
-          (255 - b).clamp(0, 255),
-        );
-        _complimentaryColor2 = _primaryColor.withOpacity(0.7);
-      });
     } catch (e) {
-      debugPrint("Error picking color: $e");
+      debugPrint("Error capturing boundary: $e");
+    } finally {
+      _isCapturing = false;
     }
+  }
+
+  void _pickColorAt(Offset localPos) {
+    if (_pixelData == null || _cachedImage == null) return;
+
+    final int x = localPos.dx.toInt().clamp(0, _cachedImage!.width - 1);
+    final int y = localPos.dy.toInt().clamp(0, _cachedImage!.height - 1);
+
+    final int byteOffset = (y * _cachedImage!.width + x) * 4;
+
+    if (byteOffset + 3 >= _pixelData!.lengthInBytes) return;
+
+    final int r = _pixelData!.getUint8(byteOffset);
+    final int g = _pixelData!.getUint8(byteOffset + 1);
+    final int b = _pixelData!.getUint8(byteOffset + 2);
+    final int a = _pixelData!.getUint8(byteOffset + 3);
+
+    if (a == 0) return;
+
+    final color = Color.fromARGB(a, r, g, b);
+
+    setState(() {
+      _primaryColor = color;
+      _complimentaryColor1 = Color.fromARGB(
+        a,
+        (255 - r).clamp(0, 255),
+        (255 - g).clamp(0, 255),
+        (255 - b).clamp(0, 255),
+      );
+      _complimentaryColor2 = _primaryColor.withValues(alpha: 0.7);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: const Color(0xFF2C2C2C),
       body: Column(
@@ -217,30 +206,34 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                 _dragX = _dragX.clamp(-maxDragX, maxDragX);
                 _dragY = _dragY.clamp(-maxDragY, maxDragY);
 
-                bool isDraggingTarget = false;
-
                 return Stack(
                   children: [
                     RepaintBoundary(
                       key: _imageKey,
                       child: GestureDetector(
                         onPanStart: (details) {
-                          _cachedImage = null;
-                          _pixelData = null;
                           final distance =
                               (details.localPosition - _touchPos).distance;
-                          if (distance < 40.0) {
-                            isDraggingTarget = true;
-                          } else {
-                            isDraggingTarget = false;
-                          }
-                        },
-                        onPanUpdate: (details) {
-                          if (isDraggingTarget) {
+                          _isDraggingTarget = distance < 45.0;
+                          if (_isDraggingTarget) {
                             setState(() {
                               _touchPos = details.localPosition;
                             });
-                            _pickColor(details.localPosition);
+                            if (_pixelData != null) {
+                              _pickColorAt(details.localPosition);
+                            } else {
+                              _captureBoundary();
+                            }
+                          }
+                        },
+                        onPanUpdate: (details) {
+                          if (_isDraggingTarget) {
+                            setState(() {
+                              _touchPos = details.localPosition;
+                            });
+                            if (_pixelData != null) {
+                              _pickColorAt(details.localPosition);
+                            }
                           } else {
                             setState(() {
                               if (isLandscape) {
@@ -255,16 +248,25 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                                 );
                               }
                             });
-                            _pickColor(_touchPos);
+                            _cachedImage = null;
+                            _pixelData = null;
                           }
                         },
+                        onPanEnd: (details) {
+                          if (!_isDraggingTarget) {
+                            _captureBoundary();
+                          }
+                          _isDraggingTarget = false;
+                        },
                         onTapDown: (details) {
-                          _cachedImage = null;
-                          _pixelData = null;
                           setState(() {
                             _touchPos = details.localPosition;
                           });
-                          _pickColor(details.localPosition);
+                          if (_pixelData != null) {
+                            _pickColorAt(details.localPosition);
+                          } else {
+                            _captureBoundary();
+                          }
                         },
                         child: Container(
                           width: viewportWidth,
@@ -295,17 +297,19 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                     Positioned(
                       left: _touchPos.dx - 20,
                       top: _touchPos.dy - 20,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: const Icon(
-                          Icons.gps_fixed,
-                          color: Colors.white,
-                          size: 24,
+                      child: IgnorePointer(
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.gps_fixed,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                       ),
                     ),
@@ -468,14 +472,17 @@ class _ImageColorPickerPageState extends State<ImageColorPickerPage> {
                         border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: IconButton(
-                        onPressed: () {
-                          context.push(
+                        onPressed: () async {
+                          final result = await context.push(
                             AppRoutes.camera,
                             extra: {
                               'fromColorPicker': true,
                               'originalImage': widget.originalImage ?? widget.imageFile,
                             },
                           );
+                          if (result is File && mounted) {
+                            _setImage(result);
+                          }
                         },
                         icon: const Icon(Icons.camera_alt_outlined),
                       ),
