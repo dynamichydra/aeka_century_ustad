@@ -3,11 +3,11 @@ plugins {
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
     // END: FlutterFire Configuration
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // The Flutter Gradle Plugin must be applied after the Android Gradle Plugin.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+@Suppress("DEPRECATION")
 android {
     namespace = "com.example.century_ai"
     compileSdk = flutter.compileSdkVersion
@@ -16,10 +16,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -40,10 +36,7 @@ android {
             // Enable resource shrinking, which is performed by the Android Gradle plugin.
             isShrinkResources = true
             
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
@@ -53,6 +46,12 @@ android {
 
     lint {
         checkReleaseBuilds = false
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
