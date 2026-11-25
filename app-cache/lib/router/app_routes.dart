@@ -3,6 +3,8 @@ abstract final class AppRoutes {
   static const onboarding = '/onboarding';
   static const login = '/login';
   static const otp = '/otp';
+  static const loginLimitPreview = '/login/preview/limit';
+  static const noAccountPreview = '/login/preview/no-account';
   static const profileSetup = '/profile_setup';
   static const profile = '/profile';
 

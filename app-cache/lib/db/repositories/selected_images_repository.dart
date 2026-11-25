@@ -23,17 +23,10 @@ class SelectedImagesRepository {
 
   /// Initialize the selected_images table
   static Future<void> initializeTable() async {
-    await DbCore.ensureTablesExist({tableName: _createTableScript});
-    try {
-      final db = await DbCore.database;
-      await db.execute('ALTER TABLE $tableName ADD COLUMN application_type TEXT');
-      print('Added column application_type to $tableName');
-    } catch (_) {}
-    try {
-      final db = await DbCore.database;
-      await db.execute('ALTER TABLE $tableName ADD COLUMN original_image_url TEXT');
-      print('Added column original_image_url to $tableName');
-    } catch (_) {}
+    await DbCore.ensureTable(tableName, _createTableScript, const {
+      'application_type': 'TEXT',
+      'original_image_url': 'TEXT',
+    });
   }
 
   /// Save selected image to database once.

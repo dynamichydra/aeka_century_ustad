@@ -43,13 +43,9 @@ class LocalUserProfileRepository {
   static String? _docsPath;
 
   static Future<void> initializeTable() async {
-    await DbCore.ensureTablesExist({tableName: _createTableScript});
-    try {
-      final db = await DbCore.database;
-      await db.execute('ALTER TABLE $tableName ADD COLUMN address TEXT');
-    } catch (_) {
-      // Column may already exist
-    }
+    await DbCore.ensureTable(tableName, _createTableScript, const {
+      'address': 'TEXT',
+    });
   }
 
   static Future<UserProfileData?> getProfile(String uid) async {

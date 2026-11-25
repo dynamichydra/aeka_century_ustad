@@ -1,3 +1,4 @@
+import 'package:century_ai/core/constants/final_save_credits.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -35,7 +36,16 @@ class EditHistoryRepository {
   /// Initialize the edit_history table
   static Future<void> initializeTable() async {
     _docsPath = (await getApplicationDocumentsDirectory()).path;
-    await DbCore.ensureTablesExist({tableName: _createTableScript});
+    await DbCore.ensureTable(tableName, _createTableScript, const {
+      'parent_edit_id': 'TEXT',
+      'system_area': 'REAL',
+      'user_area': 'REAL',
+    });
+    final db = await DbCore.database;
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS final_save_usage ('
+      'owner_id TEXT PRIMARY KEY NOT NULL, used INTEGER NOT NULL)',
+    );
   }
 
   /// Rows store absolute paths, but the iOS app folder (`…/Application/<id>/`)
@@ -62,19 +72,46 @@ class EditHistoryRepository {
     return EditHistoryData.fromMap(map);
   }
 
-  /// Save an edit record to the database
-  static Future<void> saveEdit(EditHistoryData editData) async {
-    final db = await DbCore.database;
-
-    debugPrint('Saving edit record for furniture ID: ${editData.furnitureId}, parentEditId: ${editData.parentEditId}');
-
-    await db.insert(
-      tableName,
-      editData.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+  static Future<int> _usedCredits(DatabaseExecutor db, String ownerId) async {
+    final rows = await db.query(
+      'final_save_usage',
+      columns: ['used'],
+      where: 'owner_id = ?',
+      whereArgs: [ownerId],
     );
+    return rows.isEmpty ? 0 : rows.single['used'] as int;
+  }
 
-    debugPrint('Edit record saved successfully');
+  static Future<int> usedCredits(String ownerId) async =>
+      _usedCredits(await DbCore.database, ownerId);
+
+  /// A final edit and its debit commit together. Deleting history leaves usage intact.
+  static Future<int> saveEdit(EditHistoryData editData) async {
+    final db = await DbCore.database;
+    return db.transaction((txn) async {
+      final used = await _usedCredits(txn, editData.ownerId);
+      if (used >= FinalSaveCredits.limit) throw const FinalSaveLimitReached();
+      await txn.insert(tableName, editData.toMap());
+      await txn.insert(
+        'final_save_usage',
+        {'owner_id': editData.ownerId, 'used': used + 1},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      return used + 1;
+    });
+  }
+
+  /// Adopt a new server ID only when it does not belong to an earlier Apply.
+  static Future<String> linkServerEdit(String localId, String serverId) async {
+    final db = await DbCore.database;
+    final changed = await db.update(
+      tableName,
+      {'id': serverId, 'session_id': serverId},
+      where: 'id = ?',
+      whereArgs: [localId],
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+    return changed == 1 ? serverId : localId;
   }
 
   /// Retrieve all edits for a specific furniture ID
