@@ -1,4 +1,5 @@
 import 'package:century_ai/core/constants/colors.dart';
+import 'package:century_ai/core/constants/sample_bsm_contact.dart';
 import 'package:century_ai/cubit/auth/auth_cubit.dart';
 import 'package:century_ai/db/repositories/local_user_profile_repository.dart';
 import 'package:century_ai/features/auth/data/auth_storage.dart';
@@ -48,6 +49,30 @@ class HomeDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.only(top: 4),
                 children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(28, 0, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your BSM',
+                          style: TextStyle(
+                            color: TColors.vividRed,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          SampleBsmContact.name,
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 4),
+                        Text(SampleBsmContact.phone),
+                        Text(SampleBsmContact.email),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 28, endIndent: 20),
                   _DrawerItem(
                     icon: const Icon(Iconsax.home_2, color: _iconColor),
                     label: 'Home',

@@ -1,3 +1,5 @@
+import 'package:century_ai/features/camera_pages/presentation/widgets/toolbar/credit_usage_button.dart';
+import 'package:century_ai/core/constants/final_save_credits.dart';
 import 'dart:io';
 import 'package:century_ai/core/auth/current_user.dart';
 import 'dart:async';
@@ -143,6 +145,17 @@ class _ImageEditPageState extends State<ImageEditPage>
   double _sliderPosition = 0.5;
 
   final UserEditsService _userEditsService = UserEditsService();
+  int? _usedCredits;
+
+  Future<void> _loadCreditBalance() async {
+    try {
+      final used = await EditHistoryRepository.usedCredits(_ownerEmail);
+      if (mounted && _usedCredits == null) setState(() => _usedCredits = used);
+    } catch (error) {
+      debugPrint('Could not load final-save balance: $error');
+    }
+  }
+
   String get _ownerEmail => CurrentUser.ownerId;
   List<EditRecord> _userEdits = [];
 
@@ -507,6 +520,7 @@ class _ImageEditPageState extends State<ImageEditPage>
   @override
   void initState() {
     super.initState();
+    _loadCreditBalance();
     _horizontalScrollController.addListener(_onHorizontalScroll);
     _textureController = TextureController(
       laminateApi: _laminateApi,
@@ -546,21 +560,19 @@ class _ImageEditPageState extends State<ImageEditPage>
   }
 
   Future<void> _fetchUserEditHistory() async {
-    if (widget.image_id == null) return;
-
     setState(() => _isLoadingEdits = true);
     try {
       // 1. Fetch from Network
-      final allEdits = await _userEditsService.getEdits(
-        furnitureId: widget.image_id,
-      );
+      final allEdits = widget.image_id == null
+          ? <EditRecord>[]
+          : await _userEditsService.getEdits(furnitureId: widget.image_id);
       final filteredNetwork = allEdits
           .where((e) => e.furnitureId == widget.image_id)
           .toList();
 
       // 2. Fetch from SQLite (ALL EDITS FOR THIS FURNITURE)
       final localEdits = await EditHistoryRepository.getEditsByFurnitureId(
-        widget.image_id!,
+        widget.image_id ?? widget.imageFile.path,
       );
 
       // 3. Convert local to EditRecord (Use SQLite's session_id as the primary identifier if synchronized, fallback to local UUID)
@@ -4831,11 +4843,24 @@ class _ImageEditPageState extends State<ImageEditPage>
 
   Future<void> _finalizeEdit() async {
     final state = context.read<ImageEditCubit>().state;
-    if (state.currentGeneratedImage == null) return;
+    if (state.currentGeneratedImage == null || !_hasNewUnappliedEdit) return;
     if (_isUploading) return;
     setState(() => _isUploading = true);
 
     try {
+      final cubit = context.read<ImageEditCubit>();
+      var editId = const Uuid().v4();
+      final used = await cubit.saveToDatabase(
+        localFurnitureId: widget.imageFile.path,
+        imgPath: state.currentGeneratedImage!,
+        laminate: state.selectedPattern,
+        customSessionId: editId,
+        parentEditId: _parentEditId,
+        systemArea: _systemArea,
+        userArea: double.tryParse(_areaController.text) ?? _systemArea,
+      );
+      if (mounted) setState(() => _usedCredits = used);
+
       // Trigger comparison details API call
       if (state.selectedPattern != null) {
         final pattern = state.selectedPattern!;
@@ -4847,73 +4872,29 @@ class _ImageEditPageState extends State<ImageEditPage>
           category: _selectedCategory,
           subcategory: _selectedSubCategory,
         );
-        context.read<ImageEditCubit>().compareImageSelected(model);
+        if (!cubit.isClosed) cubit.compareImageSelected(model);
       }
 
-      // 1. POST TO SERVER (THE FINAL STACKED IMAGE ON TOP)
-      String? responseId;
       if (widget.image_id != null) {
         try {
-          debugPrint(
-            '\n================== API TRACE: APPLY / FINALIZE ==================',
-          );
-          debugPrint(
-            '📡 API_LOG: Hit /me/edits to save top final stacked image to backend.',
-          );
-          debugPrint(
-            '=========================================================\n',
-          );
-          final EditRecord? record = await _userEditsService.postEdit(
+          final record = await _userEditsService.postEdit(
             editedFile: File(state.currentGeneratedImage!),
             furnitureId: widget.image_id!,
           );
-          if (record != null && record.id.isNotEmpty) {
-            responseId = record.id;
-            debugPrint(
-              "✅ Applied design successfully posted to server. Record ID: $responseId",
-            );
+          if (record != null &&
+              record.id.isNotEmpty &&
+              record.id != widget.image_id) {
+            editId = await EditHistoryRepository.linkServerEdit(editId, record.id);
           }
-        } catch (e) {
-          debugPrint("❌ Failed to post applied design to server: $e");
+        } catch (error) {
+          debugPrint('Final edit saved locally. Server sync failed: $error');
         }
       }
-
-      // 2. SAVE TO LOCAL DATABASE WITH RESPONSE ID AS THE SESSION ID
-      // Every Apply must be its own row. The server can return the same
-      // record ID again for the same furniture; saving under an ID that
-      // already exists would overwrite (INSERT OR REPLACE) the earlier edit,
-      // so fall back to a fresh ID in that case.
-      String newEditId = const Uuid().v4();
-      if (responseId != null &&
-          responseId != widget.image_id &&
-          await EditHistoryRepository.getEditById(responseId) == null) {
-        newEditId = responseId;
-      } else if (responseId != null) {
-        debugPrint(
-          '⚠️ Server returned an existing edit ID ($responseId); saving this '
-          'edit under a new local ID ($newEditId) so earlier edits are kept.',
-        );
-      }
-      if (widget.image_id != null) {
-        try {
-          final cubit = context.read<ImageEditCubit>();
-          final double? userVal = double.tryParse(_areaController.text);
-          await cubit.saveToDatabase(
-            imgPath: state.currentGeneratedImage!,
-            laminate: state.selectedPattern,
-            customSessionId: newEditId,
-            parentEditId: _parentEditId, // link to ancestor
-            systemArea: _systemArea,
-            userArea: userVal ?? _systemArea,
-          );
-          _parentEditId = newEditId;
-        } catch (e) {
-          debugPrint("❌ Error saving local edit: $e");
-        }
-      }
+      _parentEditId = editId;
       final String finalizedImage = state.currentGeneratedImage!;
       if (mounted) {
         setState(() {
+          _isUploading = false;
           _baseImage = finalizedImage;
           _currentAssetPreview = null;
           _compareExpanded = true;
@@ -4937,7 +4918,23 @@ class _ImageEditPageState extends State<ImageEditPage>
           ownerId: _ownerEmail,
           sessionId: _sessionId,
         );
-        _fetchUserEditHistory(); // REFRESH UI FOR NEW SESSION
+        _fetchUserEditHistory();
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+        await showCreditUsageDialog(context, used);
+      }
+    } on FinalSaveLimitReached {
+      if (!mounted) return;
+      setState(() => _usedCredits = FinalSaveCredits.limit);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You have used all your final save credits.')),
+      );
+    } catch (error) {
+      debugPrint('Final save failed: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not save this image. Please try again.')),
+        );
       }
     } finally {
       if (mounted) {
@@ -5104,8 +5101,6 @@ class _ImageEditPageState extends State<ImageEditPage>
     }
   }
 
-  bool get _isApplied => _hasAppliedOnce;
-
   Widget _buildBottomBarFixed() {
     if (!_editExpanded) {
       return const SizedBox.shrink();
@@ -5141,39 +5136,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                     ),
                   ),
                   const Spacer(),
-                  BlocBuilder<ImageEditCubit, ImageEditState>(
-                    builder: (context, state) {
-                      return Visibility(
-                        visible:
-                            _hasAppliedOnce &&
-                            _editExpanded &&
-                            !state.isApplyLoading,
-                        maintainSize: true,
-                        maintainAnimation: true,
-                        maintainState: true,
-                        child: GestureDetector(
-                          onTap: _navigateToFinalizePage,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.black12,
-                                width: 1,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.arrow_forward,
-                              color: Colors.black,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  CreditUsageButton(used: _usedCredits),
                   const SizedBox(width: 50),
                 ],
               ),
@@ -5191,8 +5154,11 @@ class _ImageEditPageState extends State<ImageEditPage>
                         state.currentGeneratedImage != null &&
                         _hasNewUnappliedEdit;
 
+                    final disabled = isApplying ||
+                        !hasResult ||
+                        _usedCredits == FinalSaveCredits.limit;
                     return ElevatedButton(
-                      onPressed: (isApplying || !hasResult)
+                      onPressed: disabled
                           ? null
                           : _finalizeEdit,
                       style: ElevatedButton.styleFrom(
@@ -5203,7 +5169,7 @@ class _ImageEditPageState extends State<ImageEditPage>
                         disabledBackgroundColor: Colors.grey[100],
                         disabledForegroundColor: Colors.black26,
                         side: BorderSide(
-                          color: (isApplying || !hasResult)
+                          color: disabled
                               ? Colors.transparent
                               : Colors.black12,
                           width: 1,
@@ -5265,21 +5231,18 @@ class _ImageEditPageState extends State<ImageEditPage>
                     maintainSize: true,
                     maintainAnimation: true,
                     maintainState: true,
-                    child: GestureDetector(
-                      onTap: _navigateToFinalizePage,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black12, width: 1),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_forward,
-                          color: Colors.black,
-                          size: 20,
-                        ),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: IconButton(
+                        tooltip: 'Export final image',
+                        onPressed: _navigateToFinalizePage,
+                        icon: const Icon(Icons.arrow_forward, size: 20, color: Colors.black),
                       ),
                     ),
                   );

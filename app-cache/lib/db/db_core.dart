@@ -57,42 +57,7 @@ class DbCore {
       _database = await openDatabase(
         path,
         version: 4,
-        onUpgrade: (db, oldVersion, newVersion) async {
-          if (oldVersion < 2) {
-            try {
-              await db.execute(
-                'ALTER TABLE edit_history ADD COLUMN parent_edit_id TEXT',
-              );
-              print('✅ [DbCore] Migration v2: Added parent_edit_id column');
-            } catch (e) {
-              // Column may already exist if DB was freshly created with the new schema
-              print('⚠️ [DbCore] Migration v2 note: $e');
-            }
-          }
-          if (oldVersion < 3) {
-            try {
-              await db.execute(
-                'ALTER TABLE edit_history ADD COLUMN system_area REAL',
-              );
-              await db.execute(
-                'ALTER TABLE edit_history ADD COLUMN user_area REAL',
-              );
-              print('✅ [DbCore] Migration v3: Added system_area and user_area columns');
-            } catch (e) {
-              print('⚠️ [DbCore] Migration v3 note: $e');
-            }
-          }
-          if (oldVersion < 4) {
-            try {
-              await db.execute(
-                'ALTER TABLE user_profile ADD COLUMN address TEXT',
-              );
-              print('✅ [DbCore] Migration v4: Added address column to user_profile');
-            } catch (e) {
-              print('⚠️ [DbCore] Migration v4 note: $e');
-            }
-          }
-        },
+        // Repositories reconcile their tables before the app starts.
         onOpen: (db) {
           print('🔓 [DbCore] Database connection opened');
         },
@@ -105,24 +70,25 @@ class DbCore {
     }
   }
 
-  static Future<void> ensureTablesExist(
-    Map<String, String> tableCreationScripts,
+  /// Creates the table or adds columns missing from an older installation.
+  static Future<void> ensureTable(
+    String tableName,
+    String createSql,
+    Map<String, String> migrationColumns,
   ) async {
-    if (_database == null) {
-      await database;
-    }
-
-    for (final entry in tableCreationScripts.entries) {
-      final tableName = entry.key;
-      final createScript = entry.value;
-
-      try {
-        await _database!.execute(createScript);
-        print("✅ Ensured table '$tableName' exists");
-      } catch (e) {
-        print("❌ Error creating table '$tableName': $e");
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.execute(createSql);
+      final schema = await txn.rawQuery('PRAGMA table_info($tableName)');
+      final existing = schema.map((row) => row['name']).toSet();
+      for (final column in migrationColumns.entries) {
+        if (!existing.contains(column.key)) {
+          await txn.execute(
+            'ALTER TABLE $tableName ADD COLUMN ${column.key} ${column.value}',
+          );
+        }
       }
-    }
+    });
   }
 
   static Future<void> closeDatabase() async {

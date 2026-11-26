@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:century_ai/db/repositories/local_user_profile_repository.dart';
 import 'package:century_ai/features/auth/data/auth_storage.dart';
 import 'package:century_ai/features/auth/presentation/pages/login_page.dart';
+import 'package:century_ai/features/auth/presentation/pages/login_support_page.dart';
 import 'package:century_ai/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:century_ai/features/auth/presentation/pages/otp_page.dart';
 import 'package:century_ai/features/auth/presentation/pages/profile_setup_page.dart';
@@ -91,6 +92,14 @@ final GoRouter router = GoRouter(
       path: AppRoutes.login,
       name: "login",
       builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.loginLimitPreview,
+      builder: (context, state) => const LoginSupportPage.loginLimit(),
+    ),
+    GoRoute(
+      path: AppRoutes.noAccountPreview,
+      builder: (context, state) => const LoginSupportPage.noAccount(),
     ),
     GoRoute(
       path: AppRoutes.otp,

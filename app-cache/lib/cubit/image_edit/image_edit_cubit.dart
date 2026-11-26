@@ -314,80 +314,70 @@ class ImageEditCubit extends Cubit<ImageEditState> {
   }
 
   /// Save a specific generated edit to SQLite
-  Future<void> saveToDatabase({
+  Future<int> saveToDatabase({
     required String imgPath,
+    required String localFurnitureId,
     Map<String, dynamic>? laminate,
     String? customSessionId,
     String? parentEditId,
     double? systemArea,
     double? userArea,
   }) async {
-    if (state.furnitureId == null) return;
+    final furnitureId = state.furnitureId ?? localFurnitureId;
+    final List<Map<String, dynamic>> sessionLaminates = [];
+    for (var hist in state.generatedHistory) {
+      if (hist['laminate'] != null) {
+        final lam = hist['laminate'] as Map<String, dynamic>;
+        if (!sessionLaminates.any((element) => element['id'] == lam['id'])) {
+          sessionLaminates.add(lam);
+        }
+      }
+      if (hist['generated'] == imgPath) {
+        break;
+      }
+    }
+    if (sessionLaminates.isEmpty && laminate != null) {
+      sessionLaminates.add(laminate);
+    }
+
+    final editId = customSessionId ?? const Uuid().v4();
+    final editData = EditHistoryData(
+      id: editId,
+      furnitureId: furnitureId,
+      sessionId: customSessionId ?? state.sessionId ?? "default_session",
+      originalImagePath: state.originalImage!,
+      editedImagePath: await _persistEditedImage(imgPath, editId),
+      editedAt: DateTime.now(),
+      ownerId: state.ownerId ?? CurrentUser.ownerId,
+      usedLaminates: sessionLaminates.isNotEmpty
+          ? jsonEncode(sessionLaminates)
+          : null,
+      laminateName: laminate?['name']?.toString(),
+      laminateSku: laminate?['sku']?.toString(),
+      parentEditId: parentEditId,
+      systemArea: systemArea,
+      userArea: userArea,
+    );
 
     try {
-      final List<Map<String, dynamic>> sessionLaminates = [];
-      for (var hist in state.generatedHistory) {
-        if (hist['laminate'] != null) {
-          final lam = hist['laminate'] as Map<String, dynamic>;
-          if (!sessionLaminates.any((element) => element['id'] == lam['id'])) {
-            sessionLaminates.add(lam);
-          }
-        }
-        if (hist['generated'] == imgPath) {
-          break;
-        }
+      return await EditHistoryRepository.saveEdit(editData);
+    } catch (_) {
+      if (editData.editedImagePath != imgPath) {
+        await File(editData.editedImagePath).delete();
       }
-      if (sessionLaminates.isEmpty && laminate != null) {
-        sessionLaminates.add(laminate);
-      }
-
-      final editId = customSessionId ?? const Uuid().v4();
-      final editData = EditHistoryData(
-        id: editId,
-        furnitureId: state.furnitureId!,
-        sessionId: customSessionId ?? state.sessionId ?? "default_session",
-        originalImagePath: state.originalImage!,
-        editedImagePath: await _persistEditedImage(imgPath, editId),
-        editedAt: DateTime.now(),
-        ownerId: state.ownerId ?? CurrentUser.ownerId,
-        usedLaminates: sessionLaminates.isNotEmpty
-            ? jsonEncode(sessionLaminates)
-            : null,
-        laminateName: laminate?['name']?.toString(),
-        laminateSku: laminate?['sku']?.toString(),
-        parentEditId: parentEditId,
-        systemArea: systemArea,
-        userArea: userArea,
-      );
-
-      await EditHistoryRepository.saveEdit(editData);
-      debugPrint(
-        '✅ Edit saved to SQLite | laminates: ${sessionLaminates.length} | parentEditId: $parentEditId | systemArea: $systemArea | userArea: $userArea',
-      );
-    } catch (e) {
-      debugPrint('❌ Error saving to SQLite: $e');
+      rethrow;
     }
   }
 
-  /// Copies an applied edit out of the temp folder (which the OS may clear)
-  /// into app documents, so saved edits stay viewable. Returns the new path,
-  /// or [imgPath] unchanged if it is a URL or the copy fails.
+  /// Save local images in documents before committing their history row.
   Future<String> _persistEditedImage(String imgPath, String editId) async {
     if (imgPath.startsWith('http')) return imgPath;
-    try {
-      final source = File(imgPath);
-      if (!await source.exists()) return imgPath;
-      final docs = await getApplicationDocumentsDirectory();
-      final dir = Directory(p.join(docs.path, 'edits'));
-      await dir.create(recursive: true);
-      final ext = p.extension(imgPath).isEmpty ? '.png' : p.extension(imgPath);
-      final target = p.join(dir.path, '$editId$ext');
-      await source.copy(target);
-      return target;
-    } catch (e) {
-      debugPrint('⚠️ Could not copy edited image to documents: $e');
-      return imgPath;
-    }
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory(p.join(docs.path, 'edits'));
+    await dir.create(recursive: true);
+    final ext = p.extension(imgPath).isEmpty ? '.png' : p.extension(imgPath);
+    final target = p.join(dir.path, '$editId$ext');
+    return (await File(imgPath).copy(target)).path;
   }
 
   Future<void> submitFeedback(String feedbackType) async {

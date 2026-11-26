@@ -82,6 +82,20 @@ class _LoginPageState extends State<LoginPage> {
           loading: loading,
           onPressed: _requestOtp,
         ),
+        belowButton: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          children: [
+            TextButton(
+              onPressed: () => context.push(AppRoutes.loginLimitPreview),
+              child: const Text('Login limit reached'),
+            ),
+            TextButton(
+              onPressed: () => context.push(AppRoutes.noAccountPreview),
+              child: const Text('No account found'),
+            ),
+          ],
+        ),
       ),
     );
   }
