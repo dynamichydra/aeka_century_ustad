@@ -9,6 +9,7 @@ import 'package:century_ai/features/auth/presentation/pages/onboarding_page.dart
 import 'package:century_ai/features/auth/presentation/pages/otp_page.dart';
 import 'package:century_ai/features/auth/presentation/pages/profile_setup_page.dart';
 import 'package:century_ai/features/camera_pages/camera_pages.dart';
+import 'package:century_ai/features/camera_pages/presentation/pages/camera_tips_page.dart';
 import 'package:century_ai/features/home/home.dart';
 import 'package:century_ai/features/home/presentation/pages/home_2.dart';
 import 'package:century_ai/router/app_routes.dart';
@@ -72,7 +73,11 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: AppRoutes.heart,
           name: "heart",
-          builder: (context, state) => HomeScreen(),
+          builder: (context, state) => const HomeScreen(showFavoritesOnOpen: true),
+        ),
+        GoRoute(
+          path: AppRoutes.tips,
+          builder: (context, state) => const CameraTipsPage(),
         ),
         GoRoute(
           path: AppRoutes.star,

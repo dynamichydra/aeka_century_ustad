@@ -3,9 +3,10 @@ import 'package:century_ai/core/constants/final_save_credits.dart';
 import 'package:flutter/material.dart';
 
 class CreditUsageButton extends StatelessWidget {
-  const CreditUsageButton({super.key, required this.used});
+  const CreditUsageButton({super.key, required this.used, required this.size});
 
   final int? used;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -17,11 +18,17 @@ class CreditUsageButton extends StatelessWidget {
     return IconButton(
       tooltip: description,
       padding: EdgeInsets.zero,
-      style: IconButton.styleFrom(backgroundColor: Colors.white),
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white,
+        shape: const CircleBorder(),
+        fixedSize: Size.square(size),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
       onPressed: () => showCreditUsageDialog(context, used),
       icon: ExcludeSemantics(
         child: SizedBox.square(
-          dimension: 44,
+          dimension: size,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -33,9 +40,9 @@ class CreditUsageButton extends StatelessWidget {
                       : const Duration(milliseconds: 260),
                   builder: (context, value, _) => CircularProgressIndicator(
                     value: value,
-                    strokeWidth: 3,
+                    strokeWidth: 1,
                     strokeCap: StrokeCap.round,
-                    backgroundColor: const Color(0xFFE6E6E6),
+                    backgroundColor: Colors.black12,
                     color: TColors.vividRed,
                   ),
                 ),
@@ -73,97 +80,153 @@ class CreditUsageButton extends StatelessWidget {
 Future<void> showCreditUsageDialog(BuildContext context, int? used) =>
     showDialog<void>(
       context: context,
+      barrierColor: const Color(0x4D000000),
       builder: (_) => _CreditUsageDialog(used: used),
     );
 
-class _CreditUsageDialog extends StatefulWidget {
+class _CreditUsageDialog extends StatelessWidget {
   const _CreditUsageDialog({required this.used});
 
   final int? used;
 
   @override
-  State<_CreditUsageDialog> createState() => _CreditUsageDialogState();
-}
-
-class _CreditUsageDialogState extends State<_CreditUsageDialog> {
-  bool _showRemaining = false;
-
-  @override
   Widget build(BuildContext context) {
     const limit = FinalSaveCredits.limit;
-    final used = widget.used;
-    final count = used == null ? 0 : (_showRemaining ? limit - used : used);
-    final percentage = (100 * count / limit).round();
-    final label = _showRemaining ? 'remaining' : 'used';
-    return AlertDialog(
-      scrollable: true,
-      backgroundColor: Colors.white,
-      title: const Text('Final save credits', textAlign: TextAlign.center),
-      content: used == null
-          ? const Text('Your credit balance is unavailable.')
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+    final usedCoins = used?.clamp(0, limit);
+    final fraction = (usedCoins ?? 0) / limit;
+    final percentage = (fraction * 100).round();
+    final showWarning = fraction > 0.70;
+    const bodyStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: TColors.pureBlack,
+    );
+
+    return Dialog(
+      backgroundColor: TColors.pureWhite,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      constraints: const BoxConstraints(maxWidth: 420),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Coin Usage',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w700,
+                  color: TColors.pureBlack,
+                ),
+              ),
+              if (usedCoins == null) ...[
+                const SizedBox(height: 24),
+                const Text(
+                  'Your coin balance is unavailable.',
+                  textAlign: TextAlign.center,
+                  style: bodyStyle,
+                ),
+              ] else ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 24,
+                  child: showWarning
+                      ? const Icon(
+                          Icons.warning_rounded,
+                          color: TColors.vividRed,
+                          size: 24,
+                          semanticLabel: 'Coin usage is above 70 percent',
+                        )
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '1 coin is used each time you click Apply',
+                    maxLines: 1,
+                    style: bodyStyle,
+                  ),
+                ),
+                const SizedBox(height: 22),
                 Semantics(
-                  label: '$percentage percent $label, $count of $limit credits',
-                  child: ExcludeSemantics(
-                    child: SizedBox.square(
-                      dimension: 128,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Positioned.fill(
+                  label: '$percentage percent of coins used',
+                  excludeSemantics: true,
+                  child: SizedBox.square(
+                    dimension: 124,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Positioned.fill(
+                          child: RotatedBox(
+                            quarterTurns: 2,
                             child: TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0, end: count / limit),
+                              tween: Tween(begin: 0, end: fraction),
                               duration: MediaQuery.disableAnimationsOf(context)
                                   ? Duration.zero
                                   : const Duration(milliseconds: 350),
                               curve: Curves.easeOutCubic,
-                              builder: (_, value, _) => CircularProgressIndicator(
-                                value: value,
-                                strokeWidth: 6,
-                                strokeCap: StrokeCap.round,
-                                backgroundColor: const Color(0xFFEDEDED),
-                                color: TColors.vividRed,
+                              builder: (context, value, child) =>
+                                  CircularProgressIndicator(
+                                    value: value,
+                                    strokeWidth: 3.5,
+                                    strokeCap: StrokeCap.butt,
+                                    backgroundColor: TColors.lightGray,
+                                    color: TColors.vividRed,
+                                  ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '$percentage%',
+                              style: bodyStyle.copyWith(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('$percentage%', style: Theme.of(context).textTheme.headlineLarge),
-                                  Text('$count of $limit $label'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 22),
-                SegmentedButton<bool>(
-                  showSelectedIcon: false,
-                  segments: const [
-                    ButtonSegment(value: false, label: Text('Used')),
-                    ButtonSegment(value: true, label: Text('Remaining')),
-                  ],
-                  selected: {_showRemaining},
-                  onSelectionChanged: (value) => setState(() => _showRemaining = value.single),
-                ),
                 const SizedBox(height: 16),
-                const Text('Each final save uses one credit. AI layers are free.',
-                    textAlign: TextAlign.center),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Total: $limit coins | Used: $usedCoins coins | '
+                    'Remaining: ${limit - usedCoins} coins',
+                    maxLines: 1,
+                    style: bodyStyle,
+                  ),
+                ),
               ],
-            ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
-      ],
+              const SizedBox(height: 18),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(84, 44),
+                  backgroundColor: TColors.vividRed,
+                  foregroundColor: TColors.pureWhite,
+                  shape: const StadiumBorder(),
+                  elevation: 3,
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

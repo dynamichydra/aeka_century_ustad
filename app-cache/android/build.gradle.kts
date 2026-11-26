@@ -30,6 +30,15 @@ subprojects {
             }
         }
     }
+
+    // file_picker 9.0.3 declares API 34, while the resolved lifecycle plugin requires API 36.
+    if (name == "file_picker") {
+        afterEvaluate {
+            extensions.configure<com.android.build.gradle.LibraryExtension> {
+                compileSdk = 36
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {

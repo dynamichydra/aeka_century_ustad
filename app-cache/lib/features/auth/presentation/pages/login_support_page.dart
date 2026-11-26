@@ -10,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart';
 class LoginSupportPage extends StatelessWidget {
   const LoginSupportPage.loginLimit({super.key})
     : title = 'Login limit reached',
-      message = 'Contact your BSM for help restoring login access.',
       role = 'BSM',
       name = SampleBsmContact.name,
       phone = SampleBsmContact.phone,
@@ -18,14 +17,12 @@ class LoginSupportPage extends StatelessWidget {
 
   const LoginSupportPage.noAccount({super.key})
     : title = 'No account found',
-      message = 'Contact your admin to set up your account before logging in.',
       role = 'admin',
       name = 'Ravi Mehta',
       phone = '+1 202 555 0143',
       email = 'admin@example.com';
 
   final String title;
-  final String message;
   final String role;
   final String name;
   final String phone;
@@ -50,79 +47,127 @@ class LoginSupportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
+    final scale = (MediaQuery.sizeOf(context).width / 390).clamp(0.8, 1.15);
     return Scaffold(
       body: AuthDecoratedBackground(
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 360),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CenturyLogo(),
-                    const SizedBox(height: 44),
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: theme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              bottom: 0,
+              child: Image.asset(
+                AuthAssets.mascot,
+                width: 100 * scale,
+                excludeFromSemantics: true,
+              ),
+            ),
+            Positioned.fill(
+              bottom: 116 * scale,
+              child: SafeArea(
+                bottom: false,
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: theme.bodyLarge,
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: TColors.pureWhite,
-                        border: Border.all(color: const Color(0xFFE3E3E3)),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Sample $role contact', style: theme.bodyMedium),
-                          const SizedBox(height: 4),
-                          Text(
-                            name,
-                            style: theme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 45 * scale, bottom: 8),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CenturyLogo(width: 174 * scale),
+                              SizedBox(height: 42 * scale),
+                              DecorStudioBadge(size: 166 * scale),
+                              SizedBox(height: 46 * scale),
+                              Semantics(
+                                header: true,
+                                label: title,
+                                child: Text(
+                                  'Contact $role to login',
+                                  textAlign: TextAlign.center,
+                                  style: theme.titleMedium?.copyWith(
+                                    color: const Color(0xFF555555),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 24 * scale),
+                              SizedBox(
+                                width: 210 * scale,
+                                child: Container(
+                                  padding: const EdgeInsets.all(11),
+                                  decoration: BoxDecoration(
+                                    color: TColors.pureWhite,
+                                    border: Border.all(
+                                      color: const Color(0xFFE8E8E8),
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        role == 'admin'
+                                            ? 'Admin contact'
+                                            : '$role contact',
+                                        style: theme.bodySmall?.copyWith(
+                                          color: const Color(0xFF666666),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        name,
+                                        style: theme.titleMedium?.copyWith(
+                                          color: TColors.pureBlack,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const Divider(
+                                        height: 20,
+                                        color: Color(0xFFBDBDBD),
+                                      ),
+                                      _ContactLine(
+                                        icon: Icons.phone,
+                                        value: phone,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _ContactLine(
+                                        icon: Icons.email,
+                                        value: email,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 24 * scale),
+                              AuthPrimaryButton(
+                                label: 'Call $role',
+                                onPressed: () => _openDialer(context),
+                              ),
+                              SizedBox(height: 8 * scale),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: TColors.vividRed,
+                                ),
+                                onPressed: () => context.canPop()
+                                    ? context.pop()
+                                    : context.go(AppRoutes.login),
+                                child: const Text('Back to login'),
+                              ),
+                            ],
                           ),
-                          const Divider(height: 24),
-                          _ContactLine(
-                            icon: Icons.phone_outlined,
-                            value: phone,
-                          ),
-                          const SizedBox(height: 12),
-                          _ContactLine(icon: Icons.mail_outline, value: email),
-                        ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 28),
-                    AuthPrimaryButton(
-                      label: 'Call $role',
-                      onPressed: () => _openDialer(context),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => context.canPop()
-                          ? context.pop()
-                          : context.go(AppRoutes.login),
-                      child: const Text('Back to login'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -139,9 +184,17 @@ class _ContactLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: TColors.vividRed),
-        const SizedBox(width: 12),
-        Expanded(child: SelectableText(value)),
+        Icon(icon, size: 16, color: TColors.pureBlack),
+        const SizedBox(width: 9),
+        Expanded(
+          child: SelectableText(
+            value,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF555555),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ],
     );
   }

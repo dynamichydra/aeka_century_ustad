@@ -27,19 +27,23 @@ import 'package:century_ai/router/app_routes.dart';
 import 'package:century_ai/cubit/upload/upload_cubit.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.showFavoritesOnOpen = false});
+
+  final bool showFavoritesOnOpen;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => HomeCubit(),
-      child: const _HomeScreenContent(),
+      child: _HomeScreenContent(showFavoritesOnOpen: showFavoritesOnOpen),
     );
   }
 }
 
 class _HomeScreenContent extends StatefulWidget {
-  const _HomeScreenContent();
+  const _HomeScreenContent({required this.showFavoritesOnOpen});
+
+  final bool showFavoritesOnOpen;
 
   @override
   State<_HomeScreenContent> createState() => _HomeScreenContentState();
@@ -74,8 +78,17 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     _loadProductsByCategoryFromAsset();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductsCubit>().fetchFeaturedProducts(
-      );
+      if (!mounted) return;
+      final productsCubit = context.read<ProductsCubit>();
+      if (widget.showFavoritesOnOpen) {
+        final homeCubit = context.read<HomeCubit>();
+        homeCubit.toggleLiked();
+        productsCubit.fetchFavoriteProducts(
+          applicationType: homeCubit.state.isExterior ? 'EXTERIOR' : 'INTERIOR',
+        );
+      } else {
+        productsCubit.fetchFeaturedProducts();
+      }
     });
   }
 

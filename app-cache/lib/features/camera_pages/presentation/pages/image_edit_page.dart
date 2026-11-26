@@ -5105,6 +5105,7 @@ class _ImageEditPageState extends State<ImageEditPage>
     if (!_editExpanded) {
       return const SizedBox.shrink();
     }
+    const buttonHeight = 40.0;
     return Builder(
       builder: (context) {
         return Container(
@@ -5117,8 +5118,8 @@ class _ImageEditPageState extends State<ImageEditPage>
                 children: [
                   const SizedBox(width: 50),
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: buttonHeight,
+                    height: buttonHeight,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -5136,13 +5137,13 @@ class _ImageEditPageState extends State<ImageEditPage>
                     ),
                   ),
                   const Spacer(),
-                  CreditUsageButton(used: _usedCredits),
+                  CreditUsageButton(used: _usedCredits, size: buttonHeight),
                   const SizedBox(width: 50),
                 ],
               ),
               SizedBox(
                 width: 120,
-                height: 40,
+                height: buttonHeight,
                 child: BlocBuilder<ImageEditCubit, ImageEditState>(
                   builder: (context, state) {
                     final bool isApplying =

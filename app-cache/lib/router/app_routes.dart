@@ -13,6 +13,7 @@ abstract final class AppRoutes {
   static const home2 = '/home_2';
   static const heart = '/heart';
   static const star = '/star';
+  static const tips = '/tips';
 
   // Main flow (home -> preview -> edit -> compare/finalize)
   static const camera = '/camera';
