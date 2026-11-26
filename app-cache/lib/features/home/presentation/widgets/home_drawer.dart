@@ -131,11 +131,6 @@ class HomeDrawer extends StatelessWidget {
                     label: 'Share The App',
                     onTap: () => _close(context),
                   ),
-                  _DrawerItem(
-                    icon: const Icon(Icons.info_outline),
-                    label: 'About Us',
-                    onTap: () => _close(context),
-                  ),
                 ],
               ),
             ),

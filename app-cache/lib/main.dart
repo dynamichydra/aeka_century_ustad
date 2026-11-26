@@ -13,6 +13,8 @@ import 'package:century_ai/router/router.dart';
 import 'package:century_ai/core/theme/theme.dart';
 import 'package:century_ai/data/repositories/upload_repository.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:century_ai/utils/helpers/network_manager.dart';
@@ -24,6 +26,10 @@ import 'package:get_storage/get_storage.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  if (kDebugMode && !kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    // Local Android builds can receive a rejected Play Integrity verdict.
+    await FirebaseAuth.instance.setSettings(forceRecaptchaFlow: true);
+  }
   await GetStorage.init();
   await DbCore.database;
   await SelectedImagesRepository.initializeTable();

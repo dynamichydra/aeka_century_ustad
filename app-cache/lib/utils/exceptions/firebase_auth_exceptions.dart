@@ -116,7 +116,7 @@ class TFirebaseAuthException implements Exception {
       case 'INVALID_LOGIN_CREDENTIALS':
         return 'Invalid login credentials.';
       default:
-        return 'An unexpected authentication error occurred. Please try again.';
+        return 'Phone sign-in failed (Firebase: $code). Please contact support if this continues.';
     }
   }
 }

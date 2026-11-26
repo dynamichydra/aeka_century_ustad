@@ -53,16 +53,16 @@ class LoginSupportPage extends StatelessWidget {
         child: Stack(
           children: [
             Positioned(
-              left: 0,
-              bottom: 0,
+              left: 6,
+              bottom: -10 * scale,
               child: Image.asset(
-                AuthAssets.mascot,
-                width: 100 * scale,
+                AuthAssets.carpenterMascot,
+                width: 96 * scale,
                 excludeFromSemantics: true,
               ),
             ),
             Positioned.fill(
-              bottom: 116 * scale,
+              bottom: 120 * scale,
               child: SafeArea(
                 bottom: false,
                 child: LayoutBuilder(

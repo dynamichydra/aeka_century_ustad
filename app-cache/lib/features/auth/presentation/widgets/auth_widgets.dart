@@ -9,6 +9,7 @@ abstract final class AuthAssets {
   static const topStars = 'assets/auth/top-stars.png';
   static const bottomStars = 'assets/auth/bottom-stars.png';
   static const mascot = 'assets/auth/banner-man.png';
+  static const carpenterMascot = 'assets/auth/carpenter-mascot.png';
   static const onboarding1 = 'assets/auth/onbaording-1.png';
   static const onboarding2Dark = 'assets/auth/onboarding-2-dark.png';
   static const onboarding2Light = 'assets/auth/onboarding-2-light.png';
