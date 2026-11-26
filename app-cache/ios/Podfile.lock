@@ -45,7 +45,7 @@ PODS:
   - Firebase/Storage (12.12.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 12.12.0)
-  - firebase_auth (6.3.0):
+  - firebase_auth (6.4.0):
     - Firebase/Auth (= 12.12.0)
     - firebase_core
     - Flutter
@@ -198,7 +198,7 @@ SPEC CHECKSUMS:
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be
   Firebase: aa154fee4e9b8eac17aa42344988865b3e857d33
-  firebase_auth: 6cc909f2a33d7ee4c1f05614ca1ab1a40e828dc4
+  firebase_auth: b0aa0a5964e23fba1bf7f32603437edc33b889c4
   firebase_core: 9156a152117c843440b0b990c785aa0259bc5447
   firebase_storage: 56cf10f4b6937ebec34721f89673ad4b69831c87
   FirebaseAppCheckInterop: c63ae0d003274f145174849c545ab861593beaf9
@@ -208,7 +208,7 @@ SPEC CHECKSUMS:
   FirebaseCoreExtension: ff6fd42eb5287e71d3e160450de6509733d9ead7
   FirebaseCoreInternal: 7c12fc3011d889085e765e317d7b9fd1cef97af9
   FirebaseStorage: b3682c96ae7016420c1f6eb43d45057a0e909c9f
-  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
   flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
   gal: baecd024ebfd13c441269ca7404792a7152fde89
   GoogleUtilities: 7dc09b3fa9ecb5c2298b952313d14628b61b9da3
